@@ -4,8 +4,7 @@ require linux.inc
 DEFAULT_PREFERENCE = "-1"
 DEFAULT_PREFERENCE_cm-x270 = "1"
 DEFAULT_PREFERENCE_em-x270 = "1"
-DEFAULT_PREFERENCE_mpc8313e-rdb = "1"
-DEFAULT_PREFERENCE_mpc8323e-rdb = "1"
+DEFAULT_PREFERENCE_mpc8313erdb = "1"
 
 PR = "r7"
 
@@ -29,7 +28,7 @@ SRC_URI_append_cm-x270 = "\
 	file://0008-cm-x270-nand-simplify-name.patch;patch=1 \
 	file://16bpp.patch;patch=1"
 
-SRC_URI_append_mpc8313e-rdb = "\
+SRC_URI_append_mpc8313erdb = "\
 	${KERNELORG_MIRROR}/pub/linux/kernel/v2.6/patch-2.6.23.12.bz2;patch=1 \
 	file://mpc831x-nand.patch;patch=1 \
 	file://mpc8313e-rdb-leds.patch;patch=1 \
