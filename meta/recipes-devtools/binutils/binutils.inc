@@ -48,9 +48,7 @@ FILES_${PN}-symlinks = " \
 B = "${S}/build.${HOST_SYS}.${TARGET_SYS}"
 
 EXTRA_OECONF = "--program-prefix=${TARGET_PREFIX} \
-                --enable-install-libbfd \
-                --enable-shared"
-
+                --enable-install-libbfd"
 EXTRA_OECONF_virtclass-native = "--enable-target=all --enable-64-bit-bfd --enable-install-libbfd"
 
 # This is necessary due to a bug in the binutils Makefiles
