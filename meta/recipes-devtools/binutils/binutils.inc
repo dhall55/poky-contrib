@@ -12,6 +12,7 @@ SECTION = "devel"
 LICENSE = "GPLv3"
 
 DEPENDS = "flex-native bison-native zlib-native"
+DEPENDS = "flex-native bison-native zlib-native flex zlib"
 
 inherit autotools gettext multilib_header
 
