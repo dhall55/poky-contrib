@@ -14,7 +14,7 @@ SRC_URI = "ftp://ftp.gnu.org/gnu/groff/groff-1.18.1.4.tar.gz \
 
 inherit autotools
 
-EXTRA_OEMAKE =+ "-f Makefile mandir=${D}${mandir}"
+EXTRA_OEMAKE =+ " -j 1 -f Makefile mandir=${D}${mandir} "
 
 localdir=/usr/local/
 do_configure (){
