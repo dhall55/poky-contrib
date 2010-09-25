@@ -12,8 +12,15 @@ PV = "2.6.34+git${SRCPV}"
 # SRC_URI = "git://///path/to/kernel/default_kernel.git;fullclone=1"
 #SRC_URI = "git://git.pokylinux.org/linux-2.6-windriver.git;protocol=git;fullclone=1;branch=${WRMACHINE}-${LINUX_KERNEL_TYPE};name=machine \
 #           git://git.pokylinux.org/linux-2.6-windriver.git;protocol=git;noclone=1;branch=wrs_meta;name=meta"
+#SRC_URI = "git:///home/trz/work/linux-2.6-windriver.git;fullclone=1;branch=${WRMACHINE}-${LINUX_KERNEL_TYPE};name=machine \
+#           git:///home/trz/work/linux-2.6-windriver.git;noclone=1;branch=wrs_meta;name=meta"
+
+# SRC_URI = "git://git.pokylinux.org/linux-2.6-windriver.git;protocol=git;fullclone=1;branch=${WRMACHINE}-${LINUX_KERNEL_TYPE};name=machine \
+#            git://git.pokylinux.org/linux-2.6-windriver.git;protocol=git;noclone=1;branch=wrs_meta;name=meta"
 SRC_URI = "git:///home/trz/work/linux-2.6-windriver.git;fullclone=1;branch=${WRMACHINE}-${LINUX_KERNEL_TYPE};name=machine \
-           git:///home/trz/work/linux-2.6-windriver.git;noclone=1;branch=wrs_meta;name=meta"
+           git:///home/trz/work/linux-2.6-windriver.git;noclone=1;branch=wrs_meta;name=meta" 
+
+SRCREV="${AUTOREV}"
            
 WRMACHINE = "${MACHINE}"
 WRMACHINE_qemux86  = "common_pc"
