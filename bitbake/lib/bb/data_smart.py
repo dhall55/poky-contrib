@@ -101,8 +101,8 @@ class ExpansionError(Exception):
     def __str__(self):
         return self.msg
 
-class DataSmart(MutableMapping):
-    def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
+class DataSmart:
+    def __init__(self, special = {}, seen = {} ):
         self.dict = {}
 
         # cookie monster tribute
@@ -378,7 +378,7 @@ class DataSmart(MutableMapping):
         Create a copy of self by setting _data to self
         """
         # we really want this to be a DataSmart...
-        data = DataSmart(seen=self._seen_overrides.copy(), special=self._special_values.copy())
+        data = DataSmart(seen=copy.deepcopy(self._seen_overrides), special=copy.deepcopy(self._special_values))
         data.dict["_data"] = self.dict
 
         return data
