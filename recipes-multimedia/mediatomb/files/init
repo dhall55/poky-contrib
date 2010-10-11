@@ -1,0 +1,109 @@
+#! /bin/sh
+#
+# MediaTomb initscript
+#
+# Original Author: Tor Krill <tor@excito.com>.
+# Modified by:     Leonhard Wimmer <leo@mediatomb.cc>
+# Modified again by Andres Mejia <mcitadel@gmail.com> to
+# base it off of /etc/init.d/skeleton
+#
+#
+
+### BEGIN INIT INFO
+# Provides:          mediatomb
+# Required-Start:    $local_fs $network $remote_fs
+# Required-Stop:     $local_fs $network $remote_fs
+# Should-Start:      $all
+# Should-Stop:       $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: upnp media server
+### END INIT INFO
+
+#FIXME-dvhart: need to redo/validate all the output
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+DESC="upnp media server"
+NAME=mediatomb
+DAEMON=/usr/bin/$NAME
+PIDFILE=/var/run/$NAME.pid
+LOGFILE=/var/log/$NAME.log
+SCRIPTNAME=/etc/init.d/$NAME
+DEFAULT=/etc/default/$NAME
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Read configuration variable file if it is present
+[ -r $DEFAULT ] && . $DEFAULT
+
+# Run as root if USER not specified
+if [ ! $USER ]; then
+	USER=root
+fi
+
+# Check for an invalid user or one without a home directory
+eval USERHOME=~$USER
+if [ "${USERHOME#/}" = "${USERHOME}" ]; then
+	echo -n "$NAME: The user '$USER' specified in $DEFAULT is invalid."
+	exit 1
+fi
+
+# Check if group is not specified and assign a proper group
+if [ -z $GROUP ]; then
+    GROUP="$USER"
+fi
+
+if [ "$INTERFACE" != "" ] ; then
+    INTERFACE_ARG="-e $INTERFACE"
+else
+    INTERFACE_ARG=""
+fi
+
+DAEMON_ARGS="-c /etc/mediatomb/config.xml -d -u $USER -g $GROUP -P $PIDFILE -l $LOGFILE $INTERFACE_ARG $OPTIONS"
+
+do_start() {
+	if [ -n "$INTERFACE" ]; then
+        $ROUTE_ADD $INTERFACE >/dev/null 2>&1
+	fi
+	touch $PIDFILE
+	chown $USER:$GROUP $PIDFILE
+	touch $LOGFILE
+	chown $USER:$GROUP $LOGFILE
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- $DAEMON_ARGS 
+}
+
+do_stop() {
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	rm -f $PIDFILE
+	if [ $? -eq 0 && -n "$INTERFACE" ]; then
+        $ROUTE_DEL $INTERFACE >/dev/null 2>&1
+    fi
+}
+
+case "$1" in
+  start)
+    echo -n "Starting $DESC: "
+    do_start
+    echo "$NAME."
+	;;
+  stop)
+	echo -n "Stopping $DESC: "
+    do_stop
+    echo "$NAME."
+	;;
+  restart|force-reload)
+	echo -n "Restaring $DESC: "
+	do_stop
+    sleep 1
+    do_start
+    echo "$NAME."
+    ;;
+  *)
+	echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
+	exit 3
+	;;
+esac
+
+exit 0
