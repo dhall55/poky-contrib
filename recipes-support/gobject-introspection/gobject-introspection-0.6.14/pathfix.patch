@@ -1,0 +1,25 @@
+Index: gobject-introspection-0.6.14/giscanner/scannermain.py
+===================================================================
+--- gobject-introspection-0.6.14.orig/giscanner/scannermain.py
++++ gobject-introspection-0.6.14/giscanner/scannermain.py
+@@ -275,6 +275,7 @@ def scanner_main(args):
+     shown_include_warning = False
+     for include in options.includes:
+         if os.sep in include:
++            continue
+             raise ValueError("Invalid include path %r" % (include, ))
+         try:
+             include_obj = Include.from_string(include)
+Index: gobject-introspection-0.6.14/giscanner/dumper.py
+===================================================================
+--- gobject-introspection-0.6.14.orig/giscanner/dumper.py
++++ gobject-introspection-0.6.14/giscanner/dumper.py
+@@ -84,7 +84,7 @@ class DumpCompiler(object):
+         self._tmpdir = tempfile.mkdtemp('', 'tmp-introspect', dir=os.getcwd())
+ 
+         self._compiler_cmd = os.environ.get('CC', 'gcc')
+-        self._linker_cmd = os.environ.get('CC', self._compiler_cmd)
++        self._linker_cmd = os.environ.get('CCLD', self._compiler_cmd)
+         self._pkgconfig_cmd = os.environ.get('PKG_CONFIG', 'pkg-config')
+ 
+         self._uninst_srcdir = os.environ.get(
