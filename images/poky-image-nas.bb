@@ -6,12 +6,13 @@
 SRC_URI = "file://fstab \
 	file://lighttpd.conf \
 	file://exports \
-	file://nfsserver \
+	file://udhcpd.init \
+	file://udhcpd.conf \
 	file://proftpd.conf \
 	file://interfaces \
 	file://tftpd-hpa"
 
-PR="r5"
+PR="r6"
 
 # Extending minimal results in build failure regardless of which
 # path I use to poky-image-minimal.bb. Ideally this file would
@@ -48,32 +49,32 @@ ROOTFS_POSTPROCESS_COMMAND += "setup_target_image ; "
 
 # Manual setup, configuration and workarounds for the NAS image
 setup_target_image() {
-	mkdir -p ${IMAGE_ROOTFS}/var/adm
-	mkdir -p ${IMAGE_ROOTFS}/usr/adm
 	mkdir -p ${IMAGE_ROOTFS}/media/storage
 	chmod 0777 ${IMAGE_ROOTFS}/media/storage
 
 	install -m 0644 ${WORKDIR}/fstab ${IMAGE_ROOTFS}/etc/fstab
 	install -m 0644 ${WORKDIR}/lighttpd.conf ${IMAGE_ROOTFS}/etc/lighttpd.conf
 	install -m 0644 ${WORKDIR}/exports ${IMAGE_ROOTFS}/etc/exports
-#	install -m 0755 ${WORKDIR}/nfsserver ${IMAGE_ROOTFS}/etc/init.d/nfsserver
 	install -m 0644 ${WORKDIR}/proftpd.conf ${IMAGE_ROOTFS}/etc/proftpd.conf
 	echo "127.0.0.1       localhost.localdomain           localhost       `cat ${IMAGE_ROOTFS}/etc/hostname`" > ${IMAGE_ROOTFS}/etc/hosts
 	install -m 0644 ${WORKDIR}/interfaces ${IMAGE_ROOTFS}/etc/network/interfaces
 	install -m 0644 ${WORKDIR}/tftpd-hpa ${IMAGE_ROOTFS}/etc/default/tftpd-hpa
 
+	install -m 0755 ${WORKDIR}/udhcpd.init ${IMAGE_ROOTFS}/etc/init.d/udhcpd
+	install -m 0644 ${WORKDIR}/udhcpd.conf ${IMAGE_ROOTFS}/etc/udhcpd.conf
+	touch ${IMAGE_ROOTFS}/var/lib/misc/udhcpd.leases
+
 	mkdir -p ${IMAGE_ROOTFS}/media/storage/tftpboot
 	for each in 2 3 4 5; do
 		ln -s ../init.d/tftp-hpa ${IMAGE_ROOTFS}/etc/rc${each}.d/S20tftp-hpa
 		ln -s ../init.d/proftpd ${IMAGE_ROOTFS}/etc/rc${each}.d/S20proftpd
+		ln -s ../init.d/udhcpd ${IMAGE_ROOTFS}/etc/rc${each}.d/S20udhcpd
 	done
 	for each in 1 ; do
 		ln -s ../init.d/tftp-hpa ${IMAGE_ROOTFS}/etc/rc${each}.d/K20tftp-hpa
 		ln -s ../init.d/proftpd ${IMAGE_ROOTFS}/etc/rc${each}.d/K20proftpd
+		ln -s ../init.d/udhcpd ${IMAGE_ROOTFS}/etc/rc${each}.d/K20udhcpd
 	done
-
-#	rm -f ${IMAGE_ROOTFS}/etc/init.d/syslog
-#	ln -s syslog.sysklogd ${IMAGE_ROOTFS}/etc/init.d/syslog
 
 	# Cron directory is missing...
 	mkdir -p ${IMAGE_ROOTFS}/etc/cron.d
