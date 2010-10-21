@@ -8,9 +8,3 @@ LICENSE = "LGPL"
 PE = "1"
 
 inherit autotools vala
-
-do_configure() {
-        gnu-configize
-        oe_runconf
-}
-
