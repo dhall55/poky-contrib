@@ -3,4 +3,4 @@
 #
 require recipes-core/images/poky-image-minimal.bb
 
-IMAGE_INSTALL += "dropbear mediatomb"
+IMAGE_INSTALL += "dropbear mediatomb task-poky-nfs-server"
