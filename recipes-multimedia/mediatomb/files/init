@@ -77,7 +77,7 @@ do_start() {
 do_stop() {
 	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
 	rm -f $PIDFILE
-	if [ $? -eq 0 && -n "$INTERFACE" ]; then
+	if [ $? -eq 0 ] && [ -n "$INTERFACE" ]; then
         $ROUTE_DEL $INTERFACE >/dev/null 2>&1
     fi
 }
