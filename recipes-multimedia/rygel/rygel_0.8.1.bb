@@ -1,4 +1,4 @@
-inherit gnome vala autotools gtk-icon-cache
+inherit gnome vala autotools gtk-icon-cache update-rc.d
 
 DESCRIPTION = "Collection of DLNA[1] (UPnP[2] AV) devices, implemented through a plug-in mechanism."
 SECTION = "network/multimedia"
@@ -9,10 +9,11 @@ RDEPENDS = "gst-meta-audio gst-meta-video gst-meta-base gst-plugins-base-decodeb
 
 HOMEPAGE = "http://live.gnome.org/Rygel"
 LICENSE = "LGPLv2"
-PR="r2"
+PR="r3"
 
 SRC_URI += "file://configure-fix.patch \
-            file://rygel.conf"
+            file://rygel.conf \
+            file://rygel.init"
 
 EXTRA_OECONF = "--disable-vala --disable-tracker-plugin"
 
@@ -23,3 +24,10 @@ do_install_append() {
 
 FILES_${PN} += "${libdir}/rygel-1.0/librygel*.so ${datadir}/dbus-1/ /home/root/.config/"
 FILES_${PN}-dbg += "${libdir}/rygel-1.0/.debug/"
+
+INITSCRIPT_NAME = "rygel"
+
+do_install_append() {
+    install -d ${D}${sysconfdir}/init.d
+    install -m 0755 ${WORKDIR}/rygel.init ${D}${sysconfdir}/init.d/rygel
+}

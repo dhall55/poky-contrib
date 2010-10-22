@@ -1,0 +1,26 @@
+#! /bin/sh
+#
+# Rygel initscript
+#
+# Provides: rygel
+# Required-Start: dbus-1
+# Short-Description: Rygel UPnP Media Renderer
+# Description: Rygel UPnP Media Renderer
+
+start_rygel(){
+	echo -n "starting rygel: "
+	start-stop-daemon --start --exec /usr/bin/rygel &
+	echo done
+}
+stop_rygel(){
+	echo -n "stopping rygel: "
+	start-stop-daemon --stop --quiet --signal 2 --name rygel
+	echo done
+}
+
+case "$1" in
+start) start_rygel ;;
+stop) stop_rygel ;;
+reload) stop_rygel ; start_rygel ;;
+restart) stop_rygel ; start_rygel ;;
+esac
