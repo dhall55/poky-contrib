@@ -12,7 +12,7 @@ SRC_URI = "file://fstab \
 	file://interfaces \
 	file://tftpd-hpa"
 
-PR="r6"
+PR="r7"
 
 # Extending minimal results in build failure regardless of which
 # path I use to poky-image-minimal.bb. Ideally this file would
@@ -75,6 +75,13 @@ setup_target_image() {
 		ln -s ../init.d/proftpd ${IMAGE_ROOTFS}/etc/rc${each}.d/K20proftpd
 		ln -s ../init.d/udhcpd ${IMAGE_ROOTFS}/etc/rc${each}.d/K20udhcpd
 	done
+
+	# Fix http
+	touch ${IMAGE_ROOTFS}/www/logs/access.log
+	touch ${IMAGE_ROOTFS}/www/logs/lighttpd.error.log
+
+	chown 65534:65534 ${IMAGE_ROOTFS}/www/logs/access.log
+	chown 65534:65534 ${IMAGE_ROOTFS}/www/logs/lighttpd.error.log
 
 	# Cron directory is missing...
 	mkdir -p ${IMAGE_ROOTFS}/etc/cron.d
