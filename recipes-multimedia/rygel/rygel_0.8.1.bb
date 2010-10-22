@@ -9,7 +9,7 @@ RDEPENDS = "gst-meta-audio gst-meta-video gst-meta-base gst-plugins-base-decodeb
 
 HOMEPAGE = "http://live.gnome.org/Rygel"
 LICENSE = "LGPLv2"
-PR="r3"
+PR="r4"
 
 SRC_URI += "file://configure-fix.patch \
             file://rygel.conf \
@@ -29,5 +29,6 @@ INITSCRIPT_NAME = "rygel"
 
 do_install_append() {
     install -d ${D}${sysconfdir}/init.d
-    install -m 0755 ${WORKDIR}/rygel.init ${D}${sysconfdir}/init.d/rygel
+    cat ${WORKDIR}/rygel.init | sed -e 's,/usr/bin,${bindir},g' > ${D}${sysconfdir}/init.d/rygel
+    chmod 755 ${D}${sysconfdir}/init.d/rygel
 }
