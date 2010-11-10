@@ -5,8 +5,11 @@ DEPENDS = "glib-2.0 dbus"
 BBCLASSEXTEND = "native"
 DEPENDS_virtclass-native = "glib-2.0-native dbus-native"
 HOMEPAGE = "http://vala-project.org"
-LICENSE = "LGPL"
-INC_PR = "r0"
+LICENSE = "LGPLv2.1+"
+LIC_FILES_CHKSUM = "file://COPYING;md5=fbc093901857fcd118f065f900982c24 \
+                    file://vala/valaloop.vala;beginline=5;endline=17;md5=43c733423764f0802e44117eaa0426d5"
+
+INC_PR = "r1"
 
 #
 # WARNING: This source release has specifically been built for OpenEmbedded.

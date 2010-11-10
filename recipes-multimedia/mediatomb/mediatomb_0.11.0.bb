@@ -1,8 +1,10 @@
 DESCRIPTION = "MediaTomb - UPnP AV MediaServer for Linux"
 HOMEPAGE = "http://mediatomb.cc/"
 LICENSE = "GPLv2"
+LIC_FILES_CHKSUM = "file://COPYING;md5=0b609ee7722218aa600220f779cb5035 \
+                    file://src/main.cc;beginline=14;endline=25;md5=ba9c4cf20a63e18b1626c4c9d794635a"
 DEPENDS = "expat ffmpeg sqlite3 libexif js zlib file id3lib"
-PR = "r0"
+PR = "r1"
 
 SRC_URI = "${SOURCEFORGE_MIRROR}/mediatomb/mediatomb-${PV}.tar.gz \
 	   file://curl.diff \

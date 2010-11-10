@@ -3,8 +3,9 @@ SECTION = "libs"
 PRIORITY = "optional"
 #DEPENDS = ""
 LICENSE = "libgsm"
+LIC_FILES_CHKSUM = "file://README;md5=f0ab53a6be4aefa9705f39b4bdafd62a"
 
-PR = "r2"
+PR = "r3"
 
 # dvhart - bad URL, trying a new one - note: 1.0.13 exists
 #SRC_URI = "http://user.cs.tu-berlin.de/~jutta/gsm/gsm-${PV}.tar.gz \

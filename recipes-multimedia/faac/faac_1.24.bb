@@ -2,9 +2,11 @@ DESCRIPTION = "Library for reading some sort of media format."
 SECTION = "libs"
 PRIORITY = "optional"
 DEPENDS = ""
-LICENSE = "LGPL"
+LICENSE = "LGPLv2+"
+LIC_FILES_CHKSUM = "file://COPYING;md5=3bf50002aefd002f49e7bb854063f7e7 \
+                    file://libfaac/coder.h;beginline=5;endline=17;md5=fa1fd6a5fa8cdc877d63a12530d273e0"
 
-PR = "r1"
+PR = "r2"
 
 inherit autotools
 

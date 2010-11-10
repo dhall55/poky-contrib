@@ -1,7 +1,8 @@
 DESCRIPTION = "Secure ftp daemon"
 SECTION = "console/network"
-LICENSE = "GPL"
-PR = "r1"
+LICENSE = "GPLv2"
+LIC_FILES_CHKSUM = "file://COPYING;md5=fdedcde17b1ffd967d86c20fe0ac158a"
+PR = "r2"
 
 SRC_URI = "ftp://ftp.nl.uu.net/pub/unix/ftp/proftpd/ftp/distrib/source/${PN}-${PV}.tar.gz;name=src \
 	file://make.patch \

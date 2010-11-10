@@ -2,7 +2,8 @@ DESCRIPTION = "HPA's tftp server"
 DEPENDS = "tcp-wrappers readline"
 SECTION = "network"
 LICENSE = "BSD"
-PR = "r1"
+LIC_FILES_CHKSUM = "file://tftp/tftp.c;beginline=5;endline=32;md5=e1716e40722d9f56478f13bc46c2be9c"
+PR = "r2"
 
 SRC_URI = "${KERNELORG_MIRROR}/pub/software/network/tftp/tftp-hpa-${PV}.tar.bz2 \
 	   file://tftp-hpa-progname.patch \
