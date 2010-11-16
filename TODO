@@ -1,0 +1,25 @@
+Linaro sources: http://www.linaro.org/downloads/
+More git trees: http://git.linaro.org/gitweb
+  o Tools (GCC 4.5, GDB)
+  o Kernel (2.6.35, next)
+  o U-boot (stable, next)
+
+Basic layer plan:
+For now we will be building linux-linaro-2.6.35.git/HEAD. Once working, we'll
+look at adding linux-linaro-2.6.37 as a bleeding edge developer kernel. Per
+discussions with Linaro developers, there is no need for us to package any
+version other than 4.5 of GCC.gj
+
+recipes-kernel:
+	linux-linaro-2.6.35
+	linux-linaro-2.6.37
+
+Perhaps two layers are appropriate here?
+	meta-linaro
+	experimental/meta-linaro-next
+
+Approach:
+To build a linaro image, set MACHINE in local.conf to one of the machines
+defined in the meta-linaro layer, ie beagleboard-linaro. Add meta-linaro to your
+bblayers.conf, and build an appropriate image - such as poky-image-minimal.
+
