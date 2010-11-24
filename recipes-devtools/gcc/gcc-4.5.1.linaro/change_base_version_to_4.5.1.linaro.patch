@@ -1,0 +1,14 @@
+The gcc recipes need imatching base version in the code and the ${PV}. 
+Otherwise supporting tools like as, ld, cpp, ar, nm, ranlib, objcopy, 
+objdump, strip, gcc can not be found correctly.
+
+Nitin A Kamble <nitin.a.kamble@intel.com>
+2010/11/24
+
+Index: gcc-linaro-4.5-2010.11-1/gcc/BASE-VER
+===================================================================
+--- gcc-linaro-4.5-2010.11-1.orig/gcc/BASE-VER
++++ gcc-linaro-4.5-2010.11-1/gcc/BASE-VER
+@@ -1 +1 @@
+-4.5.2
++4.5.1.linaro
