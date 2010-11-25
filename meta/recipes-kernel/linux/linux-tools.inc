@@ -1,3 +1,6 @@
+# included by kernel recipes if they want to build/provide
+# perf functionality from their tree.
+
 do_compile_perf() {
 	oe_runmake -C ${S}/tools/perf CC="${KERNEL_CC}" LD="${KERNEL_LD}" prefix=${prefix}
 }
