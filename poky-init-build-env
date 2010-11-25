@@ -3,6 +3,7 @@
 # Poky Build Enviroment Setup Script
 #
 # Copyright (C) 2006-2007 OpenedHand Ltd.
+# Copyright (C) 2010 Wind River Systems
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,19 +26,70 @@
 # being sourced.   To workaround the shell limitation use "set arg1" prior 
 # to sourcing this script.
 #
-if [ "x$0" = "x./poky-init-build-env" ]; then
-   echo "Error: This script needs to be sourced. Please run as '. ./poky-init-build-env'"
-else
-   if [ -n "$BASH_SOURCE" ]; then
-      OEROOT="`dirname $BASH_SOURCE`"
-   else
-      OEROOT="`pwd`"
-   fi
-   OEROOT=`readlink -f "$OEROOT"`
-   export OEROOT
-   . $OEROOT/scripts/poky-env-internal
-   $OEROOT/scripts/poky-setup-builddir
-   unset OEROOT
-   [ -n "$BUILDDIR" ] && cd $BUILDDIR
-fi
+# zsh also has some irregularities in how it passed arg0
+#
+
+# Identify the shell...
+expr "$version" : '.*csh.*' > /dev/null && set CSH=csh || SH=sh
+
+# If in csh, blank out all variables we might use...
+[ -n "$CSH" ] && set SH=''
+[ -n "$CSH" ] && set BASH_SOURCE=''
+[ -n "$CSH" ] && set ZSH_VERSION=''
+[ -n "$CSH" ] && set SRC_ERR=''
+
+# Identify if we were executed...
+# SH specific
+[ -z "$SRC_ERR" -a -n "$SH" -a -z "$ZSH_VERSION" ] && expr "$0" : '.*poky-init-build-env' > /dev/null && SRC_ERR="not_sourced"
+# ZSH specific
+[ -z "$SRC_ERR" -a -n "$SH" -a -n "$ZSH_VERSION" -a "$0" != "poky-init-build-env" ] && SRC_ERR="not_sourced"
+# CSH specific
+[ -z "$SRC_ERR" -a -n "$CSH" ] && expr "$0" : '.*poky-init-build-env' > /dev/null && set SRC_ERR="not_sourced"
+
+### Define OEROOT
+# Default to pwd...
+# Check to see if BASH_SOURCE is set, and use it...
+# Canonicalize the path...
+[ -n "$SH"  ] && export OEROOT=`pwd`
+[ -n "$CSH" ] && setenv OEROOT `pwd`
+
+[ -n "$SH"  -a -n "$BASH_SOURCE" ] && export OEROOT=`dirname $BASH_SOURCE`
+
+[ -n "$SH"  ] && export OEROOT=`readlink -e $OEROOT`
+[ -n "$CSH" ] && setenv OEROOT `readlink -e $OEROOT`
+
+### Source the variables...
+
+[ -z "$SRC_ERR" -a -n "$SH"  -a -z "$OEROOT" ] && SRC_ERR="scripts"
+[ -z "$SRC_ERR" -a -n "$CSH" -a -z "$OEROOT" ] && set SRC_ERR="scripts"
+
+[ -z "$SRC_ERR" -a -n "$SH"  -a ! -d "$OEROOT/scripts" ] && SRC_ERR="scripts"
+[ -z "$SRC_ERR" -a -n "$CSH" -a ! -d "$OEROOT/scripts" ] && set SRC_ERR="scripts"
+
+[ -z "$SRC_ERR" -a -n "$SH"  ] && . $OEROOT/scripts/poky-env-internal
+[ -z "$SRC_ERR" -a -n "$CSH" ] && source $OEROOT/scripts/poky-env-internal
+
+### Setup and display build directory
+
+[ -z "$SRC_ERR" ] && $OEROOT/scripts/poky-setup-builddir && cd $BUILDDIR
+
+[ -z "$SRC_ERR" -a -n "$SH"  ] && unset OEROOT
+[ -z "$SRC_ERR" -a -n "$CSH" ] && unsetenv OEROOT
+
+### Display error messages (if we errored)
+
+[ "$SRC_ERR" = "not_sourced" ] && echo "Error: This script needs to be sourced.  For example:"
+[ "$SRC_ERR" = "not_sourced" ] && echo "        POSIX shell: . ./poky-init-build-env"
+[ "$SRC_ERR" = "not_sourced" ] && echo "          csh shell: source ./poky-init-build-env"
+
+[ "$SRC_ERR" = "scripts" ]     && echo "Error: Unable to find scripts directory.  This script must be sourced from"
+[ "$SRC_ERR" = "scripts" ]     && echo "       within the poky directory."
+
+[ -n "$SRC_ERR" ]              && echo
+
+[ -n "$CSH" ] && unset BASH_SOURCE
+[ -n "$CSH" ] && unset ZSH_VERSION
+unset SRC_ERR
+unset CSH
+unset SH
 
