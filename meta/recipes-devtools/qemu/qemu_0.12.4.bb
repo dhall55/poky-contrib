@@ -25,7 +25,9 @@ SRC_URI = "\
     file://cursor-shadow-fix.patch \
     file://vmware-vga-fifo-rewind.patch \
     file://fix-configure-checks.patch \
-    file://powerpc_rom.bin"
+    file://powerpc_rom.bin \
+    file://arm_timer-fix-oneshot-mode.patch \
+    file://arm_timer-reload-timer-when-enabled.patch"
 
 do_install_append () {
         install -d ${D}${datadir}/qemu
