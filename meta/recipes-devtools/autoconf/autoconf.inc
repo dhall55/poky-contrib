@@ -6,7 +6,6 @@ SECTION = "devel"
 DEPENDS += "m4-native"
 RDEPENDS_${PN} = "m4 gnu-config"
 
-SRC_URI = "${GNU_MIRROR}/autoconf/autoconf-${PV}.tar.bz2 \
-	   file://program_prefix.patch;patch=1"
+SRC_URI = "${GNU_MIRROR}/autoconf/autoconf-${PV}.tar.bz2" 
 
 inherit autotools
