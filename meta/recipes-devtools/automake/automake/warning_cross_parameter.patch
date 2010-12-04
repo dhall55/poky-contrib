@@ -1,0 +1,99 @@
+Imported by: Nitin A Kamble <nitin.a.kamble@intel.com> 2010/12/03
+
+Source: http://www.mail-archive.com/openembedded-devel@lists.openembedded.org/msg11001.html
+
+[oe] [patch] cross keyword for automake warnings
+
+Alexander Stohr
+Tue, 28 Sep 2010 10:54:04 -0700
+
+each of the following two patches adds the "cross" keyword to the command line 
+option --warnings of the automake utility.
+
+that feature is merely a dummy right now as it's not yet used by the tool.
+it improves consistency for the commandline parameters of the tools from that 
+sector.
+it further helps the oe build to not fail when e.g. a tool from the
+autoconf collection blindly tries to pass along "--warnings=cross" to automake.
+
+consider this as a systematic change that paves the way for more whilst 
+reducing need for complexity (like filtering that) in the callers area.
+
+two versions are appended.
+i only ran the one for 1.10.x on my build testbed.
+
+regards, Alex.
+-- 
+GRATIS: Spider-Man 1-3 sowie 300 weitere Videos!
+Jetzt freischalten! http://portal.gmx.net/de/go/maxdome
+
+Index: automake-1.11.1/aclocal.in
+===================================================================
+--- automake-1.11.1.orig/aclocal.in
++++ automake-1.11.1/aclocal.in
+@@ -890,6 +890,7 @@ Options:
+   -W, --warnings=CATEGORY   report the warnings falling in CATEGORY
+ 
+ Warning categories include:
++  `cross'         cross compilation issues
+   `syntax'        dubious syntactic constructs (default)
+   `unsupported'   unknown macros (default)
+   `all'           all the warnings (default)
+Index: automake-1.11.1/lib/Automake/ChannelDefs.pm
+===================================================================
+--- automake-1.11.1.orig/lib/Automake/ChannelDefs.pm
++++ automake-1.11.1/lib/Automake/ChannelDefs.pm
+@@ -97,6 +97,10 @@ Errors related to GNITS Standards (silen
+ 
+ Internal errors.  Use C<&prog_error> to send messages over this channel.
+ 
++=item C<cross>
++
++cross compilation issues
++
+ =item C<gnu>
+ 
+ Warnings related to GNU Coding Standards.
+@@ -150,6 +154,7 @@ register_channel 'automake', type => 'fa
+   footer => "\nPlease contact <bug-automake\@gnu.org>.",
+   uniq_part => UP_NONE, ordered => 0;
+ 
++register_channel 'cross', type => 'warning';
+ register_channel 'gnu', type => 'warning';
+ register_channel 'obsolete', type => 'warning', silent => 1;
+ register_channel 'override', type => 'warning', silent => 1;
+@@ -175,6 +180,7 @@ Display warning categories.
+ sub usage ()
+ {
+   print "Warning categories include:
++  `cross'         cross compilation issues
+   `gnu'           GNU coding standards (default in gnu and gnits modes)
+   `obsolete'      obsolete features or constructions
+   `override'      user redefinitions of Automake rules or variables
+@@ -262,7 +268,11 @@ sub switch_warning ($)
+       $has_no = 1;
+     }
+ 
+-  if ($cat eq 'all')
++  if ($cat eq 'cross')
++    {
++      setup_channel_type 'warning', silent => $has_no;
++    }
++  elsif ($cat eq 'all')
+     {
+       setup_channel_type 'warning', silent => $has_no;
+     }
+Index: automake-1.11.1/doc/aclocal-1.11.1
+===================================================================
+--- automake-1.11.1.orig/doc/aclocal-1.11.1
++++ automake-1.11.1/doc/aclocal-1.11.1
+@@ -47,6 +47,9 @@ print version number, then exit
+ report the warnings falling in CATEGORY
+ .SS "Warning categories include:"
+ .TP
++`cross'
++cross compilation issues
++.TP
+ `syntax'
+ dubious syntactic constructs (default)
+ .TP
