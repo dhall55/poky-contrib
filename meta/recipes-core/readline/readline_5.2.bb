@@ -10,7 +10,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=03b36fdd84f74b8d8189a202b980b67f"
 DEPENDS += "ncurses"
 PRIORITY = "optional"
 
-PR = "r6"
+PR = "r7"
 
 SRC_URI = "${GNU_MIRROR}/readline/${BPN}-${PV}.tar.gz \
            file://configure-fix.patch \
