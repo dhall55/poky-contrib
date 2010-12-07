@@ -1,0 +1,27 @@
+meta-kernel-dev
+
+What is it ?
+------------
+
+A gathering place for extensions to the linux-yocto (or really
+any) kernel recipes that faciliate the creation and development
+of kernel features, BSPs or configuration.
+
+What does it do?
+----------------
+
+Currently this is mainly additions to the kernel recipes to:
+
+  - Use a local clone vs a remote clone
+  - Use AUTOREV to track the HEAD of branches vs a specific revision
+  - Ensure that the $MACHINE is compatible with the yocto kernel
+  - disables branch/revision checking
+  - controls the naming of the linux build dirs via BB_LOCALCOUNT_OVERRIDE
+    and LOCALCOUNT
+
+What will be added to it ?
+--------------------------
+
+  - Tools specifically related to kernel development if they are
+    unique and don't belong in the main layers.
+
