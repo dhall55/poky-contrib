@@ -1,0 +1,112 @@
+The meta-crownbay layer makes use of the proprietary Intel EMGD
+userspace drivers, which at this point in time require that the user
+accept the Intel license by manually extracting the binaries and
+copying them to the proper location in the meta-crownbay layer.
+
+There currently isn't an automated way to do this, thus the manual
+step.  When Yocto supports a click-through installation mechanism, the
+binary files will be packaged as part of the recipe, and this step
+will be unnecessary.
+
+These steps require that you run a graphical application in Windows.
+Windows 7 was used for these instructions, but it shouldn't matter
+which version of Windows you use.
+
+The first step of the process is to download the EMGD 1.5 Gold Driver.
+Here is the current link to the URL which it can be downloaded from:
+
+http://edc.intel.com/Software/Downloads/EMGD/
+
+In the Download Now tab, select:
+
+Intel® architecture-based product: Intel Atom Processor E6XX Series
+Operating System: MeeGo 1.0 IVI Linux (kernel 2.6.33.3, X.server 1.8.0)
+
+That will give you a large zip file:
+
+IEMGD_1_5_GOLD_ALL_1742.zip
+
+Extract the files in the zip file, which will in turn give you a large
+.exe file:
+
+IEMGD_1_5_GOLD_ALL_1742.exe
+
+Run IEMGD_1_5_GOLD_ALL_1742.exe to install, accept licenses, etc.
+
+If it says to install watcom, follow the instructions to do that.
+
+When the installation completes, an application named "emgd-ced" will
+be present in the install directory.  Double-click to run it.
+
+Select the menu item: New Configuration
+
+In the tabbed page, make the following selections and/or enter the
+specified data:
+
+Configuration File Name: myconfig
+Platform Chipset: Intel Atom Processor E6xx
+Port Devices: LVDS, sDVO
+
+Hit the 'Next' button.
+
+On the next tabbed page, make the following selections and/or enter
+the specified data:
+
+Readable Port Name: portname0
+Encoder Configuration: Select sDVO Device: Internal LVDS
+
+Hit the 'Finish' button.
+
+Select the menu item: New Package
+
+In the tabbed page, make the following selections and/or enter the
+specified data:
+
+Package File Name: mypackage
+Configurations: selec myconfig.cnfg
+Target OS: Linux operating System
+
+Hit the 'Finish' button.
+
+Select the menu item: Generate Installation
+
+This will create the EMGD installation package:
+
+Generating EMGD installation...
+
+The installation package should now be under the 'workspace'
+subdirectory of the directory you installed to:
+
+workspace/installation/mypackage.pkg_installation/IEMGD_HEAD_Linux/IEMGD_HEAD_Linux.tgz
+
+This is the file you are interested in.  Copy it to your Poky build
+system, and uncompress/untar it:
+
+$ tar cvfz IEMGD_HEAD_Linux.tgz
+
+Finally, copy Xorg-xserver binaries in the Meego1.0 driver directory
+to the xserver-xf86-emgd-bin directory in the meta-crownbay layer:
+
+$ cp IEMGD_HEAD_Linux/MeeGo1.0/driver/Xorg-xserver-1.7.99/* meta-crownbay/recipes/xorg-xserver/xserver-xf86-emgd-bin
+
+You also need to copy the IEMGD License.txt file to the same directory:
+
+$ cp IEMGD_HEAD_Linux/License/License.txt meta-crownbay/recipes/xorg-xserver/xserver-xf86-emgd-bin
+
+At this point, you should be able to build meta-crownbay images as usual.
+
+----
+
+For reference, the EMGD Driver documentation is also available at the
+above link (it's also part of the installation).
+
+The specific text of the document is:
+
+User Guide: Intel® Embedded Media and Graphics Driver, EFI Video
+Driver, EPOG, and Video BIOS v1.5 for Windows* XP and Linux* Provides
+installation requirements/procedures & describes the vbios/firmware,
+configuration options, & functionality of Intel® EMGD under Windows* &
+Linux*. Refer to guide for details.
+
+File Type/Size: PDF 3,340KB
+Version: 008 : October 2010
