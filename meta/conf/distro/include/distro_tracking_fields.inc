@@ -79,7 +79,7 @@ RECIPE_STATUS_pn-moblin-proto = "red"
 RECIPE_LATEST_VERIONS_pn-moblin-proto = "check"
 RECIPE_MAINTAINER_pn-moblin-proto = "Dexuan Cui <dexuan.cui@intel.com>"
 
-RECIPE_STATUS_pn-patch = "red"
+RECIPE_STATUS_pn-patch = "green"
 RECIPE_LATEST_VERIONS_pn-patch = "2.6.1"
 RECIPE_MAINTAINER_pn-patch = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
@@ -2602,7 +2602,7 @@ RECIPE_STATUS_pn-gcc="green"
 RECIPE_LATEST_VERSION_pn-gcc="4.5.1"
 RECIPE_MAINTAINER_pn-gcc = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
-RECIPE_STATUS_pn-autoconf="red" 
+RECIPE_STATUS_pn-autoconf="green" 
 RECIPE_LATEST_VERSION_pn-autoconf="2.68"
 RECIPE_MAINTAINER_pn-autoconf = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
