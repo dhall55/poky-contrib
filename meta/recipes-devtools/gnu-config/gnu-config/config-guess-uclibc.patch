@@ -3,11 +3,11 @@ Patch courtesy gentoo-portage/sys-devel/gnuconfig/files/automake-1.8.5-config-gu
 updated to 20050516 by Marcin 'Hrw' Juszkiewicz (by hand)
 updated to 20080123 by Nitin A Kamble (by hand)
 
-Index: config/config.guess
+Index: config-1a0cbc1/config.guess
 ===================================================================
---- config.orig/config.guess
-+++ config/config.guess
-@@ -139,6 +139,19 @@ UNAME_RELEASE=`(uname -r) 2>/dev/null` |
+--- config-1a0cbc1.orig/config.guess
++++ config-1a0cbc1/config.guess
+@@ -140,6 +140,19 @@ UNAME_RELEASE=`(uname -r) 2>/dev/null` |
  UNAME_SYSTEM=`(uname -s) 2>/dev/null`  || UNAME_SYSTEM=unknown
  UNAME_VERSION=`(uname -v) 2>/dev/null` || UNAME_VERSION=unknown
  
@@ -27,7 +27,24 @@ Index: config/config.guess
  # Note: order is significant - the case branches are not exclusive.
  
  case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
-@@ -840,13 +853,13 @@ EOF
+@@ -191,7 +204,7 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:$
+ 	# suitable tag, in the style of linux-gnu.
+ 	case "${UNAME_VERSION}" in
+ 	    Debian*)
+-		release='-gnu'
++		release='-${LIBC}'
+ 		;;
+ 	    *)
+ 		release=`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
+@@ -870,29 +883,29 @@ EOF
+         esac
+ 	objdump --private-headers /bin/sh | grep -q ld.so.1
+ 	if test "$?" = 0 ; then LIBC="libc1" ; else LIBC="" ; fi
+-	echo ${UNAME_MACHINE}-unknown-linux-gnu${LIBC}
++	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+ 	exit ;;
+     arm*:Linux:*:*)
+ 	eval $set_cc_for_build
  	if echo __ARM_EABI__ | $CC_FOR_BUILD -E - 2>/dev/null \
  	    | grep -q __ARM_EABI__
  	then
@@ -42,13 +59,21 @@ Index: config/config.guess
 +	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
  	exit ;;
      cris:Linux:*:*)
- 	echo cris-axis-linux-gnu
-@@ -855,16 +868,16 @@ EOF
- 	echo crisv32-axis-linux-gnu
+-	echo cris-axis-linux-gnu
++	echo cris-axis-linux-${LIBC}
+ 	exit ;;
+     crisv32:Linux:*:*)
+-	echo crisv32-axis-linux-gnu
++	echo crisv32-axis-linux-${LIBC}
  	exit ;;
      frv:Linux:*:*)
 -    	echo frv-unknown-linux-gnu
 +    	echo frv-unknown-linux-${LIBC}
+ 	exit ;;
+     i*86:Linux:*:*)
+ 	LIBC=gnu
+@@ -906,13 +919,13 @@ EOF
+ 	echo "${UNAME_MACHINE}-pc-linux-${LIBC}"
  	exit ;;
      ia64:Linux:*:*)
 -	echo ${UNAME_MACHINE}-unknown-linux-gnu
@@ -62,21 +87,12 @@ Index: config/config.guess
 -	echo ${UNAME_MACHINE}-unknown-linux-gnu
 +	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
  	exit ;;
-     mips:Linux:*:*)
+     mips:Linux:*:* | mips64:Linux:*:*)
  	eval $set_cc_for_build
-@@ -887,7 +900,7 @@ EOF
- 		s: ::g
- 		p
- 	    }'`"
--	test x"${CPU}" != x && { echo "${CPU}-unknown-linux-gnu"; exit; }
-+	test x"${CPU}" != x && { echo "${CPU}-unknown-linux-${LIBC}"; exit; }
- 	;;
-     mips64:Linux:*:*)
- 	eval $set_cc_for_build
-@@ -910,16 +923,16 @@ EOF
- 		s: ::g
- 		p
- 	    }'`"
+@@ -931,54 +944,54 @@ EOF
+ 	#endif
+ EOF
+ 	eval `$CC_FOR_BUILD -E $dummy.c 2>/dev/null | grep '^CPU'`
 -	test x"${CPU}" != x && { echo "${CPU}-unknown-linux-gnu"; exit; }
 +	test x"${CPU}" != x && { echo "${CPU}-unknown-linux-${LIBC}"; exit; }
  	;;
@@ -84,24 +100,13 @@ Index: config/config.guess
 -	echo or32-unknown-linux-gnu
 +	echo or32-unknown-linux-${LIBC}
  	exit ;;
-     ppc:Linux:*:*)
--	echo powerpc-unknown-linux-gnu
-+	echo powerpc-unknown-linux-${LIBC}
+     padre:Linux:*:*)
+-	echo sparc-unknown-linux-gnu
++	echo sparc-unknown-linux-${LIBC}
  	exit ;;
-     ppc64:Linux:*:*)
--	echo powerpc64-unknown-linux-gnu
-+	echo powerpc64-unknown-linux-${LIBC}
- 	exit ;;
-     alpha:Linux:*:*)
- 	case `sed -n '/^cpu model/s/^.*: \(.*\)/\1/p' < /proc/cpuinfo` in
-@@ -932,40 +945,40 @@ EOF
- 	  EV68*) UNAME_MACHINE=alphaev68 ;;
-         esac
- 	objdump --private-headers /bin/sh | grep ld.so.1 >/dev/null
--	if test "$?" = 0 ; then LIBC="libc1" ; else LIBC="" ; fi
--	echo ${UNAME_MACHINE}-unknown-linux-gnu${LIBC}
-+	if test "$?" = 0 ; then LIBC="gnulibc1" ; fi
-+	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+     parisc64:Linux:*:* | hppa64:Linux:*:*)
+-	echo hppa64-unknown-linux-gnu
++	echo hppa64-unknown-linux-${LIBC}
  	exit ;;
      parisc:Linux:*:* | hppa:Linux:*:*)
  	# Look for CPU level
@@ -114,9 +119,13 @@ Index: config/config.guess
 +	  *)    echo hppa-unknown-linux-${LIBC} ;;
  	esac
  	exit ;;
-     parisc64:Linux:*:* | hppa64:Linux:*:*)
--	echo hppa64-unknown-linux-gnu
-+	echo hppa64-unknown-linux-${LIBC}
+     ppc64:Linux:*:*)
+-	echo powerpc64-unknown-linux-gnu
++	echo powerpc64-unknown-linux-${LIBC}
+ 	exit ;;
+     ppc:Linux:*:*)
+-	echo powerpc-unknown-linux-gnu
++	echo powerpc-unknown-linux-${LIBC}
  	exit ;;
      s390:Linux:*:* | s390x:Linux:*:*)
  	echo ${UNAME_MACHINE}-ibm-linux
@@ -133,8 +142,13 @@ Index: config/config.guess
 -	echo ${UNAME_MACHINE}-unknown-linux-gnu
 +	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
  	exit ;;
+     tile*:Linux:*:*)
+-	echo ${UNAME_MACHINE}-tilera-linux-gnu
++	echo ${UNAME_MACHINE}-tilera-linux-${LIBC}
+ 	exit ;;
      vax:Linux:*:*)
- 	echo ${UNAME_MACHINE}-dec-linux-gnu
+-	echo ${UNAME_MACHINE}-dec-linux-gnu
++	echo ${UNAME_MACHINE}-dec-linux-${LIBC}
  	exit ;;
      x86_64:Linux:*:*)
 -	echo x86_64-unknown-linux-gnu
@@ -144,31 +158,5 @@ Index: config/config.guess
 -    	echo ${UNAME_MACHINE}-unknown-linux-gnu
 +    	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
  	exit ;;
-     i*86:Linux:*:*)
- 	# The BFD linker knows what the default object file format is, so
-@@ -980,20 +993,21 @@ EOF
- 				    p'`
-         case "$ld_supported_targets" in
- 	  elf32-i386)
--		TENTATIVE="${UNAME_MACHINE}-pc-linux-gnu"
-+		TENTATIVE="${UNAME_MACHINE}-pc-linux-${LIBC}"
- 		;;
- 	  a.out-i386-linux)
--		echo "${UNAME_MACHINE}-pc-linux-gnuaout"
-+		echo "${UNAME_MACHINE}-pc-linux-${LIBC}aout"
- 		exit ;;
- 	  coff-i386)
--		echo "${UNAME_MACHINE}-pc-linux-gnucoff"
-+		echo "${UNAME_MACHINE}-pc-linux-${LIBC}coff"
- 		exit ;;
- 	  "")
- 		# Either a pre-BFD a.out linker (linux-gnuoldld) or
- 		# one that does not give us useful --help.
--		echo "${UNAME_MACHINE}-pc-linux-gnuoldld"
-+		echo "${UNAME_MACHINE}-pc-linux-${LIBC}oldld"
- 		exit ;;
- 	esac
-+	if [ $LIBC != "gnu" -o $LIBC != "gnulibc1" ];then echo "$TENTATIVE" && exit; fi
- 	# Determine whether the default compiler is a.out or elf
- 	eval $set_cc_for_build
- 	sed 's/^	//' << EOF >$dummy.c
+     i*86:DYNIX/ptx:4*:*)
+ 	# ptx 4.0 does uname -s correctly, with DYNIX/ptx in there.
