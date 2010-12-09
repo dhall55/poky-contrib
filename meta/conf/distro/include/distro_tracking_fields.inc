@@ -2702,7 +2702,7 @@ RECIPE_MAINTAINER_pn-python-pygobject = "Nitin A Kamble <nitin.a.kamble@intel.co
 RECIPE_STATUS_pn-python-pygtk="red"
 DISTRO_PN_ALIAS_pn-python-pygtk = "Debian=python-gtk2 Fedora=pygtk2 OpenSuSE=python-gtk"
 RECIPE_LATEST_VERSION_pn-python-pygtk="2.17.0"
-RECIPE_MAINTAINER_pn-python-pygtk = "Nitin A Kamble <nitin.a.kamble@intel.com>"
+RECIPE_MAINTAINER_pn-python-pygtk = "Zhai Edwin <edwin.zhai@intel.com>"
 
 RECIPE_STATUS_pn-python-pyrex="green"
 RECIPE_LATEST_VERSION_pn-python-pyrex="0.9.9"
