@@ -2694,9 +2694,9 @@ RECIPE_STATUS_pn-python-pycurl="green"
 RECIPE_LATEST_VERSION_pn-python-pycurl="7.19.0"
 RECIPE_MAINTAINER_pn-python-pycurl = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
-RECIPE_STATUS_pn-python-pygobject="red"
+RECIPE_STATUS_pn-python-pygobject="green"
 DISTRO_PN_ALIAS_pn-python-pygobject = "Meego=pygobject2 Fedora=pygobject2 Ubuntu=pygobject Debian=pygobject"
-RECIPE_LATEST_VERSION_pn-python-pygobject="2.21.1"
+RECIPE_LATEST_VERSION_pn-python-pygobject="2.27.0"
 RECIPE_MAINTAINER_pn-python-pygobject = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
 RECIPE_STATUS_pn-python-pygtk="red"
