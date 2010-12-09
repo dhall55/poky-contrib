@@ -2733,8 +2733,8 @@ RECIPE_STATUS_pn-unifdef="green" # poky local source files
 RECIPE_LATEST_VERSION_pn-unifdef="2.6.18+git"
 RECIPE_MAINTAINER_pn-unifdef = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
-RECIPE_STATUS_pn-gnu-config="red" 
-RECIPE_LATEST_VERSION_pn-gnu-config="0.1+cvs20080123"
+RECIPE_STATUS_pn-gnu-config="green" 
+RECIPE_LATEST_VERSION_pn-gnu-config="0.0+git3155524"
 DISTRO_PN_ALIAS_pn-gnu-config = "OpenedHand"
 RECIPE_MAINTAINER_pn-gnu-config = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
