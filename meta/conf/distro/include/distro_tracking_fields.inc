@@ -2759,7 +2759,7 @@ RECIPE_STATUS_pn-libconvert-asn1-perl="red" # 0.22 version does not build, so cr
 RECIPE_LATEST_VERSION_pn-libconvert-asn1-perl="0.22"
 RECIPE_MAINTAINER_pn-libconvert-asn1-perl = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
-RECIPE_STATUS_pn-libxml-parser-perl="red" 
+RECIPE_STATUS_pn-libxml-parser-perl="green" 
 RECIPE_LATEST_VERSION_pn-libxml-parser-perl="2.36"
 RECIPE_MAINTAINER_pn-libxml-parser-perl = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
