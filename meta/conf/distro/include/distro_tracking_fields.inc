@@ -2755,7 +2755,7 @@ RECIPE_STATUS_pn-byacc="green"
 RECIPE_LATEST_VERSION_pn-byacc="20100610"
 RECIPE_MAINTAINER_pn-byacc = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
-RECIPE_STATUS_pn-libconvert-asn1-perl="red" # 0.22 version does not build, so created a recipe for version 0.21
+RECIPE_STATUS_pn-libconvert-asn1-perl="green" # 0.22 version does not build, so created a recipe for version 0.21
 RECIPE_LATEST_VERSION_pn-libconvert-asn1-perl="0.22"
 RECIPE_MAINTAINER_pn-libconvert-asn1-perl = "Nitin A Kamble <nitin.a.kamble@intel.com>"
 
