@@ -11,6 +11,8 @@ COMPATIBLE_MACHINE = ${MACHINE}
 # KBRANCH can be directly set.
 
 # KBRANCH ?= "${KMACHINE}-${LINUX_KERNEL_TYPE}"
+KSRC ?= /home/bruce/poky-kernel/default_kernel-stable
+KBRANCH ?= "${KMACHINE}-${LINUX_KERNEL_TYPE}"
 
 SRC_URI = "git://${KSRC};nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
 

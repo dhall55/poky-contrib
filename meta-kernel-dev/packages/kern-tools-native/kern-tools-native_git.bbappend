@@ -4,5 +4,5 @@ SRCREV=${AUTOREV}
 # BB_LOCALCOUNT_OVERRIDE = "1"
 LOCALCOUNT = "0"
 
-# ksrc ?= /path/to/yocto-kernel-tools
-# SRC_URI = "git://${ksrc}"
+ksrc ?= /home/bruce/yocto-kernel-tools/
+SRC_URI = "git://${ksrc}"

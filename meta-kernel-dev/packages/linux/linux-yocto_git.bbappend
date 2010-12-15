@@ -15,6 +15,8 @@ COMPATIBLE_MACHINE = ${MACHINE}
 # point to configurations stored on the 'meta' branch of the kernel
 # that is being built.
 # KERNEL_FEATURES ?= <FOO>
+KSRC ?= /home/bruce/poky-kernel/yocto-publish
+KMACHINE ?= "yocto/${LINUX_KERNEL_TYPE}/${KMACHINE}"
 
 SRC_URI = "git://${KSRC};protocol=git;nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
 
