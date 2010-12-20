@@ -24,5 +24,13 @@ do_compile () {
 do_install () {
 	oe_runmake 'DESTDIR=${D}' install
 	install -d ${D}${target_base_libdir}/
+	install -d ${D}${target_libdir}/
 	mv ${D}${exec_prefix}/${TARGET_SYS}/lib/* ${D}${target_base_libdir}/
+	rm -f ${D}${target_base_libdir}/libgcc_s.so
+	rm -f ${D}${target_libdir}/libgcc_s.so
+	echo "/* GNU ld script
+   Use the shared library, but some functions are only in
+   the static library.  */
+GROUP ( libgcc_s.so.1 libgcc.a )" > ${D}${target_libdir}/libgcc_s.so
+
 }
