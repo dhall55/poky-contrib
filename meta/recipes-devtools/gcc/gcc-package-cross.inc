@@ -44,4 +44,9 @@ do_install () {
 		mv $dest${target_libdir}/gcc/* $dest${target_libdir}/
 		rmdir $dest${target_libdir}/gcc
 	fi
+	echo "/* GNU ld script
+   Use the shared library, but some functions are only in
+   the static library.  */
+GROUP ( libgcc_s.so.1 libgcc.a )" > ${D}${target_libdir}/libgcc_s.so
+
 }
