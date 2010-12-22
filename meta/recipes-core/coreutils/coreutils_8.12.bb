@@ -11,7 +11,8 @@ PR = "r3"
 DEPENDS = "gmp"
 DEPENDS_virtclass-native = ""
 
-inherit autotools gettext
+inherit autotools
+# gettext
 
 SRC_URI = "${GNU_MIRROR}/coreutils/${BP}.tar.gz \
            file://remove-usr-local-lib-from-m4.patch \
@@ -76,3 +77,7 @@ pkg_prerm_${PN} () {
 }
 
 BBCLASSEXTEND = "native"
+
+python do_configure() {
+    bar = 1
+}

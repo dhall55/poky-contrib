@@ -59,3 +59,11 @@ FILES_lib${BPN}-doc = "${mandir}/man3 \
                       ${mandir}/man1/curl-config.1"
 
 BBCLASSEXTEND = "native nativesdk"
+
+FOO = "A"
+FOO_append = "B"
+FOO_append_virtclass-native = "C"
+
+BAR = "A"
+BAR += "B"
+BAR += "C"
