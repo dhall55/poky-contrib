@@ -124,7 +124,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.pr = self.getvar('PR', metadata)
         self.defaultpref = self.intvar('DEFAULT_PREFERENCE', metadata)
         self.broken = self.getvar('BROKEN', metadata)
-        self.not_world = self.getvar('EXCLUDE_FROM_WORLD', metadata)
+        self.not_world = (self.getvar('EXCLUDE_FROM_WORLD', metadata) == "1")
         self.stamp = self.getvar('STAMP', metadata)
         self.stamp_base = self.flaglist('stamp-base', self.tasks, metadata)
         self.stamp_extrainfo = self.flaglist('stamp-extra-info', self.tasks, metadata)
