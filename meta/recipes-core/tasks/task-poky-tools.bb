@@ -50,6 +50,7 @@ RRECOMMENDS_task-poky-tools-profile = "\
     trace-cmd \
     kernel-module-oprofile \
     sysprof \
+    systemtap \
     "
 
 #    exmap-console
