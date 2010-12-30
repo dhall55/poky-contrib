@@ -4,7 +4,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=94d55d512a9ba36caa9b7df079bae19f"
 
 DEPENDS = "elfutils rpm"
 
-PR = r7
+PR = r0
 PV = "1.3+git${SRCPV}"
 
 #PV = "release-1.3+git${SRCPV}"
@@ -12,7 +12,13 @@ PV = "1.3+git${SRCPV}"
 SRC_URI = "git://sources.redhat.com/git/systemtap.git;protocol=git \
           "
 
-EXTRA_OECONF = "--prefix=${D} --with-libelf=${STAGING_DIR_TARGET} --without-rpm"
+EXTRA_OECONF = "--prefix=${D} --with-libelf=${STAGING_DIR_TARGET} --without-rpm \
+	     ac_cv_file__usr_include_nss=no \
+	     ac_cv_file__usr_include_nss3=no \
+	     ac_cv_file__usr_include_nspr=no \
+	     ac_cv_file__usr_include_nspr4=no \
+	     ac_cv_file__usr_include_avahi_client=no \
+	     ac_cv_file__usr_include_avahi_common=no "
 
 CXXFLAGS += " -I${STAGING_INCDIR}/rpm"
 
