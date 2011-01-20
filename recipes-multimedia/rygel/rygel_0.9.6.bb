@@ -11,7 +11,10 @@ HOMEPAGE = "http://live.gnome.org/Rygel"
 LICENSE = "LGPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=3bf50002aefd002f49e7bb854063f7e7 \
                     file://src/rygel/rygel-main.vala;beginline=9;endline=22;md5=c00a3b21ab9237b97063b8bbe3747ef8"
-PR="r5"
+SRC_URI[archive.md5sum] = "cad506f6aa65396dbec3f87e744b1f26"
+SRC_URI[archive.sha256sum] = "01773499901873c669b7fc0d2c4fef7edc6bb81a3f334364dd14fb588a935369"
+
+PR="r0"
 
 SRC_URI += "file://configure-fix.patch \
             file://rygel.conf \
