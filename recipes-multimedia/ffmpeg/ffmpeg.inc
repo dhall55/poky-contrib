@@ -46,9 +46,9 @@ SYSROOT_PREPROCESS_FUNCS = " \
   ffmpeg_create_compat_links"
 
 ffmpeg_create_compat_links() {
-        rm -rf ${SYSROOT_DESTDIR}${STAGING_INCDIR}/ffmpeg
-        mkdir -m 0755 ${SYSROOT_DESTDIR}${STAGING_INCDIR}/ffmpeg
-        cd ${SYSROOT_DESTDIR}${STAGING_INCDIR}/ffmpeg
+        rm -rf ${SYSROOT_DESTDIR}${includedir}/ffmpeg
+        mkdir -m 0755 ${SYSROOT_DESTDIR}${includedir}/ffmpeg
+        cd ${SYSROOT_DESTDIR}${includedir}/ffmpeg
 
         for lib in ${FFMPEG_LIBS}; do
                 ln -s ../$lib/*.h '.'
@@ -56,8 +56,8 @@ ffmpeg_create_compat_links() {
 }
 
 ffmpeg_stage_cleanup() {
-        rm -rf ${SYSROOT_DESTDIR}${STAGING_LIBDIR}/vhook \
-        ${SYSROOT_DESTDIR}${STAGING_DATADIR}
+        rm -rf ${SYSROOT_DESTDIR}${libdir}/vhook \
+        ${SYSROOT_DESTDIR}${datadir}
 }
 
 
