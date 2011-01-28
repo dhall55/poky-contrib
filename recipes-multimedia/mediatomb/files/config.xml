@@ -32,6 +32,15 @@
     <!--
        <upnp-string-limit>101</upnp-string-limit>
     -->
+    <extended-runtime-options>
+      <ffmpegthumbnailer enabled="yes">
+        <thumbnail-size>160</thumbnail-size>
+        <seek-percentage>10</seek-percentage>
+        <filmstrip-overlay>no</filmstrip-overlay>
+        <workaround-bugs>no</workaround-bugs>
+        <image-quality>8</image-quality>
+      </ffmpegthumbnailer>
+    </extended-runtime-options>
   </server>
   <import hidden-files="no">
     <scripting script-charset="UTF-8">
