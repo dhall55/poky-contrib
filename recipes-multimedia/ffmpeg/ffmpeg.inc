@@ -4,10 +4,6 @@ AUTHOR = "Fabrice Bellard ffmpeg-devel@mplayerhq.hu"
 SECTION = "libs"
 PRIORITY = "optional"
 LICENSE = "GPLv2+ & LGPLv2.1+"
-LIC_FILES_CHKSUM = "file://COPYING.GPL;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
-                    file://libpostproc/postprocess.c;beginline=8;endline=21;md5=3163771dd725805aeda961a4e05173b5 \
-                    file://COPYING.LGPL;md5=e344c8fa836c3a41c4cbd79d7bd3a379 \
-		    file://ffmpeg.c;beginline=7;endline=20;md5=9dee9cc51a9da6c3254d39ebf4d5aa03"
 
 ARM_INSTRUCTION_SET = "arm"
 
@@ -38,8 +34,7 @@ EXTRA_OECONF = "\
 
 EXTRA_OECONF_append_powerpc += "--${@['disable-altivec','enable-altivec'][bb.data.getVar('BASE_PACKAGE_ARCH',d,1) in ['ppce600']]}"
 
-FFMPEG_LIBS = "libavcodec libavdevice libavformat \
-               libavutil libpostproc libswscale libavfilter"
+FFMPEG_LIBS = "libavcodec libavdevice libavformat libavutil libpostproc libswscale libavfilter"
 
 SYSROOT_PREPROCESS_FUNCS = " \
   ffmpeg_stage_cleanup \
@@ -50,7 +45,7 @@ ffmpeg_create_compat_links() {
         mkdir -m 0755 ${SYSROOT_DESTDIR}${includedir}/ffmpeg
         cd ${SYSROOT_DESTDIR}${includedir}/ffmpeg
 
-        for lib in ${FFMPEG_LIBS}; do
+        for lib in "${FFMPEG_LIBS}"; do
                 ln -s ../$lib/*.h '.'
         done
 }
