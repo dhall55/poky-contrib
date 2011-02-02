@@ -16,10 +16,9 @@ COMPATIBLE_MACHINE = ${MACHINE}
 # that is being built.
 # KERNEL_FEATURES ?= <FOO>
 
-SRC_URI = "git://${KSRC};fullclone=1;branch=${KBRANCH};name=machine \
-           git://${KSRC};noclone=1;branch=meta;name=meta"
+SRC_URI = "git://${KSRC};protocol=git;nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
 
 KERNEL_REVISION_CHECKING=
 SRCREV=${AUTOREV}
-BB_LOCALCOUNT_OVERRIDE = "1"
+#BB_LOCALCOUNT_OVERRIDE = "1"
 LOCALCOUNT = "0"
