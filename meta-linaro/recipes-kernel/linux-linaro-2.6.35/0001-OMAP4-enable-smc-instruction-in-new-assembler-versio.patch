@@ -1,0 +1,39 @@
+From edb963694e7bd53b92f4c65aea878f0fefbe78e6 Mon Sep 17 00:00:00 2001
+From: John Rigby <john.rigby@linaro.org>
+Date: Wed, 1 Dec 2010 05:57:51 +0000
+Subject: [PATCH] OMAP4: enable smc instruction in new assembler versions
+
+New assemblers need -march=armv7-a+sec on command line or
+.arch_extension sec inline to enable use of the smc instruction.
+
+This patch uses as-instr to check the latter to conditionally
+enable the former in AFLAGS for files that use smc.
+
+Checked on both old and new binutils to verify that it does
+not break old versions.
+
+Signed-off-by: John Rigby <john.rigby@linaro.org>
+Signed-off-by: Tony Lindgren <tony@atomide.com>
+---
+ arch/arm/mach-omap2/Makefile |    5 +++--
+ 1 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/mach-omap2/Makefile b/arch/arm/mach-omap2/Makefile
+index 60e51bc..ee9ef4f 100644
+--- a/arch/arm/mach-omap2/Makefile
++++ b/arch/arm/mach-omap2/Makefile
+@@ -26,8 +26,9 @@ obj-$(CONFIG_LOCAL_TIMERS)		+= timer-mpu.o
+ obj-$(CONFIG_HOTPLUG_CPU)		+= omap-hotplug.o
+ obj-$(CONFIG_ARCH_OMAP4)		+= omap44xx-smc.o omap4-common.o
+ 
+-AFLAGS_omap-headsmp.o			:=-Wa,-march=armv7-a
+-AFLAGS_omap44xx-smc.o			:=-Wa,-march=armv7-a
++plus_sec := $(call as-instr,.arch_extension sec,+sec)
++AFLAGS_omap-headsmp.o			:=-Wa,-march=armv7-a$(plus_sec)
++AFLAGS_omap44xx-smc.o			:=-Wa,-march=armv7-a$(plus_sec)
+ 
+ # Functions loaded to SRAM
+ obj-$(CONFIG_ARCH_OMAP2420)		+= sram242x.o
+-- 
+1.7.3.4
+
