@@ -49,6 +49,11 @@ SRC_URI = "http://launchpad.net/gcc-linaro/4.5/4.5-2010.11-0/+download/gcc-linar
 	   file://gcc-poison-parameters.patch \
 	  "
 
+do_move_src() {
+	echo moving ${WORKDIR}/gcc-linaro-4.5-2010.11-1 ${WORKDIR}/gcc-${PV}
+	mv ${WORKDIR}/gcc-linaro-4.5-2010.11-1 ${WORKDIR}/gcc-${PV}
+}
+
 do_unpack_append() {
-	mv gcc-linaro-4.5-2010.11-1 gcc-${PV}
+	bb.build.exec_func('do_move_src', d)
 }
