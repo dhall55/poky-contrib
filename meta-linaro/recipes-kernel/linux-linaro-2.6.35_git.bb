@@ -14,12 +14,13 @@ SRC_URI = "git://git.linaro.org/kernel/linux-linaro-2.6.35.git;protocol=git \
 	   file://0001-OMAP4-enable-smc-instruction-in-new-assembler-versio.patch \
 	   "
 
-SRCREV = "${AUTOREV}"
+#SRCREV = "${AUTOREV}"
+SRCREV = "2207e446f6559ee5c51332c0f64a8a06f48f4d5f"
 
 PV = "2.6.35"
 # FIXME: using the following PV breaks the build
 #PV = "${PR}+git${SRCREV}"
-PR = "r2"
+PR = "r3"
 
 COMPATIBLE_MACHINE = "beagleboard"
 
