@@ -96,9 +96,8 @@ do_install () {
 	ln -sf g++ c++
 	ln -sf gcc cc
 	ln -sf ${bindir}/${TARGET_SYS}-cpp ${D}${bindir}/cpp
-	echo "/* GNU ld script
-   Use the shared library, but some functions are only in
-   the static library.  */
-GROUP ( libgcc_s.so.1 libgcc.a )" > ${D}${libdir}/libgcc_s.so
-
+#echo "/* GNU ld script
+#   Use the shared library, but some functions are only in
+#   the static library.  */
+#GROUP ( libgcc_s.so.1 libgcc.a )" > ${D}${libdir}/libgcc_s.so
 }
