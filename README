@@ -1,0 +1,20 @@
+Meta-Hamradio Layer for Poky
+----------------------------
+Maintainer: Elizabeth 'KF7ESD' Flanagan <elizabeth.flanagan@intel.com>
+
+HOWTO:
+This is a typical poky layer, I've created to get my feet wet 
+in creating poky layers and to play with ham stuff outside of work. 
+In order to use it you should git clone the poky git tree and 
+clone this layer into the tree. Modify your bblayers.conf to 
+include this layer.
+
+Keep in mind that this is a development tree and is unsupported 
+and most likely not stable. Feature additions are pretty much at 
+whatever my whim/interest/hardware is or via contrib (which is 
+most certainly welcome!). Neither I nor my employeer nor the Yocto 
+Project are responsible if any of this code doesn't work with your 
+hardware, or does odd things with it (upto and including bricking 
+hardware, melting your ham shack or causing poor QSOs).
+
+
