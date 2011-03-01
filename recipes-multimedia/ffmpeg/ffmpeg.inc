@@ -34,7 +34,8 @@ EXTRA_OECONF = "\
 
 EXTRA_OECONF_append_powerpc += "--${@['disable-altivec','enable-altivec'][bb.data.getVar('BASE_PACKAGE_ARCH',d,1) in ['ppce600']]}"
 
-FFMPEG_LIBS = "libavcodec libavdevice libavformat libavutil libpostproc libswscale libavfilter"
+FFMPEG_LIBS = "libavcodec libavdevice libavformat \
+               libavutil libpostproc libswscale libavfilter"
 
 SYSROOT_PREPROCESS_FUNCS = " \
   ffmpeg_stage_cleanup \
@@ -45,8 +46,8 @@ ffmpeg_create_compat_links() {
         mkdir -m 0755 ${SYSROOT_DESTDIR}${includedir}/ffmpeg
         cd ${SYSROOT_DESTDIR}${includedir}/ffmpeg
 
-        for lib in "${FFMPEG_LIBS}"; do
-                ln -s ../$lib/*.h '.'
+        for lib in ${FFMPEG_LIBS}; do
+                ln -s ../$lib/*.h '.' || true
         done
 }
 
