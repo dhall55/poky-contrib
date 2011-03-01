@@ -8,7 +8,7 @@ LIC_FILES_CHKSUM = "file://README;md5=f0ab53a6be4aefa9705f39b4bdafd62a"
 PR = "r3"
 
 # dvhart - bad URL, trying a new one - note: 1.0.13 exists
-#SRC_URI = "http://user.cs.tu-berlin.de/~jutta/gsm/gsm-${PV}.tar.gz \
+#SRC_URI = "http://user.cs.tu-berlin.de/~jutta/gsm/gsm-${PV}.tar.gz
 SRC_URI = " http://www.imagemagick.org/download/delegates/ffmpeg/gsm-1.0.12.tar.gz \
 	   file://01_makefile.patch \
            file://02_cplusplus.patch \
