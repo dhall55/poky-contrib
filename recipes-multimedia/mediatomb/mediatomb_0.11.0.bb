@@ -3,8 +3,8 @@ HOMEPAGE = "http://mediatomb.cc/"
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://COPYING;md5=0b609ee7722218aa600220f779cb5035 \
                     file://src/main.cc;beginline=14;endline=25;md5=ba9c4cf20a63e18b1626c4c9d794635a"
-DEPENDS = "expat ffmpeg sqlite3 libexif js zlib file id3lib ffmpegthumbnailer"
-PR = "r2"
+DEPENDS = "expat ffmpeg sqlite3 libexif js zlib file id3lib ffmpegthumbnailer curl"
+PR = "r3"
 
 SRC_URI = "${SOURCEFORGE_MIRROR}/mediatomb/mediatomb-${PV}.tar.gz \
 	   file://curl.diff \
@@ -40,6 +40,8 @@ EXTRA_OECONF = "--disable-mysql \
 		--with-js-libs=${STAGING_LIBDIR} \
 		--with-id3lib-h=${STAGING_INCDIR} \
 		--with-id3lib-libs=${STAGING_LIBDIR} \
+		--with-ffmpeg-h=${STAGING_INCDIR} \
+		--with-ffmpeg-libs=${STAGING_LIBDIR} \
 		ac_cv_header_sys_inotify_h=yes"
 
 SRC_URI[md5sum] = "661f08933830d920de21436fe122fb15"
