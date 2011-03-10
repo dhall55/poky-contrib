@@ -18,7 +18,7 @@ COMPATIBLE_MACHINE = ${MACHINE}
 KSRC ?= /home/bruce/poky-kernel/yocto-publish
 KMACHINE ?= "yocto/${LINUX_KERNEL_TYPE}/${KMACHINE}"
 
-SRC_URI = "git://${KSRC};protocol=git;nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
+SRC_URI = "git://${KSRC};protocol=file;nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
 
 KERNEL_REVISION_CHECKING=
 SRCREV=${AUTOREV}
