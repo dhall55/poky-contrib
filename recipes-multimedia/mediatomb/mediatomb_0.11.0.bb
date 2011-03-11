@@ -42,6 +42,7 @@ EXTRA_OECONF = "--disable-mysql \
 		--with-id3lib-libs=${STAGING_LIBDIR} \
 		--with-ffmpeg-h=${STAGING_INCDIR} \
 		--with-ffmpeg-libs=${STAGING_LIBDIR} \
+                --with-search=${STAGING_DIR_HOST}${prefix}/local \
 		ac_cv_header_sys_inotify_h=yes"
 
 SRC_URI[md5sum] = "661f08933830d920de21436fe122fb15"
