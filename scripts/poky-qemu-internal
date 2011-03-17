@@ -429,7 +429,7 @@ function _quit() {
     return
 }
 
-DISTCCD=`which distccd`
+DISTCCD=`which distccd 2>/dev/null`
 PIDFILE=""
 
 trap _quit INT TERM QUIT
@@ -442,10 +442,36 @@ else
     echo "Warning: distccd not present, no distcc support loaded."
 fi
 
+# qemu got segfault if linked with nVidia's libgl
+GL_LD_PRELOAD=$LD_PRELOAD
+
+if ldd $QEMUBIN | grep -i nvidia &> /dev/null
+then
+    echo "    ************** !!!Warning!!! **************
+    
+    The nVidia libGL library has been detected.
+    This may lead to a crash of QEMU.
+
+    You may need to un-install the proprietary nVidia drivers
+    in order to use QEMU.
+
+    ************** !!!Warning!!! **************"
+
+    # To avoid segfault of qemu, skip nVidia's libGL and use mesa's instead
+    echo "Attempting nVidia libGL workaround..."
+    GL_LD_PRELOAD="libGL.so $LD_PRELOAD"
+fi
+
+if LD_PRELOAD="$GL_LD_PRELOAD" ldd $QEMUBIN | grep -i nvidia &> /dev/null
+then
+    echo "WARNING: Workaround does not appear to be successful on this machine."
+fi
+
 echo "Running $QEMU..."
 # -no-reboot is a mandatory option - see bug #100
 echo $QEMUBIN -kernel $KERNEL $QEMUOPTIONS $SERIALOPTS -no-reboot $SCRIPT_QEMU_OPT $SCRIPT_QEMU_EXTRA_OPT --append '"'$KERNCMDLINE $SCRIPT_KERNEL_OPT'"'
-$QEMUBIN -kernel $KERNEL $QEMUOPTIONS $SERIALOPTS -no-reboot $SCRIPT_QEMU_OPT $SCRIPT_QEMU_EXTRA_OPT --append "$KERNCMDLINE $SCRIPT_KERNEL_OPT" || /bin/true
+# If QEMU crashes, we need to run stty sane
+LD_PRELOAD="$GL_LD_PRELOAD" $QEMUBIN -kernel $KERNEL $QEMUOPTIONS $SERIALOPTS -no-reboot $SCRIPT_QEMU_OPT $SCRIPT_QEMU_EXTRA_OPT --append "$KERNCMDLINE $SCRIPT_KERNEL_OPT" || stty sane
 
 cleanup
 
