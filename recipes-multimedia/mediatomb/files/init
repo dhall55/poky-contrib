@@ -92,7 +92,7 @@ case "$1" in
 		echo "$NAME."
 		;;
 	restart|force-reload)
-		echo -n "Restarting $DESC: "
+		echo -n "Restaring $DESC: "
 		do_stop
 		sleep 1
 		do_start
