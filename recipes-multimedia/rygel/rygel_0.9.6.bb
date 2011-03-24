@@ -14,7 +14,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=3bf50002aefd002f49e7bb854063f7e7 \
 SRC_URI[archive.md5sum] = "cad506f6aa65396dbec3f87e744b1f26"
 SRC_URI[archive.sha256sum] = "01773499901873c669b7fc0d2c4fef7edc6bb81a3f334364dd14fb588a935369"
 
-PR="r0"
+PR="r1"
 
 SRC_URI += "file://configure-fix.patch \
             file://rygel.conf \
@@ -23,11 +23,10 @@ SRC_URI += "file://configure-fix.patch \
 EXTRA_OECONF = "--disable-vala --disable-tracker-plugin"
 
 do_install_append() {
-  install -d ${D}/home/root/.config
-  install -m 0755 ${WORKDIR}/rygel.conf ${D}/home/root/.config/rygel.conf
+  install -m 0755 ${WORKDIR}/rygel.conf ${D}/etc/rygel.conf
 }
 
-FILES_${PN} += "${libdir}/rygel-1.0/librygel*.so ${datadir}/dbus-1/ /home/root/.config/"
+FILES_${PN} += "${libdir}/rygel-1.0/librygel*.so ${datadir}/dbus-1/ ${sysconfdir}/rygel.conf"
 FILES_${PN}-dbg += "${libdir}/rygel-1.0/.debug/"
 
 INITSCRIPT_NAME = "rygel"
