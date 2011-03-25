@@ -11,8 +11,8 @@ HOMEPAGE = "http://live.gnome.org/Rygel"
 LICENSE = "LGPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=3bf50002aefd002f49e7bb854063f7e7 \
                     file://src/rygel/rygel-main.vala;beginline=9;endline=22;md5=c00a3b21ab9237b97063b8bbe3747ef8"
-SRC_URI[archive.md5sum] = "cad506f6aa65396dbec3f87e744b1f26"
-SRC_URI[archive.sha256sum] = "01773499901873c669b7fc0d2c4fef7edc6bb81a3f334364dd14fb588a935369"
+SRC_URI[archive.md5sum] = "dadd1bd3968ead6456950a465af89f7c"
+SRC_URI[archive.sha256sum] = "7a001cf578e8b84408ddca43c24fb9392130f982527de5c90042d6c6a84e2ab0"
 
 PR="r1"
 
@@ -20,7 +20,7 @@ SRC_URI += "file://configure-fix.patch \
             file://rygel.conf \
             file://rygel.init"
 
-EXTRA_OECONF = "--disable-vala --disable-tracker-plugin"
+EXTRA_OECONF = "--disable-vala --disable-tracker-plugin --disable-media-export-plugin"
 
 do_install_append() {
   install -m 0755 ${WORKDIR}/rygel.conf ${D}/etc/rygel.conf
