@@ -5,10 +5,10 @@ HOMEPAGE = "http://live.gnome.org/Grilo"
 LICENSE = "LGPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=fbc093901857fcd118f065f900982c24"
 
-DEPENDS = "glib-2.0 libxml2 gtk+ gconf-dbus libsoup-2.4"
+DEPENDS = "glib-2.0 libxml2 gtk+ gconf-dbus libsoup-2.4 grilo gupnp gupnp-av sqlite3 libgcrypt"
 
-SRC_URI[archive.md5sum] = "abb06e83a579eef84f2993c900c929c3"
-SRC_URI[archive.sha256sum] = "b8db743a570471260b1d0bc9e4922ea818103ce6f3a8bd36e936f7412fc7a2ab"
+SRC_URI[archive.md5sum] = "3c838eb782f5b5365e6c24a3b8ec4a71"
+SRC_URI[archive.sha256sum] = "2844356e5c7f8125704cf4d0846290c5e793cb5affbbcb2dc9f175e543a1d682"
 
 PR = "r0"
 
