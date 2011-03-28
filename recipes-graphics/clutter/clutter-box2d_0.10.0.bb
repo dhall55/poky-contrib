@@ -2,7 +2,8 @@ require clutter-box2d.inc
 
 PR = "r0"
 
-SRC_URI = "http://source.clutter-project.org/sources/clutter-box2d/0.10/${PN}-${PV}.tar.bz2"
+SRC_URI = "http://source.clutter-project.org/sources/clutter-box2d/0.10/${PN}-${PV}.tar.bz2 \
+           file://fix-disable-introspection.patch"
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=7fbc338309ac38fefcd64b04bb903e34"
 
