@@ -14,8 +14,8 @@ PR = "r2"
 
 EXTRA_OECONF = "--disable-tests"
 
-DEPENDS = "libffi gobject-introspection-native"
-DEPENDS_virtclass-native = "libffi-native python-native bison-native flex-native"
+DEPENDS = "libffi gobject-introspection-native glib-2.0"
+DEPENDS_virtclass-native = "libffi-native python-native bison-native flex-native glib-2.0-native"
 
 inherit autotools
 
