@@ -60,9 +60,6 @@
       <extension-mimetype ignore-unknown="no">
         <map from="mp3" to="audio/mpeg"/>
         <map from="ogx" to="application/ogg"/>
-        <map from="ogv" to="video/ogg"/>
-        <map from="oga" to="audio/ogg"/>
-        <map from="ogg" to="audio/ogg"/>
         <map from="ogm" to="video/ogg"/>
         <map from="asf" to="video/x-ms-asf"/>
         <map from="asx" to="video/x-ms-asf"/>
