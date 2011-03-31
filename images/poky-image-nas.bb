@@ -12,7 +12,7 @@ SRC_URI = "file://fstab \
 	file://interfaces \
 	file://tftpd-hpa"
 
-PR="r7"
+PR = "r8"
 
 # Extending minimal results in build failure regardless of which
 # path I use to poky-image-minimal.bb. Ideally this file would
