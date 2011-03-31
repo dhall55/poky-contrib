@@ -9,6 +9,8 @@ IMAGE_INSTALL += "dropbear mediatomb task-poky-nfs-server"
 
 LICENSE = "MIT"
 
+PR = "r1"
+
 ROOTFS_POSTPROCESS_COMMAND += "setup_target_image ; "
 
 # Manual workaround for lack of auto eth0 (see bug #875)
