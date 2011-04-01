@@ -4,7 +4,8 @@
 require recipes-core/images/poky-image-minimal.bb
 
 SRC_URI = "file://interfaces \
-           file://fstab"
+           file://fstab \
+	   file://config.xml"
 
 IMAGE_INSTALL += "dropbear mediatomb task-poky-nfs-server"
 
@@ -21,5 +22,8 @@ setup_target_image() {
 	# Set up mount of /media/storage NFS share
 	install -d ${IMAGE_ROOTFS}/media/storage
 	install -m 0644 ${WORKDIR}/fstab ${IMAGE_ROOTFS}/etc/fstab
+
+        # Configure mediatomb to autoscan /media/storage
+        install -m 0644 ${WORKDIR}/config.xml ${IMAGE_ROOTFS}/etc/mediatomb/config.xml
 }
 
