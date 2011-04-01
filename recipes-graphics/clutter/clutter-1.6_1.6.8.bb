@@ -2,6 +2,8 @@ require recipes-graphics/clutter/clutter.inc
 
 PR = "r0"
 
+DEPENDS += "json-glib"
+
 PACKAGES =+ "${PN}-examples"
 FILES_${PN}-examples = "${bindir}/test-* ${pkgdatadir}/redhand.png"
 
