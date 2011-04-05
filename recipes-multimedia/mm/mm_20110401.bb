@@ -4,15 +4,15 @@ LICENSE = "Simplified BSD"
 LIC_FILES_CHKSUM = "file://README;md5=34b26b12bf909c4cdc26c17897f41f1f"
 
 DEPENDS = "glib-2.0 clutter-1.6 clutter-box2d grilo grilo-plugins clutter-gst-1.6"
+RDEPENDS_${PN} += "grilo-plugins"
 
 SRC_URI = "http://pippin.gimp.org/${BPN}-${PV}.tar.gz \
 	   file://fake-query-with-browse.patch \
 	   file://mm.desktop"
-
 SRC_URI[md5sum] = "03b5fe1f21c79c8155a118fb28a0c8e1"
 SRC_URI[sha256sum] = "978fda5f591af1ec853ecf77de6132d6ecd6f22daa663cb2399ef9406b6f1f30"
 
-PR = "r0"
+PR = "r1"
 
 S = "${WORKDIR}/mm"
 
