@@ -1,0 +1,7 @@
+[Desktop Entry]
+Comment=Surface-physics upnp media player
+Exec=mm -u
+GenericName=UPnP Demo
+Name=UPnP Demo
+Terminal=false
+Type=Application

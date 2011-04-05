@@ -1,0 +1,83 @@
+Mediatomb does not support UPnP queries, so with this patch we teach mm to fake
+queries by doing a recursive browse and looking for video and images.
+
+Written-by: Joshua Lock <josh@linux.intel.com> - 04/04/11
+
+--- ../mm.c	2011-04-01 14:49:27.000000000 +0100
++++ mm.c	2011-04-04 15:18:23.345653012 +0100
+@@ -968,6 +968,50 @@ static void got_image (GrlMediaSource *s
+     }
+ }
+ 
++
++static void
++browse_cb (GrlMediaSource *source,
++	   guint           browse_id,
++	   GrlMedia       *media,
++	   guint           remaining,
++	   gpointer        user_data,
++	   const GError   *error)
++{
++  if (error)
++    {
++      g_debug ("Browse operation failed with '%s'.", error->message);
++    }
++
++  if (media)
++    {
++      if (GRL_IS_MEDIA_BOX (media))
++	{
++	  const GList *keys = grl_metadata_source_supported_keys (GRL_METADATA_SOURCE (source));
++	  grl_media_source_browse (GRL_MEDIA_SOURCE (source),
++				   media, keys,
++				   0, MAX_ITEMS_PER_UPNP, GRL_RESOLVE_NORMAL, browse_cb, NULL);
++	}
++      else
++	{
++	  const gchar *mime = grl_media_get_mime (media);
++	  if (g_str_has_prefix (mime, "video"))
++	    {
++	      got_video(source, browse_id, media, remaining, user_data, error);
++	    }
++	  else if (g_str_has_prefix (mime, "image"))
++	    {
++	      got_image(source, browse_id, media, remaining, user_data, error);
++	    }
++	  else
++	    {
++	      printf ("Skipping media of unsupported mime '%s'\n", mime);
++	    }
++	}
++    }
++
++  g_object_unref (media);
++}
++
+ static void
+ source_added_cb (GrlPluginRegistry *registry,
+                  GrlMediaPlugin *source,
+@@ -977,7 +1021,7 @@ source_added_cb (GrlPluginRegistry *regi
+   /* bail if it is not upnp ... */
+   if (!g_str_equal (grl_media_plugin_get_name (GRL_MEDIA_PLUGIN (source)), "UPnP"))
+     return;
+- #if 1
++#if 1
+   printf ("Detected new source available: '%s'\n",
+           grl_metadata_source_get_name (GRL_METADATA_SOURCE (source)));
+ 
+@@ -995,6 +1039,15 @@ source_added_cb (GrlPluginRegistry *regi
+                                "(upnp:class derivedfrom \"object.item.imageItem\")", keys,
+                                0, MAX_ITEMS_PER_UPNP, GRL_RESOLVE_NORMAL, got_image, NULL);
+     }
++  else
++    {
++      const GList *keys = grl_metadata_source_supported_keys (GRL_METADATA_SOURCE (source));      
++      printf ("GRL_OP_QUERY not supported on '%s' faking a query with browse\n",
++	      grl_metadata_source_get_name (GRL_METADATA_SOURCE (source)));
++      grl_media_source_browse (GRL_MEDIA_SOURCE (source),
++			       NULL, keys,
++			       0, MAX_ITEMS_PER_UPNP, GRL_RESOLVE_NORMAL, browse_cb, NULL);
++    }
+ }
+ 
+ static void
