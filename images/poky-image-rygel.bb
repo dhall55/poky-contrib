@@ -8,6 +8,7 @@ SRC_URI_append_beagleboard = " file://inittab"
 
 IMAGE_INSTALL += "rygel gupnp-tools gst-meta-audio gst-meta-video gst-meta-base gnome-icon-theme gst-plugins-base-decodebin2 gst-plugins-base-videorate gst-plugins-base-videoscale gst-plugins-base-ffmpegcolorspace gst-ffmpeg gst-plugins-ugly-lame gst-plugins-base-audioconvert gst-plugins-ugly-mpeg2dec gst-plugins-base-audiotestsrc gst-plugins-base-audiorate gst-plugins-base-videotestsrc gst-plugins-ugly-mad gst-plugins-bad-faac gst-plugins-base-vorbis gst-plugins-base-theora gst-plugins-good-matroska gst-plugins-base-ogg gst-plugins-good-qtdemux gst-plugins-good-souphttpsrc"
 
+IMAGE_INSTALL_append_sugarbay = " snb-audio"
 IMAGE_INSTALL_append_sugarbay = " gstreamer-vaapi"
 IMAGE_INSTALL_append_crownbay = " gstreamer-vaapi"
 
