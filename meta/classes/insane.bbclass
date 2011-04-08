@@ -47,6 +47,7 @@ def package_qa_get_machine_dict():
                         "alpha":      (36902,  0,    0,          True,          64),
                         "hppa":       (15,     3,    0,          False,         32),
                         "m68k":       ( 4,     0,    0,          False,         32),
+                        "microblaze": (189,    0,    0,          False,         32),
                         "mips":       ( 8,     0,    0,          False,         32),
                         "mipsel":     ( 8,     0,    0,          True,          32),
                         "s390":       (22,     0,    0,          False,         32),
