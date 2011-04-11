@@ -9,11 +9,12 @@ RDEPENDS_${PN} += "grilo-plugins"
 SRC_URI = "http://pippin.gimp.org/${BPN}-${PV}.tar.gz \
 	   file://fake-query-with-browse.patch \
 	   file://debug_fixes.patch \
+	   file://clutter-box2d-0.12.patch \
 	   file://mm.desktop"
 SRC_URI[md5sum] = "03b5fe1f21c79c8155a118fb28a0c8e1"
 SRC_URI[sha256sum] = "978fda5f591af1ec853ecf77de6132d6ecd6f22daa663cb2399ef9406b6f1f30"
 
-PR = "r2"
+PR = "r3"
 
 S = "${WORKDIR}/mm"
 
