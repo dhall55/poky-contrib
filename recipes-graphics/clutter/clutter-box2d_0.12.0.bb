@@ -2,8 +2,9 @@ require clutter-box2d.inc
 
 PR = "r0"
 
-SRC_URI = "http://source.clutter-project.org/sources/clutter-box2d/0.10/${PN}-${PV}.tar.bz2 \
-           file://fix-disable-introspection.patch"
+SRC_URI = "git://git.gnome.org/clutter-box2d;protocol=git;tag=CLUTTER_BOX2D_0_12_0"
+
+S = "${WORKDIR}/git"
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=7fbc338309ac38fefcd64b04bb903e34"
 
