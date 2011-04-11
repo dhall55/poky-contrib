@@ -1,0 +1,89 @@
+Index: mm/mm.c
+===================================================================
+--- mm.orig/mm.c
++++ mm/mm.c
+@@ -54,6 +54,7 @@
+ 
+ #define GRL_LOG_DOMAIN_DEFAULT  test_ui_log_domain
+ #define MARGIN                  8
++#define PIXMAP_PATH		"/usr/share/pixmaps/"
+ 
+ GRL_LOG_DOMAIN_STATIC(test_ui_log_domain);
+ 
+@@ -611,6 +612,8 @@ add_item (ClutterActor   *group,
+ {
+   static int count = 0;
+   QItem *item = g_new0(QItem, 1);
++
++  g_printf ("Adding item: %s %s\n", uri, thumb_uri);
+   item->group = group;
+   item->source = source;
+   item->uri = g_strdup (uri);
+@@ -684,12 +687,12 @@ real_add_item (ClutterActor   *group,
+   texture = g_object_get_data (G_OBJECT (source), "mm-frame");
+   if (!texture)
+     {
+-      const char *frame_name[6] = {"mm-frame-red.png",
+-                                   "mm-frame-green.png",
+-                                   "mm-frame-blue.png",
+-                                   "mm-frame-yellow.png",
+-                                   "mm-frame-purple.png",
+-                                   "mm-frame-cyan.png"};
++      const char *frame_name[6] = {PIXMAP_PATH "mm-frame-red.png",
++                                   PIXMAP_PATH "mm-frame-green.png",
++                                   PIXMAP_PATH "mm-frame-blue.png",
++                                   PIXMAP_PATH "mm-frame-yellow.png",
++                                   PIXMAP_PATH "mm-frame-purple.png",
++                                   PIXMAP_PATH "mm-frame-cyan.png"};
+ 
+       texture = g_object_new (CLUTTER_TYPE_TEXTURE,
+                               "filename", frame_name[frame_no],
+@@ -763,6 +766,7 @@ real_add_item (ClutterActor   *group,
+ 
+   if (type == MMTypeVideo)
+     {
++      printf("Loading video from %s\n", uri);
+       real = clutter_gst_video_texture_new ();
+       clutter_media_set_uri (CLUTTER_MEDIA (real), uri);
+       clutter_media_set_progress (CLUTTER_MEDIA (real), 0.25);
+@@ -783,14 +787,16 @@ real_add_item (ClutterActor   *group,
+       if (img_uri)
+         {
+           GFile *file = g_file_new_for_uri (img_uri);
++          printf("Loading image stream from %s\n", img_uri);
+           GInputStream *is = G_INPUT_STREAM (g_file_read (file, NULL, NULL));
+-          GdkPixbuf *pixbuf;
++          GdkPixbuf *pixbuf = NULL;
+ 
+           /* */
+           real = NULL;
+-          pixbuf = gdk_pixbuf_new_from_stream (is, NULL, NULL);
++          if (is)
++            pixbuf = gdk_pixbuf_new_from_stream (is, NULL, NULL);
+ 
+-          if (gdk_pixbuf_get_width (pixbuf) * gdk_pixbuf_get_height (pixbuf) > 512 * 512)
++          if (pixbuf && gdk_pixbuf_get_width (pixbuf) * gdk_pixbuf_get_height (pixbuf) > 512 * 512)
+             {
+               GdkPixbuf *pixbuf_tmp;
+               gdouble s = 1.0;
+@@ -830,7 +836,8 @@ real_add_item (ClutterActor   *group,
+               g_object_unref (pixbuf);
+             }
+ 
+-          g_object_unref (is);
++          if (is)
++            g_object_unref (is);
+           g_object_unref (file);
+         }
+     }
+@@ -1007,9 +1014,8 @@ browse_cb (GrlMediaSource *source,
+ 	      printf ("Skipping media of unsupported mime '%s'\n", mime);
+ 	    }
+ 	}
++      g_object_unref (media);
+     }
+-
+-  g_object_unref (media);
+ }
+ 
+ static void
