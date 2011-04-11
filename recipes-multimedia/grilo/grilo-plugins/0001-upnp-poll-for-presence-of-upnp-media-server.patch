@@ -25,8 +25,8 @@ index 424e900..e2415d1 100644
    g_object_unref (cp);
  }
  
-+#define PINGER_TIMEOUT  1.0
-+#define PINGER_IDLE     4.0
++#define PINGER_TIMEOUT  3.0
++#define PINGER_IDLE     6.0
 +
 +typedef struct Pinger {
 +  GUPnPDeviceProxy *device;
