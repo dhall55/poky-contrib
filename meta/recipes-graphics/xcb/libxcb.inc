@@ -19,10 +19,12 @@ PACKAGES =+ "libxcb-composite libxcb-damage libxcb-dpms libxcb-glx \
              libxcb-randr libxcb-record libxcb-render libxcb-res \
              libxcb-screensaver libxcb-shape libxcb-shm libxcb-sync \
              libxcb-xevie libxcb-xf86dri libxcb-xfixes libxcb-xlib \
-             libxcb-xprint libxcb-xtest libxcb-xv libxcb-xvmc"
+             libxcb-xprint libxcb-xtest libxcb-xv libxcb-xvmc \
+             libxcb-dri2"
 
 FILES_${PN} = "${libdir}/libxcb.so.*"
 #FILES_${PN}-dev = "${libdir}/libxcb.* ${libdir}/pkgconfig/*.pc ${includedir}/xcb/*.h"
+FILES_libxcb-dri2 = "${libdir}/libxcb-dri2.so.*"
 FILES_libxcb-composite = "${libdir}/libxcb-composite.so.*"
 FILES_libxcb-damage = "${libdir}/libxcb-damage.so.*"
 FILES_libxcb-dpms = "${libdir}/libxcb-dpms.so.*"
@@ -52,5 +54,7 @@ inherit autotools pkgconfig
 # tweeking here:
 do_configure_prepend () {
     sed -i "s|XCBPROTO_XCBINCLUDEDIR=|XCBPROTO_XCBINCLUDEDIR=${STAGING_DIR_HOST}/|" \
+        ${S}/configure.ac
+    sed -i "s|XCBPROTO_XCBPYTHONDIR=|XCBPROTO_XCBPYTHONDIR=${STAGING_DIR_HOST}/|" \
         ${S}/configure.ac
 }

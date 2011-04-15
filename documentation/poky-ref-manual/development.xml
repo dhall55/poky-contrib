@@ -12,7 +12,7 @@
     </para>
 
         <section id="platdev-appdev-external-sdk">
-        <title>External Development Using the Poky SDK</title>
+        <title>External Development Using the Application Development Toolkit (ADT)</title>
         <para>
             The meta-toolchain and meta-toolchain-sdk targets build tarballs that contain toolchains and 
             libraries suitable for application development outside of Poky. 
@@ -45,17 +45,41 @@
         </section>
 
         <section id="using-the-eclipse-and-anjuta-plug-ins">
-        <title>Using the Eclipse and Anjuta Plug-ins</title>
+        <title>Using the Eclipse Plug-in</title>
         <para>
-            Yocto Project supports both Anjuta and Eclipse IDE plug-ins to make developing software
-            easier for the application developer. The plug-ins provide capability
-            extensions to the graphical IDE allowing for cross compilation, 
-            deployment and execution of the output in a QEMU emulation session. 
-            Support of these plug-ins also allows for cross debugging and
-            profiling.  Additionally, the Eclipse plug-in provides a suite of tools 
+            The current release of the Yocto Project supports the Eclipse IDE plug-in
+            to make developing software easier for the application developer. 
+            The plug-in provides capability extensions to the graphical IDE to allow
+            for cross compilation, deployment and execution of the output in a QEMU 
+            emulation session. 
+            Support of the Eclipse plug-in also allows for cross debugging and
+            profiling.  
+            Additionally, the Eclipse plug-in provides a suite of tools 
             that allows the developer to perform remote profiling, tracing, collection of 
             power data, collection of latency data and collection of performance data.
         </para>
+        <note>
+            The current release of the Yocto Project no longer supports the Anjuta plug-in.
+            However, the Poky Anjuta Plug-in is available to download directly from the Poky 
+            Git repository located through the web interface at
+            <ulink url="http://git.yoctoproject.org/"></ulink> under IDE Plugins.
+            The community is free to continue supporting it beyond the Yocto Project 0.9
+            Release.            
+        </note>
+        <para>
+            To use the Eclipse plug-in you need the Eclipse Framework (Helios 3.6.1) along 
+            with other plug-ins installed into the Eclipse IDE.
+            Once you have your environment setup you need to configure the Eclipse plug-in.
+            For information on how to install and configure the Eclipse plug-in, see the
+            <ulink url='http://www.yoctoproject.org/docs/adt-manual/adt-manual.html#adt-eclipse'>
+            "Working Within Eclipse"</ulink> chapter in the 
+            <ulink url='http://www.yoctoproject.org/docs/adt-manual/adt-manual.html'>
+            "Application Development Toolkit (ADT) User's Guide."</ulink>
+         </para>
+
+
+
+<!--
 
             <section id="the-eclipse-plug-in">
             <title>The Eclipse Plug-in</title>
@@ -309,7 +333,7 @@
              <para>
                 See the README file contained in the project for more information on 
                 Anjuta dependencies and building the plug-in. 
-                If you want to disable remote gdb debugging, pass the "--disable-gdb-integration" switch when 
+                If you want to disable remote gdb debugging, pass the "&dash;&dash;disable-gdb-integration" switch when 
                 you configure the plug-in.
             </para>
                 <section id="setting-up-the-anjuta-plugin">
@@ -416,6 +440,10 @@
                 </para>
                 </section>
             </section>
+
+
+-->
+
         </section>
 
         <section id="platdev-appdev-qemu">
@@ -691,7 +719,7 @@
                 </literallayout>
                 Once the binary is built you can find it here: 
                 <programlisting>
-tmp/sysroots/&lt;host-arch&lt;/usr/bin/&lt;target-abi&gt;-gdb 
+tmp/sysroots/&lt;host-arch&gt;/usr/bin/&lt;target-abi&gt;-gdb 
                 </programlisting>
             </para>
 
@@ -909,8 +937,8 @@ $ opreport -cl
 
         <para>
             A graphical user interface for OProfile is also available. 
-            You can download and build it from svn at
-            <ulink url="http://svn.o-hand.com/repos/oprofileui/trunk/"></ulink>. 
+            You can download and build it from the Yocto Project at
+            <ulink url="http://git.yoctoproject.org/cgit.cgi/oprofileui/"></ulink>. 
             If the "tools-profile" image feature is selected, all necessary binaries
             are installed onto the target device for OProfileUI interaction.
         </para>
@@ -926,7 +954,7 @@ $ opreport -cl
             </caption>
          </mediaobject>
          </screenshot>
--->
+
         <para>
             In order to convert the data in the sample format from the target
             to the host you need the <filename>opimport</filename> program. 
@@ -935,13 +963,12 @@ $ opreport -cl
             <ulink url='http://debian.o-hand.com/'>OpenedHand repository</ulink>.
             We recommend using OProfile 0.9.3 or greater. 
         </para>
+-->
         <para>
             Even though Poky usually includes all needed patches on the target device, you 
             might find you need other OProfile patches for recent OProfileUI features.
-            If so, see the <ulink url='http://svn.o-hand.com/repos/oprofileui/trunk/README'>
+            If so, see the <ulink url='http://git.yoctoproject.org/cgit.cgi/oprofileui/tree/README'>
             OProfileUI README</ulink> for the most recent information.
-            You can also see <ulink url="http://labs.o-hand.com/oprofileui">OProfileUI website
-            </ulink> for general information on the OProfileUI project. 
         </para>
 
         <section id="platdev-oprofile-oprofileui-online">
@@ -1038,7 +1065,7 @@ $ opreport -cl
                 a "vmlinux" file that matches the running kernel is available. 
                 In Poky, that file is usually located in 
                 <filename>/boot/vmlinux-KERNELVERSION</filename>, where KERNEL-version is the 
-                version of the kernel (e.g. 2.6.23). 
+                version of the kernel. 
                 Poky generates separate vmlinux packages for each kernel
                 it builds so it should be a question of just making sure a matching package is 
                 installed - for example: <filename>opkg install kernel-vmlinux</filename>. 
