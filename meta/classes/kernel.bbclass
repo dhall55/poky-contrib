@@ -131,6 +131,7 @@ kernel_do_install() {
 	if [ ! "${S}" == "${B}" ]; then
 		cp -fR ${S}/* $kerneldir
 	fi
+	install -m 0644 ${KERNEL_OUTPUT} $kerneldir/${KERNEL_IMAGETYPE}
 	echo "LINUX BUILD TREE COPIED TO SYSROOTS"
 	du -hs $kerneldir
 
