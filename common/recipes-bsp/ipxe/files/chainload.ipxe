@@ -1,0 +1,5 @@
+#!ipxe
+dhcp net0
+kernel tftp://TFTP_HOST/boot.ipxe
+boot
+
