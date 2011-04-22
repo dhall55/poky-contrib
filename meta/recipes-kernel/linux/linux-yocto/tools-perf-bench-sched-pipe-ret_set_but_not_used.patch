@@ -1,0 +1,36 @@
+Upstream-Status="Pending"
+
+Fix the following compilation error:
+
+| bench/sched-pipe.c: In function 'bench_sched_pipe':
+| bench/sched-pipe.c:58:6: error: variable 'ret' set but not used [-Werror=unused-but-set-variable]
+| cc1: all warnings being treated as errors
+| 
+| make: *** [bench/sched-pipe.o] Error 1
+| make: Leaving directory `/build_disk/poky_build/build_gcc_4.6.0/tmp/work/qemux86-poky-linux/linux-yocto-2.6.37+git1+727fc4769aa920fc5bb3eb9a81bf92d0e6340903_1+cb0537a40dadea20f12bc10e0986fd2a70290b42-r17/linux/tools/perf'
+| FATAL: oe_runmake failed
+| ERROR: Function 'do_compile_perf' failed (see /build_disk/poky_build/build_gcc_4.6.0/tmp/work/qemux86-poky-linux/linux-yocto-2.6.37+git1+727fc4769aa920fc5bb3eb9a81bf92d0e6340903_1+cb0537a40dadea20f12bc10e0986fd2a70290b42-r17/temp/log.do_compile_perf.20775 for further information)
+
+Nitin A Kamble <nitin.a.kamble@intel.com> 2011/04/21
+
+Index: linux/tools/perf/bench/sched-pipe.c
+===================================================================
+--- linux.orig/tools/perf/bench/sched-pipe.c
++++ linux/tools/perf/bench/sched-pipe.c
+@@ -72,12 +72,16 @@ int bench_sched_pipe(int argc, const cha
+ 	if (!pid) {
+ 		for (i = 0; i < loops; i++) {
+ 			ret = read(pipe_1[0], &m, sizeof(int));
++			if (ret == -1) perror("read failed");
+ 			ret = write(pipe_2[1], &m, sizeof(int));
++			if (ret == -1) perror("write failed");
+ 		}
+ 	} else {
+ 		for (i = 0; i < loops; i++) {
+ 			ret = write(pipe_1[1], &m, sizeof(int));
++			if (ret == -1) perror("write failed");
+ 			ret = read(pipe_2[0], &m, sizeof(int));
++			if (ret == -1) perror("read failed");
+ 		}
+ 	}
+ 
