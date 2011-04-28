@@ -18,6 +18,8 @@
 def get_siteinfo_list(d):
        target = bb.data.getVar('HOST_ARCH', d, 1) + "-" + bb.data.getVar('HOST_OS', d, 1)
 
+       bb.debug(2, "TARGET ARCH = %s\n" % target);
+
        targetinfo = {\
                "armeb-linux":             "endian-big bit-32 common-glibc arm-common",\
                "armeb-linux-gnueabi":     "endian-big bit-32 common-glibc arm-common armeb-linux",\
@@ -32,6 +34,7 @@ def get_siteinfo_list(d):
                "avr32-linux":             "endian-big bit-32 common-glibc avr32-common",\ 
                "avr32-linux-uclibc":      "endian-big bit-32 common-uclibc avr32-common",\
                "bfin-uclinux-uclibc":       "endian-little bit-32 common-uclibc bfin-common",\
+               "i386-darwin":             "endian-little bit-32 common-darwin ix86-common",\
                "i386-linux":              "endian-little bit-32 common-glibc ix86-common",\
                "i486-linux":              "endian-little bit-32 common-glibc ix86-common",\
                "i586-linux":              "endian-little bit-32 common-glibc ix86-common",\
@@ -52,6 +55,7 @@ def get_siteinfo_list(d):
                "sh4-linux":               "endian-little bit-32 common-glibc sh-common",\
                "sh4-linux-uclibc":        "endian-little bit-32 common-uclibc sh-common",\
                "sparc-linux":             "endian-big bit-32 common-glibc",\
+               "x86_64-darwin":           "endian-little bit-64 common-darwin",\
                "x86_64-linux":            "endian-little bit-64 common-glibc",\
                "x86_64-linux-uclibc":     "endian-little bit-64 common-uclibc"}
        if target in targetinfo:
@@ -77,6 +81,8 @@ def siteinfo_get_files(d):
        # Determine which site files to look for
        sites = get_siteinfo_list(d)
 
+       bb.debug(1, "SITE sites %s" % sites);
+
        # Check along bbpath for site files and append in reverse order so
        # the application specific sites files are last and system site
        # files first.
@@ -88,6 +94,8 @@ def siteinfo_get_files(d):
                        if os.path.exists(fname):
                                tmp += fname + " "
                sitefiles = tmp + sitefiles;
+
+       return sitefiles
 
        # Now check for the applications version specific site files
        path_pkgv = os.path.join(bb.data.getVar('FILE_DIRNAME', d, 1), "site-" + bb.data.getVar('PV', d, 1))

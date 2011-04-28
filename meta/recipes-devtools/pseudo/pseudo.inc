@@ -18,7 +18,7 @@ NO32LIBS ??= "0"
 
 # Compile for the local machine arch...
 do_compile () {
-	${S}/configure --prefix=${prefix} --with-sqlite=${STAGING_DIR_TARGET}${exec_prefix} --bits=${SITEINFO_BITS}
+	${S}/configure --prefix=${prefix} --with-sqlite=${STAGING_DIR_TARGET}${exec_prefix} --bits=${SITEINFO_BITS} --without-rpath
 	oe_runmake 'LIB=lib/pseudo/lib$(MARK64)'
 }
 

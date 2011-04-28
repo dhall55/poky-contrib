@@ -63,11 +63,15 @@ def remove(path, recurse=True):
     """Equivalent to rm -f or rm -rf"""
     for name in glob.glob(path):
         try:
-            os.unlink(name)
-        except OSError, exc:
-            if recurse and exc.errno == errno.EISDIR:
+            if recurse and os.path.isdir(name):
                 shutil.rmtree(name)
-            elif exc.errno != errno.ENOENT:
+            else:
+                os.unlink(name)
+        except OSError, exc:
+            #if recurse and (exc.errno == errno.EISDIR or exc.errno == errno.EPERM):
+            #    shutil.rmtree(name)
+            #elif exc.errno != errno.ENOENT and exc.errno != errno.EBUSY:
+            if exc.errno != errno.ENOENT and exc.errno != errno.EBUSY:
                 raise
 
 def symlink(source, destination, force=False):

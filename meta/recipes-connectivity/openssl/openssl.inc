@@ -18,10 +18,12 @@ S = "${WORKDIR}/openssl-${PV}"
 AR_append = " r"
 CFLAG = "${@base_conditional('SITEINFO_ENDIANESS', 'le', '-DL_ENDIAN', '-DB_ENDIAN', d)} \
 	-DTERMIO ${FULL_OPTIMIZATION} -Wall"
+CFLAG_build-darwin = "${@base_conditional('SITEINFO_ENDIANESS', 'le', '-DL_ENDIAN', '-DB_ENDIAN', d)} \
+	-DTERMIOS ${FULL_OPTIMIZATION} -Wall"
 
 # Avoid binaries being marked as requiring an executable stack (which causes 
 # issues with SELinux on the host)
-CFLAG_append_virtclass-native = " -Wa,--noexecstack"
+#CFLAG_append_virtclass-native = " -Wa,--noexecstack"
 
 # -02 does not work on mipsel: ssh hangs when it tries to read /dev/urandom
 CFLAG_mtx-1 := "${@'${CFLAG}'.replace('-O2', '')}"
@@ -85,6 +87,12 @@ do_configure () {
 		;;
 	linux-sparc)
 		target=linux-sparcv8
+		;;
+	darwin-i386)
+		target=darwin-i386-cc
+		;;
+	darwin-x86_64)
+		target=darwin64-x86_64-cc
 		;;
 	esac
 	# inject machine-specific flags

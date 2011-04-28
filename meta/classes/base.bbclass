@@ -7,7 +7,7 @@ inherit mirrors
 inherit utils
 inherit utility-tasks
 inherit metadata_scm
-inherit buildstats
+#inherit buildstats
 inherit logging
 
 python sys_path_eh () {

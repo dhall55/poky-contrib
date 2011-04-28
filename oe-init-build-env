@@ -33,7 +33,10 @@ else
    else
       OEROOT="`pwd`"
    fi
-   OEROOT=`readlink -f "$OEROOT"`
+   if [ "$OEROOT" = "." ]; then
+      OEROOT="`pwd`"
+   fi
+#   OEROOT=`readlink -f "$OEROOT"`
    export OEROOT
    . $OEROOT/scripts/oe-buildenv-internal
    $OEROOT/scripts/oe-setup-builddir

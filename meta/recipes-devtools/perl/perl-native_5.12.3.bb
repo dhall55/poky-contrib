@@ -57,7 +57,7 @@ do_configure () {
 		-Ui_db \
 		-Ui_ndbm \
 		-Ui_gdbm \
-		-Di_shadow \
+		-Ui_shadow \
 		-Di_syslog \
 		-Duseperlio \
 		-Dman3ext=3pm \

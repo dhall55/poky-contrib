@@ -18,7 +18,7 @@ SRC_URI += "file://debian/ca.patch \
             file://debian/rehash_pod.patch \
             file://debian/shared-lib-ext.patch \
             file://debian/stddef.patch \
-            file://debian/version-script.patch \
+            file://debian/version-script.patch;apply=no \
             file://debian/perl-path.diff"
 
 SRC_URI[md5sum] = "0352932ea863bc02b056cda7c9ac5b79"
