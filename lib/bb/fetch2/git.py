@@ -142,7 +142,7 @@ class Git(FetchMethod):
             runfetchcmd("%s remote add origin %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
             runfetchcmd("%s fetch --all -t" % ud.basecmd, d)
             runfetchcmd("%s prune-packed" % ud.basecmd, d)
-            runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
+            runfetchcmd("%s pack-redundant --all | xargs rm" % ud.basecmd, d)
             ud.repochanged = True
 
     def build_mirror_data(self, url, ud, d):

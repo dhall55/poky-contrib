@@ -600,11 +600,12 @@ def remove(path, recurse=False):
     import os, errno, shutil, glob
     for name in glob.glob(path):
         try:
-            os.unlink(name)
-        except OSError as exc:
-            if recurse and exc.errno == errno.EISDIR:
+            if recurse and os.path.isdir(name):
                 shutil.rmtree(name)
-            elif exc.errno != errno.ENOENT:
+            else:
+                os.unlink(name)
+        except OSError as exc:
+            if exc.errno != errno.ENOENT:
                 raise
 
 def prunedir(topdir):
