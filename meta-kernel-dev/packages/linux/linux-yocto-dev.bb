@@ -15,11 +15,11 @@ KMACHINE_beagleboard = "yocto/standard/beagleboard"
 KBRANCH = ${KMACHINE}
 KMETA = meta
 
-SRC_URI = "git://git.kernel.org/pub/scm/linux/kernel/git/ashfield/linux-yocto-dev.git;protocol=git;nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
+SRC_URI = "git://git.pokylinux.org/linux-yocto-dev;protocol=git;nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
 
 SRCREV=${AUTOREV}
-SRCREV_machine_pn-linux-yocto-dev ?= "a19d632e7fb478180dbe61720fdde8b25189792c"
-SRCREV_meta_pn-linux-yocto-dev ?= "a19d632e7fb478180dbe61720fdde8b25189792c"
+SRCREV_machine_pn-linux-yocto-dev ?= "8e10cd74342c7f5ce259cceca36f6eba084f5d58"
+SRCREV_meta_pn-linux-yocto-dev ?= "3fc7c4c685f4e1d7d5fc7aea08536ca472fa1821"
 
 LINUX_VERSION ?= "2.6.39"
 LINUX_VERSION_EXTENSION ?= "-yoctodev-${LINUX_KERNEL_TYPE}"
