@@ -24,7 +24,7 @@ SRCREV_meta_pn-linux-yocto-dev ?= "3fc7c4c685f4e1d7d5fc7aea08536ca472fa1821"
 LINUX_VERSION ?= "2.6.39"
 LINUX_VERSION_EXTENSION ?= "-yoctodev-${LINUX_KERNEL_TYPE}"
 PR = "r0"
-PV = "${LINUX_VERSION}+git"
+PV = "${LINUX_VERSION}+git${SRCPV}"
 SRCREV_FORMAT = "meta_machine"
 
 COMPATIBLE_MACHINE = "(qemuarm|qemux86|qemuppc|qemumips|qemux86-64|mpc8315e-rdb|routerstationpro|beagleboard)"

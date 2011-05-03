@@ -15,7 +15,7 @@ SRCREV_pn-linux-korg = deadbeef
 LINUX_VERSION ?= "2.6.39"
 LINUX_VERSION_EXTENSION ?= "-yoctized-${LINUX_KERNEL_TYPE}"
 PR = "r0"
-PV = "${LINUX_VERSION}+git"
+PV = "${LINUX_VERSION}+git${SRCPV}"
 
 COMPATIBLE_MACHINE = "(qemuarm|qemux86|qemuppc|qemumips|qemux86-64)"
 
