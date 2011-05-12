@@ -10,7 +10,7 @@ KMETA = meta
 SRC_URI = "git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git;protocol=git;nocheckout=1"
 
 SRCREV=${AUTOREV}
-SRCREV_pn-linux-korg = deadbeef
+# SRCREV_pn-linux-korg = 
 
 LINUX_VERSION ?= "2.6.39"
 LINUX_VERSION_EXTENSION ?= "-yoctized-${LINUX_KERNEL_TYPE}"
