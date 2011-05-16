@@ -70,6 +70,24 @@
             </para>
 
             <para>
+                The meta-&lt;bsp_name&gt; base directory is actually
+                the root of a 'BSP layer' and is what you add to the
+                BBLAYERS variable in build/conf/bbblayers.conf in
+                order to have the build system 'see' the BSP
+                definition and build an image from it.  For example:
+                <programlisting>
+BBLAYERS = " \
+  /usr/local/src/yocto/meta \
+  /usr/local/src/yocto/meta-yocto \
+  /usr/local/src/yocto/meta-&lt;bsp_name&gt; \
+  "
+                </programlisting>
+		For more detailed information on layers, please see
+		the 'Bitbake Layers' section in the Poky Reference
+		Manual.
+            </para>
+
+            <para>
                 Below is the common form for the file structure inside a base directory.
                 While you can use this basic form for the standard, realize that the actual structures
                 for specific BSPs could differ. 
