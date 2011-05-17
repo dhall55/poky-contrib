@@ -11,7 +11,13 @@ PARALLEL_MAKE=""
 # GCC 4.5.1 builds unusable binaries using -Os, remove it from OPTFLAGS
 EXTRA_OEMAKE = "CROSS_COMPILE=${TARGET_PREFIX} OPTFLAGS='-O2'"
 
-UBOOT_MACHINE ?= "${MACHINE}_config"
+python () {
+	if not bb.data.getVar('UBOOT_MACHINE', d, 1):
+		bb.debug("To build %s, see u-boot_git.bb for instructions on \
+			  setting up your machine config" % pn)
+		raise bb.parse.SkipPackage("because UBOOT_MACHINE is not set")
+}
+
 UBOOT_IMAGE ?= "u-boot-${MACHINE}-${PV}-${PR}.bin"
 UBOOT_SYMLINK ?= "u-boot-${MACHINE}.bin"
 UBOOT_MAKE_TARGET ?= "all"
