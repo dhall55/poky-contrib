@@ -37,29 +37,26 @@ fi
 
 cd "$BUILDDIR"
 
-TEMPLATECONF=${TEMPLATECONF:-meta-yocto/conf}
 
 # 
-# $TEMPLATECONF can point to a directory for the template local.conf & bblayers.conf
+# $TEMPLATECONF can point to a directory for the template local.conf &
+# bblayers.conf. If the user hasn't specified a path, default to
+# meta-yocto/conf.
 #
-if [ "x" != "x$TEMPLATECONF" ]; then
-    if ! (test -d "$TEMPLATECONF"); then
-	# Allow TEMPLATECONF=meta-xyz/conf as a shortcut
-	if [ -d "$OEROOT/$TEMPLATECONF" ]; then
-	    TEMPLATECONF="$OEROOT/$TEMPLATECONF"
-	fi
-	if ! (test -d "$TEMPLATECONF"); then
-	    echo >&2 "Error: '$TEMPLATECONF' must be a directory containing local.conf & bblayers.conf"
-	    return
-	fi
+TEMPLATECONF=${TEMPLATECONF:-meta-yocto/conf}
+if ! (test -d "$TEMPLATECONF"); then
+    # Allow TEMPLATECONF=meta-xyz/conf as a shortcut
+    if [ -d "$OEROOT/$TEMPLATECONF" ]; then
+        TEMPLATECONF="$OEROOT/$TEMPLATECONF"
     fi
-    OECORELAYERCONF="$TEMPLATECONF/bblayers.conf.sample"
-    OECORELOCALCONF="$TEMPLATECONF/local.conf.sample"
+    if ! (test -d "$TEMPLATECONF"); then
+        echo >&2 "Error: '$TEMPLATECONF' must be a directory containing local.conf.sample & bblayers.conf.sample"
+        return
+    fi
 fi
+OECORELAYERCONF="$TEMPLATECONF/bblayers.conf.sample"
+OECORELOCALCONF="$TEMPLATECONF/local.conf.sample"
 
-if [ "x" = "x$OECORELOCALCONF" ]; then
-    OECORELOCALCONF="$OEROOT/meta/conf/local.conf.sample"
-fi
 if ! (test -r "$BUILDDIR/conf/local.conf"); then
 cat <<EOM
 You had no conf/local.conf file. This configuration file has therefore been
@@ -79,9 +76,6 @@ EOM
     cp -f $OECORELOCALCONF $BUILDDIR/conf/local.conf
 fi
 
-if [ "x" = "x$OECORELAYERCONF" ]; then
-    OECORELAYERCONF="$OEROOT/meta/conf/bblayers.conf.sample"
-fi
 if ! (test -r "$BUILDDIR/conf/bblayers.conf"); then
 cat <<EOM
 You had no conf/bblayers.conf file. The configuration file has been created for
