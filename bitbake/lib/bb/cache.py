@@ -422,6 +422,51 @@ class Cache(object):
                     info_array.append(info)
             infos.append((virtualfn, info_array))
 
+            tname = "/tmp/bbsave/" + str(os.path.basename(filename)) + variant
+
+            bb.utils.mkdirhier("/tmp/bbsave/")
+            newdict = {}
+            for k in data.keys():
+                newdict[k] = data.getVarFlags(k)
+                if newdict[k] == None:
+                    newdict[k] = {}
+                newdict[k]['content'] = data.getVar(k, False)
+
+            if os.path.exists(tname):
+                # Compare against existing data
+                with open(tname, "rb") as tfile:
+                    pickled = pickle.Unpickler(tfile)
+                    olddict = pickled.load()
+                    for k in olddict:
+                        # Ignore non-interesting bits
+                        if k == "__base_depends" or k == "TIME" or k == "__depends" or k == "ORIG_DEPENDS" or k == "ORIG_RDEPENDS" or k == "__BBHANDLERS" or k == "__BBANONFUNCS":
+                            continue
+                        if k not in newdict:
+                            bb.note("Variable %s disappeared (%s)" % (k, tname))
+                            continue
+                        for f in olddict[k]:
+                            if f not in newdict[k]:
+                                bb.note("Flag %s in variable %s disappeared (%s)" % (f, k, tname))
+                                continue
+                            if newdict[k][f] != olddict[k][f]:
+                                if k.find("virtclass-") == -1:
+                                    bb.note("Variable %s(%s) changed from %s to %s (%s)" % (k, f, olddict[k][f], newdict[k][f], tname))
+                        for f in newdict[k]:
+                            if f not in olddict[k]:
+                                bb.note("Flag %s in variable %s added %s" % (f, k, tname))
+                                continue
+                    for k in newdict:
+                        if k not in olddict:
+                            bb.note("Variable %s was added" % k)
+
+            else:
+                # Otherwise save data out
+                with open(tname, "wb") as tfile:
+                    pickler = pickle.Pickler(tfile, pickle.HIGHEST_PROTOCOL)
+                    pickler.dump(newdict)
+
+
+
         return infos
 
     def load(self, filename, appends, configdata):
