@@ -210,7 +210,11 @@ NO32LIBS = "1"
 #TERMCMD = "${KONSOLE_TERMCMD}"
 #TERMCMDRUN = "${KONSOLE_TERMCMDRUN}"
 
-
 # The network based PR service host and port
 #PRSERV_HOST = "localhost"
 #PRSERV_PORT = "8585"
+
+# Uncomment the following lines to enable multilib builds
+#require conf/multilib.conf
+#MULTILIBS = "multilib:lib32"
+
