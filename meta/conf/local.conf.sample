@@ -186,3 +186,7 @@ NO32LIBS = "1"
 # GNOME, SCREEN, XTERM and KONSOLE
 #TERMCMD = "${KONSOLE_TERMCMD}"
 #TERMCMDRUN = "${KONSOLE_TERMCMDRUN}"
+
+# Uncomment the following lines to enable multilib builds
+#require conf/multilib.conf
+#MULTILIBS = "multilib:lib32"

@@ -40,9 +40,9 @@ do_install () {
 	chown -R root:root ${D}
 }
 
-do_package_write_ipk[depends] += "virtual/libc:do_package"
-do_package_write_deb[depends] += "virtual/libc:do_package"
-do_package_write_rpm[depends] += "virtual/libc:do_package"
+do_package_write_ipk[depends] += "virtual/${MLPREFIX}libc:do_package"
+do_package_write_deb[depends] += "virtual/${MLPREFIX}libc:do_package"
+do_package_write_rpm[depends] += "virtual/${MLPREFIX}libc:do_package"
 
 BBCLASSEXTEND = "nativesdk"
 
