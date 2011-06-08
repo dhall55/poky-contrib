@@ -1,0 +1,18 @@
+Qt3  will report "error: 'ptrdiff_t' does not name a type" while building lsb \
+image with the updated library libstdc++ and complication tool.
+The data type "ptrdiff_t" is defined in file cstddef.
+
+Upstream-Status: Pending
+
+Signed-off-by: xiaofeng.yan@windriver.com
+
+--- qt-x11-free-3.3.7/src/tools/qvaluelist.h	2006-10-19 22:25:01.000000000 +0800
++++ qt-x11-free-3.3.7/src/tools/qvaluelist.h.new	2011-06-07 14:57:06.288997350 +0800
+@@ -47,6 +47,7 @@
+ #ifndef QT_NO_STL
+ #include <iterator>
+ #include <list>
++#include <cstddef>
+ #endif
+ 
+ //#define QT_CHECK_VALUELIST_RANGE
