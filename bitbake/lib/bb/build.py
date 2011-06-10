@@ -361,7 +361,38 @@ def exec_task(fn, task, d):
         if d.getVarFlag(task, "quieterrors") is not None:
             quieterr = True
 
-        return _exec_task(fn, task, d, quieterr)
+        profbasename = os.path.basename(fn) + "-" + task
+        try:
+            import cProfile as profile
+        except:
+            import profile
+        prof = profile.Profile()
+
+        ret = profile.Profile.runcall(prof, _exec_task, fn, task, d, quieterr)
+
+        prof.dump_stats("profile-%s.log" % (profbasename))
+
+        # Redirect stdout to capture profile information
+        pout = open('profile-%s.log.processed' % (profbasename), 'w')
+        so = sys.stdout.fileno()
+        orig_so = os.dup(sys.stdout.fileno())
+        os.dup2(pout.fileno(), so)
+   
+        import pstats
+        p = pstats.Stats('profile-%s.log' % (profbasename))
+        p.sort_stats('time')
+        p.print_stats()
+        p.print_callers()
+        p.sort_stats('cumulative')
+        p.print_stats()
+
+        os.dup2(orig_so, so)
+        pout.flush()
+        pout.close()  
+
+        return ret
+
+
     except Exception:
         from traceback import format_exc
         if not quieterr:
