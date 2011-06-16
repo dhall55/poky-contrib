@@ -444,6 +444,8 @@ class MsgFatal(MsgBase):
 class MsgPlain(MsgBase):
     """General output"""
 
+shouldfire = True
+
 class LogHandler(logging.Handler):
     """Dispatch logging messages as bitbake events"""
 
@@ -454,7 +456,8 @@ class LogHandler(logging.Handler):
                 tb = list(bb.exceptions.extract_traceback(tb, context=3))
             record.bb_exc_info = (etype, value, tb)
             record.exc_info = None
-        fire(record, None)
+        if shouldfire:
+            fire(record, None)
 
     def filter(self, record):
         record.taskpid = worker_pid

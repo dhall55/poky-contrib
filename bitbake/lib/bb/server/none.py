@@ -27,8 +27,11 @@
 """
 
 import time
-import bb
+import logging
 import signal
+import bb
+import bb.event
+logger = logging.getLogger('BitBake')
 
 DEBUG = False
 
@@ -61,44 +64,27 @@ class BitBakeServerCommands():
 
 eventQueue = []
 
-class BBUIEventQueue:
-    class event:
-        def __init__(self, parent):
-            self.parent = parent
-        @staticmethod
-        def send(event):
-            bb.server.none.eventQueue.append(event)
-        @staticmethod
-        def quit():
-            return
+from bb.server.process import ProcessEventQueue
+from Queue import Empty
 
+class BBUIEventQueue(ProcessEventQueue):
     def __init__(self, BBServer):
-        self.eventQueue = bb.server.none.eventQueue
         self.BBServer = BBServer
-        self.EventHandle = bb.event.register_UIHhandler(self)
+        ProcessEventQueue.__init__(self)
 
-    def __popEvent(self):
-        if len(self.eventQueue) == 0:
-            return None
-        return self.eventQueue.pop(0)
-
-    def getEvent(self):
-        if len(self.eventQueue) == 0:
-          self.BBServer.idle_commands(0)
-        return self.__popEvent()
-
-    def waitEvent(self, delay):
-        event = self.__popEvent()
+    def waitEvent(self, timeout):
+        event = self.getEvent()
         if event:
             return event
-        self.BBServer.idle_commands(delay)
-        return self.__popEvent()
+        self.BBServer.idle_commands(timeout)
+        return self.getEvent()
 
-    def queue_event(self, event):
-        self.eventQueue.append(event)
-
-    def system_quit( self ):
-        bb.event.unregister_UIHhandler(self.EventHandle)
+    def getEvent(self):
+        try:
+            return self.get(False)
+        except Empty:
+            self.BBServer.idle_commands(0)
+            return None
 
 # Dummy signal handler to ensure we break out of sleep upon SIGCHLD
 def chldhandler(signum, stackframe):
@@ -111,9 +97,12 @@ class BitBakeNoneServer():
     def __init__(self):
         self._idlefuns = {}
         self.commands = BitBakeServerCommands(self)
+        self.event_queue = BBUIEventQueue(self)
+        self.event = bb.server.process.EventAdapter(self.event_queue)
 
     def addcooker(self, cooker):
         self.cooker = cooker
+        self.event_handle = bb.event.register_UIHhandler(self)
         self.commands.cooker = cooker
 
     def register_idle_function(self, function, data):
@@ -158,20 +147,17 @@ class BitBakeNoneServer():
                 retval = function(self, data, True)
             except:
                 pass
+        bb.event.unregister_UIHhandler(self.event_handle)
 
 class BitBakeServerConnection():
     def __init__(self, server):
         self.server = server.server
         self.connection = self.server.commands
-        self.events = bb.server.none.BBUIEventQueue(self.server)
+        self.events = self.server.event_queue
         for event in bb.event.ui_queue:
-            self.events.queue_event(event)
+            self.server.event_queue.put(event)
 
     def terminate(self):
-        try:
-            self.events.system_quit()
-        except:
-            pass
         try:
             self.connection.terminateServer()
         except:
@@ -196,6 +182,7 @@ class BitBakeServer(object):
 
     def establishConnection(self):
         self.connection = BitBakeServerConnection(self)
+        logger.addHandler(bb.event.LogHandler())
         return self.connection
 
     def launchUI(self, uifunc, *args):

@@ -28,7 +28,7 @@ import progressbar
 import bb.msg
 from bb.ui import uihelper
 
-logger = logging.getLogger("BitBake")
+logger = logging.getLogger("BitBake.Knotty")
 interactive = sys.stdout.isatty()
 
 class BBProgress(progressbar.ProgressBar):
@@ -77,6 +77,7 @@ def main(server, eventHandler):
     bb.msg.addDefaultlogFilter(console)
     console.setFormatter(format)
     logger.addHandler(console)
+    logger.removeHandler(bb.event.LogHandler())
 
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
@@ -124,7 +125,9 @@ def main(server, eventHandler):
                 #if logger.getEffectiveLevel() > format.VERBOSE:
                 if event.taskpid != 0 and event.levelno <= format.NOTE:
                         continue
+                bb.event.shouldfire = False
                 logger.handle(event)
+                bb.event.shouldfire = True
                 continue
 
             if isinstance(event, bb.build.TaskFailed):
