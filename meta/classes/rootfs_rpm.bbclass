@@ -93,7 +93,7 @@ EOF
 
 	# List must be prefered to least preferred order
 	INSTALL_PLATFORM_EXTRA_RPM=""
-	for each_arch in ${PACKAGE_ARCHS} ; do
+	for each_arch in ${MULTILIB_ARCHS} ${PACKAGE_ARCHS}; do
 		INSTALL_PLATFORM_EXTRA_RPM="$each_arch $INSTALL_PLATFORM_EXTRA_RPM"
 	done
 	export INSTALL_PLATFORM_RPM
