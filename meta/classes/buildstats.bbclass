@@ -11,10 +11,10 @@ DEVFILE = ${BUILDSTATS_BASE}/.device
 # 
 ################################################################################
 
-def get_process_cputime(pid):
+def get_process_cputimes(pid):
     fields = open("/proc/%d/stat" % pid, "r").readline().rstrip().split()
     # 13: utime, 14: stime, 15: cutime, 16: cstime
-    return sum(int(field) for field in fields[13:16])
+    return [int(field) for field in fields[13:17]]
 
 def get_cputime():
     fields = open("/proc/stat", "r").readline().rstrip().split()[1:]
@@ -91,27 +91,48 @@ def get_diskdata(var, dev, data):
         diskdata["End"+key] = str(int(newdiskdata[key]))    
     return diskdata
     
+def print_cputime(file, cpu, cputimes):
+    if cpu is not None:
+        file.write("CPU usage: %0.1f%% \n" % cpu)
+    if cputimes[0] is not None:
+        file.write("CPU utime: %0.1f%% \n" % cputimes[0])
+    if cputimes[1] is not None:
+        file.write("CPU stime: %0.1f%% \n" % cputimes[1])
+    if cputimes[2] is not None:
+        file.write("CPU cutime: %0.1f%% \n" % cputimes[2])
+    if cputimes[3] is not None:
+        file.write("CPU cstime: %0.1f%% \n" % cputimes[3])
+
 def set_timedata(var, data):
     import time
     time = time.time()
     cputime = get_cputime()
-    proctime = get_process_cputime(os.getpid())
-    data.setVar(var, (time, cputime, proctime))
+    cputimes = get_process_cputimes(os.getpid())
+    proctime = sum(cputimes)
+    data.setVar(var, (time, cputime, proctime, cputimes))
 
 def get_timedata(var, data):
     import time
     timedata = data.getVar(var, False)
     if timedata is None:
         return
-    oldtime, oldcpu, oldproc = timedata
-    procdiff = get_process_cputime(os.getpid()) - oldproc
+    oldtime, oldcpu, oldproc, oldcputimes = timedata
+    newcputimes = get_process_cputimes(os.getpid())
+    procdiff = sum(newcputimes) - oldproc
     cpudiff = get_cputime() - oldcpu
     timediff = time.time() - oldtime
+    def computeperc(start, end, totaldiff):
+        return float(end - start) * 100 / totaldiff
+    cpuperc = None
+    cputimes = [None, None, None, None]
     if cpudiff > 0:
-        cpuperc = float(procdiff) * 100 / cpudiff
-    else:
-        cpuperc = None
-    return timediff, cpuperc
+        cpuperc = computeperc(oldproc, sum(newcputimes), cpudiff)
+        cputimes[0] = computeperc(oldcputimes[0], newcputimes[0], cpudiff)
+        cputimes[1] = computeperc(oldcputimes[1], newcputimes[1], cpudiff)
+        cputimes[2] = computeperc(oldcputimes[2], newcputimes[2], cpudiff)
+        cputimes[3] = computeperc(oldcputimes[3], newcputimes[3], cpudiff)
+
+    return timediff, cpuperc, cputimes
     
 def write_task_data(status, logfile, dev, e):
     bn = get_bn(e)
@@ -120,11 +141,10 @@ def write_task_data(status, logfile, dev, e):
     file = open(os.path.join(logfile), "a")
     timedata = get_timedata("__timedata_task", e.data)
     if timedata:
-        elapsedtime, cpu = timedata
+        elapsedtime, cpu, splitcpu = timedata
         file.write(bb.data.expand("${PF}: %s: Elapsed time: %0.2f seconds \n" %
                                  (e.task, elapsedtime), e.data))
-        if cpu:
-            file.write("CPU usage: %0.1f%% \n" % cpu)
+        print_cputime(file, cpu, splitcpu)
     ############################################################################
     # Here we gather up disk data. In an effort to avoid lying with stats
     # I do a bare minimum of analysis of collected data.
@@ -195,12 +215,11 @@ python run_buildstats () {
         ########################################################################
         timedata = get_timedata("__timedata_build", e.data)
         if timedata:
-            time, cpu = timedata
+            time, cpu, splitcpu = timedata
             # write end of build and cpu used into build_time
             file = open(build_time, "a")
             file.write("Elapsed time: %0.2f seconds \n" % (time))
-            if cpu:
-                file.write("CPU usage: %0.1f%% \n" % cpu)
+            print_cputime(file, cpu, splitcpu)
         diskio = get_diskdata("__diskdata_build", dev, e.data)
         if diskio:
             for key in sorted(diskio.iterkeys()):
