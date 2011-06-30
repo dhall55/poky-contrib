@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2007 OpenedHand Ltd.
 #
-IMAGE_INSTALL = "task-core-boot ${ROOTFS_PKGMANAGE_BOOTSTRAP} lib64-zlib"
+IMAGE_INSTALL = "task-core-boot ${ROOTFS_PKGMANAGE_BOOTSTRAP} bash lib64-bash"
 
 IMAGE_LINGUAS = " "
 
