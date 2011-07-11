@@ -1,0 +1,119 @@
+This layer provides recipes and tools designed to make it easy to
+create m2m (machine-to-machine) applications using the Yocto Project.
+
+Currently, this includes:
+
+- recipes for the Sun Java Development Kit and Java Runtime Environment
+
+  Because they require a click-through license, a few manual steps are
+  necessary to build the Java recipes.
+
+  See the instructions in the sun-jse-jdk or sun-jse-jre recipes 
+
+
+Known BUGS and problems
+-----------------------
+
+1) The build will fail with the below error due to recursive symlinks.
+Avoiding this currently requires INHIBIT_PACKAGE_DEBUG_SPLIT = "1" in
+the recipes.
+
+NOTE: package sun-jse-jdk-6.26-r6: task do_populate_sysroot: Started
+NOTE: package sun-jse-jdk-6.26-r6: task do_populate_sysroot: Succeeded
+NOTE: package sun-jse-jdk-6.26-r6: task do_package: Started
+pseudo: link recursion too deep, not expanding path '/usr/local/src/yocto/cur/build/tmp/work/core2-poky-linux/sun-jse-jdk-6.26-r6/package/usr/jdk1.6.0_26/jre/lib/i386/server/.debug/libjsig.so'.
+ERROR: '/usr/local/src/yocto/cur/meta-m2m/recipes-devtools/java/sun-jse-jdk_6.26.bb' failed
+ERROR: Logfile of failure stored in: /usr/local/src/yocto/cur/build/tmp/work/core2-poky-linux/sun-jse-jdk-6.26-r6/temp/log.do_package.3247
+Log data follows:
+| ERROR: Error executing a python function in /usr/local/src/yocto/cur/meta-m2m/recipes-devtools/java/sun-jse-jdk_6.26.bb:
+| OSError: [Errno 40] Too many levels of symbolic links: '/usr/local/src/yocto/cur/build/tmp/work/core2-poky-linux/sun-jse-jdk-6.26-r6/package/usr/jdk1.6.0_26/jre/lib/i386/server/.debug/libjsig.so'
+| 
+| ERROR: Error executing a python function in /usr/local/src/yocto/cur/meta-m2m/recipes-devtools/java/sun-jse-jdk_6.26.bb:
+| OSError: [Errno 40] Too many levels of symbolic links: '/usr/local/src/yocto/cur/build/tmp/work/core2-poky-linux/sun-jse-jdk-6.26-r6/package/usr/jdk1.6.0_26/jre/lib/i386/server/.debug/libjsig.so'
+| 
+| ERROR: The stack trace of python calls that resulted in this exception/failure was:
+| ERROR: The stack trace of python calls that resulted in this exception/failure was:
+| ERROR:   File "split_and_strip_files", line 193, in <module>
+| ERROR:   File "split_and_strip_files", line 193, in <module>
+| ERROR:
+| ERROR:
+| ERROR:   File "split_and_strip_files", line 162, in split_and_strip_files
+| ERROR:   File "split_and_strip_files", line 162, in split_and_strip_files
+| ERROR:
+| ERROR:
+| ERROR: The code that was being executed was:
+| ERROR: The code that was being executed was:
+| ERROR:      0189:    # End of strip
+| ERROR:      0189:    # End of strip
+| ERROR:      0190:    #
+| ERROR:      0190:    #
+| ERROR:      0191:
+| ERROR:      0191:
+| ERROR:      0192:
+| ERROR:      0192:
+| ERROR:  *** 0193:split_and_strip_files(d)
+| ERROR:  *** 0193:split_and_strip_files(d)
+| ERROR:      0194:
+| ERROR:      0194:
+| ERROR: (file: 'split_and_strip_files', lineno: 193, function: <module>)
+| ERROR: (file: 'split_and_strip_files', lineno: 193, function: <module>)
+| ERROR:      0158:			 	      		src = file[len(dvar):]
+| ERROR:      0158:							src = file[len(dvar):]
+| ERROR:      0159:								dest = debuglibdir + os.path.dirname(src) + debugdir + "/" + os.path.basename(src) + debugappend
+| ERROR:      0159:								       		   dest = debuglibdir + os.path.dirname(src) + debugdir + "/" + os.path.basename(src) + debugappend
+| ERROR:      0160:										   	  	      fpath = dvar + dest
+| ERROR:      0160:												      	      	   fpath = dvar + dest
+| ERROR:      0161:														   	   	try:
+| ERROR:      0161:																   try:
+| ERROR:  *** 0162:																       s = os.stat(fpath)
+| ERROR:  *** 0162:																       	     s = os.stat(fpath)
+| ERROR:      0163:																	       	  except OSError, (err, strerror):
+| ERROR:      0163:																		  	 	  	except OSError, (err, strerror):
+| ERROR:      0164:																					       		       if err != errno.ENOENT:
+| ERROR:      0164:																							       	      	  if err != errno.ENOENT:
+| ERROR:      0165:																									     	      raise
+| ERROR:      0165:																										           raise
+| ERROR:      0166:																											       #bb.note("Remove dangling link %s -> %s" % (fpath, os.readlink(fpath)))
+| ERROR:      0166:																											       				      	 #bb.note("Remove dangling link %s -> %s" % (fpath, os.readlink(fpath)))
+| ERROR: (file: 'split_and_strip_files', lineno: 162, function: split_and_strip_files)
+| ERROR: (file: 'split_and_strip_files', lineno: 162, function: split_and_strip_files)
+| ERROR: Function 'split_and_strip_files' failed
+| ERROR: Function 'split_and_strip_files' failed
+NOTE: package sun-jse-jdk-6.26-r6: task do_package: Failed
+ERROR: Task 9 (/usr/local/src/yocto/cur/meta-m2m/recipes-devtools/java/sun-jse-jdk_6.26.bb, do_package) failed with exit code '1'
+
+2) The build will fail with the below error during rpm packaging for
+some reason.  Avoiding this currently requires that package_rpm be
+turned off in local.conf.
+
+ERROR: Logfile of failure stored in: /usr/local/src/yocto/cur/build/tmp/work/core2-poky-linux/sun-jse-jdk-6.26-r14/temp/log.do_package_write_rpm.21692
+Log data follows:
+| NOTE: Creating RPM package for sun-jse-jdk-dbg
+| NOTE: Creating RPM package for sun-jse-jdk-dbg
+| NOTE: Creating RPM package for sun-jse-jdk
+| NOTE: Creating RPM package for sun-jse-jdk
+| NOTE: Not creating empty RPM package for sun-jse-jdk-doc
+| NOTE: Not creating empty RPM package for sun-jse-jdk-doc
+| NOTE: Creating RPM package for sun-jse-jdk-dev
+| NOTE: Creating RPM package for sun-jse-jdk-dev
+| NOTE: Not creating empty RPM package for sun-jse-jdk-staticdev
+| NOTE: Not creating empty RPM package for sun-jse-jdk-staticdev
+| NOTE: Not creating empty RPM package for sun-jse-jdk-locale
+| NOTE: Not creating empty RPM package for sun-jse-jdk-locale
+| Building target platforms: core2-poky-linux-gnu
+| Processing files: sun-jse-jdk-6.26-r14.core2
+| Finding  Provides: /usr/local/src/yocto/cur/build/tmp/work/core2-poky-linux/sun-jse-jdk-6.26-r14/sun-jse-jdk.requires
+| error: line 5616: Dependency "../../../../build/linux-i586/lib/i386/libnative_chmod.so(GCC.INTERNAL)" must begin with alpha-numeric, '_' or '/':
+| 
+| error: Failed to find Provides:
+| Provides: lib.so libunpack.so libunpack.so(GLIBC_2.0) libgctest.so libgctest.so(SUNWprivate_1.1) libheapTracker.so libheapTracker.so(SUNWprivate_1.1) libheapViewer.so libheapViewer.so(SUNWprivate_1.1) libminst.so libminst.so(SUNWprivate_1.1) libmtrace.so libmtrace.so(SUNWprivate_1.1) libversionCheck.so libversionCheck.so(SUNWprivate_1.1) libwaiters.so libwaiters.so(SUNWprivate_1.1) libJdbcOdbc.so libattach.so libawt.so libcmm.so libdcpr.so libdeploy.so libdt_socket.so libfontmanager.so libhprof.so libinstrument.so libioser12.so libj2gss.so libj2pcsc.so libj2pkcs11.so libjaas_unix.so libjava.so libjava_crw_demo.so libjavaplugin_jni.so libjavaplugin_nscp.so libjavaplugin_nscp_gcc29.so libjawt.so libjdwp.so libjpeg.so libjsig.so libjsound.so libjsoundalsa.so libmanagement.so libmlib_image.so libnet.so libnio.so libnpjp2.so libnpt.so librmi.so libsaproc.so libsplashscreen.so libverify.so libzip.so libjvm.so libjvm.so(SUNWprivate_1.1) libmawt.so libmawt.so(SUNWprivate_1.1) libjli.so libjli.so(SUNWprivate_1.1) libattach.so(SUNWprivate_1.1) libcmm.so(SUNWprivate_1.1) libdcpr.so(SUNWprivate_1.1) libdt_socket.so(SUNWprivate_1.1) libfontmanager.so(SUNWprivate_1.1) libhprof.so(SUNWprivate_1.1) libinstrument.so(SUNWprivate_1.1) libioser12.so(SUNWprivate_1.1) libj2gss.so(SUNWprivate_1.1) libj2pcsc.so(SUNWprivate_1.1) libj2pkcs11.so(SUNWprivate_1.1) libjava.so(SUNWprivate_1.1) libjava_crw_demo.so(SUNWprivate_1.1) libjavaplugin_nscp_gcc29.so(GCC.INTERNAL) libjawt.so(SUNWprivate_1.1) libjdwp.so(SUNWprivate_1.1) libjpeg.so(SUNWprivate_1.1) libjsound.so(SUNWprivate_1.1) libjsoundalsa.so(SUNWprivate_1.1) libmanagement.so(SUNWprivate_1.1) libmlib_image.so(SUNWprivate_1.1)
+| 
+| 
+| RPM build errors:
+|     line 5616: Dependency "../../../../build/linux-i586/lib/i386/libnative_chmod.so(GCC.INTERNAL)" must begin with alpha-numeric, '_' or '/':
+| 
+|     Failed to find Provides:
+| ERROR: Function 'BUILDSPEC' failed (see /usr/local/src/yocto/cur/build/tmp/work/core2-poky-linux/sun-jse-jdk-6.26-r14/temp/log.do_package_write_rpm.21692 for further information)
+| ERROR: Function 'BUILDSPEC' failed (see /usr/local/src/yocto/cur/build/tmp/work/core2-poky-linux/sun-jse-jdk-6.26-r14/temp/log.do_package_write_rpm.21692 for further information)
+NOTE: package sun-jse-jdk-6.26-r14: task do_package_write_rpm: Failed
+ERROR: Task 12 (/usr/local/src/yocto/cur/meta-m2m/recipes-devtools/java/sun-jse-jdk_6.26.bb, do_package_write_rpm) failed with exit code '1'
