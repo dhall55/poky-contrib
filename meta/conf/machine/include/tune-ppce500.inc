@@ -1,3 +1,5 @@
+require conf/machine/include/arch-powerpc.inc
+
 TARGET_CC_ARCH = "-mcpu=8540"
 BASE_PACKAGE_ARCH = "ppce500"
 FEED_ARCH = "ppce500"

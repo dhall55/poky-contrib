@@ -1,3 +1,5 @@
+require conf/machine/include/arch-arm.inc
+
 FEED_ARCH = "armv5te"
 PACKAGE_EXTRA_ARCHS = "arm armv4 armv4t armv5te"
 # For gcc 3.x you need:
