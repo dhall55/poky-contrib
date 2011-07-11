@@ -69,7 +69,7 @@ class Svn(FetchMethod):
         command is "fetch", "update", "info"
         """
 
-        basecmd = data.expand('${FETCHCMD_svn}', d)
+        basecmd = data.getVar('FETCHCMD_svn', d, True) or "/usr/bin/env svn"
 
         proto = ud.parm.get('proto', 'svn')
 

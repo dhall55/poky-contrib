@@ -80,7 +80,7 @@ class Hg(FetchMethod):
         command is "fetch", "update", "info"
         """
 
-        basecmd = data.expand('${FETCHCMD_hg}', d)
+        basecmd = data.getVar('FETCHCMD_hg', d, True) or "/usr/bin/env hg"
 
         proto = ud.parm.get('proto', 'http')
 

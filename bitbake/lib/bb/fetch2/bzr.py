@@ -58,7 +58,7 @@ class Bzr(FetchMethod):
         command is "fetch", "update", "revno"
         """
 
-        basecmd = data.expand('${FETCHCMD_bzr}', d)
+        basecmd = data.getVar('FETCHCMD_bzr', d, True) or "/usr/bin/env bzr"
 
         proto =  ud.parm.get('proto', 'http')
 
