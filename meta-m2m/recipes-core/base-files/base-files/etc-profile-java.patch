@@ -1,0 +1,17 @@
+Upstream-Status: Inappropriate [configuration]
+
+Index: base-files-3.0.14/profile
+===================================================================
+--- base-files-3.0.14/profile	2011-07-10 09:02:41.739772142 -0500
++++ base-files-3.0.14/profile	2011-07-10 09:04:46.548937412 -0500
+@@ -26,6 +26,10 @@
+   unset i
+ fi
+ 
++PATH=$PATH:/usr/java/bin
++JAVA_HOME=/usr/java
++export JAVA_HOME
++
+ export PATH PS1 OPIEDIR QPEDIR QTDIR EDITOR TERM
+ 
+ umask 022
