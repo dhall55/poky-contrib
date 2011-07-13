@@ -402,11 +402,17 @@ def fileslocked(files):
     for lock in locks:
         bb.utils.unlockfile(lock)
 
+def locklog(msg):
+    f = open("/tmp/lockfilelog", 'a+')
+    f.write(msg)
+    f.close()
+
 def lockfile(name, shared=False, retry=True):
     """
     Use the file fn as a lock file, return when the lock has been acquired.
     Returns a variable to pass to unlockfile().
     """
+    import time
     dirname = os.path.dirname(name)
     mkdirhier(dirname)
 
@@ -415,11 +421,15 @@ def lockfile(name, shared=False, retry=True):
                      name)
         sys.exit(1)
 
+    start = time.time()
+
     op = fcntl.LOCK_EX
     if shared:
         op = fcntl.LOCK_SH
     if not retry:
         op = op | fcntl.LOCK_NB
+
+    locklog("Attempting lockfile %s\n" % name)
 
     while True:
         # If we leave the lockfiles lying around there is no problem
@@ -440,9 +450,12 @@ def lockfile(name, shared=False, retry=True):
             if os.path.exists(lf.name):
                 statinfo2 = os.stat(lf.name)
                 if statinfo.st_ino == statinfo2.st_ino:
+                    end = time.time()
+                    locklog("Aquired lockfile %s in %s\n" % (name, end-start))
                     return lf
             lf.close()
         except Exception:
+            locklog("Couldn't aquire lockfile %s, retrying\n" % name)
             continue
         if not retry:
             return None
@@ -451,6 +464,7 @@ def unlockfile(lf):
     """
     Unlock a file locked using lockfile()
     """
+    locklog("Unlocking %s\n" % lf.name)
     try:
         # If we had a shared lock, we need to promote to exclusive before
         # removing the lockfile. Attempt this, ignore failures.
