@@ -2,10 +2,7 @@
 # eglibc specific configuration
 #
 
-TARGET_OS = "linux"
-TARGET_OS_arm = "linux-gnueabi"
-TARGET_OS_armeb = "linux-gnueabi"
-TARGET_OS_powerpc = "linux${@['','-gnuspe'][bb.data.getVar('TUNE_PKGARCH', d, True) in ['ppce500', 'ppce500v2']]}"
+LIBCEXTENSION_libc-glibc = "${@['', '-gnu'][(d.getVar('ABIEXTENSION', True) or '') != '']}"
 
 # Add glibc overrides to the overrides for eglibc.
 OVERRIDES .= ":libc-glibc"

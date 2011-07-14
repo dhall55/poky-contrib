@@ -221,7 +221,7 @@ def package_qa_check_arch(path,name,d, elf, messages):
             = package_qa_get_machine_dict()[target_os][target_arch]
     except:
         (machine, osabi, abiversion, littleendian, bits) \
-            = package_qa_get_machine_dict()[target_os.replace("-gnu", "")][target_arch]
+            = package_qa_get_machine_dict()[target_os][target_arch]
         pass
 
     # Check the architecture and endiannes of the binary

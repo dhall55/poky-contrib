@@ -63,13 +63,8 @@ def get_siteinfo_list(d):
                info.append(target)
                info.append("common")
                return info
-       elif target.replace("-gnu", "") in targetinfo:
-               info = targetinfo[target.replace("-gnu", "")].split()
-               info.append(target)
-               info.append("common")
-               return info
        else:
-               bb.error("Information not available for target '%s' (%s)" % (target, target.replace("-gnu", "")))
+               bb.error("Information not available for target '%s' (%s)" % target)
 
 
 #
