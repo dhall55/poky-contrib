@@ -30,11 +30,10 @@ DEPENDS_GETTEXT = "gettext-native"
 # Path mangling needed by the cross packaging
 # Note that we use := here to ensure that libdir and includedir are
 # target paths.
-target_libdir := "${libdir}"
 target_includedir := "${includedir}"
-target_base_libdir := "${base_libdir}"
 target_prefix := "${prefix}"
 target_exec_prefix := "${exec_prefix}"
+target_base_prefix := "${base_prefix}"
 
 # Overrides for paths
 CROSS_TARGET_SYS_DIR = "${MULTIMACH_TARGET_SYS}"

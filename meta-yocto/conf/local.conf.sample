@@ -215,8 +215,8 @@ NO32LIBS = "1"
 #PRSERV_PORT = "8585"
 
 # Uncomment the following lines to enable multilib builds
-#MULTILIB_ARCHS="all any noarch x86_64"
-#MULTILIB_ID="lib64-"
 #require conf/multilib.conf
-#MULTILIBS = "multilib:lib64"
-
+#MULTILIBS = "multilib:lib32"
+#MULTILIB_ID="lib32-"
+#MULTILIB_ARCHS="all any noarch x86"
+#TUNENAME_virtclass-multilib-lib32 = "x86"

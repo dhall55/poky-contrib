@@ -9,29 +9,6 @@ python multilib_virtclass_handler () {
  
     override = ":virtclass-multilib-" + variant
 
-    # cross.bbclass has := assignments we need to work around
-    # This is horribly hacky since *libdir_ml-tune-XXX cannot refer to other variables
-    # as those may have been overwritten at this point and they hence need to be absolute 
-    # values
-    if bb.data.inherits_class('cross', e.data):
-        baselibdir = e.data.getVar("base_libdir_ml-tune-" + variant, True)
-        e.data.delVar("base_libdir_ml-tune-" + variant)
-        e.data.delVarFlags("base_libdir_ml-tune-" + variant)
-        e.data.setVar("target_base_libdir", baselibdir)
-
-        libdir = e.data.getVar("libdir_ml-tune-" + variant, True)
-        e.data.delVar("libdir_ml-tune-" + variant)
-        e.data.delVarFlags("libdir_ml-tune-" + variant)
-        e.data.setVar("target_libdir", libdir)
-
-    tune = e.data.getVar("TUNE_FEATURES", False)
-    tune = tune + " ml-" + variant
-    e.data.setVar("TUNE_FEATURES", tune)
-
-    pkgarch = e.data.getVar("TUNE_PKGARCH", False)
-    pkgarch = "${MLPREFIX}" + pkgarch
-    e.data.setVar("TUNE_PKGARCH", pkgarch)
-
     bb.data.setVar("PN", variant + "-" + bb.data.getVar("PN", e.data, False), e.data)
     bb.data.setVar("SHLIBSDIR_virtclass-multilib-" + variant ,bb.data.getVar("SHLIBSDIR",e.data,False) + "/" + variant, e.data)
     bb.data.setVar("TARGET_VENDOR_virtclass-multilib-" + variant, "-pokyml" + variant, e.data)
