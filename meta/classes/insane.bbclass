@@ -216,8 +216,13 @@ def package_qa_check_arch(path,name,d, elf, messages):
         return
 
     #if this will throw an exception, then fix the dict above
-    (machine, osabi, abiversion, littleendian, bits) \
-        = package_qa_get_machine_dict()[target_os][target_arch]
+    try:
+        (machine, osabi, abiversion, littleendian, bits) \
+            = package_qa_get_machine_dict()[target_os][target_arch]
+    except:
+        (machine, osabi, abiversion, littleendian, bits) \
+            = package_qa_get_machine_dict()[target_os.replace("-gnu", "")][target_arch]
+        pass
 
     # Check the architecture and endiannes of the binary
     if not machine == elf.machine():
