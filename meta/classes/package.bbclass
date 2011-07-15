@@ -648,7 +648,8 @@ python fixup_perms () {
 					fix_perms(each_dir, fs_perms_table[dir].mode, fs_perms_table[dir].uid, fs_perms_table[dir].gid, dir)
 				for f in files:
 					each_file = os.path.join(root, f)
-					fix_perms(each_file, fs_perms_table[dir].fmode, fs_perms_table[dir].fuid, fs_perms_table[dir].fgid, dir)
+					if not os.path.islink(each_file):
+						fix_perms(each_file, fs_perms_table[dir].fmode, fs_perms_table[dir].fuid, fs_perms_table[dir].fgid, dir)
 }
 
 python split_and_strip_files () {
