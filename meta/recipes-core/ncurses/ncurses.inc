@@ -6,9 +6,9 @@ LIC_FILES_CHKSUM = "file://ncurses/base/version.c;beginline=1;endline=27;md5=cbc
 SECTION = "libs"
 DEPENDS = "ncurses-native"
 DEPENDS_virtclass-native = ""
-INC_PR = "r0"
+INC_PR = "r1"
 
-inherit autotools binconfig
+inherit autotools binconfig multilib_header
 
 # Upstream has useful patches at times at ftp://invisible-island.net/ncurses/
 SRC_URI = "${GNU_MIRROR}/ncurses/ncurses-${PV}.tar.gz"
@@ -161,6 +161,17 @@ do_install() {
         f=${D}${libdir}/libtermcap.so
         echo '/* GNU ld script */' >$f
         echo 'INPUT(AS_NEEDED(-ltinfo))' >>$f
+
+	find ${D}${mandir} -type f -name "*.gz" | xargs gunzip
+	for each_link in `find ${D}${mandir} -type l -name "*.gz"` ; do
+		link_name=`echo $each_link | sed "s,\.gz$,,"`
+		target=`readlink -n $each_link | sed "s,\.gz$,,"`
+		echo "Changing $each_link to $link_name (-> $target)"
+		rm -f $each_link
+		ln -s $target $link_name
+	done
+
+	oe_multilib_header curses.h
 }
 
 python populate_packages_prepend () {
