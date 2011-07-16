@@ -1,2 +1,0 @@
-TUNE_ARCH = "mips"
-
