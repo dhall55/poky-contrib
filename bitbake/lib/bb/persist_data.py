@@ -196,6 +196,11 @@ def persist(domain, d):
     cachedir = (bb.data.getVar("PERSISTENT_DIR", d, True) or
                 bb.data.getVar("CACHE", d, True))
     if not cachedir:
+        tmpdir = bb.data.getVar("TMPDIR", d, True)
+        if tmpdir:
+            cachedir = os.path.join(tmpdir, "cache")
+
+    if not cachedir:
         logger.critical("Please set the 'PERSISTENT_DIR' or 'CACHE' variable")
         sys.exit(1)
 
