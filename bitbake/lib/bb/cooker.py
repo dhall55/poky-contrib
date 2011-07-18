@@ -127,6 +127,9 @@ class BBCooker:
         if not self.server_registration_cb:
             bb.data.setVar("BB_WORKERCONTEXT", "1", self.configuration.data)
 
+        if self.configuration.lazy_parse:
+            bb.data.setVar("BB_LAZY_PARSE", "1", self.configuration.data)
+
         bb.data.inheritFromOS(self.configuration.data)
 
         try:
@@ -1101,8 +1104,11 @@ class BBCooker:
             files = self.get_bbfiles()
 
         if not len(files):
-            collectlog.error("no recipe files to build, check your BBPATH and BBFILES?")
-            bb.event.fire(CookerExit(), self.configuration.event_data)
+            if self.configuration.lazy_parse:
+                return ([], [])
+            else:
+                collectlog.error("no recipe files to build, check your BBPATH and BBFILES?")
+                bb.event.fire(CookerExit(), self.configuration.event_data)
 
         # Can't use set here as order is important
         newfiles = []
@@ -1241,12 +1247,16 @@ class CookerExit(bb.event.Event):
 def catch_parse_error(func):
     """Exception handling bits for our parsing"""
     @wraps(func)
-    def wrapped(fn, *args):
+    def wrapped(fn, data, *args):
         try:
-            return func(fn, *args)
+            return func(fn, data, *args)
         except (IOError, bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
-            parselog.critical("Unable to parse %s: %s" % (fn, exc))
-            sys.exit(1)
+            if data.getVar("BB_LAZY_PARSE", True):
+                parselog.warn("Unable to parse %s: %s" % (fn, exc))
+                return data
+            else:
+                parselog.critical("Unable to parse %s: %s" % (fn, exc))
+                sys.exit(1)
     return wrapped
 
 @catch_parse_error
