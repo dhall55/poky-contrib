@@ -1,0 +1,259 @@
+#!/usr/bin/env python
+
+# Remote layer management utility
+#
+# Copyright (C) 2011 Intel Corporation
+# Copyright (C) 2011 Jeremy Puhlman
+# Copyright (C) 2003, 2004  Chris Larson
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+
+import cmd
+import logging
+import os.path
+import sys
+import shutil
+
+bindir = os.path.dirname(__file__)
+topdir = os.path.dirname(bindir)
+sys.path[0:0] = [os.path.join(topdir, 'lib')]
+os.environ['BBFETCH2'] = '1'
+os.environ['BB_ENV_EXTRAWHITE'] = os.environ.get('BB_ENV_EXTRAWHITE', '') + ' LAYER_UNPACKDIR'
+
+from commands import getstatusoutput
+import bb.cache
+import bb.cooker
+import bb.providers
+import bb.utils
+from bb.cooker import state
+from bb import fetch
+
+logger = logging.getLogger('BitBake')
+
+
+def main(args):
+    logging.basicConfig(format='%(levelname)s: %(message)s')
+    bb.utils.clean_environment()
+
+    cmds = Commands()
+    if args:
+        cmds.onecmd(' '.join(args))
+        return cmds.returncode
+    else:
+        cmds.onecmd('help')
+        return 0
+
+class LayerDef:
+    def __init__(self):
+        self.uri = ''
+        self.subdir = ''
+        self.localpath = ''
+
+    def default_values(self, layer_unpackdir, d):
+        if self.localpath == '':
+            module = self.uri.split(';')[0].split('/')[-1]
+            if self.uri.startswith('git:') and module.endswith('.git'):
+                module = module[:len(module)-4]
+            self.localpath = os.path.join(layer_unpackdir, module)
+        elif self.localpath[0] != os.sep:
+            self.localpath = os.path.join(layer_unpackdir, self.localpath)
+
+
+class Commands(cmd.Cmd):
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+
+        self.returncode = 0
+        self.config = Config(parse_only=True, lazy_parse=True)
+        self.cooker = bb.cooker.BBCooker(self.config,
+                                         self.register_idle_function)
+        self.config_data = self.cooker.configuration.data
+        bb.providers.logger.setLevel(logging.ERROR)
+        self.cooker_data = None
+
+    def register_idle_function(self, function, data):
+        pass
+
+    def check_prepare_cooker(self):
+        if not self.cooker_data:
+            self.prepare_cooker()
+
+    def prepare_cooker(self):
+        sys.stderr.write("Parsing recipes..")
+        logger.setLevel(logging.ERROR)
+
+        try:
+            while self.cooker.state in (state.initial, state.parsing):
+                self.cooker.updateCache()
+        except KeyboardInterrupt:
+            self.cooker.shutdown()
+            self.cooker.updateCache()
+            sys.exit(2)
+
+        logger.setLevel(logging.INFO)
+        sys.stderr.write("done.\n")
+
+        self.cooker_data = self.cooker.status
+        self.cooker_data.appends = self.cooker.appendlist
+
+    def do_init(self, args):
+        """Initialise the specified layers
+syntax: init <layer1> [layer2] [layer3] ...
+
+Where layers are:
+    <uri>[,localdir[,subdir]]
+"""
+        arglist = args.split()
+        if len(arglist) < 1:
+            self.do_help('init')
+            return
+
+        layers = []
+        for arg in arglist:
+            parts = arg.split(',')
+            if len(parts) >= 1:
+                layer = LayerDef()
+                layer.uri = parts[0]
+                if len(parts) > 1:
+                    layer.localpath = parts[1]
+                    if len(parts) > 2:
+                        layer.subdir = parts[2]
+                layers.append(layer)
+            else:
+                self.do_help('init')
+                return
+
+        self.check_prepare_cooker()
+
+        fetcher = LayerFetcher()
+        localpaths = []
+
+        if not self.config_data.getVar('LAYER_UNPACKDIR'):
+            self.config_data.setVar('LAYER_UNPACKDIR', '${TOPDIR}/layers')
+
+        if not self.config_data.getVar('DL_DIR'):
+            self.config_data.setVar('DL_DIR', '${TOPDIR}/downloads')
+
+        if not self.config_data.getVar('CO_DIR'):
+            self.config_data.setVar('CO_DIR', '${DL_DIR}')
+
+        layer_unpackdir = self.config_data.getVar('LAYER_UNPACKDIR', True)
+        layer_unpackdir = os.path.abspath(layer_unpackdir)
+
+        for layer in layers:
+            layer.default_values(layer_unpackdir, self.config_data)
+            if layer.localpath in localpaths:
+                logger.info("Skipping already fetched %s", layer.uri)
+            else:
+                logger.info("Fetching '%s' to '%s'", layer.uri, layer.localpath)
+                ld = self.config_data.createCopy()
+                ld.setVar('SRCREV', 'AUTOINC')
+                fetcher.fetch(layer.uri, layer.localpath, ld)
+                localpaths.append(layer.localpath)
+
+        bblayers = 'BBLAYERS = "'
+        for layer in layers:
+            localpath = layer.localpath
+            if layer.subdir:
+                localpath = os.path.join(localpath, layer.subdir)
+            bblayers += localpath + ' \\\n            '
+        bblayers += '"'
+        print
+        print bblayers
+
+    def do_fetch(self, args):
+        """Fetch a URI
+syntax: fetch <uri> <localpath> """
+        arglist = args.split()
+        if len(arglist) != 2:
+            self.do_help('fetch')
+            return
+        self.check_prepare_cooker()
+        fetcher = LayerFetcher()
+        logger.info("Fetching '%s' to '%s'", arglist[0], arglist[1])
+        ld = self.config_data.createCopy()
+        ld.setVar('SRCREV', 'AUTOINC')
+        fetcher.fetch(arglist[0], arglist[1], ld)
+
+
+class LayerFetcher(object):
+    def fetch(self, url, localpath, ld):
+        urldata = {}
+        try:
+            urldata[url] = bb.fetch.FetchData(url,ld)
+        except bb.fetch.NoMethodError:
+            logger.debug(1, "No method for %s" % url)
+            return
+        ud = urldata[url]
+
+        if not ud.setup:
+            ud.setup_localpath(ld)
+        m = ud.method
+        if ud.type in ['git'] or not os.path.exists(bb.fetch.localpath(url, ld)):
+            try:
+                m.download(url,ud,ld)
+            except (bb.fetch.MissingParameterError,
+                bb.fetch.FetchError,
+                bb.fetch.MD5SumError):
+
+                (type, value, traceback) = sys.exc_info()
+                logger.debug(1, "layer fetch failure: %s" % value)
+                return
+
+        tmppath = ld.getVar('TMPDIR', True)
+        tmppath = os.path.join(tmppath, "layerfetch")
+        if os.path.exists(tmppath):
+            bb.utils.prunedir(tmppath)
+        bb.utils.mkdirhier(tmppath)
+        ud.parm['unpack'] = 'True'
+        if ud.type == 'git':
+            if m.need_update(url,ud,ld):
+                m.build_mirror_data(url, ud,ld)
+        m.unpack(ud, tmppath ,ld)
+
+        subdir = None
+        if ud.type == 'git':
+            subdir = 'git'
+        else:
+            subdir = ud.parm.get('module')
+
+        if subdir:
+            subdirpath = os.path.join(tmppath, subdir)
+        else:
+            subdirpath = tmppath
+        bb.utils.mkdirhier(localpath)
+        for f in os.listdir(subdirpath):
+            shutil.move(os.path.join(subdirpath, f), os.path.join(localpath, f))
+
+
+class Config(object):
+    def __init__(self, **options):
+        self.pkgs_to_build = []
+        self.debug_domains = []
+        self.extra_assume_provided = []
+        self.prefile = []
+        self.postfile = []
+        self.debug = 0
+        self.__dict__.update(options)
+
+    def __getattr__(self, attribute):
+        try:
+            return super(Config, self).__getattribute__(attribute)
+        except AttributeError:
+            return None
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]) or 0)
