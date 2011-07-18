@@ -716,6 +716,10 @@ class BBCooker:
         for bbclass in bbclasses:
             data = _inherit(bbclass, data)
 
+        # Default TMPDIR
+        if not data.getVar("TMPDIR", True):
+            data.setVar("TMPDIR", "${TOPDIR}/tmp")
+
         # Nomally we only register event handlers at the end of parsing .bb files
         # We register any handlers we've found so far here...
         for var in bb.data.getVar('__BBHANDLERS', data) or []:
