@@ -11,7 +11,7 @@ python multilib_virtclass_handler () {
 
     bb.data.setVar("PN", variant + "-" + bb.data.getVar("PN", e.data, False), e.data)
     bb.data.setVar("SHLIBSDIR_virtclass-multilib-" + variant ,bb.data.getVar("SHLIBSDIR",e.data,False) + "/" + variant, e.data)
-    bb.data.setVar("TARGET_VENDOR_virtclass-multilib-" + variant, "-pokyml" + variant, e.data)
+    bb.data.setVar("TARGET_VENDOR_virtclass-multilib-" + variant, bb.data.getVar("TARGET_VENDOR", e.data, False) + "ml" + variant, e.data)
     bb.data.setVar("OVERRIDES", bb.data.getVar("OVERRIDES", e.data, False) + override, e.data)
 }
 
