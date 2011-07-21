@@ -9,10 +9,10 @@ COMPATIBLE_MACHINE = ${MACHINE}
 
 # KMACHINE is the branch to be built, or alternatively
 # KBRANCH can be directly set.
-
+# KMACHINE ?= "${KMACHINE}"
 # KBRANCH ?= "${KMACHINE}-${LINUX_KERNEL_TYPE}"
+
 # KSRC_linux_yocto_rt ?= /path/to/local/linux-yocto-2.6.34/clone
-KBRANCH ?= "${KMACHINE}-${LINUX_KERNEL_TYPE}"
 
 SRC_URI = "git://${KSRC_linux_yocto_rt};nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
 
