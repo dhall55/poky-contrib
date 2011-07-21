@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://GPL;md5=4325afd396febcb659c36b49533135d4 \
                     file://src/pulsecore/vector.h;beginline=1;endline=21;md5=1b561f0a2ca47b1fa49862a6ccaacff1"
 DEPENDS = "libatomics-ops liboil avahi libsamplerate0 libsndfile1 libtool virtual/libx11"
 # optional
-DEPENDS += "udev alsa-lib glib-2.0 dbus consolekit"
+DEPENDS += "bluez4 udev alsa-lib glib-2.0 dbus consolekit"
 
 SRC_URI = "http://0pointer.de/lennart/projects/pulseaudio/pulseaudio-${PV}.tar.gz \
            file://gcc4-compile-fix.patch;patch=1 \
@@ -19,7 +19,7 @@ inherit autotools pkgconfig
 
 EXTRA_OECONF = "\
 		--disable-lynx \
-		--disable-bluez \
+		--enable-bluez \
 		--disable-polkit \
 		--with-x \
 		--without-jack \
@@ -27,6 +27,8 @@ EXTRA_OECONF = "\
 		--with-alsa \
 		--with-oss \
 		--without-hal \
+		--disable-hal \
+		--with-access-group=audio \
 "
 
 PARALLEL_MAKE = ""
@@ -108,8 +110,9 @@ python populate_packages_prepend() {
 }
 
 RDEPENDS_pulseaudio-module-console-kit =+ "consolekit"
-RDEPENDS_pulseaudio-module-hal-detect =+ "hal"
 RDEPENDS_pulseaudio-server = " \
+    pulseaudio-module-udev-detect \
+    pulseaudio-module-null-sink \
     pulseaudio-module-device-restore \
     pulseaudio-module-stream-restore \
     pulseaudio-module-card-restore \
@@ -119,8 +122,8 @@ RDEPENDS_pulseaudio-server = " \
     pulseaudio-module-alsa-source \
     pulseaudio-module-alsa-card \
     pulseaudio-module-native-protocol-unix \
-    pulseaudio-module-hal-detect \
     pulseaudio-module-default-device-restore \
+    pulseaudio-module-intended-roles \
     pulseaudio-module-rescue-streams \
     pulseaudio-module-always-sink \
     pulseaudio-module-suspend-on-idle \

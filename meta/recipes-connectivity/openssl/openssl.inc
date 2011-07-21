@@ -80,6 +80,9 @@ do_configure () {
 	linux-powerpc)
 		target=linux-ppc
 		;;
+	linux-gnuspe-powerpc)
+		target=linux-ppc
+		;;
 	linux-supersparc)
 		target=linux-sparcv8
 		;;
@@ -93,7 +96,7 @@ do_configure () {
         if [ "x$useprefix" = "x" ]; then
                 useprefix=/
         fi        
-	perl ./Configure ${EXTRA_OECONF} shared --prefix=$useprefix --openssldir=${libdir}/ssl $target
+	perl ./Configure ${EXTRA_OECONF} shared --prefix=$useprefix --openssldir=${libdir}/ssl --libdir=`basename ${libdir}` $target
 }
 
 do_compile () {
@@ -102,7 +105,7 @@ do_compile () {
 
 do_install () {
 	install -m 0755 -d ${D}${libdir}/pkgconfig
-	oe_runmake INSTALL_PREFIX="${D}" install
+	oe_runmake INSTALL_PREFIX="${D}" MANDIR="${mandir}" install
 	chmod 644 ${D}${libdir}/pkgconfig/openssl.pc
 	oe_libinstall -so libcrypto ${D}${libdir}
 	oe_libinstall -so libssl ${D}${libdir}

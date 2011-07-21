@@ -327,24 +327,28 @@ class TaskListModel(gtk.ListStore):
     If the item isn't a package we leave it included.
     """
     def sweep_up(self):
-        model = self.contents
-        removals = []
         it = self.contents.get_iter_first()
-
-	while it:
-            binb = model.get_value(it, self.COL_BINB)
-            itype = model.get_value(it, self.COL_TYPE)
+        while it:
+            binb = self.contents.get_value(it, self.COL_BINB)
+            itype = self.contents.get_value(it, self.COL_TYPE)
+            remove = False
 
             if itype == 'package' and not binb:
-                opath = model.convert_path_to_child_path(model.get_path(it))
-                if not opath in removals:
-                    removals.extend(opath)
+                oit = self.contents.convert_iter_to_child_iter(it)
+                opath = self.get_path(oit)
+                self.mark(opath)
+                remove = True
 
-            it = model.iter_next(it)
-
-	while removals:
-	    path = removals.pop()
-	    self.mark(path)
+            # When we remove a package from the contents model we alter the
+            # model, so continuing to iterate is bad. *Furthermore* it's
+            # likely that the removal has affected an already iterated item
+            # so we should start from the beginning anyway.
+            # Only when we've managed to iterate the entire contents model
+            # without removing any items do we allow the loop to exit.
+            if remove:
+                it = self.contents.get_iter_first()
+            else:
+                it = self.contents.iter_next(it)
 
     """
     Find the name of an item in the image contents which depends on the item
@@ -390,8 +394,9 @@ class TaskListModel(gtk.ListStore):
         if not cur_inc:
             self[item_path][self.COL_INC] = True
             self[item_path][self.COL_BINB] = binb
-        # We want to do some magic with things which are brought in by the base
-        # image so tag them as so
+
+        # We want to do some magic with things which are brought in by the
+        # base image so tag them as so
         if image_contents:
             self[item_path][self.COL_IMG] = True
             if self[item_path][self.COL_TYPE] == 'image':
@@ -403,12 +408,17 @@ class TaskListModel(gtk.ListStore):
                 # If the contents model doesn't already contain dep, add it
                 # We only care to show things which will end up in the
                 # resultant image, so filter cross and native recipes
-                if not self.contents_includes_name(dep) and not dep.endswith("-native") and not dep.endswith("-cross"):
-                    path = self.find_path_for_item(dep)
+                dep_included = self.contents_includes_name(dep)
+                path = self.find_path_for_item(dep)
+                if not dep_included and not dep.endswith("-native") and not dep.endswith("-cross"):
                     if path:
                         self.include_item(path, name, image_contents)
                     else:
                         pass
+                # Set brought in by for any no longer orphan packages
+                elif dep_included and path:
+                    if not self[path][self.COL_BINB]:
+                        self[path][self.COL_BINB] = name
 
     """
     Find the model path for the item_name

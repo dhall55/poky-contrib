@@ -58,6 +58,12 @@ SRC_URI = "${GNU_MIRROR}/gcc/gcc-${PV}/gcc-${PV}.tar.bz2 \
 	   file://GPLUSPLUS_INCLUDE_DIR_with_sysroot.patch \
 	   file://COLLECT_GCC_OPTIONS.patch \
 	   file://use-defaults.h-and-t-oe-in-B.patch \
+	   file://pr43810.patch \
+	   file://pr44290.patch \
+	   file://pr44606.patch \
+	   file://pr45094.patch \
+	   file://pr45052.patch \
+	   file://pr45886.patch \
 	  "
 	
 SRC_URI_append_sh3  = " file://sh3-installfix-fixheaders.patch;patch=1 "

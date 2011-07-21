@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=3bf50002aefd002f49e7bb854063f7e7 \
 SECTION = "libs"
 
 DEPENDS = "libpng glib-2.0 jpeg"
-PR = "r0"
+PR = "r1"
 
 SRC_URI = "http://ftp.acc.umu.se/pub/GNOME/sources/gdk-pixbuf/2.22/gdk-pixbuf-${PV}.tar.gz \
            file://hardcoded_libtool.patch;patch=1 \
@@ -26,6 +26,7 @@ LIBV = "2.10.0"
 EXTRA_OECONF = "\
   --without-libtiff \
   --with-libpng \
+  --disable-introspection \
 "
 
 FILES_${PN} = "${bindir}/gdk-pixbuf-query-loaders \
@@ -33,11 +34,14 @@ FILES_${PN} = "${bindir}/gdk-pixbuf-query-loaders \
 
 FILES_${PN}-dev += " \
 	${bindir}/gdk-pixbuf-csource \
-	${includedir}/*"
+	${includedir}/* \
+	${libdir}/gdk-pixbuf-2.0/${LIBV}/loaders/*.la \
+"
 
 FILES_${PN}-dbg += " \
         ${libdir}/.debug/* \
-	${libdir}/gdk-pixbuf-2.0/${LIBV}/loaders/.debug/*"
+	${libdir}/gdk-pixbuf-2.0/${LIBV}/loaders/.debug/* \
+"
 
 postinst_pixbufloader () {
 if [ "x$D" != "x" ]; then

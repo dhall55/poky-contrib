@@ -354,6 +354,12 @@ python () {
         depends = depends + " xz-native:do_populate_sysroot"
         bb.data.setVarFlag('do_unpack', 'depends', depends, d)
 
+    # unzip-native should already be staged before unpacking ZIP recipes
+    if ".zip" in srcuri:
+        depends = bb.data.getVarFlag('do_unpack', 'depends', d) or ""
+        depends = depends + " unzip-native:do_populate_sysroot"
+        bb.data.setVarFlag('do_unpack', 'depends', depends, d)
+
     # 'multimachine' handling
     mach_arch = bb.data.getVar('MACHINE_ARCH', d, 1)
     pkg_arch = bb.data.getVar('PACKAGE_ARCH', d, 1)
@@ -396,16 +402,6 @@ python () {
             bb.data.setVar('PACAKGE_ARCH', "${MACHINE_ARCH}", d)
             bb.warn("Recipe %s is marked as only being architecture specific but seems to have machine specific packages?! The recipe may as well mark itself as machine specific directly." % d.getVar("PN", True))
 }
-
-def check_gcc3(data):
-
-	gcc3_versions = 'gcc-3.4.6 gcc-3.4.7 gcc-3.4 gcc34 gcc-3.4.4 gcc-3.3 gcc33 gcc-3.3.6 gcc-3.2 gcc32'
-
-	for gcc3 in gcc3_versions.split():
-		if check_app_exists(gcc3, data):
-			return gcc3
-	
-	return False
 
 addtask cleansstate after do_clean
 python do_cleansstate() {

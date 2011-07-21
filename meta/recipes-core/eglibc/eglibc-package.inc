@@ -20,7 +20,7 @@ USE_LDCONFIG ?= "1"
 PKGSUFFIX = ""
 PKGSUFFIX_virtclass-nativesdk = "-nativesdk"
 
-PACKAGES = "${PN}-dbg ${PN} catchsegv${PKGSUFFIX} sln${PKGSUFFIX} nscd${PKGSUFFIX} ldd${PKGSUFFIX} ${PN}-utils ${PN}-pic ${PN}-dev eglibc-doc libcidn libmemusage libsegfault${PKGSUFFIX} eglibc-extra-nss eglibc-thread-db${PKGSUFFIX} eglibc-pcprofile libsotruss${PKGSUFFIX}"
+PACKAGES = "${PN}-dbg ${PN} catchsegv${PKGSUFFIX} sln${PKGSUFFIX} nscd${PKGSUFFIX} ldd${PKGSUFFIX} ${PN}-utils eglibc-extra-nss eglibc-thread-db${PKGSUFFIX} ${PN}-pic ${PN}-dev eglibc-doc libcidn libmemusage libsegfault${PKGSUFFIX} eglibc-pcprofile libsotruss${PKGSUFFIX}"
 
 # Create a eglibc-binaries
 ALLOW_EMPTY_${PN}-binaries = "1"
@@ -58,7 +58,7 @@ FILES_ldd${PKGSUFFIX} = "${bindir}/ldd"
 FILES_libsegfault${PKGSUFFIX} = "${base_libdir}/libSegFault*"
 FILES_libcidn = "${base_libdir}/libcidn-*.so ${base_libdir}/libcidn.so.*"
 FILES_libmemusage = "${base_libdir}/libmemusage.so"
-FILES_eglibc-extra-nss = "${base_libdir}/libnss*"
+FILES_eglibc-extra-nss = "${base_libdir}/libnss_*-*.so ${base_libdir}/libnss_*.so.*"
 FILES_sln = "/sbin/sln"
 FILES_eglibc-pic = "${libdir}/*_pic.a ${libdir}/*_pic.map ${libdir}/libc_pic/"
 FILES_libsotruss${PKGSUFFIX} = "${libdir}/audit/sotruss-lib.so"
@@ -69,9 +69,9 @@ FILES_eglibc-utils = "${bindir}/* ${sbindir}/*"
 FILES_${PN}-dbg += "${libexecdir}/*/.debug ${libdir}/audit/.debug"
 FILES_catchsegv${PKGSUFFIX} = "${bindir}/catchsegv"
 RDEPENDS_catchsegv${PKGSUFFIX} = "libsegfault"
-EDEPENDS_eglibc-utils = "libsotruss"
+RDEPENDS_eglibc-utils += "bash"
 FILES_eglibc-pcprofile = "${base_libdir}/libpcprofile.so"
-FILES_eglibc-thread-db${PKGSUFFIX} = "${base_libdir}/libthread_db*"
+FILES_eglibc-thread-db${PKGSUFFIX} = "${base_libdir}/libthread_db.so.* ${base_libdir}/libthread_db-*.so"
 RPROVIDES_eglibc-dev += "libc-dev"
 
 SUMMARY_sln = "The static ln."
@@ -88,12 +88,22 @@ DESCRIPTION_libsotruss = "Library to support sotruss which traces calls through 
 
 inherit libc-common
 
+do_install_append () {
+	rm -f ${D}${sysconfdir}/localtime
+}
+
 do_install_locale () {
 	dest=${D}/${includedir}/eglibc-locale-internal-${MULTIMACH_TARGET_SYS}
 	install -d ${dest}${base_libdir} ${dest}${bindir} ${dest}${libdir} ${dest}${datadir}
-	cp -fpPR ${D}${base_libdir}/* ${dest}${base_libdir}
-	mv ${D}${bindir}/localedef ${dest}${bindir}
-        mv ${D}${libdir}/gconv ${dest}${libdir}
+	if [ "${base_libdir}" != "${libdir}" ]; then
+		cp -fpPR ${D}${base_libdir}/* ${dest}${base_libdir}
+	fi
+	if [ -f ${D}${bindir}/localedef ]; then
+		mv -f ${D}${bindir}/localedef ${dest}${bindir}
+	fi
+	if [ -f ${D}${libdir}/gconv ]; then
+		mv -f ${D}${libdir}/gconv ${dest}${libdir}
+	fi
 	cp -fpPR ${D}${libdir}/* ${dest}${libdir}
         mv ${D}${datadir}/i18n ${dest}${datadir}
 	cp -fpPR ${D}${datadir}/* ${dest}${datadir}

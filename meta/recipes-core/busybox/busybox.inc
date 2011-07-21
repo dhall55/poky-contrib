@@ -11,6 +11,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=de10de48642ab74318e893a61105afbb"
 SECTION = "base"
 
 export EXTRA_CFLAGS = "${CFLAGS}"
+export EXTRA_LDFLAGS = "${LDFLAGS}"
+
 PACKAGES =+ "${PN}-httpd ${PN}-udhcpd ${PN}-udhcpc ${PN}-syslog ${PN}-mdev"
 
 FILES_${PN}-httpd = "${sysconfdir}/init.d/busybox-httpd /srv/www"
@@ -47,8 +49,8 @@ def busybox_cfg(feature, features, tokens, cnf, rem):
 # Map distro and machine features to config settings
 def features_to_busybox_settings(d):
 	cnf, rem = ([], [])
-	distro_features = bb.data.getVar('DISTRO_FEATURES', d).split()
-	machine_features = bb.data.getVar('MACHINE_FEATURES', d).split()
+	distro_features = bb.data.getVar('DISTRO_FEATURES', d, True).split()
+	machine_features = bb.data.getVar('MACHINE_FEATURES', d, True).split()
 	busybox_cfg('ipv6', distro_features, 'CONFIG_FEATURE_IPV6', cnf, rem)
 	busybox_cfg('largefile', distro_features, 'CONFIG_LFS', cnf, rem)
 	busybox_cfg('largefile', distro_features, 'CONFIG_FDISK_SUPPORT_LARGE_DISKS', cnf, rem)

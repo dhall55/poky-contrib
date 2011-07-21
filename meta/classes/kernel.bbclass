@@ -7,6 +7,8 @@ DEPENDS += "virtual/${TARGET_PREFIX}gcc virtual/${TARGET_PREFIX}depmod virtual/$
 INHIBIT_DEFAULT_DEPS = "1"
 
 KERNEL_IMAGETYPE ?= "zImage"
+INITRAMFS_IMAGE ?= ""
+INITRAMFS_TASK ?= ""
 
 python __anonymous () {
     kerneltype = bb.data.getVar('KERNEL_IMAGETYPE', d, 1) or ''
@@ -14,6 +16,10 @@ python __anonymous () {
     	depends = bb.data.getVar("DEPENDS", d, 1)
     	depends = "%s u-boot-mkimage-native" % depends
     	bb.data.setVar("DEPENDS", depends, d)
+
+    image = bb.data.getVar('INITRAMFS_IMAGE', d, True)
+    if image:
+        bb.data.setVar('INITRAMFS_TASK', '${INITRAMFS_IMAGE}:do_rootfs', d)
 }
 
 inherit kernel-arch deploy
@@ -178,8 +184,18 @@ kernel_do_configure() {
 	if [ -f "${WORKDIR}/defconfig" ] && [ ! -f "${S}/.config" ]; then
 		cp "${WORKDIR}/defconfig" "${S}/.config"
 	fi
-        yes '' | oe_runmake oldconfig
+	yes '' | oe_runmake oldconfig
+
+	if [ ! -z "${INITRAMFS_IMAGE}" ]; then
+		for img in cpio.gz cpio.lzo cpio.lzma cpio.xz; do
+		if [ -e "${DEPLOY_DIR_IMAGE}/${INITRAMFS_IMAGE}-${MACHINE}.$img" ]; then
+			cp "${DEPLOY_DIR_IMAGE}/${INITRAMFS_IMAGE}-${MACHINE}.$img" initramfs.$img
+		fi
+		done
+	fi
 }
+
+do_configure[depends] += "${INITRAMFS_TASK}"
 
 do_menuconfig() {
         export DISPLAY='${DISPLAY}'
@@ -226,11 +242,6 @@ PKG_kernel-base = "kernel-${@legitimize_package_name('${KERNEL_VERSION}')}"
 ALLOW_EMPTY_kernel = "1"
 ALLOW_EMPTY_kernel-base = "1"
 ALLOW_EMPTY_kernel-image = "1"
-
-# Userspace workarounds for kernel modules issues
-# This is shame, fix the kernel instead!
-DEPENDS_kernel-module-dtl1-cs = "bluez-dtl1-workaround"
-RDEPENDS_kernel-module-dtl1-cs = "bluez-dtl1-workaround"
 
 pkg_postinst_kernel-image () {
 if [ ! -e "$D/lib/modules/${KERNEL_VERSION}" ]; then

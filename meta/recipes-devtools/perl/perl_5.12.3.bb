@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://Copying;md5=2b4c6ffbcfcbdee469f02565f253d81a \
 # We need gnugrep (for -I)
 DEPENDS = "virtual/db grep-native"
 DEPENDS += "gdbm zlib"
-PR = "r2"
+PR = "r3"
 
 # 5.10.1 has Module::Build built-in
 PROVIDES += "libmodule-build-perl"
@@ -116,8 +116,8 @@ do_configure() {
         # Generate configuration
         rm -f config.sh-${TARGET_ARCH}-${TARGET_OS}
         for i in ${WORKDIR}/config.sh \
-                 ${WORKDIR}/config.sh-${@siteinfo_get_bits(d)} \
-                 ${WORKDIR}/config.sh-${@siteinfo_get_bits(d)}-${@siteinfo_get_endianess(d)}; do
+                 ${WORKDIR}/config.sh-${SITEINFO_BITS} \
+                 ${WORKDIR}/config.sh-${SITEINFO_BITS}-${SITEINFO_ENDIANESS}; do
             cat $i >> config.sh-${TARGET_ARCH}-${TARGET_OS}
         done
 
@@ -150,6 +150,7 @@ do_configure() {
                -e 's,@ARCH@-thread-multi,,g' \
                -e 's,@ARCH@,${TARGET_ARCH}-${TARGET_OS},g' \
                -e "s%/usr/include%${STAGING_INCDIR}%g" \
+	       -e 's,/usr/lib/,${libdir}/,g' \
 	       -e 's,/usr/,${exec_prefix}/,g' \
 	       -e 's,/perl5,/perl,g' \
             config.sh-${TARGET_ARCH}-${TARGET_OS}
@@ -281,7 +282,7 @@ FILES_perl-module-unicore += "${libdir}/perl/${PV}/unicore"
 # packages (actually the non modules packages and not created too)
 ALLOW_EMPTY_perl-modules = "1"
 PACKAGES_append = " perl-modules "
-RRECOMMENDS_perl-modules = "${@bb.data.getVar('PACKAGES', d, 1).replace('perl-modules ', '').replace('perl-dbg ', '').replace('perl-misc ', '').replace('perl-dev ', '').replace('perl-pod ', '').replace('perl-doc ', '')}"
+RRECOMMENDS_perl-modules = "${@bb.data.getVar('PACKAGES', d, 1).replace('${PN}-modules ', '').replace('${PN}-dbg ', '').replace('${PN}-misc ', '').replace('${PN}-dev ', '').replace('${PN}-pod ', '').replace('${PN}-doc ', '')}"
 
 python populate_packages_prepend () {
         libdir = bb.data.expand('${libdir}/perl/${PV}', d)
