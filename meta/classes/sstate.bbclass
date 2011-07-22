@@ -391,6 +391,7 @@ def pstaging_fetch(sstatepkg, d):
     # Only try and fetch if the user has configured a mirror
     mirrors = bb.data.getVar('SSTATE_MIRRORS', d, True)
     if not mirrors:
+        bb.note("SSTATE_MIRRORS set so no sstate fetching attempted")
         return
 
     # Copy the data object and override DL_DIR and SRC_URI
@@ -409,6 +410,7 @@ def pstaging_fetch(sstatepkg, d):
     # Try a fetch from the sstate mirror, if it fails just return and
     # we will build the package
     try:
+        bb.note("Attempting sstate fetch")
         fetcher = bb.fetch2.Fetch([srcuri], localdata, cache=False)
         fetcher.download()        
 
@@ -416,9 +418,13 @@ def pstaging_fetch(sstatepkg, d):
         # For now work around by symlinking
         localpath = bb.data.expand(fetcher.localpath(srcuri), localdata)
         if localpath != sstatepkg and os.path.exists(localpath) and not os.path.exists(sstatepkg):
+            bb.note("sstate fetch successful, symlinking %s to %s" % (localpath, sstatepkg))
             os.symlink(localpath, sstatepkg)
+        else:
+            bb.note("sstate fetch successful for %s" % sstatepkg)
 
     except bb.fetch2.BBFetchException:
+        bb.note("sstate fetcher exception")
         pass
 
 def sstate_setscene(d):
@@ -486,6 +492,7 @@ def sstate_checkhashes(sq_fn, sq_task, sq_hash, sq_hashfn, d):
     for task in range(len(sq_fn)):
         sstatefile = bb.data.expand("${SSTATE_DIR}/" + sq_hashfn[task] + "_" + mapping[sq_task[task]] + ".tgz", d)
         sstatefile = sstatefile.replace("${BB_TASKHASH}", sq_hash[task])
+        print("Checking for %s" % sstatefile)
         if os.path.exists(sstatefile):
             bb.debug(2, "SState: Found valid sstate file %s" % sstatefile)
             ret.append(task)
@@ -502,11 +509,13 @@ def sstate_checkhashes(sq_fn, sq_task, sq_hash, sq_hashfn, d):
         dldir = bb.data.expand("${SSTATE_DIR}", localdata)
         bb.data.setVar('DL_DIR', dldir, localdata)
         bb.data.setVar('PREMIRRORS', mirrors, localdata)
+        bb.note("Testing sstate mirror: %s" % mirrors)
 
         bb.debug(2, "SState using premirror of: %s" % mirrors)
 
         for task in range(len(sq_fn)):
             if task in ret:
+                bb.note("task already existed")
                 continue
 
             sstatefile = bb.data.expand("${SSTATE_DIR}/" + sq_hashfn[task] + "_" + mapping[sq_task[task]] + ".tgz", d)
@@ -517,6 +526,7 @@ def sstate_checkhashes(sq_fn, sq_task, sq_hash, sq_hashfn, d):
             bb.debug(2, "SState: Attempting to fetch %s" % srcuri)
 
             try:
+                bb.note("Attempting fetch for %s" % srcuri)
                 fetcher = bb.fetch2.Fetch(srcuri.split(), localdata)
                 fetcher.checkstatus()
                 bb.debug(2, "SState: Successful fetch test for %s" % srcuri)
