@@ -1,0 +1,13 @@
+Index: apmd-3.2.2.orig/Makefile
+===================================================================
+--- apmd-3.2.2.orig.orig/Makefile	2011-07-15 12:28:08.451829936 +0100
++++ apmd-3.2.2.orig/Makefile	2011-07-15 12:28:16.591829232 +0100
+@@ -67,7 +67,7 @@
+ $(OBJS): $(HEADERS)
+ 
+ %.o: %.c
+-	$(LT_COMPILE) -c $(CPPFLAGS) $(CFLAGS) $(XTRACFLAGS) $<
++	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(XTRACFLAGS) $<
+ 
+ %: %.o $(LIBAPM)
+ 	$(LT_LINK) -o $@ $< $(LDFLAGS) $(LIBAPM)

@@ -14,6 +14,7 @@ SRC_URI = "${DEBIAN_MIRROR}/main/a/apmd/apmd_3.2.2.orig.tar.gz;name=tarball \
            ${DEBIAN_MIRROR}/main/a/apmd/apmd_${PV}.diff.gz;name=patch \
            file://libtool.patch \
            file://unlinux.patch \
+           file://static.patch \
            file://init \
            file://default \
            file://apmd_proxy \
