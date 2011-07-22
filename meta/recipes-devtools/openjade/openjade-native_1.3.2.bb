@@ -47,9 +47,9 @@ do_install() {
 	install -m 0755 ${S}/jade/.libs/openjade ${D}${bindir}/openjade
 	ln -sf openjade ${D}${bindir}/jade
 
-	oe_libinstall -a -so -C style libostyle ${D}${libdir}
-	oe_libinstall -a -so -C spgrove libospgrove ${D}${libdir}
-	oe_libinstall -a -so -C grove libogrove ${D}${libdir}
+	oe_libinstall -so -C style libostyle ${D}${libdir}
+	oe_libinstall -so -C spgrove libospgrove ${D}${libdir}
+	oe_libinstall -so -C grove libogrove ${D}${libdir}
 
 	install -d ${D}${datadir}/sgml/openjade-${PV}
 	install -m 644 dsssl/catalog ${D}${datadir}/sgml/openjade-${PV}
