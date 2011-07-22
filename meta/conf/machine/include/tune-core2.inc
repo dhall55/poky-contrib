@@ -19,3 +19,12 @@ TUNE_FEATURES_tune-core2-64 ?= "${TUNE_FEATURES_tune-x86-64} core2"
 BASE_LIB_tune-core2-64 ?= "lib64"
 PACKAGE_EXTRA_ARCHS_tune-core2-64 = "${PACKAGE_EXTRA_ARCHS_tune-x86-64} core2-64"
 
+# Extra tune features
+TUNEVALID[x32] = "Enable x32"
+TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "x32", "-mx32", "", d)}"
+
+AVAILTUNES += "core2-x32"
+TUNE_FEATURES_tune-core2 ?= "core2 x32"
+BASE_LIB_tune-core2 = "lib"
+PACKAGE_EXTRA_ARCHS_tune-core2 = "core2-x32"
+
