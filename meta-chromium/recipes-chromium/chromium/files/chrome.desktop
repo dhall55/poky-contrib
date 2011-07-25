@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Chromium
+Comment=Chromium Browser
+Exec=/usr/bin/chrome/chrome
+Icon=web-browser
+Terminal=false
+Type=Application
+Categories=GTK;Network;WebBrowser;
+X-MB-SingleInstance=faluse
+StartupNotify=true
