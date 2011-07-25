@@ -1,4 +1,5 @@
-TARGET_CC_ARCH = "-mcpu=e500mc"
-BASE_PACKAGE_ARCH = "ppce500mc"
-FEED_ARCH = "ppce500mc"
+require conf/machine/include/powerpc/arch-powerpc.inc
+
+TUNE_CCARGS = "-mcpu=e500mc"
+TUNE_PKGARCH = "ppce500mc"
 PACKAGE_EXTRA_ARCHS = "powerpc ppce500mc"

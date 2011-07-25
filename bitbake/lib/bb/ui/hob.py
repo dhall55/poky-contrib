@@ -46,6 +46,7 @@ class MainWindow (gtk.Window):
         self.files_to_clean = []
         self.selected_image = None
         self.selected_packages = None
+        self.stopping = False
 
         self.model = taskmodel
         self.model.connect("tasklist-populated", self.update_model)
@@ -282,6 +283,7 @@ class MainWindow (gtk.Window):
         dialog.destroy()
         if response == gtk.RESPONSE_OK:
             self.reset_build()
+            self.search.set_text("")
         return
 
     def reset_build(self):
@@ -402,6 +404,7 @@ class MainWindow (gtk.Window):
         self.nb.set_current_page(0)
 
     def build_complete_cb(self, running_build):
+        self.stopping = False
         self.back.connect("clicked", self.back_button_clicked_cb)
         self.back.set_sensitive(True)
         self.cancel.set_sensitive(False)
@@ -576,12 +579,12 @@ class MainWindow (gtk.Window):
 
         hb = gtk.HBox(False, 0)
         hb.show()
-        search = gtk.Entry()
-        search.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, "gtk-clear")
-        search.connect("icon-release", self.search_entry_clear_cb)
-        search.show()
-        self.pkgsaz_tree.set_search_entry(search)
-        hb.pack_end(search, False, False, 0)
+        self.search = gtk.Entry()
+        self.search.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, "gtk-clear")
+        self.search.connect("icon-release", self.search_entry_clear_cb)
+        self.search.show()
+        self.pkgsaz_tree.set_search_entry(self.search)
+        hb.pack_end(self.search, False, False, 0)
         label = gtk.Label("Search packages:")
         label.show()
         hb.pack_end(label, False, False, 6)
@@ -602,7 +605,7 @@ class MainWindow (gtk.Window):
         self.tasks_tree.set_search_column(0)
         self.tasks_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
 
-        col = gtk.TreeViewColumn('Package')
+        col = gtk.TreeViewColumn('Package Collection')
         col.set_min_width(430)
         col1 = gtk.TreeViewColumn('Description')
         col1.set_min_width(430)
@@ -650,20 +653,32 @@ class MainWindow (gtk.Window):
         return vbox
 
     def cancel_build(self, button):
-        lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this build?\n"
-        lbl = lbl + "'Force Stop' will stop the build as quickly as"
-        lbl = lbl + " possible but may well leave your build directory in an"
-        lbl = lbl + " unusable state that requires manual steps to fix.\n"
-        lbl = lbl + "'Stop' will stop the build as soon as all in"
-        lbl = lbl + " progress build tasks are finished. However if a"
-        lbl = lbl + " lengthy compilation phase is in progress this may take"
-        lbl = lbl + " some time."
-        dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
-        dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
-        dialog.add_button("Stop", gtk.RESPONSE_OK)
-        dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+        if self.stopping:
+            lbl = "<b>Force Stop build?</b>\nYou've already selected Stop once,"
+            lbl = lbl + " would you like to 'Force Stop' the build?\n\n"
+            lbl = lbl + "This will stop the build as quickly as possible but may"
+            lbl = lbl + " well leave your build directory in an  unusable state"
+            lbl = lbl + " that requires manual steps to fix.\n"
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+            dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+        else:
+            lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this"
+            lbl = lbl + " build?\n\n'Force Stop' will stop the build as quickly as"
+            lbl = lbl + " possible but may well leave your build directory in an"
+            lbl = lbl + " unusable state that requires manual steps to fix.\n\n"
+            lbl = lbl + "'Stop' will stop the build as soon as all in"
+            lbl = lbl + " progress build tasks are finished. However if a"
+            lbl = lbl + " lengthy compilation phase is in progress this may take"
+            lbl = lbl + " some time."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+            dialog.add_button("Stop", gtk.RESPONSE_OK)
+            dialog.add_button("Force Stop", gtk.RESPONSE_YES)
         response = dialog.run()
         dialog.destroy()
+        if response != gtk.RESPONSE_CANCEL:
+            self.stopping = True
         if response == gtk.RESPONSE_OK:
             self.handler.cancel_build()
         elif response == gtk.RESPONSE_YES:
@@ -885,7 +900,8 @@ def main (server, eventHandler):
         # up to and including the space
         pmake = int(pmake.lstrip("-j "))
 
-    image_types = server.runCommand(["getVariable", "IMAGE_TYPES"])
+    selected_image_types = server.runCommand(["getVariable", "IMAGE_FSTYPES"])
+    all_image_types = server.runCommand(["getVariable", "IMAGE_TYPES"])
 
     pclasses = server.runCommand(["getVariable", "PACKAGE_CLASSES"]).split(" ")
     # NOTE: we're only supporting one value for PACKAGE_CLASSES being set
@@ -894,7 +910,7 @@ def main (server, eventHandler):
     pkg, sep, pclass = pclasses[0].rpartition("_")
 
     prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass, cpu_cnt,
-                     pmake, bbthread, image_types)
+                     pmake, bbthread, selected_image_types, all_image_types)
     layers = LayerEditor(configurator, None)
     window = MainWindow(taskmodel, handler, configurator, prefs, layers, mach)
     prefs.set_parent_window(window)

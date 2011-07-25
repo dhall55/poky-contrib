@@ -1,3 +1,4 @@
-TARGET_CC_ARCH = "-march=mips32"
-FEED_ARCH = "${TARGET_ARCH}"
-BASE_PACKAGE_ARCH = "${TARGET_ARCH}"
+require conf/machine/include/mips/arch-mips.inc
+
+TUNE_CCARGS = "-march=mips32"
+TUNE_PKGARCH = "mips"

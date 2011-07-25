@@ -1,3 +1,4 @@
-TARGET_CC_ARCH = "-ml -m3"
-FEED_ARCH = "sh3"
-BASE_PACKAGE_ARCH = "sh3"
+TUNE_ARCH = "sh3"
+
+TUNE_CCARGS = "-ml -m3"
+TUNE_PKGARCH = "sh3"

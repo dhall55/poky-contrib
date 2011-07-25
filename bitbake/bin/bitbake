@@ -40,7 +40,7 @@ from bb import cooker
 from bb import ui
 from bb import server
 
-__version__ = "1.13.2"
+__version__ = "1.13.3"
 logger = logging.getLogger("BitBake")
 
 
@@ -102,7 +102,7 @@ It expects that BBFILES is defined, which is a space separated list of files to
 be executed.  BBFILES does support wildcards.
 Default BBFILES are the .bb files in the current directory.""")
 
-    parser.add_option("-b", "--buildfile", help = "execute the task against this .bb file, rather than a package from BBFILES.",
+    parser.add_option("-b", "--buildfile", help = "execute the task against this .bb file, rather than a package from BBFILES. Does not handle any dependencies.",
                action = "store", dest = "buildfile", default = None)
 
     parser.add_option("-k", "--continue", help = "continue as much as possible after an error. While the target that failed, and those that depend on it, cannot be remade, the other dependencies of these targets can be processed all the same.",
@@ -172,8 +172,8 @@ Default BBFILES are the .bb files in the current directory.""")
 
     ui_main = get_ui(configuration)
 
-    # Server type could be xmlrpc or none currently, if nothing is specified,
-    # default server would be none
+    # Server type can be xmlrpc, process or none currently, if nothing is specified,
+    # the default server is process
     if configuration.servertype:
         server_type = configuration.servertype
     else:
@@ -184,7 +184,7 @@ Default BBFILES are the .bb files in the current directory.""")
         server = getattr(module, server_type)
     except AttributeError:
         sys.exit("FATAL: Invalid server type '%s' specified.\n"
-                 "Valid interfaces: xmlrpc, process, none [default]." % servertype)
+                 "Valid interfaces: xmlrpc, process [default], none." % servertype)
 
     # Save a logfile for cooker into the current working directory. When the
     # server is daemonized this logfile will be truncated.
@@ -197,6 +197,9 @@ Default BBFILES are the .bb files in the current directory.""")
     handler = bb.event.LogHandler()
     logger.addHandler(handler)
 
+    # Before we start modifying the environment we should take a pristine
+    # copy for possible later use
+    initialenv = os.environ.copy()
     # Clear away any spurious environment variables. But don't wipe the
     # environment totally. This is necessary to ensure the correct operation
     # of the UIs (e.g. for DISPLAY, etc.)
@@ -207,7 +210,7 @@ Default BBFILES are the .bb files in the current directory.""")
     server.initServer()
     idle = server.getServerIdleCB()
 
-    cooker = bb.cooker.BBCooker(configuration, idle)
+    cooker = bb.cooker.BBCooker(configuration, idle, initialenv)
     cooker.parseCommandLine()
 
     server.addcooker(cooker)

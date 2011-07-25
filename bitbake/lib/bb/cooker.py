@@ -78,7 +78,7 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__(self, configuration, server_registration_cb):
+    def __init__(self, configuration, server_registration_cb, savedenv={}):
         self.status = None
         self.appendlist = {}
         self.skiplist = {}
@@ -86,6 +86,14 @@ class BBCooker:
         self.server_registration_cb = server_registration_cb
 
         self.configuration = configuration
+
+        # Keep a datastore of the initial environment variables and their
+        # values from when BitBake was launched to enable child processes
+        # to use environment variables which have been cleaned from the
+        # BitBake processes env
+        self.savedenv = bb.data.init()
+        for k in savedenv:
+            self.savedenv.setVar(k, savedenv[k])
 
         self.caches_array = []
         # Currently, only Image Creator hob ui needs extra cache.
@@ -905,6 +913,10 @@ class BBCooker:
         """
         Build the file matching regexp buildfile
         """
+
+        # Too many people use -b because they think it's how you normally
+        # specify a target to be built, so show a warning
+        bb.warn("Buildfile specified, dependencies will not be handled. If this is not what you want, do not use -b / --buildfile.")
 
         # Parse the configuration here. We need to do it explicitly here since
         # buildFile() doesn't use the cache
