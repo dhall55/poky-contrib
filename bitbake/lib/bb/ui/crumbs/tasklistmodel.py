@@ -261,6 +261,9 @@ class TaskListModel(gtk.ListStore):
                 self[path][self.COL_INC] = False
             it = self.images.iter_next(it)
 
+        #reload package list based on recipe first
+        self.emit("image-changed", rep.base_image)
+
         # Mark all of the additional packages for inclusion
         packages = rep.userpkgs.split(" ")
         it = self.get_iter_first()
@@ -272,7 +275,6 @@ class TaskListModel(gtk.ListStore):
                 packages.remove(name)
             it = self.iter_next(it)
 
-        self.emit("image-changed", rep.base_image)
 
     """
     squish lst so that it doesn't contain any duplicate entries
