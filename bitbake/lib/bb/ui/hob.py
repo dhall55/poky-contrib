@@ -902,6 +902,9 @@ def main (server, eventHandler):
 
     selected_image_types = server.runCommand(["getVariable", "IMAGE_FSTYPES"])
     all_image_types = server.runCommand(["getVariable", "IMAGE_TYPES"])
+    exclude_lic = server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"])
+    build_toolchain = server.runCommand(["getVariable", "BUILD_TOOLCHAIN"])
+    toolchain_with_header = server.runCommand(["getVariable", "TOOLCHAIN_WITH_HEADER"])
 
     pclasses = server.runCommand(["getVariable", "PACKAGE_CLASSES"]).split(" ")
     # NOTE: we're only supporting one value for PACKAGE_CLASSES being set
@@ -910,7 +913,8 @@ def main (server, eventHandler):
     pkg, sep, pclass = pclasses[0].rpartition("_")
 
     prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass, cpu_cnt,
-                     pmake, bbthread, selected_image_types, all_image_types)
+                     pmake, bbthread, selected_image_types, all_image_types,
+                     exclude_lic, build_toolchain, toolchain_with_header)
     layers = LayerEditor(configurator, None)
     window = MainWindow(taskmodel, handler, configurator, prefs, layers, mach)
     prefs.set_parent_window(window)

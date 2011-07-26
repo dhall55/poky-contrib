@@ -93,6 +93,12 @@ class Configurator(gobject.GObject):
         fstypes = getString('IMAGE_FSTYPES')
         if fstypes and fstypes != self.config.get('IMAGE_FSTYPES', ''):
             self.config['IMAGE_FSTYPES'] = fstypes
+        toolchain = getString('BUILD_TOOLCHAIN')
+        if toolchain and toolchain != self.config.get('BUILD_TOOLCHAIN', ''):
+            self.config['BUILD_TOOLCHAIN'] = toolchain
+        header = getString('TOOLCHAIN_WITH_HEADER')
+        if header and header != self.config.get('TOOLCHAIN_WITH_HEADER', ''):
+            self.config['TOOLCHAIN_WITH_HEADER'] = header
 
         self.orig_config = copy.deepcopy(self.config)
 

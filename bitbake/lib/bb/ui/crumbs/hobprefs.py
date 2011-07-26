@@ -132,10 +132,18 @@ class HobPrefs(gtk.Dialog):
     def toggle_toolchain_cb(self, check):
         enabled = check.get_active()
         self.handler.toggle_toolchain(enabled)
+        if (enabled):
+            self.configurator.setLocalConfVar('BUILD_TOOLCHAIN', 'True')
+        else:
+            self.configurator.setLocalConfVar('BUILD_TOOLCHAIN', 'False')
 
     def toggle_headers_cb(self, check):
         enabled = check.get_active()
         self.handler.toggle_toolchain_headers(enabled)
+        if (enabled):
+            self.configurator.setLocalConfVar('TOOLCHAIN_WITH_HEADER', 'True')
+        else:
+            self.configurator.setLocalConfVar('TOOLCHAIN_WITH_HEADER', 'False')
 
     def set_parent_window(self, parent):
         self.set_transient_for(parent)
@@ -148,7 +156,8 @@ class HobPrefs(gtk.Dialog):
             glib.idle_add(self.handler.reload_data)
 
     def __init__(self, configurator, handler, curr_sdk_mach, curr_distro, pclass,
-                 cpu_cnt, pmake, bbthread, selected_image_types, all_image_types):
+                 cpu_cnt, pmake, bbthread, selected_image_types, all_image_types, 
+                 exclude_lic, build_toolchain, toolchain_with_header):
         """
         """
         gtk.Dialog.__init__(self, "Preferences", None,
@@ -203,6 +212,8 @@ class HobPrefs(gtk.Dialog):
         # Exclude GPLv3
         check = gtk.CheckButton("Exclude GPLv3 packages")
         check.set_tooltip_text("Check this box to prevent GPLv3 packages from being included in your image")
+        if exclude_lic and len(exclude_lic) != 0:
+            check.set_active(True)
         check.show()
         check.connect("toggled", self.include_gplv3_cb)
         hbox.pack_start(check, expand=False, fill=False, padding=6)
@@ -290,6 +301,8 @@ class HobPrefs(gtk.Dialog):
         hbox.show()
         pbox.pack_start(hbox, expand=False, fill=False, padding=6)
         toolcheck = gtk.CheckButton("Build external development toolchain with image")
+        if build_toolchain and build_toolchain.lower() == "true":
+            toolcheck.set_active(True)
         toolcheck.show()
         toolcheck.connect("toggled", self.toggle_toolchain_cb)
         hbox.pack_start(toolcheck, expand=False, fill=False, padding=6)
@@ -304,6 +317,8 @@ class HobPrefs(gtk.Dialog):
         self.sdk_machine_combo.show()
         hbox.pack_start(self.sdk_machine_combo, expand=False, fill=False, padding=6)
         headerscheck = gtk.CheckButton("Include development headers with toolchain")
+        if toolchain_with_header and toolchain_with_header.lower() == "true":
+           headerscheck.set_active(True)
         headerscheck.show()
         headerscheck.connect("toggled", self.toggle_headers_cb)
         hbox.pack_start(headerscheck, expand=False, fill=False, padding=6)
