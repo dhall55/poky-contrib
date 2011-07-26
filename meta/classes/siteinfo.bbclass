@@ -42,12 +42,15 @@ def siteinfo_data(d):
         "sh4": "endian-little bit-32 sh-common",
         "sparc": "endian-big bit-32",
         "viac3": "endian-little bit-32 ix86-common",
-        "x86_64": "endian-little bit-64",
+        "x86_64": "endian-little", # bitinfo specified in targetinfo
     }
     osinfo = {
         "darwin": "common-darwin",
         "darwin9": "common-darwin",
         "linux": "common-linux common-glibc",
+        "linux-gnu32": "common-linux common-glibc",
+        "linux-gnux32": "common-linux common-glibc",
+        "linux-gnu64": "common-linux common-glibc",
         "linux-gnueabi": "common-linux common-glibc",
         "linux-gnuspe": "common-linux common-glibc",
         "linux-uclibc": "common-linux common-uclibc",
@@ -64,6 +67,15 @@ def siteinfo_data(d):
         "armeb-linux-uclibceabi": "armeb-linux-uclibc",
         "powerpc-linux-gnuspe": "powerpc-linux",
         "powerpc-linux-uclibcspe": "powerpc-linux-uclibc",
+        "x86_64-cygwin": "bit-64",
+        "x86_64-darvin": "bit-64",
+        "x86_64-darvin9": "bit-64",
+        "x86_64-linux": "bit-64",
+        "x86_64-linux-uclibc": "bit-64",
+        "x86_64-linux-gnu32": "bit-32 ix86-common",
+        "x86_64-linux-gnux32": "bit-32 ix86-common",
+        "x86_64-linux-gnu64": "bit-64 x86_64-linux",
+        "x86_64-mingw32": "bit-64",
     }
 
     hostarch = d.getVar("HOST_ARCH", True)
