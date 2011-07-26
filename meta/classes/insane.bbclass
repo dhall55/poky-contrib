@@ -90,6 +90,15 @@ def package_qa_get_machine_dict():
                         "microblaze":   (47787,  0,    0,          False,         32),
                         "microblazeel": (47787,  0,    0,          True,          32),
                       },
+            "linux-gnu32" :       {
+                        "x86_64":     (62,     0,    0,          True,          32),
+                      },
+            "linux-gnux32" :       {
+                        "x86_64":     (62,     0,    0,          True,          32),
+                      },
+            "linux-gnu64" :       {
+                        "x86_64":     (62,     0,    0,          True,          64),
+                      },
        }
 
 
