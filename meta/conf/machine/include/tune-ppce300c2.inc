@@ -1,5 +1,11 @@
+DEFAULTTUNE ?= "ppce300"
+
 require conf/machine/include/powerpc/arch-powerpc.inc
 
-TUNE_CCARGS = "-mcpu=e300c2 -msoft-float"
-TUNE_PKGARCH = "ppce300"
-PACKAGE_EXTRA_ARCHS = "powerpc ppce300"
+TUNEVALID[ppce300] = "Enable ppce300 specific processor optimizations"
+TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "ppce300", "-mcpu=e300c2", "", d)}"
+TUNE_PKGARCH = "${@bb.utils.contains("TUNE_FEATURES", "ppce300", "ppce300", "${TUNE_ARCH}", d)}"
+
+AVAILTUNES += "ppce300"
+TUNE_FEATURES_tune-ppce300 = "m32 fpu-soft ppce300"
+PACKAGE_EXTRA_ARCHS_tune-ppce300 = "powerpc ppce300"
