@@ -21,9 +21,6 @@ COMPATIBLE_MACHINE = "(qemuarm|qemux86|qemuppc|qemumips|qemux86-64)"
 
 # Functionality flags
 KERNEL_REVISION_CHECKING=
-KERNEL_FEATURES="features/netfilter"
-KERNEL_FEATURES_append_qemux86=" cfg/sound"
-KERNEL_FEATURES_append_qemux86-64=" cfg/sound"
 
 # extra tasks
 addtask kernel_link_vmlinux after do_compile before do_install
