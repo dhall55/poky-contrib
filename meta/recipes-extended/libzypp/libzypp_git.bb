@@ -111,9 +111,9 @@ do_archgen () {
 				shift ; continue;;
 		esac
 		if [ "${AVOID_CONSTRUCTOR}" != "true" ]; then
-		  ARCH="_$1"
+		  CARCH="_$1"
 		else
-		  ARCH="IdString(\"$1\")"
+		  CARCH="IdString(\"$1\")"
 		fi
 		shift
 		COMPAT=""
@@ -129,7 +129,7 @@ do_archgen () {
 				COMPAT="${arch_val},$COMPAT"
 			fi
 		done
-		COMPAT_WITH="${ARCH},${COMPAT} $COMPAT_WITH"
+		COMPAT_WITH="${CARCH},${COMPAT} $COMPAT_WITH"
 	done
 	for each_compat in ${COMPAT_WITH} ; do
 		echo "        defCompatibleWith( ${each_compat} );"		>> zypp/poky-arch.h
