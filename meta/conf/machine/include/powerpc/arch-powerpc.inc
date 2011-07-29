@@ -8,6 +8,7 @@ DEFAULTTUNE ?= "powerpc"
 TUNEVALID[m32] = "Power ELF32 standard ABI"
 TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "m32", "-m32", "", d)}"
 TUNE_ARCH .= "${@bb.utils.contains("TUNE_FEATURES", "m32", "powerpc", "", d)}"
+PPC_PKGARCH = "ppc"
 
 TUNEVALID[fpu-hard] = "Use hardware FPU."
 TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "fpu-hard", "-mhard-float", "", d)}"
@@ -20,7 +21,7 @@ ABIEXTENSION = "${@['','spe'][d.getVar('TARGET_FPU', True) in ['ppc-efd', 'ppc-e
 
 PPCPKGSFX_FPU = "${@bb.utils.contains("TUNE_FEATURES", "fpu-soft", "-nf", "", d)}"
 
-TUNE_PKGARCH ?= "${TUNE_ARCH}${PPCPKGSFX_FPU}"
+TUNE_PKGARCH ?= "${PPC_PKGARCH}${PPCPKGSFX_FPU}"
 
 # Basic tune definitions
 AVAILTUNES += "powerpc powerpc-nf" 
