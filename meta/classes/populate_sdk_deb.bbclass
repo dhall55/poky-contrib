@@ -34,16 +34,9 @@ fakeroot populate_sdk_deb () {
 	export INSTALL_ROOTFS_DEB="${SDK_OUTPUT}"
 	export INSTALL_BASEARCH_DEB="${SDK_ARCH}"
 	export INSTALL_PACKAGES_NORMAL_DEB="${TOOLCHAIN_HOST_TASK}"
-	INSTALL_ARCHS_DEB=""
+	INSTALL_ARCHS_DEB="${SDK_ARCH}-nativesdk"
 	for arch in ${PACKAGE_ARCHS}; do
-		sdkarch=`echo $arch | sed -e 's/${HOST_ARCH}/${SDK_ARCH}/'`
-		extension="-nativesdk"
-		if [ "$sdkarch" = "all" -o "$sdkarch" = "any" -o "$sdkarch" = "noarch" ]; then
-		    extension=""
-		fi
-		if [ -e ${DEPLOY_DIR_DEB}/$sdkarch$extension ]; then
-			INSTALL_ARCHS_DEB="$INSTALL_ARCHS_DEB $sdkarch$extension"
-		fi
+		INSTALL_ARCHS_DEB="$INSTALL_ARCHS_DEB $arch"
 	done
 	export INSTALL_ARCHS_DEB
 

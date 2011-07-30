@@ -32,14 +32,12 @@ package_update_index_rpm () {
 		eval archs=\${${archvar}}
 		packagedirs=""
 		packagedirs_sdk=""
-		for arch in $archs; do
-			sdkarch=`echo $arch | sed -e 's/${HOST_ARCH}/${SDK_ARCH}/'`
-			extension="-nativesdk"
-			if [ "$sdkarch" = "all" -o "$sdkarch" = "any" -o "$sdkarch" = "noarch" ]; then
-			    extension=""
-			fi
+		if [ "${SDK_ARCH}-nativesdk" != "-nativesdk" ]; then
+			packagedirs_sdk="${DEPLOY_DIR_RPM}/${SDK_ARCH}-nativesdk"
+		fi
+		for arch in $archs ; do
 			packagedirs="${DEPLOY_DIR_RPM}/$arch $packagedirs"
-			packagedirs_sdk="${DEPLOY_DIR_RPM}/$sdkarch$extension $packagedirs_sdk"
+			packagedirs_sdk="${DEPLOY_DIR_RPM}/$arch $packagedirs_sdk"
 
 			rm -rf ${DEPLOY_DIR_RPM}/$arch/solvedb
 			rm -rf ${DEPLOY_DIR_RPM}/$sdkarch$extension/solvedb
@@ -95,6 +93,7 @@ package_update_index_rpm () {
 #
 package_generate_rpm_conf () {
 	printf "_solve_dbpath " > ${RPMCONF_TARGET_BASE}.macro
+	printf "_solve_dbpath " > ${RPMCONF_HOST_BASE}.macro
 	o_colon_t=false
 	o_colon_h=false
 
@@ -238,7 +237,7 @@ package_install_internal_rpm () {
 					echo "Unable to find package $pkg ($ml_pkg)!"
 					exit 1
 				fi
-				echo $pkg_name >> ${IMAGE_ROOTFS}/install/install.manifest
+				echo $pkg_name >> ${target_rootfs}/install/install.manifest
 			done
 		fi
 	fi
@@ -258,7 +257,7 @@ package_install_internal_rpm () {
 				echo "Unable to find package $pkg ($ml_pkg)!"
 				exit 1
 			fi
-			echo $pkg_name >> ${IMAGE_ROOTFS}/install/install.manifest
+			echo $pkg_name >> ${target_rootfs}/install/install.manifest
 		done
 	fi
 
@@ -303,7 +302,7 @@ package_install_internal_rpm () {
 		# Dump the full set of recommends...
 		${RPM} --predefine "_rpmds_sysinfo_path ${target_rootfs}/etc/rpm/sysinfo" \
 			--predefine "_rpmrc_platform_path ${target_rootfs}/etc/rpm/platform" \
-			-D "_dbpath ${IMAGE_ROOTFS}/install" -D "`cat ${confbase}.macro`" \
+			-D "_dbpath ${target_rootfs}/install" -D "`cat ${confbase}.macro`" \
 			-D "__dbi_txn create nofsync private" \
 			-qa --qf "[%{RECOMMENDS}\n]" | sort -u > ${target_rootfs}/install/recommend
 		# Did we add more to the list?
