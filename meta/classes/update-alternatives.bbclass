@@ -40,6 +40,8 @@
 ALTERNATIVE_PRIORITY = "10"
 ALTERNATIVE_LINK = "${bindir}/${ALTERNATIVE_NAME}"
 
+RPROVIDES_${PN} += "${@(d.getVar('ALTERNATIVE_LINK', True) or '') + ' ' + (d.getVar('ALTERNATIVE_LINKS', True) or '')}"
+
 update_alternatives_postinst() {
 update-alternatives --install ${ALTERNATIVE_LINK} ${ALTERNATIVE_NAME} ${ALTERNATIVE_PATH} ${ALTERNATIVE_PRIORITY}
 }
