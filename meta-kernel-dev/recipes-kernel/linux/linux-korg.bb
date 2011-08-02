@@ -2,7 +2,7 @@ inherit kernel
 require recipes-kernel/linux/linux-yocto.inc
 
 KMACHINE = "yocto/standard/auto-bsp"
-YOCTO_KERNEL_EXTERNAL_BRANCH="yocto/standard/auto-bsp"
+YOCTO_KERNEL_EXTERNAL_BRANCH ?= "yocto/standard/auto-bsp"
 
 KBRANCH = ${KMACHINE}
 KMETA = meta
