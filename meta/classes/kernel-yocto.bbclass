@@ -28,7 +28,8 @@ do_patch() {
 			addon_features="$addon_features --feature $feat"
 		done
 	fi
-	updateme --branch ${kbranch} ${addon_features} ${ARCH} ${MACHINE} ${WORKDIR}
+	updateme --branch ${kbranch} -DKDESC=${KMACHINE}:${LINUX_KERNEL_TYPE} \
+                         ${addon_features} ${ARCH} ${KMACHINE} ${WORKDIR}
 	if [ $? -ne 0 ]; then
 		echo "ERROR. Could not update ${kbranch}"
 		exit 1
@@ -83,20 +84,12 @@ do_kernel_checkout[dirs] = "${S}"
 
 addtask kernel_checkout before do_patch after do_unpack
 
+do_kernel_configme[dirs] = "${CCACHE_DIR} ${S} ${B}"
 do_kernel_configme() {
 	echo "[INFO] doing kernel configme"
 
-	kbranch=${KBRANCH}
-	if [ -n "${YOCTO_KERNEL_EXTERNAL_BRANCH}" ]; then
-           # switch from a generic to a specific branch
-           kbranch=${YOCTO_KERNEL_EXTERNAL_BRANCH}
-           cd ${S}
-           git checkout ${kbranch}
-	else
-	   cd ${S}
-	fi
-
-	configme --reconfig --output ${B} ${kbranch} ${MACHINE}
+	cd ${S}
+	configme --reconfig --output ${B} ${KBRANCH} ${KMACHINE}
 	if [ $? -ne 0 ]; then
 		echo "ERROR. Could not configure ${KMACHINE}-${LINUX_KERNEL_TYPE}"
 		exit 1
