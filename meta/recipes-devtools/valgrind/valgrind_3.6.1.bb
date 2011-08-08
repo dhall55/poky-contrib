@@ -11,6 +11,7 @@ PR = "r0"
 
 SRC_URI = "http://www.valgrind.org/downloads/valgrind-${PV}.tar.bz2 \
 	   file://fix_issue_caused_by_ccache.patch \
+           file://fix_3.0_kernel_support.patch \
            file://fixed-perl-path.patch"
 
 SRC_URI[md5sum] = "2c3aa122498baecc9d69194057ca88f5"
