@@ -4,10 +4,16 @@ require recipes-kernel/linux/linux-yocto.inc
 KMACHINE = "yocto/standard/preempt-rt/base"
 KMACHINE_qemux86  = "common-pc"
 KMACHINE_qemux86-64  = "common-pc-64"
+KMACHINE_qemuppc  = "qemu-ppc32"
+KMACHINE_qemumips = "mti-malta32-be"
+KMACHINE_qemuarm  = "arm-versatile-926ejs"
 
 KBRANCH = ${KMACHINE}
 KBRANCH_qemux86 = "yocto/standard/preempt-rt/base"
 KBRANCH_qemux86-64 = "yocto/standard/preempt-rt/base"
+KBRANCH_qemuppc  = "yocto/standard/preempt-rt/base"
+KBRANCH_qemumips = "yocto/standard/preempt-rt/base"
+KBRANCH_qemuarm  = "yocto/standard/preempt-rt/base"
 KMETA = meta
 
 LINUX_VERSION ?= "3.0"
@@ -26,7 +32,7 @@ SRCREV_FORMAT = "meta_machine"
 
 SRC_URI = "git://git.yoctoproject.org/linux-yocto-3.0.git;protocol=git;nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
 
-COMPATIBLE_MACHINE = "(qemux86|qemux86-64)"
+COMPATIBLE_MACHINE = "(qemux86|qemux86-64|qemuppc|qemumips|qemuarm)"
 
 # Functionality flags
 KERNEL_REVISION_CHECKING ?= "t"
