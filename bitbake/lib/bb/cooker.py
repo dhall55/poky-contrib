@@ -1379,8 +1379,41 @@ class ParsingFailure(Exception):
 
 def parse_file(task):
     filename, appends, caches_array = task
+
+    import random
     try:
-        return True, bb.cache.Cache.parse(filename, appends, parse_file.cfg, caches_array)
+        import cProfile as profile
+    except:
+        import profile
+
+    try:
+        ret = [None]
+        prof = profile.Profile()
+
+        prof.runctx("ret[0] = bb.cache.Cache.parse(filename, appends, parse_file.cfg, caches_array)", globals(), locals())
+
+        ran = random.random()
+        prof.dump_stats("profile.log.%s" % ran)
+
+        # Redirect stdout to capture profile information
+        pout = open('profile.log.processed', 'w')
+        so = sys.stdout.fileno()
+        orig_so = os.dup(sys.stdout.fileno())
+        os.dup2(pout.fileno(), so)
+   
+        import pstats
+        p = pstats.Stats('profile.log.%s' % ran)
+        p.sort_stats('time')
+        p.print_stats()
+        p.print_callers()
+        p.sort_stats('cumulative')
+        p.print_stats()
+
+        os.dup2(orig_so, so)
+        pout.flush()
+        pout.close()  
+
+        return True, ret[0]
     except Exception as exc:
         tb = sys.exc_info()[2]
         exc.recipe = filename
