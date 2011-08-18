@@ -159,17 +159,16 @@ def expandKeys(alterdata, readdata = None):
         ekey = todolist[key]
         renameVar(key, ekey, alterdata)
 
-def inheritFromOS(d, savedenv, permitted):
+def inheritFromOS(d, savedenv):
     """Inherit variables from the initial environment."""
     exportlist = bb.utils.preserved_envvars_exported()
     for s in savedenv.keys():
-        if s in permitted:
-            try:
-                setVar(s, getVar(s, savedenv, True), d)
-                if s in exportlist:
-                    setVarFlag(s, "export", True, d)
-            except TypeError:
-                pass
+        try:
+            setVar(s, getVar(s, savedenv, True), d)
+            if s in exportlist:
+                setVarFlag(s, "export", True, d)
+        except TypeError:
+            pass
 
 def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     """Emit a variable to be sourced by a shell."""
