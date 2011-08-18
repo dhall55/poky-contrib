@@ -169,7 +169,8 @@ class BBCooker:
         if not self.server_registration_cb:
             bb.data.setVar("BB_WORKERCONTEXT", "1", self.configuration.data)
 
-        bb.data.inheritFromOS(self.configuration.data, self.savedenv)
+        filtered_keys = bb.utils.approved_variables()
+        bb.data.inheritFromOS(self.configuration.data, self.savedenv, filtered_keys)
 
         try:
             self.parseConfigurationFiles(self.configuration.prefile,
@@ -1104,8 +1105,8 @@ class BBCooker:
 
         self.server_registration_cb(buildTargetsIdle, rq)
 
-    def updateCache(self, force=False):
-        if self.state == state.running and not force:
+    def updateCache(self):
+        if self.state == state.running:
             return
 
         if self.state in (state.shutdown, state.stop):
@@ -1290,8 +1291,11 @@ class BBCooker:
         self.state = state.stop
 
     def reparseFiles(self):
+        return
+
+    def reset(self):
+        self.state = state.initial
         self.loadConfigurationData()
-        self.updateCache(force=True)
 
 def server_main(cooker, func, *args):
     cooker.pre_serve()

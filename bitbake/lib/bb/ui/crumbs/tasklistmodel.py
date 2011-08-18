@@ -132,7 +132,7 @@ class TaskListModel(gtk.ListStore):
         if not model.get_value(it, self.COL_INC) or model.get_value(it, self.COL_TYPE) == 'image':
             return False
         name = model.get_value(it, self.COL_NAME)
-        if name.endswith('-native') or name.endswith('-cross'):
+        if name.count('-native') or name.count('-cross'):
             return False
         else:
             return True
@@ -196,7 +196,7 @@ class TaskListModel(gtk.ListStore):
             return False
         else:
             name = model.get_value(it, self.COL_NAME)
-            if name.count('-native') or name.count('cross'):
+            if name.count('-native') or name.count('-cross'):
                 return False
             return True
 
@@ -226,32 +226,30 @@ class TaskListModel(gtk.ListStore):
             lic = event_model["pn"][item]["license"]
             group = event_model["pn"][item]["section"]
             filename = event_model["pn"][item]["filename"]
-            depends = event_model["depends"].get(item, "")
-            rdepends = event_model["rdepends-pn"].get(item, "")
-            if rdepends:
-                for rdep in rdepends:
-                    if event_model["packages"].get(rdep, ""):
-                        pn = event_model["packages"][rdep].get("pn", "")
-                        if pn:
-                            depends.append(pn)
-
-            # uniquify the list of depends
-            depends = self.squish(depends)
-            # remove circular dependencies
-            if name in depends:
-                depends.remove(name)
-            deps = " ".join(depends)
-
             if name.count('task-') > 0:
                 atype = 'task'
             elif name.count('-image-') > 0:
                 atype = 'image'
 
-            self.set(self.append(), self.COL_NAME, name, self.COL_DESC, summary,
-                     self.COL_LIC, lic, self.COL_GROUP, group,
-                     self.COL_DEPS, deps, self.COL_BINB, "",
-                     self.COL_TYPE, atype, self.COL_INC, False,
-                     self.COL_IMG, False, self.COL_PATH, filename)
+            depends = event_model["depends"].get(item, [])
+            rdepends = event_model["rdepends-pn"].get(item, [])
+            if ("%s-dev" % item) in rdepends:
+                rdepends.remove("%s-dev" % item)
+            packages = {}
+            for pkg in event_model["packages"]:
+                if event_model["packages"][pkg]["pn"] == name:
+                    deps = []
+                    deps.extend(depends)
+                    deps.extend(event_model["rdepends-pkg"].get(pkg, []))
+                    deps.extend(rdepends)
+                    packages[pkg] = deps
+
+            for p in packages:
+                self.set(self.append(), self.COL_NAME, p, self.COL_DESC, summary,
+                         self.COL_LIC, lic, self.COL_GROUP, group,
+                         self.COL_DEPS, " ".join(packages[p]), self.COL_BINB, "",
+                         self.COL_TYPE, atype, self.COL_INC, False,
+                         self.COL_IMG, False, self.COL_PATH, filename)
 
 	self.emit("tasklist-populated")
 
@@ -459,11 +457,8 @@ class TaskListModel(gtk.ListStore):
                 # resultant image, so filter cross and native recipes
                 dep_included = self.contents_includes_name(dep)
                 path = self.find_path_for_item(dep)
-                if not dep_included and not dep.endswith("-native") and not dep.endswith("-cross"):
-                    if path:
-                        self.include_item(path, name, image_contents)
-                    else:
-                        pass
+                if not dep_included and path:
+                    self.include_item(path, name, image_contents)
                 # Set brought in by for any no longer orphan packages
                 elif dep_included and path:
                     if not self[path][self.COL_BINB]:
@@ -474,6 +469,11 @@ class TaskListModel(gtk.ListStore):
     Returns the path in the model or None
     """
     def find_path_for_item(self, item_name):
+        # We don't include virtual/* or *-native items in the model so save a
+        # heavy iteration loop by exiting early for these items
+        if item_name.startswith("virtual/") or item_name.count('-native') or item_name.count('-cross'):
+            return None
+
         it = self.get_iter_first()
         path = None
         while it:

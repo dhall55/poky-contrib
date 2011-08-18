@@ -438,7 +438,7 @@
                 i686 or x86_64.
        
          &lt;<emphasis>arch</emphasis>&gt; is a string representing the target architecture: 
-                i686, x86_64, powerpc, mips, or arm.
+                i586, x86_64, powerpc, mips, or arm.
        
          &lt;<emphasis>release</emphasis>&gt; is the version of Yocto Project.
          </literallayout>
@@ -449,19 +449,20 @@
          </para>
 
          <literallayout class='monospaced'>
-     yocto-eglibc-x86_64-i686-toolchain-gmae-1.0.tar.bz2
+     yocto-eglibc-x86_64-i586-toolchain-gmae-1.0.tar.bz2
          </literallayout>
 
          <para>
              The toolchain tarballs are self-contained and must be installed into <filename>/opt/poky</filename>.
              The following commands show how you install the toolchain tarball given a 64-bit development host system
              and a 32-bit target architecture.
+             The example assumes the toolchain tarball is located in <filename>~/toolchains/</filename>:
          </para>
 
          <para>
              <literallayout class='monospaced'>
      $ cd /
-     $ sudo tar -xvjf yocto-eglibc-x86_64-i686-toolchain-gmae-1.0.tar.bz2
+     $ sudo tar -xvjf ~/toolchains/yocto-eglibc-x86_64-i586-toolchain-gmae-1.0.tar.bz2
              </literallayout>
          </para>
          </section>
@@ -474,6 +475,9 @@
              <ulink url='http://yoctoproject.org/downloads/yocto-1.0/machines/qemu'></ulink>.
              Be sure to use the kernel and filesystem image that matches the architecture you want 
              to simulate.
+             Download areas exist for the five supported machine architectures:
+             <filename>qemuarm</filename>, <filename>qemumips</filename>, <filename>qemuppc</filename>,
+             <filename>qemux86</filename>, and <filename>qemux86_64</filename>.
          </para>
        
          <para>  
@@ -481,37 +485,45 @@
          </para>
 
          <literallayout class='monospaced'>
-     *zImage-&lt;<emphasis>kernel-rev</emphasis>&gt;-qemu&lt;<emphasis>arch</emphasis>&gt;*.bin
-     vmlinux-&lt;<emphasis>kernel-rev</emphasis>&gt;-&lt;<emphasis>arch</emphasis>&gt;*.bin
+     *zImage-&lt;<emphasis>kernel-rev</emphasis>&gt;-qemu&lt;<emphasis>arch</emphasis>&gt;-&lt;<emphasis>release</emphasis>&gt;*.bin
+     vmlinux-&lt;<emphasis>kernel-rev</emphasis>&gt;-qemu&lt;<emphasis>arch</emphasis>&gt;-&lt;<emphasis>release</emphasis>&gt;*.bin
 
      Where:
+         &lt;<emphasis>kernel-rev</emphasis>&gt; is the base Linux kernel revision 
+                (e.g. 2.6.37).
+
          &lt;<emphasis>arch</emphasis>&gt; is a string representing the target architecture: 
                 x86, x86-64, ppc, mips, or arm.
 
-         &lt;<emphasis>kernel-rev</emphasis>&gt; is the base Linux kernel revision 
-                (e.g. 2.6.37).
+         &lt;<emphasis>release</emphasis>&gt; is the version of Yocto Project. 
          </literallayout>
          </section>
 
         <section id='downloading-the-filesystem'>
         <title>Downloading the Filesystem</title>
          <para>
-             The filesystem image has two forms.
-             One form is an <filename>ext3</filename> filesystem image.
-             The other form is a tarball of the filesystem and is booted using user-space NFS.
-             Here are the respective forms:
+             The filesystem image has two tarball forms: <filename>ext3</filename> and 
+             <filename>tar</filename>.
+             You must use the <filename>ext3</filename> form when booting an image using the 
+             QEMU emulator.
+             The <filename>tar</filename> form can be flattened out in your host development system
+             and used for Yocto Project build purposes.
          </para>
 
           <literallayout class='monospaced'>
-     yocto-image-&lt;<emphasis>profile</emphasis>&gt;-qemu&lt;<emphasis>arch</emphasis>&gt;.rootfs.ext3.bz2
-     yocto-image-&lt;<emphasis>profile</emphasis>&gt;-qemu&lt;<emphasis>arch</emphasis>&gt;.rootfs.tar.bz2
+     yocto-image-&lt;<emphasis>profile</emphasis>&gt;-qemu&lt;<emphasis>arch</emphasis>&gt;-&lt;<emphasis>release</emphasis>&gt;.rootfs.ext3.bz2
+     yocto-image-&lt;<emphasis>profile</emphasis>&gt;-qemu&lt;<emphasis>arch</emphasis>&gt;-&lt;<emphasis>release</emphasis>&gt;.rootfs.tar.bz2
 
      Where:
          &lt;<emphasis>profile</emphasis>&gt; is the filesystem image's profile:
-                   sdk, sato, minimal, or lsb.
+                   lsb, lsb-dev, lsb-sdk, minimal, minimal-dev, sato, sato-dev, or sato-sdk.
+                   For information on these types of image profiles, see
+                   <ulink url='http://www.yoctoproject.org/docs/1.1/poky-ref-manual/poky-ref-manual.html#ref-images'>Reference: Images</ulink> in the Yocto Project Reference Manual.
 
          &lt;<emphasis>arch</emphasis>&gt; is a string representing the target architecture: 
                 x86, x86-64, ppc, mips, or arm.
+
+         &lt;<emphasis>release</emphasis>&gt; is the version of Yocto Project. 
           </literallayout>
          </section>
 
@@ -527,7 +539,7 @@
 
      Where:
          &lt;<emphasis>arch</emphasis>&gt; is a string representing the target architecture: 
-                i686, x86_64, ppc603e, mips, or armv5te.
+                i586, x86_64, ppc603e, mips, or armv5te.
 
          &lt;<emphasis>if</emphasis>&gt; is a string representing an embedded application binary interface.
               Not all setup scripts include this string.
@@ -538,15 +550,15 @@
          </para>
 
          <literallayout class='monospaced'>
-     $ poky-qemu &lt;<emphasis>qemuarch</emphasis>&gt; &lt;<emphasis>kernel</emphasis>&gt; &lt;<emphasis>filesystem_image</emphasis>&gt;
+     $ poky-qemu &lt;<emphasis>qemuarch</emphasis>&gt; &lt;<emphasis>kernel-image</emphasis>&gt; &lt;<emphasis>filesystem-image</emphasis>&gt;
 
      Where:
          &lt;<emphasis>qemuarch</emphasis>&gt; is a string representing the target architecture: qemux86, qemux86-64, 
                     qemuppc, qemumips, or qemuarm.
 
-         &lt;<emphasis>kernel</emphasis>&gt; is the architecture-specific kernel.
+         &lt;<emphasis>kernel-image</emphasis>&gt; is the architecture-specific kernel image.
 
-         &lt;<emphasis>filesystem_image</emphasis>&gt; is the .ext3 filesystem image.
+         &lt;<emphasis>filesystem-image</emphasis>&gt; is the .ext3 filesystem image.
 
          </literallayout>
 

@@ -2,9 +2,7 @@
 
 # This script has subcommands which operate against your bitbake layers, either
 # displaying useful information, or acting against them.
-# Currently, it only provides a show_appends command, which shows you what
-# bbappends are in effect, and warns you if you have appends which are not being
-# utilized.
+# See the help output for details on available commands.
 
 import cmd
 import logging
@@ -23,25 +21,30 @@ from bb.cooker import state
 
 
 logger = logging.getLogger('BitBake')
-default_cmd = 'show_appends'
 
 
 def main(args):
-    logging.basicConfig(format='%(levelname)s: %(message)s')
+    # Set up logging
+    console = logging.StreamHandler(sys.stdout)
+    format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+    bb.msg.addDefaultlogFilter(console)
+    console.setFormatter(format)
+    logger.addHandler(console)
+
+    initialenv = os.environ.copy()
     bb.utils.clean_environment()
 
-    cmds = Commands()
+    cmds = Commands(initialenv)
     if args:
         cmds.onecmd(' '.join(args))
     else:
-        cmds.onecmd(default_cmd)
+        cmds.do_help('')
     return cmds.returncode
 
 
 class Commands(cmd.Cmd):
-    def __init__(self):
+    def __init__(self, initialenv):
         cmd.Cmd.__init__(self)
-        initialenv = os.environ.copy()
         self.returncode = 0
         self.config = Config(parse_only=True)
         self.cooker = bb.cooker.BBCooker(self.config,
@@ -76,33 +79,66 @@ class Commands(cmd.Cmd):
         if not self.cooker_data:
             self.prepare_cooker()
 
+    def default(self, line):
+        """Handle unrecognised commands"""
+        sys.stderr.write("Unrecognised command or option\n")
+        self.do_help('')
+
+    def do_help(self, topic):
+        """display general help or help on a specified command"""
+        if topic:
+            sys.stdout.write('%s: ' % topic)
+            cmd.Cmd.do_help(self,topic)
+        else:
+            sys.stdout.write("usage: bitbake-layers <command> [arguments]\n\n")
+            sys.stdout.write("Available commands:\n")
+            procnames = self.get_names()
+            for procname in procnames:
+                if procname[:3] == 'do_':
+                    sys.stdout.write("  %s\n" % procname[3:])
+                    doc = getattr(self, procname).__doc__
+                    if doc:
+                        sys.stdout.write("    %s\n" % doc.splitlines()[0])
+
     def do_show_layers(self, args):
-        """show_layers: shows current configured layers"""
+        """show current configured layers"""
         self.check_prepare_cooker()
-        logger.info(str(self.config_data.getVar('BBLAYERS', True)))
+        logger.plain('')
+        logger.plain("%s  %s  %s" % ("layer".ljust(20), "path".ljust(40), "priority"))
+        logger.plain('=' * 74)
+        layerdirs = str(self.config_data.getVar('BBLAYERS', True)).split()
+        for layerdir in layerdirs:
+            layername = '?'
+            layerpri = 0
+            for layer, _, regex, pri in self.cooker.status.bbfile_config_priorities:
+                if regex.match(os.path.join(layerdir, 'test')):
+                    layername = layer
+                    layerpri = pri
+                    break
+
+            logger.plain("%s  %s  %d" % (layername.ljust(20), layerdir.ljust(40), layerpri))
 
     def do_show_overlayed(self, args):
-        """show_overlayed: list overlayed recipes (where there is a recipe in another
-layer that has a higher layer priority)
+        """list overlayed recipes (where there is a recipe in another layer that has a higher layer priority)
 
-syntax: show_overlayed
+usage: show_overlayed
 
 Highest priority recipes are listed with the recipes they overlay as subitems.
 """
         self.check_prepare_cooker()
         if self.cooker.overlayed:
-            logger.info('Overlayed recipes:')
+            logger.plain('Overlayed recipes:')
             for f in self.cooker.overlayed.iterkeys():
-                logger.info('%s' % f)
+                logger.plain('%s' % f)
                 for of in self.cooker.overlayed[f]:
-                    logger.info('  %s' % of)
+                    logger.plain('  %s' % of)
         else:
-            logger.info('No overlayed recipes found')
+            logger.plain('No overlayed recipes found')
 
     def do_flatten(self, args):
-        """flatten: flattens layer configuration into a separate output directory.
+        """flattens layer configuration into a separate output directory.
 
-syntax: flatten <outputdir>
+usage: flatten <outputdir>
 
 Takes the current layer configuration and builds a "flattened" directory
 containing the contents of all layers, with any overlayed recipes removed
@@ -134,12 +170,12 @@ cleanup may still be necessary afterwards, in particular:
                     if of.startswith(layer):
                         overlayed.append(of)
 
-            logger.info('Copying files from %s...' % layer )
+            logger.plain('Copying files from %s...' % layer )
             for root, dirs, files in os.walk(layer):
                 for f1 in files:
                     f1full = os.sep.join([root, f1])
                     if f1full in overlayed:
-                        logger.info('  Skipping overlayed file %s' % f1full )
+                        logger.plain('  Skipping overlayed file %s' % f1full )
                     else:
                         ext = os.path.splitext(f1)[1]
                         if ext != '.bbappend':
@@ -148,7 +184,7 @@ cleanup may still be necessary afterwards, in particular:
                             bb.utils.mkdirhier(os.path.dirname(fdest))
                             if os.path.exists(fdest):
                                 if f1 == 'layer.conf' and root.endswith('/conf'):
-                                    logger.info('  Skipping layer config file %s' % f1full )
+                                    logger.plain('  Skipping layer config file %s' % f1full )
                                     continue
                                 else:
                                     logger.warn('Overwriting file %s', fdest)
@@ -157,7 +193,7 @@ cleanup may still be necessary afterwards, in particular:
                                 if f1 in self.cooker_data.appends:
                                     appends = self.cooker_data.appends[f1]
                                     if appends:
-                                        logger.info('  Applying appends to %s' % fdest )
+                                        logger.plain('  Applying appends to %s' % fdest )
                                         for appendname in appends:
                                             self.apply_append(appendname, fdest)
 
@@ -175,18 +211,18 @@ cleanup may still be necessary afterwards, in particular:
         recipefile.writelines(appendfile.readlines())
 
     def do_show_appends(self, args):
-        """show_appends: List bbappend files and recipe files they apply to
+        """list bbappend files and recipe files they apply to
 
-syntax: show_appends
+usage: show_appends
 
 Recipes are listed with the bbappends that apply to them as subitems.
 """
         self.check_prepare_cooker()
         if not self.cooker_data.appends:
-            logger.info('No append files found')
+            logger.plain('No append files found')
             return
 
-        logger.info('State of append files:')
+        logger.plain('State of append files:')
 
         pnlist = list(self.cooker_data.pkg_pn.keys())
         pnlist.sort()
@@ -215,9 +251,9 @@ Recipes are listed with the bbappends that apply to them as subitems.
         appended, missing = self.get_appends_for_files(filenames)
         if appended:
             for basename, appends in appended:
-                logger.info('%s%s:', basename, name_suffix)
+                logger.plain('%s%s:', basename, name_suffix)
                 for append in appends:
-                    logger.info('  %s', append)
+                    logger.plain('  %s', append)
 
             if best_filename:
                 if best_filename in missing:

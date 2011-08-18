@@ -177,7 +177,15 @@ package_install_internal_rpm () {
 	echo "${platform}${TARGET_VENDOR}-${TARGET_OS}" > ${target_rootfs}/etc/rpm/platform
 	if [ ! -z "$platform_extra" ]; then
 		for pt in $platform_extra ; do
-			echo "$pt-.*-${TARGET_OS}" >> ${target_rootfs}/etc/rpm/platform
+			case $pt in
+				noarch | any | all)
+					os="`echo ${TARGET_OS} | sed "s,-.*,,"`.*"
+					;;
+				*)
+					os="${TARGET_OS}"
+					;;
+			esac
+			echo "$pt-.*-$os" >> ${target_rootfs}/etc/rpm/platform
 		done
 	fi
 
@@ -249,10 +257,16 @@ package_install_internal_rpm () {
 		echo "Adding attempt only packages..."
 		for pkg in ${package_attemptonly} ; do
 			echo "Processing $pkg..."
-			pkg_name=$(resolve_package_rpm $pkg ${confbase}.conf)
+			archvar=base_archs
+			ml_pkg=$(echo ${pkg} | sed "s,^${MLPREFIX}\(.*\),\1,")
+			if [ "${ml_pkg}" != "${pkg}" ]; then
+				archvar=ml_archs
+			fi
+
+			pkg_name=$(resolve_package_rpm ${confbase}-${archvar}.conf ${ml_pkg})
 			if [ -z "$pkg_name" ]; then
-				echo "Unable to find package $pkg!"
-				exit 1
+				echo "Note: Unable to find package $pkg ($ml_pkg) -- PACKAGE_INSTALL_ATTEMPTONLY"
+				continue
 			fi
 			echo "Attempting $pkg_name..." >> "${WORKDIR}/temp/log.do_${task}_attemptonly.${PID}"
 			${RPM} --predefine "_rpmds_sysinfo_path ${target_rootfs}/etc/rpm/sysinfo" \
@@ -289,8 +303,17 @@ package_install_internal_rpm () {
 			# Ohh there was a new one, we'll need to loop again...
 			loop=1
 			echo "Processing $pkg..."
-			pkg_name=$(resolve_package $pkg ${confbase}.conf)
-			if [ -z "$pkg_name" ]; then
+			found=0
+			for archvar in base_archs ml_archs ; do
+				pkg_name=$(resolve_package_rpm ${confbase}-${archvar}.conf ${pkg})
+				if [ -n "$pkg_name" ]; then
+					found=1
+					break
+				fi
+			done
+
+			if [ $found -eq 0 ]; then
+				echo "Note: Unable to find package $pkg -- suggests"
 				echo "Unable to find package $pkg." >> "${WORKDIR}/temp/log.do_${task}_recommend.${PID}"
 				continue
 			fi
@@ -334,8 +357,8 @@ python write_specfile () {
 		multilibs = d.getVar('MULTILIBS', True) or ""
 		for ext in multilibs.split():
 			eext = ext.split(':')
-			if len(eext) > 1 and eext[0] == 'multilib' and name and name.find(eext[1] + '-') == 0:
-				name = (eext[1] + '-').join(name.split(eext[1] + '-', 1)[1:])
+			if len(eext) > 1 and eext[0] == 'multilib' and name and name.find(eext[1] + '-') >= 0:
+				name = "".join(name.split(eext[1] + '-'))
 		return name
 
 #		ml = bb.data.getVar("MLPREFIX", d, True)
@@ -371,7 +394,7 @@ python write_specfile () {
 							pv = subd['PKGV']
 							reppv = pv.replace('-', '+')
 							ver = ver.replace(pv, reppv)
-				newdeps_dict[strip_multilib(dep, d)] = ver
+				newdeps_dict[dep] = ver
 			depends = bb.utils.join_deps(newdeps_dict)
 			bb.data.setVar(varname, depends.strip(), d)
 
@@ -493,12 +516,12 @@ python write_specfile () {
 		# Map the dependencies into their final form
 		bb.build.exec_func("mapping_rename_hook", localdata)
 
-		splitrdepends    = bb.data.getVar('RDEPENDS', localdata, True) or ""
-		splitrrecommends = bb.data.getVar('RRECOMMENDS', localdata, True) or ""
-		splitrsuggests   = bb.data.getVar('RSUGGESTS', localdata, True) or ""
-		splitrprovides   = bb.data.getVar('RPROVIDES', localdata, True) or ""
-		splitrreplaces   = bb.data.getVar('RREPLACES', localdata, True) or ""
-		splitrconflicts  = bb.data.getVar('RCONFLICTS', localdata, True) or ""
+		splitrdepends    = strip_multilib(bb.data.getVar('RDEPENDS', localdata, True), d) or ""
+		splitrrecommends = strip_multilib(bb.data.getVar('RRECOMMENDS', localdata, True), d) or ""
+		splitrsuggests   = strip_multilib(bb.data.getVar('RSUGGESTS', localdata, True), d) or ""
+		splitrprovides   = strip_multilib(bb.data.getVar('RPROVIDES', localdata, True), d) or ""
+		splitrreplaces   = strip_multilib(bb.data.getVar('RREPLACES', localdata, True), d) or ""
+		splitrconflicts  = strip_multilib(bb.data.getVar('RCONFLICTS', localdata, True), d) or ""
 		splitrobsoletes  = []
 
 		# For now we need to manually supplement RPROVIDES with any update-alternatives links
@@ -732,8 +755,8 @@ python do_package_rpm () {
 	# and dependency information...
 	def strip_multilib(name, d):
 		ml = bb.data.getVar("MLPREFIX", d, True)
-		if ml and name and len(ml) != 0 and name.find(ml) == 0:
-			return ml.join(name.split(ml, 1)[1:])
+		if ml and name and len(ml) != 0 and name.find(ml) >= 0:
+			return "".join(name.split(ml))
 		return name
 
 	workdir = bb.data.getVar('WORKDIR', d, True)
@@ -821,13 +844,13 @@ python do_package_rpm () {
 	targetsys = bb.data.getVar('TARGET_SYS', d, True)
 	targetvendor = bb.data.getVar('TARGET_VENDOR', d, True)
 	pkgwritedir = bb.data.expand('${PKGWRITEDIRRPM}/${PACKAGE_ARCH}', d)
-	pkgarch = bb.data.expand('${PACKAGE_ARCH}', d)
+	pkgarch = bb.data.expand('${PACKAGE_ARCH}${TARGET_VENDOR}-${TARGET_OS}', d)
 	magicfile = bb.data.expand('${STAGING_DIR_NATIVE}/usr/share/misc/magic.mgc', d)
 	bb.mkdirhier(pkgwritedir)
 	os.chmod(pkgwritedir, 0755)
 
 	cmd = rpmbuild
-	cmd = cmd + " --nodeps --short-circuit --target " + pkgarch + targetvendor + "-linux-gnu --buildroot " + pkgd
+	cmd = cmd + " --nodeps --short-circuit --target " + pkgarch + " --buildroot " + pkgd
 	cmd = cmd + " --define '_topdir " + workdir + "' --define '_rpmdir " + pkgwritedir + "'"
 	cmd = cmd + " --define '_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm'"
 	cmd = cmd + " --define '_use_internal_dependency_generator 0'"

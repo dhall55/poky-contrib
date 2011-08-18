@@ -44,6 +44,10 @@ inherit prserv
 PKGD    = "${WORKDIR}/package"
 PKGDEST = "${WORKDIR}/packages-split"
 
+LOCALE_SECTION ?= ''
+
+ALL_MULTILIB_PACKAGE_ARCHS = "${@all_multilib_tune_values(d, 'PACKAGE_ARCHS')}"
+
 # rpm is used for the per-file dependency identification
 PACKAGE_DEPENDS += "rpm-native"
 
@@ -182,17 +186,6 @@ python () {
         bb.data.setVarFlag('do_package', 'deptask', " ".join(deps), d)
     else:
         d.setVar("PACKAGERDEPTASK", "")
-
-    multilib_archs = []
-    multilibs= d.getVar('MULTILIBS', True) or ""
-    if multilibs:
-        for ext in multilibs.split():
-            eext = ext.split(':')
-            if len(eext) > 1:
-                if eext[0] == 'multilib':
-                    multilib_archs.append('ml' + eext[1])
-
-    d.setVar("MULTILIB_ARCHS", ' '.join(multilib_archs))
 }
 
 def splitfile(file, debugfile, debugsrcdir, d):
@@ -401,6 +394,7 @@ python package_do_split_locales() {
 
 	summary = bb.data.getVar('SUMMARY', d, True) or pn
 	description = bb.data.getVar('DESCRIPTION', d, True) or "" 
+        locale_section = bb.data.getVar('LOCALE_SECTION', d, True)
 	for l in locales:
 		ln = legitimize_package_name(l)
 		pkg = pn + '-locale-' + ln
@@ -410,6 +404,8 @@ python package_do_split_locales() {
 		bb.data.setVar('RPROVIDES_' + pkg, '%s-locale %s-translation' % (pn, ln), d)
 		bb.data.setVar('SUMMARY_' + pkg, '%s - %s translations' % (summary, l), d)
 		bb.data.setVar('DESCRIPTION_' + pkg, '%s  This package contains language translation files for the %s locale.' % (description, l), d)
+		if locale_section:
+			bb.data.setVar('SECTION_' + pkg, locale_section, d)
 
 	bb.data.setVar('PACKAGES', ' '.join(packages), d)
 
@@ -1051,6 +1047,7 @@ python emit_pkgdata() {
 		write_if_exists(sf, pkg, 'RSUGGESTS')
 		write_if_exists(sf, pkg, 'RREPLACES')
 		write_if_exists(sf, pkg, 'RCONFLICTS')
+		write_if_exists(sf, pkg, 'SECTION')
 		write_if_exists(sf, pkg, 'PKG')
 		write_if_exists(sf, pkg, 'ALLOW_EMPTY')
 		write_if_exists(sf, pkg, 'FILES')

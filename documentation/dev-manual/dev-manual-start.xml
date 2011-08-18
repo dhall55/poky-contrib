@@ -23,7 +23,7 @@
     <title>Introducing the Yocto Project</title>
 
     <para>
-        The Yocto Project is an open-source collaboration project focused on embedded Linux developers.  
+        The Yocto Project is an open-source collaboration project focused on embedded Linux development.  
         The project provides a recent Linux kernel along with a set of system commands, libraries, 
         and system components suitable for the embedded developer.  
         The Yocto Project also features the Sato reference User Interface should you be dealing with 
@@ -48,14 +48,15 @@
             <listitem><para><emphasis>Host System:</emphasis>  You need a recent release of Fedora, 
                 OpenSUSE, Debian, or Ubuntu.  
                 You should have a reasonably current Linux-based host system.  
-                You should also have about 100 gigabytes of free disk space if you plan on building 
-                images.</para></listitem>
-            <listitem><para><emphasis>Packages:</emphasis>  Depending on your host system (Debian-based or RPM-based),
-                you need certain packages.  
+                You should also have about 100 gigabytes of free disk space for building images.
+                </para></listitem>
+            <listitem><para><emphasis>Packages:</emphasis>  The Yocto Project requires certain packages
+                exist on your development system.  
                 See the <ulink url='http://www.yoctoproject.org/docs/yocto-quick-start/yocto-project-qs.html#packages'>
                 The Packages</ulink> section in the Yocto Project Quick start for the exact package 
                 requirements.</para></listitem>
-            <listitem id='local-yp-release'><para><emphasis>Yocto Project Release:</emphasis>  You need a release of the Yocto Project.  
+            <listitem id='local-yp-release'><para><emphasis>Yocto Project Release:</emphasis>  
+                You need a release of the Yocto Project.  
                 You can get set up with local Yocto Project files one of two ways depending on whether you 
                 are going to be contributing back into the Yocto Project source repository or not.
                 <note>
@@ -74,12 +75,11 @@
                             <literallayout class='monospaced'>
      $ tar xfj poky-1.1.tar.bz2
                             </literallayout></para>
-
                         <para>This method does not produce a <filename>poky</filename> Git repository. 
                             You end up simply with a local snapshot of Yocto Project files that are based on the 
                             particular release in the tarball.</para></listitem>
                     <listitem><para><emphasis>Git Repository Method:</emphasis>  If you are going to be contributing
-                        back into the Yocto Project you should probably use Git commands to set up a local 
+                        back into the Yocto Project you should use Git commands to set up a local 
                         <filename>poky</filename> Git repository of the Yocto Project.  
                         Doing so creates a Git repository with a complete history of changes and allows 
                         you to easily submit your changes upstream to the project.</para>
@@ -105,7 +105,63 @@
                         wiki page</ulink>, which describes how to create both <filename>poky</filename>
                         and <filename>meta-intel</filename> Git repositories.</para></listitem>
                 </itemizedlist></para></listitem>
-            <listitem><para><emphasis>Supported Board Support Packages (BSPs):</emphasis>  The same considerations 
+            <listitem id='local-kernel-files'><para><emphasis>Linux Yocto Kernel:</emphasis>  
+                If you are going to be making modifications to a supported Linux Yocto kernel you 
+                need to get set up so that you can edit local copies of the source.
+                This setup involves creating a bare clone of the Linux Yocto kernel and then cloning 
+                that repository.
+                You can create the bare clone and the copy of the bare clone anywhere you like.
+                For simplicity, it is recommended that you create these structures outside of the 
+                Yocto Project files Git repository.</para>
+                <para>As an example, the following transcript shows how to create the bare clone
+                of the <filename>linux-yocto-3.0</filename> kernel and then create a copy of 
+                that clone.
+                <note>If you currently have a local Linux Yocto kernel Git repository, you can 
+                reference this local repository rather than the upstream Git repository as 
+                part of the <filename>clone</filename> command.
+                Doing so can speed up the process.</note>
+                The bare clone is named <filename>linux-yocto-3.0.git</filename>, while the 
+                copy is named <filename>linux-yocto-3.0</filename>: 
+                <literallayout class='monospaced'>
+     $ git clone --bare git://git.yoctoproject.org/linux-yocto-3.0 linux-yocto-3.0.git
+     Initialized empty Git repository in /home/scottrif/poky/linux-yocto-3.0.git/
+     remote: Counting objects: 1886034, done.
+     remote: Compressing objects: 100% (314326/314326), done.
+     remote: Total 1886034 (delta 1570200), reused 1870337 (delta 1554798)
+     Receiving objects: 100% (1886034/1886034), 401.51 MiB | 3.27 MiB/s, done.
+     Resolving deltas: 100% (1570200/1570200), done.
+                </literallayout></para>
+                <para>Now create a clone of the bare clone just created:
+                <literallayout class='monospaced'>
+     $ git clone linux-yocto-3.0.git linux-yocto-3.0
+     Initialized empty Git repository in /home/scottrif/poky/linux-yocto-3.0/.git/
+     Checking out files: 100% (35188/35188), done.
+                </literallayout></para></listitem>
+            <listitem id='poky-extras-repo'><para><emphasis>
+                The <filename>poky-extras</filename> Git Repository</emphasis>:
+                The <filename>poky-extras</filename> Git repository contains metadata needed to 
+                build the kernel image.
+                In particular, it contains the kernel <filename>.bbappend</filename> files that you 
+                edit to point to your locally modified kernel source files and to build kernel
+                image. 
+                Pointing to these local files is much more efficient than requiring a download of the 
+                source files from upstream each time you make changes to the kernel.</para>
+                <para>It is good practice to create this Git repository inside the Yocto Project
+                files Git repository.
+                Following is an example that creates the <filename>poky-extras</filename> Git 
+                repository inside the Yocto Project files Git repository, which is named 
+                <filename>poky</filename> in this case:
+                <literallayout class='monospaced'>
+     $ cd ~/poky
+     $ git clone git://git.yoctoproject.org/poky-extras poky-extras
+     Initialized empty Git repository in /home/scottrif/poky/poky-extras/.git/
+     remote: Counting objects: 531, done.
+     remote: Compressing objects: 100% (471/471), done.
+     remote: Total 531 (delta 138), reused 307 (delta 39)
+     Receiving objects: 100% (531/531), 517.86 KiB, done.
+     Resolving deltas: 100% (138/138), done.
+                </literallayout></para></listitem>
+           <listitem><para><emphasis>Supported Board Support Packages (BSPs):</emphasis>  The same considerations 
                 exist for BSPs.  
                 You can get set up for BSP development one of two ways: tarball extraction or
                 with a local Git repository.
@@ -183,7 +239,7 @@
                 script.</para></listitem>
             <listitem><para>Make sure the <filename>conf/local.conf</filename> configuration file is set 
                 up how you want it.  
-                This file defines the target machine architecture and and other build configurations.</para></listitem>
+                This file defines the target machine architecture and and other build options.</para></listitem>
             <listitem><para>Build the image using the BitBake command.  
                 If you want information on Bitbake, see the user manual at 
                 <ulink url='http://docs.openembedded.org/bitbake/html'></ulink>.</para></listitem>
@@ -197,7 +253,7 @@
     <title>Using Pre-Built Binaries and QEMU</title>
 
     <para>
-        Another option you have to get started is to use a pre-built binary.  
+        Another option you have to get started is to use pre-built binaries.  
         This scenario is ideal for developing software applications to run on your target hardware.  
         To do this you need to install the stand-alone Yocto toolchain tarball and then download the 
         pre-built kernel that you will boot using the QEMU emulator.  
