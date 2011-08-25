@@ -129,6 +129,12 @@ kernel_do_install() {
 	echo "${KERNEL_VERSION}" > $kerneldir/kernel-abiversion
 
 	#
+	# Store kernel image name to allow use during image generation
+	#
+
+	echo "${KERNEL_IMAGE_BASE_NAME}" >$kerneldir/kernel-image-name
+
+	#
 	# Copy the entire source tree. In case an external build directory is
 	# used, copy the build directory over first, then copy over the source
 	# dir. This ensures the original Makefiles are used and not the
@@ -501,7 +507,7 @@ kernel_do_deploy() {
 	rm -f ${KERNEL_IMAGE_SYMLINK_NAME}.bin
 	ln -sf ${KERNEL_IMAGE_BASE_NAME}.bin ${KERNEL_IMAGE_SYMLINK_NAME}.bin
 
-	cp -n ${COREBASE}/meta/files/deploydir_readme.txt ${DEPLOYDIR}/README_-_DO_NOT_DELETE_FILES_IN_THIS_DIRECTORY.txt
+	cp ${COREBASE}/meta/files/deploydir_readme.txt ${DEPLOYDIR}/README_-_DO_NOT_DELETE_FILES_IN_THIS_DIRECTORY.txt
 }
 do_deploy[dirs] = "${DEPLOYDIR} ${B}"
 

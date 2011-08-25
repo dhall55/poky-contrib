@@ -91,7 +91,8 @@ class RunningBuild (gobject.GObject):
             parent = self.tasks_to_iter[(package, task)]
 
         if(isinstance(event, logging.LogRecord)):
-            if (event.msg.startswith ("Running task")):
+            if (event.levelno < logging.INFO or
+                event.msg.startswith("Running task")):
                 return # don't add these to the list
 
             if event.levelno >= logging.ERROR:
@@ -253,7 +254,7 @@ class RunningBuild (gobject.GObject):
             pbar.update(event.current, self.progress_total)
         elif isinstance(event, bb.event.CacheLoadCompleted) and pbar:
             pbar.update(self.progress_total, self.progress_total)
-
+            pbar.hide()
         elif isinstance(event, bb.event.ParseStarted) and pbar:
             if event.total == 0:
                 return

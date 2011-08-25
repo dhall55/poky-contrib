@@ -89,7 +89,7 @@ class TaskListModel(gtk.ListStore):
     providing convenience functions to access gtk.TreeModel subclasses which
     provide filtered views of the data.
     """
-    (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_PATH) = range(10)
+    (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_PATH, COL_PN) = range(11)
 
     __gsignals__ = {
         "tasklist-populated" : (gobject.SIGNAL_RUN_LAST,
@@ -122,7 +122,16 @@ class TaskListModel(gtk.ListStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_BOOLEAN,
                                 gobject.TYPE_BOOLEAN,
+                                gobject.TYPE_STRING,
                                 gobject.TYPE_STRING)
+
+    """
+    Helper method to determine whether name is a target pn
+    """
+    def non_target_name(self, name):
+        if ('-native' in name) or ('-cross' in name) or name.startswith('virtual/'):
+            return True
+        return False
 
     def contents_changed_cb(self, tree_model, path, it=None):
         pkg_cnt = self.contents.iter_n_children(None)
@@ -132,7 +141,7 @@ class TaskListModel(gtk.ListStore):
         if not model.get_value(it, self.COL_INC) or model.get_value(it, self.COL_TYPE) == 'image':
             return False
         name = model.get_value(it, self.COL_NAME)
-        if name.count('-native') or name.count('-cross'):
+        if self.non_target_name(name):
             return False
         else:
             return True
@@ -196,7 +205,7 @@ class TaskListModel(gtk.ListStore):
             return False
         else:
             name = model.get_value(it, self.COL_NAME)
-            if name.count('-native') or name.count('-cross'):
+            if self.non_target_name(name):
                 return False
             return True
 
@@ -226,15 +235,16 @@ class TaskListModel(gtk.ListStore):
             lic = event_model["pn"][item]["license"]
             group = event_model["pn"][item]["section"]
             filename = event_model["pn"][item]["filename"]
-            if name.count('task-') > 0:
+            if ('task-' in name):
                 atype = 'task'
-            elif name.count('-image-') > 0:
+            elif ('-image-' in name):
                 atype = 'image'
 
+            # Create a combined list of build and runtime dependencies and
+            # then remove any duplicate entries and any entries for -dev
+            # packages
             depends = event_model["depends"].get(item, [])
             rdepends = event_model["rdepends-pn"].get(item, [])
-            if ("%s-dev" % item) in rdepends:
-                rdepends.remove("%s-dev" % item)
             packages = {}
             for pkg in event_model["packages"]:
                 if event_model["packages"][pkg]["pn"] == name:
@@ -242,6 +252,13 @@ class TaskListModel(gtk.ListStore):
                     deps.extend(depends)
                     deps.extend(event_model["rdepends-pkg"].get(pkg, []))
                     deps.extend(rdepends)
+                    deps = self.squish(deps)
+                    # rdepends-pn includes pn-dev
+                    if ("%s-dev" % item) in deps:
+                        deps.remove("%s-dev" % item)
+                    # rdepends-on includes pn
+                    if pkg in deps:
+                        deps.remove(pkg)
                     packages[pkg] = deps
 
             for p in packages:
@@ -249,7 +266,8 @@ class TaskListModel(gtk.ListStore):
                          self.COL_LIC, lic, self.COL_GROUP, group,
                          self.COL_DEPS, " ".join(packages[p]), self.COL_BINB, "",
                          self.COL_TYPE, atype, self.COL_INC, False,
-                         self.COL_IMG, False, self.COL_PATH, filename)
+                         self.COL_IMG, False, self.COL_PATH, filename,
+                         self.COL_PN, item)
 
 	self.emit("tasklist-populated")
 
@@ -334,7 +352,7 @@ class TaskListModel(gtk.ListStore):
 
             inc = self[path][self.COL_INC]
             deps = self[path][self.COL_DEPS]
-            binb = self[path][self.COL_BINB]
+            binb = self[path][self.COL_BINB].split(', ')
             itype = self[path][self.COL_TYPE]
             itname = self[path][self.COL_NAME]
 
@@ -346,22 +364,22 @@ class TaskListModel(gtk.ListStore):
             # we should keep it and its dependencies, the easiest way to do so
             # is to save its name and re-mark it for inclusion once dependency
             # processing is complete
-            if binb == "User Selected":
+            if "User Selected" in binb:
                 usersel[itname] = self[path][self.COL_IMG]
 
             # If the iterated item is included and depends on the removed
             # item it should also be removed.
             # FIXME: need to ensure partial name matching doesn't happen
-            if inc and deps.count(marked_name) and itname not in removed:
+            if inc and marked_name in deps and itname not in removed:
                 # found a dependency, remove it
                 removed.append(itname)
                 self.mark(path)
 
             # If the iterated item was brought in by the removed (passed) item
             # try and find an alternative dependee and update the binb column
-            if inc and binb.count(marked_name):
-                bib = self.find_alt_dependency(itname)
-                self[path][self.COL_BINB] = bib
+            if inc and marked_name in binb:
+                binb.remove(marked_name)
+                self[path][self.COL_BINB] = ', '.join(binb).lstrip(', ')
 
         # Re-add any removed user selected items
         for u in usersel:
@@ -399,25 +417,6 @@ class TaskListModel(gtk.ListStore):
                 it = self.contents.iter_next(it)
 
     """
-    Find the name of an item in the image contents which depends on the item
-    name.
-    Returns either an item name (str) or None
-    """
-    def find_alt_dependency(self, name):
-        it = self.contents.get_iter_first()
-        while it:
-            # iterate all items in the contents model
-            path = self.contents.get_path(it)
-            deps = self.contents[path][self.COL_DEPS]
-            itname = self.contents[path][self.COL_NAME]
-            inc = self.contents[path][self.COL_INC]
-            if itname != name and inc and deps.count(name) > 0:
-		# if this item depends on the item, return this items name
-	        return itname
-	    it = self.contents.iter_next(it)
-	return ""
-
-    """
     Check the self.contents gtk.TreeModel for an item
     where COL_NAME matches item_name
     Returns True if a match is found, False otherwise
@@ -440,7 +439,10 @@ class TaskListModel(gtk.ListStore):
         cur_inc = self[item_path][self.COL_INC]
         if not cur_inc:
             self[item_path][self.COL_INC] = True
-            self[item_path][self.COL_BINB] = binb
+
+        bin = self[item_path][self.COL_BINB].split(', ')
+        bin.append(binb)
+        self[item_path][self.COL_BINB] = ', '.join(bin).lstrip(', ')
 
         # We want to do some magic with things which are brought in by the
         # base image so tag them as so
@@ -453,16 +455,16 @@ class TaskListModel(gtk.ListStore):
             # add all of the deps and set their binb to this item
             for dep in deps.split(" "):
                 # If the contents model doesn't already contain dep, add it
-                # We only care to show things which will end up in the
-                # resultant image, so filter cross and native recipes
                 dep_included = self.contents_includes_name(dep)
                 path = self.find_path_for_item(dep)
-                if not dep_included and path:
-                    self.include_item(path, name, image_contents)
-                # Set brought in by for any no longer orphan packages
-                elif dep_included and path:
-                    if not self[path][self.COL_BINB]:
-                        self[path][self.COL_BINB] = name
+                if not path:
+                    continue
+                if dep_included:
+                    bin = self[path][self.COL_BINB].split(', ')
+                    bin.append(name)
+                    self[path][self.COL_BINB] = ', '.join(bin).lstrip(', ')
+                else:
+                    self.include_item(path, binb=name, image_contents=image_contents)
 
     """
     Find the model path for the item_name
@@ -471,7 +473,7 @@ class TaskListModel(gtk.ListStore):
     def find_path_for_item(self, item_name):
         # We don't include virtual/* or *-native items in the model so save a
         # heavy iteration loop by exiting early for these items
-        if item_name.startswith("virtual/") or item_name.count('-native') or item_name.count('-cross'):
+        if self.non_target_name(item_name):
             return None
 
         it = self.get_iter_first()
@@ -519,13 +521,27 @@ class TaskListModel(gtk.ListStore):
 
         it = self.contents.get_iter_first()
         while it:
-            sel = self.contents.get_value(it, self.COL_BINB) == "User Selected"
+            sel = "User Selected" in self.contents.get_value(it, self.COL_BINB)
             name = self.contents.get_value(it, self.COL_NAME)
             allpkgs.append(name)
             if sel:
                 userpkgs.append(name)
             it = self.contents.iter_next(it)
         return userpkgs, allpkgs
+
+    """
+    Return a squished (uniquified) list of the PN's of all selected items
+    """
+    def get_selected_pn(self):
+        pns = []
+
+        it = self.contents.get_iter_first()
+        while it:
+            if self.contents.get_value(it, self.COL_BINB):
+                pns.append(self.contents.get_value(it, self.COL_PN))
+            it = self.contents.iter_next(it)
+
+        return self.squish(pns)
 
     def image_contents_removed(self):
         it = self.get_iter_first()
@@ -561,7 +577,7 @@ class TaskListModel(gtk.ListStore):
             if not itype == 'package':
                 continue
 
-            if deps.count(pn) != 0:
+            if pn in deps:
                 revdeps.append(name)
 
         if pn in revdeps:

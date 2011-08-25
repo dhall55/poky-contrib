@@ -29,8 +29,8 @@ toolchain_create_sdk_env_script () {
 	echo 'export OECORE_NATIVE_SYSROOT="${SDKPATHNATIVE}"' >> $script
 	echo 'export OECORE_TARGET_SYSROOT="${SDKTARGETSYSROOT}"' >> $script
 	echo 'export OECORE_ACLOCAL_OPTS="-I ${SDKPATHNATIVE}/usr/share/aclocal"' >> $script
-	echo 'export POKY_DISTRO_VERSION="${DISTRO_VERSION}"' >> $script
-	echo 'export POKY_SDK_VERSION="${SDK_VERSION}"' >> $script
+	echo 'export OECORE_DISTRO_VERSION="${DISTRO_VERSION}"' >> $script
+	echo 'export OECORE_SDK_VERSION="${SDK_VERSION}"' >> $script
 }
 
 # This function creates an environment-setup-script in the TMPDIR which enables
@@ -63,8 +63,8 @@ toolchain_create_tree_env_script () {
 	echo 'export OECORE_NATIVE_SYSROOT="${STAGING_DIR_NATIVE}"' >> $script
 	echo 'export OECORE_TARGET_SYSROOT="${STAGING_DIR_TARGET}"' >> $script
 	echo 'export OECORE_ACLOCAL_OPTS="-I ${STAGING_DIR_NATIVE}/usr/share/aclocal"' >> $script
-	echo 'export POKY_DISTRO_VERSION="${DISTRO_VERSION}"' >> $script
-	echo 'export POKY_SDK_VERSION="${SDK_VERSION}"' >> $script
+	echo 'export OECORE_DISTRO_VERSION="${DISTRO_VERSION}"' >> $script
+	echo 'export OECORE_SDK_VERSION="${SDK_VERSION}"' >> $script
 }
 
 # This function creates an environment-setup-script for use by the ADT installer
@@ -97,20 +97,31 @@ toolchain_create_sdk_env_script_for_installer () {
 	echo 'export OECORE_NATIVE_SYSROOT="${SDKPATHNATIVE}"' >> $script
 	echo 'export OECORE_TARGET_SYSROOT="##SDKTARGETSYSROOT##"' >> $script
         echo 'export OECORE_ACLOCAL_OPTS="-I ${SDKPATHNATIVE}/usr/share/acloal"' >> $script
-	echo 'export POKY_DISTRO_VERSION="${DISTRO_VERSION}"' >> $script
-	echo 'export POKY_SDK_VERSION="${SDK_VERSION}"' >> $script
+	echo 'export OECORE_DISTRO_VERSION="${DISTRO_VERSION}"' >> $script
+	echo 'export OECORE_SDK_VERSION="${SDK_VERSION}"' >> $script
 }
+
+#we get the cached site config in the runtime
+TOOLCHAIN_CONFIGSITE_NOCACHE := "${@siteinfo_get_files(d, True)}"
+TOOLCHAIN_CONFIGSITE_SYSROOTCACHE := "${STAGING_DATADIR}/${TARGET_SYS}_config_site.d"
+TOOLCHAIN_NEED_CONFIGSITE_CACHE = "eglibc ncurses"
 
 #This function create a site config file
 toolchain_create_sdk_siteconfig () {
 	local siteconfig=$1
-	shift
-	local files=$@
 
 	rm -f $siteconfig
 	touch $siteconfig
-	for sitefile in ${files} ; do
+
+	for sitefile in ${TOOLCHAIN_CONFIGSITE_NOCACHE} ; do
 		cat $sitefile >> $siteconfig
+	done
+
+	#get cached site config
+	for sitefile in ${TOOLCHAIN_NEED_CONFIGSITE_CACHE}; do
+		if [ -r ${TOOLCHAIN_CONFIGSITE_SYSROOTCACHE}/${sitefile}_config ]; then
+			cat ${TOOLCHAIN_CONFIGSITE_SYSROOTCACHE}/${sitefile}_config >> $siteconfig
+		fi
 	done
 }
 
@@ -123,4 +134,11 @@ toolchain_create_sdk_version () {
 	echo 'Distro Version: ${DISTRO_VERSION}' >> $versionfile
 	echo 'Metadata Revision: ${METADATA_REVISION}' >> $versionfile
 	echo 'Timestamp: ${DATETIME}' >> $versionfile
+}
+
+python __anonymous () {
+    deps = bb.data.getVarFlag('do_configure', 'depends', d) or ""
+    for dep in (bb.data.getVar('TOOLCHAIN_NEED_CONFIGSITE_CACHE', d, True) or "").split():
+        deps += " %s:do_populate_sysroot" % dep
+    bb.data.setVarFlag('do_configure', 'depends', deps, d)
 }

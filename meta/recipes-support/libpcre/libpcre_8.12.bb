@@ -9,7 +9,7 @@ PR = "r1"
 LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://LICENCE;md5=77f9b14fe707d0376d89bc162e6c54ff"
 SRC_URI = "${SOURCEFORGE_MIRROR}/pcre/pcre-${PV}.tar.bz2 \
-           file://pcre-cross.patch;patch=1 \
+           file://pcre-cross.patch \
            file://fix-pcre-name-collision.patch"
 
 SRC_URI[md5sum] = "f14a9fef3c92f3fc6c5ac92d7a2c7eb3"
@@ -30,11 +30,11 @@ EXTRA_OECONF = " --with-link-size=2 --enable-newline-is-lf --with-match-limit=10
 do_compile () {
 	# stop libtool from trying to link with host libraries - fix from #33
 	# this resolve build problem on amd64 - #1015
-	if [ -e ${S}/${TARGET_SYS}-libtool ] ; then
-		sed -i 's:-L\$:-L${STAGING_LIBDIR} -L\$:' ${S}/${TARGET_SYS}-libtool
+	if [ -e ${S}/${HOST_SYS}-libtool ] ; then
+		sed -i 's:-L\$:-L${STAGING_LIBDIR} -L\$:' ${S}/${HOST_SYS}-libtool
 	else
-		ln -sf ${S}/libtool ${S}/${TARGET_SYS}-libtool
-		sed -i 's:-L\$:-L${STAGING_LIBDIR} -L\$:' ${S}/${TARGET_SYS}-libtool	
+		ln -sf ${S}/libtool ${S}/${HOST_SYS}-libtool
+		sed -i 's:-L\$:-L${STAGING_LIBDIR} -L\$:' ${S}/${HOST_SYS}-libtool
 	fi
 
 	# The generation of dftables can lead to timestamp problems with ccache

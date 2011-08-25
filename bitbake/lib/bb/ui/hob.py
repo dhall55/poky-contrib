@@ -174,6 +174,7 @@ class MainWindow (gtk.Window):
             self.toggle_package(path, model, image=True)
             if len(userp):
                 self.model.set_selected_packages(userp)
+            self.selected_image = model[path][self.model.COL_NAME]
 
     def reload_triggered_cb(self, handler, image, packages):
         if image:
@@ -405,7 +406,19 @@ class MainWindow (gtk.Window):
         build_image = True
 
         rep = self.model.get_build_rep()
-        if not rep.base_image:
+
+        # If no base image and no user selected packages don't build anything
+        if not self.selected_image and not len(rep.userpkgs):
+            lbl = "<b>No selections made</b>\nYou have not made any selections"
+            lbl = lbl + " so there isn't anything to bake at this time."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            dialog.run()
+            dialog.destroy()
+            return
+        # Else if no base image, ask whether to just build packages or whether
+        # to build a rootfs with the selected packages in
+        elif not self.selected_image:
             lbl = "<b>Build empty image or only packages?</b>\nA base image"
             lbl = lbl + " has not been selected.\n\'Empty image' will build"
             lbl = lbl + " an image with only the selected packages as its"
@@ -424,7 +437,22 @@ class MainWindow (gtk.Window):
             elif response == gtk.RESPONSE_OK:
                 rep.base_image = "empty"
 
-        if build_image:
+        # Ensure at least one value is set in IMAGE_FSTYPES.
+        have_selected_fstype = False
+        if (len(self.prefs.selected_image_types) and
+            len(self.prefs.selected_image_types[0])):
+            have_selected_fstype = True
+
+        if build_image and not have_selected_fstype:
+            lbl = "<b>No image output type selected</b>\nThere is no image output"
+            lbl = lbl + " selected for the build. Please set an output image type"
+            lbl = lbl + " in the preferences (Edit -> Preferences)."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            dialog.run()
+            dialog.destroy()
+            return
+        elif build_image:
             self.handler.make_temp_dir()
             recipepath =  self.handler.get_temp_recipe_path(rep.base_image)
             image_name = recipepath.rstrip(".bb")
@@ -439,14 +467,23 @@ class MainWindow (gtk.Window):
 
             self.handler.build_image(image_name, self.configurator)
         else:
-            self.handler.build_packages(rep.allpkgs.split(" "))
+            self.handler.build_packages(self.model.get_selected_pn())
 
+        # Disable parts of the menu which shouldn't be used whilst building
+        self.set_menus_sensitive(False)
         self.nb.set_current_page(1)
+
+    def set_menus_sensitive(self, sensitive):
+        self.add_layers_action.set_sensitive(sensitive)
+        self.layers_action.set_sensitive(sensitive)
+        self.prefs_action.set_sensitive(sensitive)
+        self.open_action.set_sensitive(sensitive)
 
     def back_button_clicked_cb(self, button):
         self.toggle_createview()
 
     def toggle_createview(self):
+        self.set_menus_sensitive(True)
         self.build.model.clear()
         self.nb.set_current_page(0)
 
@@ -788,18 +825,27 @@ class MainWindow (gtk.Window):
 
         actions = gtk.ActionGroup('ImageCreator')
         self.actions = actions
-        actions.add_actions([('Quit', gtk.STOCK_QUIT, None, None,
-                              None, self.menu_quit,),
+        actions.add_actions([('Quit', gtk.STOCK_QUIT, None, None, None, self.menu_quit,),
                              ('File', None, '_File'),
                              ('Save', gtk.STOCK_SAVE, None, None, None, self.save_cb),
                              ('Save As', gtk.STOCK_SAVE_AS, None, None, None, self.save_as_cb),
-                             ('Open', gtk.STOCK_OPEN, None, None, None, self.open_cb),
-                             ('AddLayer', None, 'Add Layer', None, None, self.add_layer_cb),
                              ('Edit', None, '_Edit'),
                              ('Help', None, '_Help'),
-                             ('Layers', None, 'Layers', None, None, self.layers_cb),
-                             ('Preferences', gtk.STOCK_PREFERENCES, None, None, None, self.preferences_cb),
                              ('About', gtk.STOCK_ABOUT, None, None, None, self.about_cb)])
+
+        self.add_layers_action = gtk.Action('AddLayer', 'Add Layer', None, None)
+        self.add_layers_action.connect("activate", self.add_layer_cb)
+        self.actions.add_action(self.add_layers_action)
+        self.layers_action = gtk.Action('Layers', 'Layers', None, None)
+        self.layers_action.connect("activate", self.layers_cb)
+        self.actions.add_action(self.layers_action)
+        self.prefs_action = gtk.Action('Preferences', 'Preferences', None, None)
+        self.prefs_action.connect("activate", self.preferences_cb)
+        self.actions.add_action(self.prefs_action)
+        self.open_action = gtk.Action('Open', 'Open', None, None)
+        self.open_action.connect("activate", self.open_cb)
+        self.actions.add_action(self.open_action)
+
         uimanager.insert_action_group(actions, 0)
         uimanager.add_ui_from_string(menu_items)
 
@@ -934,9 +980,6 @@ class MainWindow (gtk.Window):
         return scroll
 
 def main (server, eventHandler):
-    import multiprocessing
-    cpu_cnt = multiprocessing.cpu_count()
-
     gobject.threads_init()
 
     taskmodel = TaskListModel()
@@ -951,14 +994,12 @@ def main (server, eventHandler):
     distro = server.runCommand(["getVariable", "DISTRO"])
     bbthread = server.runCommand(["getVariable", "BB_NUMBER_THREADS"])
     if not bbthread:
-        bbthread = cpu_cnt
-        handler.set_bbthreads(cpu_cnt)
+        bbthread = 1
     else:
         bbthread = int(bbthread)
     pmake = server.runCommand(["getVariable", "PARALLEL_MAKE"])
     if not pmake:
-        pmake = cpu_cnt
-        handler.set_pmake(cpu_cnt)
+        pmake = 1
     else:
         # The PARALLEL_MAKE variable will be of the format: "-j 3" and we only
         # want a number for the spinner, so strip everything from the variable
@@ -984,7 +1025,7 @@ def main (server, eventHandler):
     build_headers = bool(server.runCommand(["getVariable", "HOB_BUILD_TOOLCHAIN_HEADERS"]))
     handler.toggle_toolchain_headers(build_headers)
 
-    prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass, cpu_cnt,
+    prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass,
                      pmake, bbthread, selected_image_types, all_image_types,
                      gplv3disabled, build_toolchain, build_headers)
     layers = LayerEditor(configurator, None)
