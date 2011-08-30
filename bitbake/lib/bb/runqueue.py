@@ -1162,6 +1162,8 @@ class RunQueueExecute:
             try:
                 if not self.cooker.configuration.dry_run:
                     ret = bb.build.exec_task(fn, taskname, the_data)
+                else:
+                    bb.build.make_stamp2(taskname, the_data, fn)
                 os._exit(ret)
             except:
                 os._exit(1)

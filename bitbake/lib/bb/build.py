@@ -420,6 +420,15 @@ def make_stamp(task, d, file_name = None):
         file_name = d.getVar('BB_FILENAME', True)
         bb.parse.siggen.dump_sigtask(file_name, task, d.getVar('STAMP', True), True)
 
+def make_stamp2(task, d, fn):
+
+    localdata = _task_data(fn, task, d)
+
+    # If we're in task context, write out a signature file for each task
+    # as it completes
+    if not task.endswith("_setscene") and task != "do_setscene":
+        bb.parse.siggen.dump_sigtask(fn, task, localdata.getVar('STAMP', True), True)
+
 def del_stamp(task, d, file_name = None):
     """
     Removes a stamp for a given task
