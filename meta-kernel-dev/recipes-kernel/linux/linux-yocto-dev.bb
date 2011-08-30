@@ -21,7 +21,7 @@ SRCREV=${AUTOREV}
 SRCREV_machine_pn-linux-yocto-dev ?= "8e10cd74342c7f5ce259cceca36f6eba084f5d58"
 SRCREV_meta_pn-linux-yocto-dev ?= "3fc7c4c685f4e1d7d5fc7aea08536ca472fa1821"
 
-LINUX_VERSION ?= "2.6.40"
+LINUX_VERSION ?= "3.1-rc4"
 LINUX_VERSION_EXTENSION ?= "-yoctodev-${LINUX_KERNEL_TYPE}"
 PR = "r0"
 PV = "${LINUX_VERSION}+git${SRCPV}"
