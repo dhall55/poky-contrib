@@ -23,7 +23,7 @@
             variables.
             For information on variables that are useful for recipes and for information about recipe naming
             issues, see the 
-            <link linkend='ref-varlocality-recipe-required'>Recipe Variables - Required</link> section.
+            <link linkend='ref-varlocality-recipe-required'>Required</link> section for recipe variables.
         </para>
 
         <para>
@@ -472,6 +472,15 @@
             might require 
             changes to <filename>gcc/glibc</filename> and to the site information, which is 
             beyond the scope of this manual.
+        </para>
+
+        <para>
+            For a complete example that shows how to add a new machine to the Yocto Project, 
+            see the 
+            <ulink url='http://www.yoctoproject.org/docs/1.1/dev-manual/dev-manual.html#dev-manual-bsp-appendix'>
+            BSP Development Example</ulink> in Appendix A of  
+            <ulink url='http://www.yoctoproject.org/docs/1.1/dev-manual/dev-manual.html'>
+            The Yocto Project Development Manual</ulink>.
         </para>
 
         <section id="platdev-newmachine-conffile">

@@ -417,54 +417,51 @@ class TaskListModel(gtk.ListStore):
                 it = self.contents.iter_next(it)
 
     """
-    Check the self.contents gtk.TreeModel for an item
-    where COL_NAME matches item_name
-    Returns True if a match is found, False otherwise
+    Check whether the item at item_path is included or not
     """
-    def contents_includes_name(self, item_name):
-        it = self.contents.get_iter_first()
-        while it:
-            path = self.contents.get_path(it)
-            if self.contents[path][self.COL_NAME] == item_name:
-                return True
-            it = self.contents.iter_next(it)
-        return False
+    def contents_includes_path(self, item_path):
+        return self[item_path][self.COL_INC]
 
     """
     Add this item, and any of its dependencies, to the image contents
     """
     def include_item(self, item_path, binb="", image_contents=False):
-        name = self[item_path][self.COL_NAME]
-        deps = self[item_path][self.COL_DEPS]
-        cur_inc = self[item_path][self.COL_INC]
-        if not cur_inc:
-            self[item_path][self.COL_INC] = True
+        item_name = self[item_path][self.COL_NAME]
+        item_deps = self[item_path][self.COL_DEPS]
 
-        bin = self[item_path][self.COL_BINB].split(', ')
-        bin.append(binb)
-        self[item_path][self.COL_BINB] = ', '.join(bin).lstrip(', ')
+        self[item_path][self.COL_INC] = True
+
+        item_bin = self[item_path][self.COL_BINB].split(', ')
+        if binb and not binb in item_bin:
+            item_bin.append(binb)
+            self[item_path][self.COL_BINB] = ', '.join(item_bin).lstrip(', ')
 
         # We want to do some magic with things which are brought in by the
         # base image so tag them as so
         if image_contents:
             self[item_path][self.COL_IMG] = True
             if self[item_path][self.COL_TYPE] == 'image':
-                self.selected_image = name
+                self.selected_image = item_name
 
-        if deps:
-            # add all of the deps and set their binb to this item
-            for dep in deps.split(" "):
+        if item_deps:
+            # Ensure all of the items deps are included and, where appropriate,
+            # add this item to their COL_BINB
+            for dep in item_deps.split(" "):
                 # If the contents model doesn't already contain dep, add it
-                dep_included = self.contents_includes_name(dep)
-                path = self.find_path_for_item(dep)
-                if not path:
+                dep_path = self.find_path_for_item(dep)
+                if not dep_path:
                     continue
-                if dep_included:
-                    bin = self[path][self.COL_BINB].split(', ')
-                    bin.append(name)
-                    self[path][self.COL_BINB] = ', '.join(bin).lstrip(', ')
-                else:
-                    self.include_item(path, binb=name, image_contents=image_contents)
+                dep_included = self.contents_includes_path(dep_path)
+
+                if dep_included and not dep in item_bin:
+                    # don't set the COL_BINB to this item if the target is an
+                    # item in our own COL_BINB
+                    dep_bin = self[dep_path][self.COL_BINB].split(', ')
+                    if not item_name in dep_bin:
+                        dep_bin.append(item_name)
+                        self[dep_path][self.COL_BINB] = ', '.join(dep_bin).lstrip(', ')
+                elif not dep_included:
+                    self.include_item(dep_path, binb=item_name, image_contents=image_contents)
 
     """
     Find the model path for the item_name
@@ -477,11 +474,9 @@ class TaskListModel(gtk.ListStore):
             return None
 
         it = self.get_iter_first()
-        path = None
         while it:
-            path = self.get_path(it)
-            if (self[path][self.COL_NAME] == item_name):
-                return path
+            if (self.get_value(it, self.COL_NAME) == item_name):
+                return self.get_path(it)
             else:
                 it = self.iter_next(it)
         return None
