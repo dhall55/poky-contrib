@@ -1,3 +1,9 @@
+# Change the following version to cause sstate to invalidate the package
+# cache.  This is useful if an item this class depends on changes in a
+# way that the output of this class changes.  rpmdeps is a good example
+# as any change to rpmdeps requires this to be rerun.
+PACKAGE_BBCLASS_VERSION = "r1"
+
 #
 # Packaging process
 #
