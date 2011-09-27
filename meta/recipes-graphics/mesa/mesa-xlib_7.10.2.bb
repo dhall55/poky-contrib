@@ -4,6 +4,7 @@ FILESPATH =. "${FILE_DIRNAME}/mesa-dri:"
 
 SRC_URI = "ftp://ftp.freedesktop.org/pub/mesa/${PV}/MesaLib-${PV}.tar.bz2 \
            file://uclibc.patch \
+           file://mesa-7.10.2-fix-mklib.patch \
            "
 
 SRC_URI[md5sum] = "f5de82852f1243f42cc004039e10b771"

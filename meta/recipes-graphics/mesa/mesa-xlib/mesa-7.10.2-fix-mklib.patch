@@ -1,0 +1,36 @@
+Upstream-Status:Pending
+
+mesa-xlib uses it's own script (mklib) to generate libraries, and it
+calls the host's ar/ranlib/gcc/g++. This fixes mklib so that it calls the
+cross-compiling tools properly.
+
+Signed-off-by: Wenzong Fan <wenzong.fan@windriver.com>
+=======================================================
+--- Mesa-7.10.2/bin/mklib.orig	2011-09-22 17:06:28.000000000 +0800
++++ Mesa-7.10.2/bin/mklib	2011-09-22 17:08:15.000000000 +0800
+@@ -87,11 +87,11 @@
+     rm -f ${LIBNAME}
+ 
+     # make static lib
+-    ar ${OPTS} ${LIBNAME} ${OBJECTS}
++    ${AR} ${OPTS} ${LIBNAME} ${OBJECTS}
+ 
+     # run ranlib
+     if [ ${RANLIB} = 1 ] ; then
+-        ranlib ${LIBNAME}
++        ${RANLIB} ${LIBNAME}
+     fi
+ 
+     echo ${LIBNAME}
+@@ -313,9 +313,9 @@
+ 	if [ "x$LINK" = "x" ] ; then
+ 	    # -linker was not specified so set default link command now
+             if [ $CPLUSPLUS = 1 ] ; then
+-                LINK=g++
++                LINK=${CXX}
+             else
+-                LINK=gcc
++                LINK=${CC}
+             fi
+ 	fi
+ 
