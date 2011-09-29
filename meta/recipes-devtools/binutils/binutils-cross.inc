@@ -3,6 +3,7 @@ PROVIDES = "virtual/${TARGET_PREFIX}binutils"
 
 INHIBIT_DEFAULT_DEPS = "1"
 INHIBIT_AUTOTOOLS_DEPS = "1"
+DEPENDS = "gnu-config-native flex-native"
 
 EXTRA_OECONF = "--with-sysroot=${STAGING_DIR_TARGET} \
                 --program-prefix=${TARGET_PREFIX} \

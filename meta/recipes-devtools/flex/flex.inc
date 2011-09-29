@@ -8,6 +8,9 @@ LICENSE = "BSD"
 
 SRC_URI = "${SOURCEFORGE_MIRROR}/flex/flex-${PV}.tar.bz2 "
 
+INHIBIT_DEFAULT_DEPS_virtclass-native = "1"
+EXTRA_OECONF_append_virtclass-native = " --disable-nls"
+
 inherit autotools gettext
 
 do_install_append_virtclass-native() {
