@@ -21,6 +21,7 @@ COMPATIBLE_MACHINE = "(qemuarm|qemux86|qemuppc|qemumips|qemux86-64)"
 
 # Functionality flags
 KERNEL_REVISION_CHECKING=
+YOCTO_KERNEL_META_DATA=
 
 # extra tasks
 addtask kernel_link_vmlinux after do_compile before do_install
