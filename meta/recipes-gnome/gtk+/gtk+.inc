@@ -9,9 +9,12 @@ LICENSE = "LGPLv2 & LGPLv2+ & LGPLv2.1+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=3bf50002aefd002f49e7bb854063f7e7"
 
 SECTION = "libs"
-DEPENDS = "glib-2.0 pango atk jpeg libpng libxext libxcursor \
-           gtk-doc-native docbook-utils-native libxrandr libgcrypt \
-           libxdamage libxrender libxcomposite cairo gdk-pixbuf"
+X11DEPENDS = "virtual/libx11 libxext libxcursor libxrandr libxdamage libxrender libxcomposite"
+DIRECTFBDEPENDS = "directfb"
+DEPENDS = "glib-2.0 pango atk jpeg libpng gtk-doc-native docbook-utils-native \
+           libgcrypt cairo gdk-pixbuf \
+           ${@base_contains('DISTRO_FEATURES', 'x11', '${X11DEPENDS}', '', d)} \
+           ${@base_contains('DISTRO_FEATURES', 'directfb', '${DIRECTFBDEPENDS}', '', d)}"
 
 inherit autotools pkgconfig
 

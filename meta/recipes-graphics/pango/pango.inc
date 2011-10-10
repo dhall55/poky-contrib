@@ -26,7 +26,8 @@ FULL_OPTIMIZATION_arm = "-O2"
 EXTRA_OECONF = "--disable-glibtest \
 		--enable-explicit-deps=no \
 	        --disable-debug \
-		${@base_contains('DISTRO_FEATURES', 'x11', '--with-x', '--without-x', d)}"
+		${@base_contains('DISTRO_FEATURES', 'x11', '--with-x', '--without-x', d)} \
+                ${@base_contains('DISTRO_FEATURES', 'directfb', '--with-x=no', '--with-x=yes', d)}"
 
 LEAD_SONAME = "libpango-1.0*"
 LIBV = "1.6.0"

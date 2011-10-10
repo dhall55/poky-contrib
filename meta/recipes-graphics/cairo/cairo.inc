@@ -11,11 +11,16 @@ BUGTRACKER = "http://bugs.freedesktop.org"
 SECTION = "libs"
 LICENSE = "MPL-1 & LGPLv2.1"
 X11DEPENDS = "virtual/libx11 libsm libxrender"
-DEPENDS = "libpng fontconfig pixman glib-2.0 ${@base_contains('DISTRO_FEATURES', 'x11', '${X11DEPENDS}', '', d)}"
+DIRECTFBDEPENDS = "directfb"
+DEPENDS = "libpng fontconfig pixman glib-2.0 ${@base_contains('DISTRO_FEATURES', 'x11', '${X11DEPENDS}', '', d)} ${@base_contains('DISTRO_FEATURES', 'directfb', '${DIRECTFBDEPENDS}', '', d)}"
 
 #check for TARGET_FPU=soft and inform configure of the result so it can disable some floating points 
 require cairo-fpu.inc
+CONF_directfb="--with-x=no --enable-xcb=no --enable-directfb=yes"
+CONF_xorg="--with-x=yes --enable-xcb=no --enable-directfb=no"
+
 EXTRA_OECONF += "${@get_cairo_fpu_setting(bb, d)} ${@base_contains('DISTRO_FEATURES', 'x11', '--with-x', '--without-x', d)}"
+EXTRA_OECONF += " ${@base_contains('DISTRO_FEATURES', 'directfb', '${CONF_directfb}', '${CONF_xorg}', d)}"
 
 inherit autotools pkgconfig
 
