@@ -1,0 +1,186 @@
+commit 042ef5caf330f88370b4b1022509aab840f83744
+Author: Mark Hatle <mark.hatle@windriver.com>
+Date:   Wed Oct 12 13:19:51 2011 -0500
+
+    Add PSEUDO_UNLOAD
+    
+    Add the ability to remove libpseudo from the LD_PRELOAD on the next
+    exec.
+    
+    Signed-off-by: Mark Hatle <mark.hatle@windriver.com>
+
+diff --git a/doc/program_flow b/doc/program_flow
+index 8991681..847809b 100644
+--- a/doc/program_flow
++++ b/doc/program_flow
+@@ -28,7 +28,7 @@ libpseudo execution flow:
+ 		pseudo_check_wrappers():
+ 			pseudo_reinit_libpseudo if necessary
+ 		call wrap_exec*()
+-			if !PSEUDO_RELOADED
++			if !PSEUDO_RELOADED && !PSEUDO_UNLOAD
+ 				pseudo_setupenv()
+ 			else
+ 				pseudo_setupenv()
+@@ -40,7 +40,7 @@ libpseudo execution flow:
+ 		pseudo_check_wrappers():
+ 			pseudo_reinit_libpseudo if necessary
+ 		call wrap_exec*()
+-			if !PSEUDO_RELOADED
++			if !PSEUDO_RELOADED && !PSEUDO_UNLOAD
+ 				pseudo_setupenv()
+ 				pseudo_reinit_libpseudo()
+ 					_libpseudo_init()
+diff --git a/ports/common/guts/execv.c b/ports/common/guts/execv.c
+index 15ad51e..35f8de5 100644
+--- a/ports/common/guts/execv.c
++++ b/ports/common/guts/execv.c
+@@ -18,7 +18,7 @@
+ 		free(path_guess);
+ 	}
+ 
+-	if (!pseudo_get_value("PSEUDO_RELOADED"))
++	if (!pseudo_get_value("PSEUDO_RELOADED") && !pseudo_get_value("PSEUDO_UNLOAD"))
+ 		pseudo_setupenv();
+ 	else {
+ 		pseudo_setupenv();
+diff --git a/ports/common/guts/execve.c b/ports/common/guts/execve.c
+index a47b9a7..db68b8e 100644
+--- a/ports/common/guts/execve.c
++++ b/ports/common/guts/execve.c
+@@ -19,7 +19,7 @@
+ 		free(path_guess);
+         }
+ 
+-	if (!pseudo_get_value("PSEUDO_RELOADED"))
++	if (!pseudo_get_value("PSEUDO_RELOADED") && !pseudo_get_value("PSEUDO_UNLOAD"))
+ 		new_environ = pseudo_setupenvp(envp);
+ 	else {
+ 		new_environ = pseudo_setupenvp(envp);
+diff --git a/ports/common/guts/execvp.c b/ports/common/guts/execvp.c
+index 419f41b..4332c83 100644
+--- a/ports/common/guts/execvp.c
++++ b/ports/common/guts/execvp.c
+@@ -19,7 +19,7 @@
+ 		free(path_guess);
+         }
+ 
+-	if (!pseudo_get_value("PSEUDO_RELOADED"))
++	if (!pseudo_get_value("PSEUDO_RELOADED") && !pseudo_get_value("PSEUDO_UNLOAD"))
+ 		pseudo_setupenv();
+ 	else {
+ 		pseudo_setupenv();
+diff --git a/ports/common/guts/fork.c b/ports/common/guts/fork.c
+index 76cac6f..cc7b33f 100644
+--- a/ports/common/guts/fork.c
++++ b/ports/common/guts/fork.c
+@@ -11,7 +11,7 @@
+ 	 * pseudo in the child process
+ 	 */
+ 	if (rc == 0) {
+-		if (!pseudo_get_value("PSEUDO_RELOADED")) {
++		if (!pseudo_get_value("PSEUDO_RELOADED") && !pseudo_get_value("PSEUDO_UNLOAD")) {
+ 			pseudo_setupenv();
+ 			pseudo_reinit_libpseudo();
+ 		} else {
+diff --git a/ports/linux/newclone/guts/clone.c b/ports/linux/newclone/guts/clone.c
+index b3400c7..47dea28 100644
+--- a/ports/linux/newclone/guts/clone.c
++++ b/ports/linux/newclone/guts/clone.c
+@@ -12,7 +12,7 @@
+ 	 * undo it later.  UGH!
+ 	 */
+ 	pseudo_debug(1, "client resetting for clone(2) call\n");
+-	if (!pseudo_get_value("PSEUDO_RELOADED")) {
++	if (!pseudo_get_value("PSEUDO_RELOADED") && !pseudo_get_value("PSEUDO_UNLOAD")) {
+ 		pseudo_setupenv();
+ 		pseudo_reinit_libpseudo();
+ 	} else {
+diff --git a/ports/linux/oldclone/guts/clone.c b/ports/linux/oldclone/guts/clone.c
+index 58ff4ad..209e4b9 100644
+--- a/ports/linux/oldclone/guts/clone.c
++++ b/ports/linux/oldclone/guts/clone.c
+@@ -12,7 +12,7 @@
+ 	 * undo it later.  UGH!
+ 	 */
+ 	pseudo_debug(1, "client resetting for clone(2) call\n");
+-	if (!pseudo_get_value("PSEUDO_RELOADED")) {
++	if (!pseudo_get_value("PSEUDO_RELOADED") && !pseudo_get_value("PSEUDO_UNLOAD")) {
+ 		pseudo_setupenv();
+ 		pseudo_reinit_libpseudo();
+ 	} else {
+diff --git a/pseudo.1 b/pseudo.1
+index aa32bbe..2463ed4 100644
+--- a/pseudo.1
++++ b/pseudo.1
+@@ -408,8 +408,9 @@ client library does not modify the behavior of called functions, though it
+ continues to intercept them and block signals while processing them.  This
+ variable is reevaluated on every call to
+ .IR fork(2) ,\  clone(2)
+-or related functions. If the value starts with a lowercase or uppercase s,
+-the pseudo client disables all server spawning and communications, but still
++or related functions. If the value starts with a lowercase or uppercase 
++.I s
++, the pseudo client disables all server spawning and communications, but still
+ operates locally. This means that no filesystem mode or permissions changes
+ are actually recorded or reported, but functions like
+ .I chown()
+@@ -417,6 +418,15 @@ will still report success, even though nothing happens. This function is
+ intended for debugging of issues which are complicated by the server's
+ involvement.
+ .TP 8
++.B PSEUDO_UNLOAD
++This variable is reevaluated on every call to
++.IR fork(2) ,\  clone(2)
++or related functions. If the variable exists 
++.RI libpseudo.so
++will be removed from
++.B LD_PRELOAD
++, effectively removing pseudo from all new child processes.
++.TP 8
+ .B PSEUDO_ENOSYS_ABORT
+ If this variable is set, the
+ .I pseudo
+@@ -514,6 +524,9 @@ value when spawning a server.  (The
+ .I pseudo
+ server itself cannot function running in the
+ .I pseudo environment.)
++Note: Since this is purely an internal variable, it should
++.B NOT
++be used by anything other then internal functions.
+ .TP 8
+ .B PSEUDO_TAG
+ If this variable is set in a client's environment, its value is
+diff --git a/pseudo_client.c b/pseudo_client.c
+index 1108658..fd4a98a 100644
+--- a/pseudo_client.c
++++ b/pseudo_client.c
+@@ -161,6 +161,16 @@ pseudo_init_client(void) {
+ 		pseudo_set_value("PSEUDO_DISABLED", "0");
+ 	}
+ 
++	/* in child processes, PSEUDO_UNLOAD may become set to
++	 * some truthy value, in which case we're being asked to
++	 * remove pseudo from the LD_PRELOAD.  We need to make sure
++	 * this value gets loaded into the internal variables.
++	 */
++	env = getenv("PSEUDO_UNLOAD");
++	if (env) {
++		pseudo_set_value("PSEUDO_UNLOAD", env);
++	}
++
+ 	/* Setup global items needed for pseudo to function... */
+ 	if (!pseudo_inited) {
+ 		/* Ensure that all of the values are reset */
+diff --git a/pseudo_util.c b/pseudo_util.c
+index ada6060..a3bebdf 100644
+--- a/pseudo_util.c
++++ b/pseudo_util.c
+@@ -65,6 +65,7 @@ static struct pseudo_variables pseudo_env[] = {
+ 	{ "PSEUDO_NOSYMLINKEXP", 19, NULL },
+ 	{ "PSEUDO_RELOADED", 15, NULL },
+ 	{ "PSEUDO_DISABLED", 15, NULL },
++	{ "PSEUDO_UNLOAD", 13, NULL},
+ 	{ NULL, 0, NULL } /* Magic terminator */
+ };
+ 
