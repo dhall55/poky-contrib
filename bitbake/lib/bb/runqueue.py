@@ -1096,6 +1096,10 @@ class RunQueueExecute:
 
             logger.debug(2, 'Running %s:%s under fakeroot, fakedirs: %s' %
                             (fn, taskname, ', '.join(fakedirs)))
+        else:
+            envbackup["PSEUDO_UNLOAD"] = os.environ.get("PSEUDO_UNLOAD")
+            os.environ["PSEUDO_UNLOAD"] = "yes"
+            fakeenv["PSEUDO_UNLOAD"] = "yes"
 
         sys.stdout.flush()
         sys.stderr.flush()
