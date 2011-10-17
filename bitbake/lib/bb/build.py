@@ -255,7 +255,7 @@ def _task_data(fn, task, d):
     data.expandKeys(localdata)
     return localdata
 
-def _exec_task(fn, task, d, quieterr, dryrun=False):
+def _exec_task(fn, task, d, quieterr):
     """Execute a BB 'task'
 
     Execution of a task involves a bit more setup than executing a function,
@@ -317,13 +317,10 @@ def _exec_task(fn, task, d, quieterr, dryrun=False):
     event.fire(TaskStarted(task, localdata), localdata)
     try:
         for func in (prefuncs or '').split():
-            if not dryrun:
-                exec_func(func, localdata)
-        if not dryrun:
-            exec_func(task, localdata)
+            exec_func(func, localdata)
+        exec_func(task, localdata)
         for func in (postfuncs or '').split():
-            if not dryrun:
-                exec_func(func, localdata)
+            exec_func(func, localdata)
     except FuncFailed as exc:
         if not quieterr:
             logger.error(str(exc))
@@ -358,13 +355,13 @@ def _exec_task(fn, task, d, quieterr, dryrun=False):
 
     return 0
 
-def exec_task(fn, task, d, dryrun=False):
+def exec_task(fn, task, d):
     try: 
         quieterr = False
         if d.getVarFlag(task, "quieterrors") is not None:
             quieterr = True
 
-        return _exec_task(fn, task, d, quieterr, dryrun)
+        return _exec_task(fn, task, d, quieterr)
     except Exception:
         from traceback import format_exc
         if not quieterr:
