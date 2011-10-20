@@ -5914,6 +5914,18 @@ RECIPE_LATEST_RELEASE_DATE_pn-gettext = "Jun 06, 2010"
 RECIPE_LAST_UPDATE_pn-gettext = "May 24, 2011"
 RECIPE_MANUAL_CHECK_DATE_pn-gettext = "Sep 29, 2011" 
 
+RECIPE_STATUS_pn-ccache = "green"
+RECIPE_MAINTAINER_pn-ccache = "Wenzong Fan <wenzong.fan@windriver.com>"
+RECIPE_LATEST_VERSION_pn-ccache = "3.1.6"
+RECIPE_LAST_UPDATE_pn-ccache = "June 24, 2011"
+RECIPE_MANUAL_CHECK_DATE_pn-ccache = "October 11, 2011"
+
+RECIPE_STATUS_pn-chkconfig = "green"
+RECIPE_MAINTAINER_pn-chkconfig = "Wenzong Fan <wenzong.fan@windriver.com>"
+RECIPE_LATEST_VERSION_pn-chkconfig = "1.3.55"
+RECIPE_LAST_UPDATE_pn-chkconfig = "May 24, 2011"
+RECIPE_MANUAL_CHECK_DATE_pn-chkconfig = "October 11, 2011"
+
 RECIPE_STATUS_pn-pseudo = "green"
 RECIPE_LATEST_VERSION_pn-pseudo = "1.1.1"
 RECIPE_LAST_UPDATE_pn-pseudo = "Jun 06, 2011"
