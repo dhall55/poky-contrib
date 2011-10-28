@@ -206,7 +206,11 @@ class PythonParser():
             else:
                 break
 
+<<<<<<< HEAD
     def __init__(self, name):
+=======
+    def __init__(self):
+>>>>>>> 48d7f52... codeparser: simplify how we compare the called node names
         self.var_references = set()
         self.var_execs = set()
         self.execs = set()
