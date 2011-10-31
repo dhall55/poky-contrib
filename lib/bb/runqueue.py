@@ -1156,7 +1156,10 @@ class RunQueueExecute:
                     logger.critical(str(exc))
                 os._exit(1)
             try:
-                ret = bb.build.exec_task(fn, taskname, the_data)
+                if not self.cooker.configuration.dry_run:
+                    ret = bb.build.exec_task(fn, taskname, the_data)
+                else:
+                    bb.build.make_stamp2(taskname, the_data, fn)
                 os._exit(ret)
             except:
                 os._exit(1)
@@ -1329,15 +1332,35 @@ class RunQueueExecuteTasks(RunQueueExecute):
                                 self.rqdata.get_user_idstring(task))
                 self.task_skip(task)
                 return True
-            elif self.cooker.configuration.dry_run:
-                self.runq_running[task] = 1
-                self.runq_buildable[task] = 1
-                self.stats.taskActive()
-                self.task_complete(task)
-                return True
 
             taskdep = self.rqdata.dataCache.task_deps[fn]
             if 'noexec' in taskdep and taskname in taskdep['noexec']:
+                if self.cooker.configuration.dry_run or 1:
+                    fakeenv = {}
+                    if 'fakeroot' in taskdep and taskname in taskdep['fakeroot']:
+                        envvars = (self.rqdata.dataCache.fakerootenv[fn] or "").split()
+                        for key, value in (var.split('=') for var in envvars):
+                            fakeenv[key] = value
+                    else:
+                        fakeenv["PSEUDO_UNLOAD"] = "yes"
+
+                    bb.data.setVar("BB_WORKERCONTEXT", "1", self.cooker.configuration.data)
+                    bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
+                    bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
+                    bb.parse.siggen.set_taskdata(self.rqdata.hashes, self.rqdata.hash_deps)
+
+                    the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
+                    the_data.setVar('BB_TASKHASH', self.rqdata.runq_hash[task])
+                    for h in self.rqdata.hashes:
+                        the_data.setVar("BBHASH_%s" % h, self.rqdata.hashes[h])
+                    for h in self.rqdata.hash_deps:
+                        the_data.setVar("BBHASHDEPS_%s" % h, self.rqdata.hash_deps[h])
+        
+                    for e in fakeenv:
+                        the_data.setVar(e, fakeenv[e])
+
+                    bb.build.make_stamp2(taskname, the_data, fn)
+
                 startevent = runQueueTaskStarted(task, self.stats, self.rq,
                                                  noexec=True)
                 bb.event.fire(startevent, self.cfgData)
