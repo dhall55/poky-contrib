@@ -1,7 +1,7 @@
 SUMMARY = "Base system master password/group files."
 DESCRIPTION = "The master copies of the user database files (/etc/passwd and /etc/group).  The update-passwd tool is also provided to keep the system databases synchronized with these master files."
 SECTION = "base"
-PR = "r4"
+PR = "r5"
 LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=eb723b61539feef013de476e68b5c50a"
 
@@ -12,11 +12,15 @@ SRC_URI = "${DEBIAN_MIRROR}/main/b/base-passwd/base-passwd_${PV}.tar.gz \
 SRC_URI[md5sum] = "47f22ab6b572d0133409ff6ad1fab402"
 SRC_URI[sha256sum] = "d34acb35a9f9f221e7e4f642b9ef4b22083dd77bb2fc7216756f445316d842fc"
 
+PACKAGES =+ "${PN}-utils "
+
 S = "${WORKDIR}/base-passwd"
 
 inherit autotools
 
 SSTATEPOSTINSTFUNCS += "base_passwd_sstate_postinst"
+
+FILES_${PN}-utils += "${sbindir}/update-passwd"
 
 do_install () {
 	install -d -m 755 ${D}${sbindir}
@@ -35,23 +39,6 @@ do_install () {
 	gzip -9 ${D}${docdir}/${BPN}/*
 	install -p -m 644 README ${D}${docdir}/${BPN}/
 	install -p -m 644 debian/copyright ${D}${docdir}/${BPN}/
-}
-
-pkg_preinst_${PN} () {
-	set -e
-
-	# Used for rootfs generation. On in-target install this will be run
-        # before the unpack so the files won't be available
-
-	if [ ! -e $D${sysconfdir}/passwd ] && [ -e $D${datadir}/base-passwd/passwd.master ]; then
-		cp $D${datadir}/base-passwd/passwd.master $D${sysconfdir}/passwd
-	fi
-
-	if [ ! -e $D${sysconfdir}/group ] && [ -e $D${datadir}/base-passwd/group.master ]; then
-		cp $D${datadir}/base-passwd/group.master $D${sysconfdir}/group
-	fi
-
-	exit 0
 }
 
 pkg_postinst_${PN} () {
