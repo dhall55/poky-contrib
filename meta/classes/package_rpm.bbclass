@@ -406,15 +406,74 @@ EOF
 
 	chmod 0755 ${WORKDIR}/scriptlet_wrapper
 
+	# If there is a base-* packages, we manually extract and install them first...
+	base_pkgs=`grep /base- ${target_rootfs}/install/total_solution.manifest`
+
+	if [ -n "$base_pkgs" ]; then
+		mkdir -p ${target_rootfs}/install/base_scripts
+
+		# Extract the package contents...
+		for each_pkg in $base_pkgs ; do
+
+			# Run the PREIN
+			${RPM} --root ${target_rootfs} \
+				--predefine "_rpmds_sysinfo_path ${target_rootfs}/etc/rpm/sysinfo" \
+				--predefine "_rpmrc_platform_path ${target_rootfs}/etc/rpm/platform" \
+				-D "_var ${localstatedir}" \
+				-D "_dbpath ${rpmlibdir}" \
+				-D "__dbi_txn create nofsync private" \
+				-qp $each_pkg \
+				--qf '%|PREIN?{%{PREIN}\n}|' > ${target_rootfs}/install/base_scripts/`basename $each_pkg`_prein.sh
+			sh ${target_rootfs}/install/base_scripts/`basename $each_pkg`_prein.sh || true
+
+			( cd ${target_rootfs} ; rpm2cpio $each_pkg | cpio -i )
+
+			# Fix permissions
+			${RPM} --root ${target_rootfs} \
+				--predefine "_rpmds_sysinfo_path ${target_rootfs}/etc/rpm/sysinfo" \
+				--predefine "_rpmrc_platform_path ${target_rootfs}/etc/rpm/platform" \
+				-D "_var ${localstatedir}" \
+				-D "_dbpath ${rpmlibdir}" \
+				-D "__dbi_txn create nofsync private" \
+				-qp $each_pkg \
+				--qf \
+				"[\[ -L ${target_rootfs}%{FILENAMES:shescape} \] || chmod %7.7{FILEMODES:octal} ${target_rootfs}%{FILENAMES:shescape}\n]" \
+				--pipe "grep -v \(none\) | grep '^. -L ' | sed 's/chmod .../chmod /' | sh"
+
+			# Fix owners and groups
+			${RPM} --root ${target_rootfs} \
+				--predefine "_rpmds_sysinfo_path ${target_rootfs}/etc/rpm/sysinfo" \
+				--predefine "_rpmrc_platform_path ${target_rootfs}/etc/rpm/platform" \
+				-D "_var ${localstatedir}" \
+				-D "_dbpath ${rpmlibdir}" \
+				-D "__dbi_txn create nofsync private" \
+				-qp $each_pkg \
+				--qf \
+			        "[ch %{FILEUSERNAME:shescape} %{FILEGROUPNAME:shescape} ${target_rootfs}%{FILENAMES:shescape}\n]" \
+        			--pipe "(echo 'ch() { chown -h -- \"\$1\" \"\$3\";chgrp -h -- \"\$2\" \"\$3\"; }';grep -v \(none\))|sh"
+
+			# Run the POSTIN
+			${RPM} --root ${target_rootfs} \
+				--predefine "_rpmds_sysinfo_path ${target_rootfs}/etc/rpm/sysinfo" \
+				--predefine "_rpmrc_platform_path ${target_rootfs}/etc/rpm/platform" \
+				-D "_var ${localstatedir}" \
+				-D "_dbpath ${rpmlibdir}" \
+				-D "__dbi_txn create nofsync private" \
+				-qp $each_pkg \
+				--qf '%|POSTIN?{%{POSTIN}\n}|' > ${target_rootfs}/install/base_scripts/`basename $each_pkg`_postin.sh
+			sh ${target_rootfs}/install/base_scripts/`basename $each_pkg`_postin.sh || true
+		done
+	fi
+
 	# Attempt install
 	${RPM} --root ${target_rootfs} \
 		--predefine "_rpmds_sysinfo_path ${target_rootfs}/etc/rpm/sysinfo" \
 		--predefine "_rpmrc_platform_path ${target_rootfs}/etc/rpm/platform" \
 		-D "_var ${localstatedir}" \
 		-D "_dbpath ${rpmlibdir}" \
-		--noparentdirs --nolinktos --replacepkgs \
 		-D "__dbi_txn create nofsync private" \
 		-D "_cross_scriptlet_wrapper ${WORKDIR}/scriptlet_wrapper" \
+		--noparentdirs --nolinktos --replacepkgs \
 		-Uhv ${target_rootfs}/install/total_solution.manifest
 }
 

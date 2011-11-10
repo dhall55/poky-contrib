@@ -143,6 +143,8 @@ EOF
 
 	# Move manifests into the directory with the logs
 	mv ${IMAGE_ROOTFS}/install/*.manifest ${T}/
+	mkdir -p ${T}/base_scripts || true
+	mv ${IMAGE_ROOTFS}/install/base_scripts/* ${T}/base_scripts/. || true
 
 	# Remove all remaining resolver files
 	rm -rf ${IMAGE_ROOTFS}/install
