@@ -313,7 +313,11 @@ if [ "$MACHINE" = "qemux86" ]; then
     QEMU=qemu
     QEMU_UI_OPTIONS="$QEMU_UI_OPTIONS -vga vmware -enable-gl"
     if [ -d /proc/asound ] && ! grep -l "no soundcards" /proc/asound/cards; then
-        export QEMU_AUDIO_DRV=alsa
+        if pidof pulseaudio; then
+            export QEMU_AUDIO_DRV=pa
+        else
+            export QEMU_AUDIO_DRV=alsa
+        fi
         QEMU_UI_OPTIONS="$QEMU_UI_OPTIONS -soundhw all"
     fi
     if [ "$FSTYPE" = "ext3" -o "$FSTYPE" = "btrfs" ]; then
