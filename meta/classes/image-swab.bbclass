@@ -1,5 +1,15 @@
+#
+# Tracks accessed files during a build and generates a report indicating host intrusion.
+#
+# To use add image-swab to the USER_CLASSES variable:
+#    USER_CLASSES += "image-swab"
+#
+
+# Where to store generated data about the build host
 HOST_DATA ?= "${TMPDIR}/host-contamination-data/"
+# Where to output generated reports
 SWABBER_REPORT ?= "${LOG_DIR}/swabber/"
+# Where to store strace logs
 SWABBER_LOGS ?= "${LOG_DIR}/contamination-logs"
 TRACE_LOGDIR ?= "${SWABBER_LOGS}/${PACKAGE_ARCH}"
 TRACE_LOGFILE = "${TRACE_LOGDIR}/${PN}-${PV}"
@@ -89,6 +99,16 @@ do_generate_swabber_report () {
 
   if [ "$(ls -A ${HOST_DATA})" ]; then
     echo "Generating swabber report"
+    #Swabber switch break-down
+    # -d, the generated information about the host distribution
+    # -l, the directory of strace logfiles
+    # -o, main swabber report output file
+    # -r, extended swabber report output file
+    # -c, the rests to run - we run all tests
+    # -p, directory where build is being done
+    # -f, directory of filter files containing (blacklist, whitelist, etc)
+    #  - the remaining paths are directories to ignore, directories we're sure
+    # aren't causing host infection
     swabber -d ${HOST_DATA} -l ${SWABBER_LOGS} -o ${SWABBER_REPORT}/report-${REPORTSTAMP}.txt -r ${SWABBER_REPORT}/extra_report-${REPORTSTAMP}.txt -c all -p ${TOPDIR} -f ${OEROOT}/meta/conf/swabber ${TOPDIR} ${OEROOT} ${CCACHE_DIR}
   else
     echo "No host data, cannot generate swabber report."
