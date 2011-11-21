@@ -128,6 +128,7 @@ autotools_do_configure() {
 				# so avoid cp's no files to copy error
 				cp -r ${STAGING_DATADIR}/aclocal/. ${B}/aclocal-copy/
 				acpaths="$acpaths -I ${B}/aclocal-copy/"
+				export ACLOAD="aclocal --acdir=${B}/aclocal-copy/"
 			fi
 			# autoreconf is too shy to overwrite aclocal.m4 if it doesn't look
 			# like it was auto-generated.  Work around this by blowing it away
