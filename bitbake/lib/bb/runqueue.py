@@ -1361,9 +1361,9 @@ class RunQueueExecuteTasks(RunQueueExecute):
                     else:
                         fakeenv["PSEUDO_UNLOAD"] = "yes"
 
-                    bb.data.setVar("BB_WORKERCONTEXT", "1", self.cooker.configuration.data)
-                    bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
-                    bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
+                    self.cooker.configuration.data.setVar("BB_WORKERCONTEXT", "1")
+                    self.cooker.configuration.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self)
+                    self.cooker.configuration.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn)
                     bb.parse.siggen.set_taskdata(self.rqdata.hashes, self.rqdata.hash_deps)
 
                     the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
