@@ -72,6 +72,26 @@ def pluralise(singular, plural, qty):
 
 def main(server, eventHandler):
 
+    cuu = None
+    stdinbackup = None
+
+    if interactive:
+        import curses
+        import termios
+        import copy
+        try:
+            fd = sys.stdin.fileno()
+            stdinbackup = termios.tcgetattr(fd)
+            new = copy.deepcopy(stdinbackup)
+            new[3] = new[3] & ~termios.ECHO
+            termios.tcsetattr(fd, termios.TCSADRAIN, new)
+            curses.setupterm()
+            ed = curses.tigetstr("ed")
+            if ed:
+                cuu = curses.tigetstr("cuu")
+        except:
+            cuu = None
+
     # Get values of variables which control our output
     includelogs = server.runCommand(["getVariable", "BBINCLUDELOGS"])
     loglines = server.runCommand(["getVariable", "BBINCLUDELOGS_LINES"])
@@ -115,8 +135,56 @@ def main(server, eventHandler):
     errors = 0
     warnings = 0
     taskfailures = []
+    main.footer_present = False
+    main.lastpids = []
+
+    def updateFooter():
+        if not cuu:
+            return
+        activetasks = helper.running_tasks
+        failedtasks = helper.failed_tasks
+        runningpids = helper.running_pids
+        if main.footer_present and (main.lastpids == runningpids):
+            return
+        if main.footer_present:
+            clearFooter()
+        if not activetasks:
+            return
+        lines = 1
+        tasks = []
+        for t in runningpids:
+            tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
+
+        if shutdown:
+            print("Waiting for %s running tasks to finish:" % len(activetasks))
+        else:
+            print("Currently %s running tasks (%s of %s):" % (len(activetasks), helper.tasknumber_current, helper.tasknumber_total))
+        for tasknum, task in enumerate(tasks):
+            print("%s: %s" % (tasknum, task))
+            lines = lines + 1
+        main.footer_present = lines
+        main.lastpids = runningpids[:]
+
+    def clearFooter():
+        if main.footer_present:
+            lines = main.footer_present
+            sys.stdout.write(curses.tparm(cuu, lines))
+            sys.stdout.write(curses.tparm(ed))
+        main.footer_present = False
+
+    class InteractConsoleLogFilter(logging.Filter):
+        def filter(self, record):
+            if record.levelno == format.NOTE and (record.msg.startswith("Running") or record.msg.startswith("package ")):
+                return False
+            clearFooter()
+            return True
+
+    if interactive:
+        console.addFilter(InteractConsoleLogFilter())
+
     while True:
         try:
+            updateFooter()
             event = eventHandler.waitEvent(0.25)
             if event is None:
                 if shutdown > 1:
@@ -126,12 +194,6 @@ def main(server, eventHandler):
             if isinstance(event, bb.runqueue.runQueueExitWait):
                 if not shutdown:
                     shutdown = 1
-            if shutdown and helper.needUpdate:
-                activetasks, failedtasks = helper.getTasks()
-                if activetasks:
-                    print("Waiting for %s active tasks to finish:" % len(activetasks))
-                    for tasknum, task in enumerate(activetasks):
-                        print("%s: %s (pid %s)" % (tasknum, activetasks[task]["title"], task))
 
             if isinstance(event, logging.LogRecord):
                 if event.levelno >= format.ERROR:
@@ -151,6 +213,7 @@ def main(server, eventHandler):
                 return_value = 1
                 logfile = event.logfile
                 if logfile and os.path.exists(logfile):
+                    clearFooter()
                     print("ERROR: Logfile of failure stored in: %s" % logfile)
                     if includelogs and not event.errprinted:
                         print("Log data follows:")
@@ -281,10 +344,12 @@ def main(server, eventHandler):
             logger.error("Unknown event: %s", event)
 
         except EnvironmentError as ioerror:
+            clearFooter()
             # ignore interrupted io
             if ioerror.args[0] == 4:
                 pass
         except KeyboardInterrupt:
+            clearFooter()
             if shutdown == 1:
                 print("\nSecond Keyboard Interrupt, stopping...\n")
                 server.runCommand(["stateStop"])
@@ -315,4 +380,6 @@ def main(server, eventHandler):
         if return_value == 0:
             return_value = 1
 
+    if stdinbackup:
+        termios.tcsetattr(fd, termios.TCSADRAIN, stdinbackup)
     return return_value
