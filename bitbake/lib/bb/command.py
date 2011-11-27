@@ -255,7 +255,7 @@ class CommandsAsync:
 
         command.cooker.findConfigFiles(varname)
         command.finishAsyncCommand()
-    findConfigFiles.needcache = True
+    findConfigFiles.needcache = False
 
     def findFilesMatchingInDir(self, command, params):
         """
@@ -267,7 +267,7 @@ class CommandsAsync:
 
         command.cooker.findFilesMatchingInDir(pattern, directory)
         command.finishAsyncCommand()
-    findFilesMatchingInDir.needcache = True
+    findFilesMatchingInDir.needcache = False
 
     def findConfigFilePath(self, command, params):
         """
