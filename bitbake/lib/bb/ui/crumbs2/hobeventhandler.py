@@ -47,20 +47,38 @@ class HobHandler(gobject.GObject):
          "command-failed"      : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_STRING,)),
+         "generating-data"     : (gobject.SIGNAL_RUN_LAST,
+                                  gobject.TYPE_NONE,
+                                  ()),
+         "data-generated"      : (gobject.SIGNAL_RUN_LAST,
+                                  gobject.TYPE_NONE,
+                                  ()),
     }
 
-    (CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, CMD_END) = range(5)
+    (CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, CMD_END) = range(7)
 
-    def __init__(self, server):
+    def __init__(self, recipemodel, server):
         gobject.GObject.__init__(self)
 
         self.next_command = None
         self.generating = False
         self.current_phase = None
 
+        self.recipe_model = recipemodel
         self.server = server
 
+    def set_busy(self):
+        if self.next_command and not self.generating:
+            self.emit("generating-data")
+            self.generating = True
+
+    def clear_busy(self):
+        if self.generating:
+            self.emit("data-generated")
+            self.generating = False
+
     def run_next_command(self):
+        self.set_busy()
         if self.next_command == self.CFG_PATH_LAYERS:
             self.next_command = self.CFG_FILES_DISTRO
             ret = self.server.runCommand(["findConfigFilePath", "bblayers.conf"])
@@ -74,14 +92,26 @@ class HobHandler(gobject.GObject):
             self.next_command = self.CMD_END
             ret = self.server.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
 
+        elif self.next_command == self.PARSE_CONFIG:
+            self.next_command = self.GENERATE_TGTS
+            self.server.runCommand(["parseConfigurationFiles", "", ""])
+        elif self.next_command == self.GENERATE_TGTS:
+            self.next_command = self.CMD_END
+            self.server.runCommand(["generateTargetsTree", "classes/image.bbclass", [], True])
+
         elif self.next_command == self.CMD_END:
+            self.clear_busy()
             self.next_command = None
                                                                          
     def handle_event(self, event):
         if not event:
             return
 
-        if isinstance(event, bb.event.ConfigFilesFound):
+        if isinstance(event, bb.event.TargetsTreeGenerated):
+            self.current_phase = "data generation"
+            if event._model:
+                self.recipe_model.populate(event._model)
+        elif isinstance(event, bb.event.ConfigFilesFound):
             self.current_phase = "configuration lookup"
             var = event._variable
             if var == "distro":
@@ -160,4 +190,9 @@ class HobHandler(gobject.GObject):
 
     def set_sstate_mirror(self, url):
         self.server.runCommand(["setVariable", "SSTATE_MIRROR", url])
+
+    def generate_data(self, config=None):
+        self.next_command = self.PARSE_CONFIG
+        self.run_next_command()
+                 
 
