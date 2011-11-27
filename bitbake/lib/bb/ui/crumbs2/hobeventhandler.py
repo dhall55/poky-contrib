@@ -55,7 +55,7 @@ class HobHandler(gobject.GObject):
                                   ()),
     }
 
-    (CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, CMD_END) = range(7)
+    (CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, BUILD_RECIPES, CMD_END) = range(8)
 
     def __init__(self, recipemodel, server):
         gobject.GObject.__init__(self)
@@ -63,6 +63,7 @@ class HobHandler(gobject.GObject):
         self.next_command = None
         self.generating = False
         self.current_phase = None
+        self.building = False
 
         self.recipe_model = recipemodel
         self.server = server
@@ -99,15 +100,25 @@ class HobHandler(gobject.GObject):
             self.next_command = self.CMD_END
             self.server.runCommand(["generateTargetsTree", "classes/image.bbclass", [], True])
 
+        elif self.next_command == self.BUILD_RECIPES:
+            self.clear_busy()
+            self.building = True
+            self.server.runCommand(["buildTargets", self.build_queue, "build"])
+            self.build_queue = []
+            self.next_command = None
+
         elif self.next_command == self.CMD_END:
             self.clear_busy()
             self.next_command = None
                                                                          
-    def handle_event(self, event):
+    def handle_event(self, event, running_build):
         if not event:
             return
 
-        if isinstance(event, bb.event.TargetsTreeGenerated):
+        if self.building:
+            self.current_phase = "building"
+            running_build.handle_event(event)
+        elif isinstance(event, bb.event.TargetsTreeGenerated):
             self.current_phase = "data generation"
             if event._model:
                 self.recipe_model.populate(event._model)
@@ -144,11 +155,11 @@ class HobHandler(gobject.GObject):
             self.emit("command-failed", event.error)
         return
 
-    def event_handle_idle_func (self, eventHandler):
+    def event_handle_idle_func (self, eventHandler, running_build):
         # Consume as many messages as we can in the time available to us
         event = eventHandler.getEvent()
         while event:
-            self.handle_event(event)
+            self.handle_event(event, running_build)
             event = eventHandler.getEvent()
         return True
 
@@ -195,4 +206,20 @@ class HobHandler(gobject.GObject):
         self.next_command = self.PARSE_CONFIG
         self.run_next_command()
                  
+    def build_targets(self, tgts):
+        targets = []
+        targets.extend(tgts)
+        self.build_queue = targets
+        self.next_command = self.BUILD_RECIPES
+        self.run_next_command()
+
+    def cancel_build(self, force=False):
+        if force:
+            # Force the cooker to stop as quickly as possible
+            self.server.runCommand(["stateStop"])
+        else:
+            # Wait for tasks to complete before shutting down, this helps
+            # leave the workdir in a usable state
+            self.server.runCommand(["stateShutdown"])
+
 

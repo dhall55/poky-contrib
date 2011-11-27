@@ -25,6 +25,7 @@ import gtk
 from bb.ui.crumbs2.recipelistmodel import RecipeListModel
 from bb.ui.crumbs2.hobeventhandler import HobHandler
 from bb.ui.crumbs2.hig import CrumbsDialog
+from bb.ui.crumbs2.runningbuild import RunningBuildTreeView, RunningBuild
 import xmlrpclib
 import logging
 import Queue
@@ -52,6 +53,8 @@ class MainWindow (gtk.Window):
         self.generating = False
         self.selected_image = None
         self.selected_recipes = None
+        self.build_succeeded = False
+        self.stopping = False
 
         self.recipe_model = recipemodel
         self.recipe_model.connect("recipelist-populated", self.update_recipe_model)
@@ -64,15 +67,23 @@ class MainWindow (gtk.Window):
         self.set_icon_name("applications-development")
         self.set_default_size(1000, 650)
 
+        self.build = RunningBuild(sequential=True)
+        self.build.connect("build-failed", self.running_build_failed_cb)
+        self.build.connect("build-succeeded", self.running_build_succeeded_cb)
+        self.build.connect("build-started", self.build_started_cb)
+        self.build.connect("build-complete", self.build_complete_cb)
+
         vbox = gtk.VBox(False, 0)
         vbox.set_border_width(0)
         vbox.show()
         self.add(vbox)
         configview = self.create_config_gui()
         recipeview = self.create_recipe_gui()
+        buildview = self.view_build_gui()
         self.nb = gtk.Notebook()
         self.nb.append_page(configview)
         self.nb.append_page(recipeview)
+        self.nb.append_page(buildview)
         self.nb.set_current_page(0)
         self.nb.set_show_tabs(False)
         vbox.pack_start(self.nb, expand=True, fill=True)
@@ -521,6 +532,38 @@ class MainWindow (gtk.Window):
 
         return vbox
 
+    def cancel_build(self, button):
+        if self.stopping:
+            lbl = "<b>Force Stop build?</b>\nYou've already selected Stop once,"
+            lbl = lbl + " would you like to 'Force Stop' the build?\n\n"
+            lbl = lbl + "This will stop the build as quickly as possible but may"
+            lbl = lbl + " well leave your build directory in an  unusable state"
+            lbl = lbl + " that requires manual steps to fix.\n"
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+            dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+        else:
+            lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this"
+            lbl = lbl + " build?\n\n'Force Stop' will stop the build as quickly as"
+            lbl = lbl + " possible but may well leave your build directory in an"
+            lbl = lbl + " unusable state that requires manual steps to fix.\n\n"
+            lbl = lbl + "'Stop' will stop the build as soon as all in"
+            lbl = lbl + " progress build tasks are finished. However if a"
+            lbl = lbl + " lengthy compilation phase is in progress this may take"
+            lbl = lbl + " some time."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+            dialog.add_button("Stop", gtk.RESPONSE_OK)
+            dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+        response = dialog.run()
+        dialog.destroy()
+        if response != gtk.RESPONSE_CANCEL:
+            self.stopping = True
+        if response == gtk.RESPONSE_OK:
+            self.handler.cancel_build()
+        elif response == gtk.RESPONSE_YES:
+            self.handler.cancel_build(True)
+
     def contents(self):
         self.contents_tree = gtk.TreeView()
         self.contents_tree.set_headers_visible(True)
@@ -563,8 +606,45 @@ class MainWindow (gtk.Window):
         self.nb.set_current_page(0)
 
     def recipe_next_clicked_cb(self, button):
+        # If no base image and no selected packages don't build anything
+        if not self.selected_image and not self.recipe_model.get_selected_recipes():
+            lbl = "<b>No selections made</b>\nYou have not made any selections"
+            lbl = lbl + " so there isn't anything to bake at this time."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            dialog.run()
+            dialog.destroy()
+            return
+
+        _, all_recipes = self.recipe_model.get_selected_recipes()
+        self.handler.build_targets(all_recipes)
+        self.build.reset()
+        self.nb.set_current_page(2)
         return
-        
+
+    def scroll_tv_cb(self, model, path, it, view):
+        view.scroll_to_cell(path)
+
+    def build_started_cb(self, running_build):
+        self.back.set_sensitive(False)
+        self.cancel.set_sensitive(True)
+
+    def build_back_clicked_cb(self, button):
+        self.nb.set_current_page(1)
+
+    def build_complete_cb(self, running_build):
+        # Have the handler process BB events again
+        self.handler.building = False
+        self.stopping = False
+        self.back.connect("clicked", self.build_back_clicked_cb)
+        self.back.set_sensitive(True)
+        self.cancel.set_sensitive(False)
+
+    def running_build_succeeded_cb(self, running_build):
+        self.build_succeeded = True
+
+    def running_build_failed_cb(self, running_build):
+        self.build_succeeded = False
 
     def destroy_window(self, widget, event):
         gtk.main_quit()
@@ -770,6 +850,33 @@ class MainWindow (gtk.Window):
 
         return vbox
 
+    def view_build_gui(self):
+        vbox = gtk.VBox(False, 12)
+        vbox.set_border_width(6)
+        vbox.show()
+        build_tv = RunningBuildTreeView(readonly=True)
+        build_tv.show()
+        build_tv.set_model(self.build.model)
+        self.build.model.connect("row-inserted", self.scroll_tv_cb, build_tv)
+        scrolled_view = gtk.ScrolledWindow ()
+        scrolled_view.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        scrolled_view.add(build_tv)
+        scrolled_view.show()
+        vbox.pack_start(scrolled_view, expand=True, fill=True)
+        hbox = gtk.HBox(False, 12)
+        hbox.show()
+        vbox.pack_start(hbox, expand=False, fill=False)
+        self.back = gtk.Button("Back")
+        self.back.show()
+        self.back.set_sensitive(False)
+        hbox.pack_start(self.back, expand=False, fill=False)
+        self.cancel = gtk.Button("Stop Build")
+        self.cancel.connect("clicked", self.cancel_build)
+        self.cancel.show()
+        hbox.pack_end(self.cancel, expand=False, fill=False)
+
+        return vbox
+
 def main (server, eventHandler):
     gobject.threads_init()
 
@@ -820,7 +927,8 @@ def main (server, eventHandler):
     # have any messages waiting for us.
     gobject.timeout_add (100,
                          handler.event_handle_idle_func,
-                         eventHandler)
+                         eventHandler,
+                         window.build)
 
     try:
         gtk.main()
