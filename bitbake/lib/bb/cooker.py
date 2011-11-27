@@ -170,6 +170,15 @@ class BBCooker:
 
         self.parser = None
 
+    def initConfigurationData(self):
+        self.configuration.data = bb.data.init()
+
+        if not self.server_registration_cb:
+            bb.data.setVar("BB_WORKERCONTEXT", "1", self.configuration.data)
+
+        filtered_keys = bb.utils.approved_variables()
+        bb.data.inheritFromOS(self.configuration.data, self.savedenv, filtered_keys)
+
     def loadConfigurationData(self):
         self.configuration.data = bb.data.init()
 
@@ -1307,6 +1316,10 @@ class BBCooker:
 
     def reparseFiles(self):
         return
+
+    def initialize(self):
+        self.state = state.initial
+        self.initConfigurationData()
 
     def reset(self):
         self.state = state.initial
