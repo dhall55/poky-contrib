@@ -179,10 +179,6 @@ class RunningBuild (gobject.GObject):
             # that we need to attach to a task.
             self.tasks_to_iter[(package, task)] = i
 
-        # If we don't handle these the GUI does not proceed
-        elif isinstance(event, bb.build.TaskInvalid):
-            return
-
         elif isinstance(event, bb.build.TaskBase):
             current = self.tasks_to_iter[(package, task)]
             parent = self.tasks_to_iter[(package, None)]
@@ -236,6 +232,10 @@ class RunningBuild (gobject.GObject):
                                       None,
                                       Colors.OK,
                                       0))
+            if pbar:
+                pbar.update(0, None, bb.event.getName(event))
+                pbar.set_title()
+
         elif isinstance(event, bb.event.BuildCompleted):
             failures = int (event._failures)
             self.model.prepend(None, (None,
@@ -254,6 +254,8 @@ class RunningBuild (gobject.GObject):
             # Emit a generic "build-complete" signal for things wishing to
             # handle when the build is finished
             self.emit("build-complete")
+            if pbar:
+                pbar.set_text(event.msg)
 
         elif isinstance(event, bb.command.CommandFailed):
             if event.error.startswith("Exited with"):
@@ -280,6 +282,11 @@ class RunningBuild (gobject.GObject):
             pbar.update(event.current, self.progress_total)
         elif isinstance(event, bb.event.ParseCompleted) and pbar:
             pbar.hide()
+        #using runqueue events as many as possible to update the progress bar
+        elif isinstance(event, (bb.runqueue.runQueueTaskStarted, bb.runqueue.sceneQueueTaskStarted)) and pbar:
+            num_of_completed = event.stats.completed + event.stats.failed
+            pbar.update(num_of_completed, event.stats.total, bb.event.getName(event))
+            pbar.set_title()
 
         return
 

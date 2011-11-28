@@ -4,6 +4,7 @@
 # Copyright (C) 2011        Intel Corporation
 #
 # Authored by Joshua Lock <josh@linux.intel.com>
+# Authored by Dongxiao Xu <dongxiao.xu@intel.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -31,19 +32,25 @@ class HobHandler(gobject.GObject):
     This object does BitBake event handling for the hob gui.
     """
     __gsignals__ = {
-         "machines-updated"    : (gobject.SIGNAL_RUN_LAST,
+         "layers-avail"       : (gobject.SIGNAL_RUN_LAST,
+                                 gobject.TYPE_NONE,
+                                 (gobject.TYPE_PYOBJECT,)),
+         "package-formats-found" : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_PYOBJECT,)),
-         "sdk-machines-updated": (gobject.SIGNAL_RUN_LAST,
+         "machines-updated"    : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_PYOBJECT,)),
          "distros-updated"     : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_PYOBJECT,)),
-         "package-formats-found" : (gobject.SIGNAL_RUN_LAST,
+         "sdk-machines-updated": (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_PYOBJECT,)),
-         "config-found"        : (gobject.SIGNAL_RUN_LAST,
+         "command-succeeded"   : (gobject.SIGNAL_RUN_LAST,
+                                  gobject.TYPE_NONE,
+                                  (gobject.TYPE_INT,)),
+         "command-failed"      : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_STRING,)),
          "generating-data"     : (gobject.SIGNAL_RUN_LAST,
@@ -52,126 +59,132 @@ class HobHandler(gobject.GObject):
          "data-generated"      : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   ()),
-         "fatal-error"         : (gobject.SIGNAL_RUN_LAST,
-                                  gobject.TYPE_NONE,
-                                  (gobject.TYPE_STRING,
-                                   gobject.TYPE_STRING,)),
-         "command-failed"      : (gobject.SIGNAL_RUN_LAST,
-                                  gobject.TYPE_NONE,
-                                  (gobject.TYPE_STRING,)),
-         "reload-triggered"    : (gobject.SIGNAL_RUN_LAST,
-                                  gobject.TYPE_NONE,
-                                  (gobject.TYPE_STRING,
-                                   gobject.TYPE_STRING,)),
     }
 
-    (CFG_PATH_LOCAL, CFG_PATH_PRE, CFG_PATH_POST, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDK, FILES_MATCH_CLASS, GENERATE_TGTS, REPARSE_FILES, BUILD_IMAGE) = range(11)
+    (CFG_AVAIL_LAYERS, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDKMACH, FILES_MATCH_CLASS, PARSE_CONFIG, PARSE_BBFILES, GENERATE_TGTS, BUILD_TARGET_RECIPES, BUILD_TARGET_IMAGE, CMD_END) = range(12)
+    (LAYERS_REFRESH, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE) = range(4)
 
-    def __init__(self, taskmodel, server):
+    def __init__(self, recipemodel, packagemodel, server):
         gobject.GObject.__init__(self)
 
-        self.current_command = None
-        self.building = False
-        self.build_toolchain = False
-        self.build_toolchain_headers = False
+        self.commands_async = []
         self.generating = False
-        self.build_queue = []
         self.current_phase = None
-        self.bbpath_ok = False
-        self.bbfiles_ok = False
-        self.build_type = "image"
-        self.image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
+        self.building = False
+        self.build_queue = []
+        self.build_queue_len = 0
+        self.package_queue = []
 
-        self.model = taskmodel
+        self.recipe_model = recipemodel
+        self.package_model = packagemodel
         self.server = server
+        self.error_msg = ""
+        self.initcmd = None
 
-        deploy_dir = self.server.runCommand(["getVariable", "DEPLOY_DIR"])
-        self.image_out_dir = os.path.join(deploy_dir, "images")
-        self.image_output_types = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]).split(" ")
-        self.bbpath = self.server.runCommand(["getVariable", "BBPATH"])
-        self.bbfiles = self.server.runCommand(["getVariable", "BBFILES"])
-
-    def run_next_command(self):
-        if self.current_command and not self.generating:
+    def set_busy(self):
+        if not self.generating:
             self.emit("generating-data")
             self.generating = True
 
-        if self.current_command == self.CFG_PATH_LOCAL:
-            self.current_command = self.CFG_PATH_PRE
-            self.server.runCommand(["findConfigFilePath", "hob-pre.conf"])
-        elif self.current_command == self.CFG_PATH_PRE:
-            self.current_command = self.CFG_PATH_POST
-            self.server.runCommand(["findConfigFilePath", "hob-post.conf"])
-        elif self.current_command == self.CFG_PATH_POST:
-            self.current_command = self.CFG_PATH_LAYERS
+    def clear_busy(self):
+        if self.generating:
+            self.emit("data-generated")
+            self.generating = False
+
+    def run_next_command(self, initcmd=None):
+        if initcmd != None:
+            self.initcmd = initcmd
+
+        if self.commands_async:
+            self.set_busy()
+            next_command = self.commands_async.pop(0)
+        else:
+            self.clear_busy()
+            if self.initcmd != None:
+                self.emit("command-succeeded", self.initcmd)
+            return
+
+        if next_command == self.CFG_AVAIL_LAYERS:
+            self.server.runCommand(["findCoreBaseFiles", "layers", "conf/layer.conf"])
+        elif next_command == self.CFG_PATH_LAYERS:
             self.server.runCommand(["findConfigFilePath", "bblayers.conf"])
-        elif self.current_command == self.CFG_PATH_LAYERS:
-            self.current_command = self.CFG_FILES_DISTRO
+        elif next_command == self.CFG_FILES_DISTRO:
             self.server.runCommand(["findConfigFiles", "DISTRO"])
-        elif self.current_command == self.CFG_FILES_DISTRO:
-            self.current_command = self.CFG_FILES_MACH
+        elif next_command == self.CFG_FILES_MACH:
             self.server.runCommand(["findConfigFiles", "MACHINE"])
-        elif self.current_command == self.CFG_FILES_MACH:
-            self.current_command = self.CFG_FILES_SDK
+        elif next_command == self.CFG_FILES_SDKMACH:
             self.server.runCommand(["findConfigFiles", "MACHINE-SDK"])
-        elif self.current_command == self.CFG_FILES_SDK:
-            self.current_command = self.FILES_MATCH_CLASS
+        elif next_command == self.FILES_MATCH_CLASS:
             self.server.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
-        elif self.current_command == self.FILES_MATCH_CLASS:
-            self.current_command = self.GENERATE_TGTS
-            self.server.runCommand(["generateTargetsTree", "classes/image.bbclass"])
-        elif self.current_command == self.GENERATE_TGTS:
-            if self.generating:
-                self.emit("data-generated")
-                self.generating = False
-            self.current_command = None
-        elif self.current_command == self.REPARSE_FILES:
-            if self.build_queue:
-                self.current_command = self.BUILD_IMAGE
-            else:
-                self.current_command = self.CFG_PATH_LAYERS
-            self.server.runCommand(["resetCooker"])
-            self.server.runCommand(["reparseFiles"])
-        elif self.current_command == self.BUILD_IMAGE:
-            if self.generating:
-                self.emit("data-generated")
-                self.generating = False
+        elif next_command == self.PARSE_CONFIG:
+            self.server.runCommand(["parseConfigurationFiles", "", ""])
+        elif next_command == self.PARSE_BBFILES:
+            self.server.runCommand(["parseFiles"])
+        elif next_command == self.GENERATE_TGTS:
+            self.server.runCommand(["generateTargetsTree", "classes/image.bbclass", [], True])
+        elif next_command == self.BUILD_TARGET_RECIPES:
             self.building = True
-            self.server.runCommand(["buildTargets", self.build_queue, "build"])
+            self.build_queue_len = len(self.build_queue)
+            self.server.runCommand(["buildTargets", self.build_queue, "package_info"])
             self.build_queue = []
-            self.current_command = None
+        elif next_command == self.BUILD_TARGET_IMAGE:
+            self.building = True
+            targets = ["hob"]
+            self.server.runCommand(["setVariable", "LINGUAS_INSTALL", ""])
+            self.server.runCommand(["setVariable", "PACKAGE_INSTALL", " ".join(self.package_queue)])
+            if self.toolchain_build:
+                pkgs = self.package_queue + [i+'-dev' for i in self.package_queue] + [i+'-dbg' for i in self.package_queue]
+                self.server.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(pkgs)])
+                targets.append("hob-toolchain")
+            self.server.runCommand(["buildTargets", targets, "build"])
 
-    def handle_event(self, event, running_build, pbar):
+    def handle_event(self, event, window):
         if not event:
-	    return
+            return
 
-        # If we're running a build, use the RunningBuild event handler
+        if isinstance(event, bb.event.PackageInfo):
+            self.build_queue_len -= 1
+            if event._pkginfolist:
+                pniter = self.package_model.populate_recipe(event._recipe)
+                for pkginfo in event._pkginfolist:
+                    self.package_model.populate(pniter, pkginfo)
+            if self.build_queue_len == 0:
+                self.package_model.map_pn_path()
+                self.package_model.emit("packagelist-populated")
+
         if self.building:
             self.current_phase = "building"
-            running_build.handle_event(event)
+            window.build.handle_event(event, window.view_build_progress)
+
+        elif(isinstance(event, logging.LogRecord)):
+            if event.levelno >= logging.ERROR:
+                self.error_msg += event.msg + '\n'
+
         elif isinstance(event, bb.event.TargetsTreeGenerated):
             self.current_phase = "data generation"
             if event._model:
-                self.model.populate(event._model)
+                self.recipe_model.populate(event._model)
+        elif isinstance(event, bb.event.CoreBaseFilesFound):
+            self.current_phase = "configuration lookup"
+            paths = event._paths
+            self.emit('layers-avail', paths)
         elif isinstance(event, bb.event.ConfigFilesFound):
             self.current_phase = "configuration lookup"
             var = event._variable
-	    if var == "distro":
-		distros = event._values
-		distros.sort()
-		self.emit("distros-updated", distros)
-	    elif var == "machine":
-	        machines = event._values
-		machines.sort()
-		self.emit("machines-updated", machines)
+            if var == "distro":
+            	distros = event._values
+            	distros.sort()
+            	self.emit("distros-updated", distros)
+            elif var == "machine":
+                machines = event._values
+            	machines.sort()
+            	self.emit("machines-updated", machines)
             elif var == "machine-sdk":
                 sdk_machines = event._values
                 sdk_machines.sort()
                 self.emit("sdk-machines-updated", sdk_machines)
         elif isinstance(event, bb.event.ConfigFilePathFound):
             self.current_phase = "configuration lookup"
-            path = event._path
-            self.emit("config-found", path)
         elif isinstance(event, bb.event.FilesMatchingFound):
             self.current_phase = "configuration lookup"
             # FIXME: hard coding, should at least be a variable shared between
@@ -188,43 +201,56 @@ class HobHandler(gobject.GObject):
             self.current_phase = None
             self.run_next_command()
         elif isinstance(event, bb.command.CommandFailed):
-            self.emit("command-failed", event.error)
-        elif isinstance(event, bb.event.CacheLoadStarted):
-            self.current_phase = "cache loading"
-            bb.ui.crumbs.hobeventhandler.progress_total = event.total
-            pbar.set_text("Loading cache: %s/%s" % (0, bb.ui.crumbs.hobeventhandler.progress_total))
-        elif isinstance(event, bb.event.CacheLoadProgress):
-            self.current_phase = "cache loading"
-            pbar.set_text("Loading cache: %s/%s" % (event.current, bb.ui.crumbs.hobeventhandler.progress_total))
-        elif isinstance(event, bb.event.CacheLoadCompleted):
-            self.current_phase = None
-            pbar.set_text("Loading...")
-        elif isinstance(event, bb.event.ParseStarted):
-            self.current_phase = "recipe parsing"
-            if event.total == 0:
-                return
-            bb.ui.crumbs.hobeventhandler.progress_total = event.total
-            pbar.set_text("Processing recipes: %s/%s" % (0, bb.ui.crumbs.hobeventhandler.progress_total))
-        elif isinstance(event, bb.event.ParseProgress):
-            self.current_phase = "recipe parsing"
-            pbar.set_text("Processing recipes: %s/%s" % (event.current, bb.ui.crumbs.hobeventhandler.progress_total))
-        elif isinstance(event, bb.event.ParseCompleted):
-            self.current_phase = None
-            pbar.set_fraction(1.0)
-            pbar.set_text("Loading...")
-        elif isinstance(event, logging.LogRecord):
-            format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
-            if event.levelno >= format.CRITICAL:
-                self.emit("fatal-error", event.getMessage(), self.current_phase)
+            self.commands_async = []
+            if self.error_msg:
+                self.emit("command-failed", self.error_msg)
+                self.error_msg = ""
+        elif isinstance(event, (bb.event.ParseStarted, bb.event.CacheLoadStarted, bb.event.TreeDataPreparationStarted)) \
+            and window and window.create_recipe_progress:
+            if isinstance(event, bb.event.ParseStarted):
+                window.create_recipe_progress.set_case_by_num(0)
+            elif isinstance(event, bb.event.CacheLoadStarted):
+                window.create_recipe_progress.set_case_by_num(1)
+            window.create_recipe_progress.update(0, None, bb.event.getName(event))
+            window.create_recipe_progress.set_title("Parsing recipes: ")
+        elif isinstance(event, (bb.event.ParseProgress, bb.event.CacheLoadProgress, bb.event.TreeDataPreparationProgress)) \
+            and window and window.create_recipe_progress:
+            window.create_recipe_progress.update(event.current, event.total, bb.event.getName(event))
+            window.create_recipe_progress.set_title("Parsing recipes: ")
+        elif isinstance(event, (bb.event.ParseCompleted, bb.event.CacheLoadCompleted, bb.event.TreeDataPreparationCompleted)) \
+            and window and window.create_recipe_progress:
+            window.create_recipe_progress.update(event.total, event.total, bb.event.getName(event))
+            window.create_recipe_progress.set_title("Parsing recipes: ")
         return
 
-    def event_handle_idle_func (self, eventHandler, running_build, pbar):
+    def event_handle_idle_func (self, eventHandler, window):
         # Consume as many messages as we can in the time available to us
         event = eventHandler.getEvent()
         while event:
-            self.handle_event(event, running_build, pbar)
+            self.handle_event(event, window)
             event = eventHandler.getEvent()
         return True
+
+    def init_cooker(self):
+        self.server.runCommand(["initCooker"])
+
+    def layer_refresh(self, bblayers):
+        self.server.runCommand(["initCooker"])
+        self.server.runCommand(["setVariable", "BBLAYERS", " ".join(bblayers)])
+        self.commands_async.append(self.PARSE_CONFIG)
+        self.commands_async.append(self.CFG_FILES_DISTRO)
+        self.commands_async.append(self.CFG_FILES_MACH)
+        self.commands_async.append(self.CFG_FILES_SDKMACH)
+        self.commands_async.append(self.FILES_MATCH_CLASS)
+        self.run_next_command(self.LAYERS_REFRESH)
+
+    def set_extra_inherit(self, bbclass):
+        inherits = self.server.runCommand(["getVariable", "INHERIT"]) or ""
+        inherits = inherits + " " + bbclass
+        self.server.runCommand(["setVariable", "INHERIT", inherits])
+
+    def set_bblayers(self, bblayers):
+        self.server.runCommand(["setVariable", "BBLAYERS", " ".join(bblayers)])
 
     def set_machine(self, machine):
         self.server.runCommand(["setVariable", "MACHINE", machine])
@@ -236,58 +262,66 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["setVariable", "DISTRO", distro])
 
     def set_package_format(self, format):
-        self.server.runCommand(["setVariable", "PACKAGE_CLASSES", "package_%s" % format])
-
-    def reload_data(self, config=None):
-        img = self.model.selected_image
-        selected_packages, _ = self.model.get_selected_packages()
-        self.emit("reload-triggered", img, " ".join(selected_packages))
-        self.current_command = self.REPARSE_FILES
-        self.run_next_command()
+        package_classes = ""
+        for pkgfmt in format.split():
+            package_classes += ("package_%s" % pkgfmt + " ")
+        self.server.runCommand(["setVariable", "PACKAGE_CLASSES", package_classes])
 
     def set_bbthreads(self, threads):
         self.server.runCommand(["setVariable", "BB_NUMBER_THREADS", threads])
 
     def set_pmake(self, threads):
         pmake = "-j %s" % threads
-        self.server.runCommand(["setVariable", "BB_NUMBER_THREADS", pmake])
+        self.server.runCommand(["setVariable", "PARALLEL_MAKE", pmake])
 
-    def build_targets(self, tgts, configurator, build_type="image"):
-        self.build_type = build_type
+    def set_dl_dir(self, directory):
+        self.server.runCommand(["setVariable", "DL_DIR", directory])
+
+    def set_sstate_dir(self, directory):
+        self.server.runCommand(["setVariable", "SSTATE_DIR", directory])
+
+    def set_sstate_mirror(self, url):
+        self.server.runCommand(["setVariable", "SSTATE_MIRROR", url])
+
+    def set_extra_size(self, image_extra_size):
+        self.server.runCommand(["setVariable", "IMAGE_ROOTFS_EXTRA_SPACE", str(image_extra_size)])
+
+    def set_incompatible_license(self, incompat_license):
+        self.server.runCommand(["setVariable", "INCOMPATIBLE_LICENSE", incompat_license])
+
+    def set_extra_config(self, extra_setting):
+        for key in extra_setting.keys():
+            value = extra_setting[key]
+            self.server.runCommand(["setVariable", key, value])
+
+    def generate_recipes(self):
+        self.commands_async.append(self.PARSE_CONFIG)
+        self.commands_async.append(self.GENERATE_TGTS)
+        self.run_next_command(self.GENERATE_RECIPES)
+                 
+    def generate_packages(self, tgts):
         targets = []
-        nbbp = None
-        nbbf = None
         targets.extend(tgts)
-        if self.build_toolchain and self.build_toolchain_headers:
-            targets.append("meta-toolchain-sdk")
-        elif self.build_toolchain:
-            targets.append("meta-toolchain")
         self.build_queue = targets
+        self.commands_async.append(self.PARSE_CONFIG)
+        self.commands_async.append(self.PARSE_BBFILES)
+        self.commands_async.append(self.BUILD_TARGET_RECIPES)
+        self.run_next_command(self.GENERATE_PACKAGES)
 
-        if not self.bbpath_ok:
-            if self.image_dir in self.bbpath.split(":"):
-                self.bbpath_ok = True
-            else:
-                nbbp = self.image_dir
+    def generate_image(self, recipes, packages, fast_mode=False, toolchain_build=False):
+        self.build_queue = recipes
+        self.package_queue = packages
+        self.toolchain_build = toolchain_build
+        self.commands_async.append(self.PARSE_CONFIG)
+        self.commands_async.append(self.PARSE_BBFILES)
+        if fast_mode:
+            self.commands_async.append(self.BUILD_TARGET_RECIPES)
+        self.commands_async.append(self.BUILD_TARGET_IMAGE)
+        self.run_next_command(self.GENERATE_IMAGE)
 
-        if not self.bbfiles_ok:
-            import re
-            pattern = "%s/\*.bb" % self.image_dir
-
-            for files in self.bbfiles.split(" "):
-                if re.match(pattern, files):
-                    self.bbfiles_ok = True
-
-            if not self.bbfiles_ok:
-                nbbf = "%s/*.bb" % self.image_dir
-
-        if nbbp or nbbf:
-            configurator.insertTempBBPath(nbbp, nbbf)
-            self.bbpath_ok = True
-            self.bbfiles_ok = True
-
-        self.current_command = self.REPARSE_FILES
-        self.run_next_command()
+    def build_failed_async(self):
+        self.initcmd = None
+        self.commands_async = []
 
     def cancel_build(self, force=False):
         if force:
@@ -298,46 +332,4 @@ class HobHandler(gobject.GObject):
             # leave the workdir in a usable state
             self.server.runCommand(["stateShutdown"])
 
-    def set_incompatible_license(self, incompatible):
-        self.server.runCommand(["setVariable", "INCOMPATIBLE_LICENSE", incompatible])
 
-    def toggle_toolchain(self, enabled):
-        if self.build_toolchain != enabled:
-            self.build_toolchain = enabled
-
-    def toggle_toolchain_headers(self, enabled):
-        if self.build_toolchain_headers != enabled:
-            self.build_toolchain_headers = enabled
-
-    def set_fstypes(self, fstypes):
-        self.server.runCommand(["setVariable", "IMAGE_FSTYPES", fstypes])
-
-    def add_image_output_type(self, output_type):
-        if output_type not in self.image_output_types:
-            self.image_output_types.append(output_type)
-            fstypes = " ".join(self.image_output_types).lstrip(" ")
-            self.set_fstypes(fstypes)
-        return self.image_output_types
-
-    def remove_image_output_type(self, output_type):
-        if output_type in self.image_output_types:
-            ind = self.image_output_types.index(output_type)
-            self.image_output_types.pop(ind)
-            fstypes = " ".join(self.image_output_types).lstrip(" ")
-            self.set_fstypes(fstypes)
-        return self.image_output_types
-
-    def get_image_deploy_dir(self):
-        return self.image_out_dir
-
-    def make_temp_dir(self):
-        bb.utils.mkdirhier(self.image_dir)
-
-    def remove_temp_dir(self):
-        bb.utils.remove(self.image_dir, True)
-
-    def get_temp_recipe_path(self, name):
-        timestamp = datetime.date.today().isoformat()
-        image_file = "hob-%s-variant-%s.bb" % (name, timestamp)
-        recipepath =  os.path.join(self.image_dir, image_file)
-        return recipepath
