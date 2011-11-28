@@ -270,6 +270,28 @@ class RecipeListModel(gtk.ListStore):
                 elif not dep_included:
                     self.include_item(dep_path, binb=item_name, image_contents=image_contents)
 
+    def exclude_item(self, item_path):
+        self[item_path][self.COL_INC] = False
+        item_name = self[item_path][self.COL_NAME]
+        item_deps = self[item_path][self.COL_DEPS]
+        if item_deps:
+            for dep in item_deps.split(" "):
+                dep_path = self.find_path_for_item(dep)
+                if not dep_path:
+                    continue
+                dep_bin = self[dep_path][self.COL_BINB].split(', ')
+                if item_name in dep_bin:
+                    dep_bin.remove(item_name)
+                    self[dep_path][self.COL_BINB] = ', '.join(dep_bin).lstrip(', ')
+
+        item_bin = self[item_path][self.COL_BINB].split(', ')
+        if item_bin:
+            for binb in item_bin:
+                binb_path = self.find_path_for_item(binb)
+                if not binb_path:
+                    continue
+                self.exclude_item(binb_path)
+
     """
     Find the model path for the item_name
     Returns the path in the model or None

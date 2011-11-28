@@ -365,14 +365,13 @@ class MainWindow (gtk.Window):
             listmodel.include_item(item_path=opath,
                                    binb="User Selected",
                                    image_contents=image)
+        else:
+            listmodel.exclude_item(item_path=opath)
 
         self.set_busy_cursor(False)
         return False
 
     def toggle_item(self, path, model, listmodel, image=False):
-        inc = listmodel[path][listmodel.COL_INC]
-        if inc:
-            return
         self.set_busy_cursor()
         # Convert path to path in original model
         opath = model.convert_path_to_child_path(path)
