@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+bitbake -u hob2
+
+ret=$?
+exit $ret
