@@ -292,6 +292,15 @@ class RecipeListModel(gtk.ListStore):
                     continue
                 self.exclude_item(binb_path)
 
+    def format_cell(self, column, cell, model, iter, userdata=None):
+        item_name = model.get_value(iter, self.COL_NAME)
+        item_bin = model.get_value(iter, self.COL_BINB)
+        item_inc = model.get_value(iter, self.COL_INC)
+        if item_inc and not item_bin:
+            cell.set_property("cell-background", "#ff0000")
+        else:
+            cell.set_property("cell-background", "#ffffff")
+
     """
     Find the model path for the item_name
     Returns the path in the model or None
