@@ -449,6 +449,12 @@ class MainWindow (gtk.Window):
         col3.set_attributes(cell3, text=self.recipe_model.COL_GROUP)
         col4.set_attributes(cell4, active=self.recipe_model.COL_INC)
 
+        col.set_cell_data_func(cell, self.recipe_model.format_cell)
+        col1.set_cell_data_func(cell1, self.recipe_model.format_cell)
+        col2.set_cell_data_func(cell2, self.recipe_model.format_cell)
+        col3.set_cell_data_func(cell3, self.recipe_model.format_cell)
+        col4.set_cell_data_func(cell4, self.recipe_model.format_cell)
+
         self.recipesaz_tree.show()
 
         scroll = gtk.ScrolledWindow()
