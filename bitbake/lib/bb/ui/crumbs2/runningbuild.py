@@ -232,6 +232,10 @@ class RunningBuild (gobject.GObject):
                                       None,
                                       Colors.OK,
                                       0))
+            if pbar:
+                pbar.update(0)
+                pbar.set_title(event.msg)
+
         elif isinstance(event, bb.event.BuildCompleted):
             failures = int (event._failures)
             self.model.prepend(None, (None,
@@ -250,6 +254,9 @@ class RunningBuild (gobject.GObject):
             # Emit a generic "build-complete" signal for things wishing to
             # handle when the build is finished
             self.emit("build-complete")
+            if pbar:
+                pbar.update(event.total, event.total)
+                pbar.set_title(event.msg)
 
         elif isinstance(event, bb.command.CommandFailed):
             if event.error.startswith("Exited with"):
@@ -276,6 +283,15 @@ class RunningBuild (gobject.GObject):
             pbar.update(event.current, self.progress_total)
         elif isinstance(event, bb.event.ParseCompleted) and pbar:
             pbar.hide()
+        #using runqueue events as many as possible to update the progress bar
+        elif isinstance(event, (bb.runqueue.runQueueTaskCompleted,
+                                bb.runqueue.runQueueTaskFailed,
+                                bb.runqueue.sceneQueueTaskFailed)) and pbar:
+            num_of_completed = event.stats.completed + event.stats.failed
+            msg = "Running queue tasks"
+            msg = msg + ": %s/%s (%.0f%%)" % (num_of_completed, event.stats.total, (num_of_completed*1.0/event.stats.total)*100)
+            pbar.update(num_of_completed, event.stats.total)
+            pbar.set_title(msg)
 
         return
 

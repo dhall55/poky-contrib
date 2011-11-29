@@ -111,13 +111,13 @@ class HobHandler(gobject.GObject):
             self.clear_busy()
             self.next_command = None
                                                                          
-    def handle_event(self, event, running_build):
+    def handle_event(self, event, window):
         if not event:
             return
 
         if self.building:
             self.current_phase = "building"
-            running_build.handle_event(event)
+            window.build.handle_event(event, window.view_build_progress)
         elif isinstance(event, bb.event.TargetsTreeGenerated):
             self.current_phase = "data generation"
             if event._model:
@@ -153,13 +153,22 @@ class HobHandler(gobject.GObject):
             self.run_next_command()
         elif isinstance(event, bb.command.CommandFailed):
             self.emit("command-failed", event.error)
+        elif isinstance(event, bb.event.OperationStarted) and window and window.create_recipe_progress:
+            window.create_recipe_progress.update(0)
+            window.create_recipe_progress.set_title(event.msg)
+        elif isinstance(event, bb.event.OperationProgress) and window and window.create_recipe_progress:
+            window.create_recipe_progress.update(event.current, event.total)
+            window.create_recipe_progress.set_title(event.msg)
+        elif isinstance(event, bb.event.OperationCompleted) and window and window.create_recipe_progress:
+            window.create_recipe_progress.update(event.total, event.total)
+            window.create_recipe_progress.set_title(event.msg)
         return
 
-    def event_handle_idle_func (self, eventHandler, running_build):
+    def event_handle_idle_func (self, eventHandler, window):
         # Consume as many messages as we can in the time available to us
         event = eventHandler.getEvent()
         while event:
-            self.handle_event(event, running_build)
+            self.handle_event(event, window)
             event = eventHandler.getEvent()
         return True
 
