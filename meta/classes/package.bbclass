@@ -1042,6 +1042,24 @@ python emit_pkgdata() {
 			f.write('%s: %s\n' % (var, encode(val)))
 		return
 
+	def get_directory_size(dir):
+		# if the dir is not created
+		if not os.path.exists(dir):
+			return 0
+		# if the dir is a link
+		if os.path.islink(dir):
+			return 0
+		# if the dir is a file
+		if os.path.isfile(dir):
+			return os.path.getsize(dir)
+
+		# calculate the size of a directory
+		size = 0
+		for rootDir, lsDirs, lsFiles in os.walk(dir):
+			for subFile in lsFiles:
+				size += get_directory_size(os.path.join(rootDir, subFile))
+		return size
+
 	packages = d.getVar('PACKAGES', True)
 	pkgdest = d.getVar('PKGDEST', 1)
 	pkgdatadir = d.getVar('PKGDESTWORK', True)
@@ -1089,6 +1107,7 @@ python emit_pkgdata() {
 		for dfile in (d.getVar('FILERDEPENDSFLIST_' + pkg, True) or "").split():
 			write_if_exists(sf, pkg, 'FILERDEPENDS_' + dfile)
 
+		sf.write('%s_%s: %s\n' % ('PKGSIZE', pkg, get_directory_size(pkgdest + "/%s" % pkg)))
 		sf.close()
 
 
