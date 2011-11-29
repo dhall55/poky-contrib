@@ -25,11 +25,30 @@ import gtk
 from bb.ui.crumbs2.recipelistmodel import RecipeListModel
 from bb.ui.crumbs2.hobeventhandler import HobHandler
 from bb.ui.crumbs2.hig import CrumbsDialog
-from bb.ui.crumbs2.runningbuild import RunningBuildTreeView, RunningBuild
+from bb.ui.crumbs2.runningbuild import RunningBuildTreeView, RunningBuild, Colors
 import xmlrpclib
 import logging
 import Queue
 import copy
+
+class MyProgressBar (gtk.ProgressBar):
+    def __init__(self):
+        gtk.ProgressBar.__init__(self)
+        rcstyle = gtk.RcStyle()
+        rcstyle.bg[3] = gtk.gdk.Color(Colors.RUNNING)
+        rcstyle.fg[2] = gtk.gdk.Color(0, 0, 0)
+        self.modify_style(rcstyle)
+
+    def set_title(self, text):
+        gtk.ProgressBar.set_text(self, text)
+
+    def update(self, current, total=None):
+        #show the progress bar if 0%
+        if (current == 0) or (total == None) or (total == 0):
+            gtk.ProgressBar.show(self)
+            gtk.ProgressBar.set_fraction(self, 0)
+        else:
+            gtk.ProgressBar.set_fraction(self, current*1.0/total)
 
 class MainWindow (gtk.Window):
 
@@ -232,31 +251,20 @@ class MainWindow (gtk.Window):
         window = self.get_root_window()
         window.set_cursor(cursor)
 
-    def busy_idle_func(self):
-        if self.generating:
-            self.progress.pulse()
-            return True
-        else:
-            if not self.image_combo_id:
-                self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
-            self.progress.set_text("Loaded")
-            self.progress.set_fraction(0.0)
-            self.set_busy_cursor(False)
-            return False
     def busy(self, handler):
         self.generating = True
-        self.progress.set_text("Loading...")
         self.set_busy_cursor()
         if self.image_combo_id:
             self.image_combo.disconnect(self.image_combo_id)
             self.image_combo_id = None
-        self.progress.pulse()
-        gobject.timeout_add (100, self.busy_idle_func)
         self.disable_widgets()
 
     def data_generated(self, handler):
         self.generating = False
         self.enable_widgets()
+        if not self.image_combo_id:
+            self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
+        self.set_busy_cursor(False)
 
     def enable_widgets(self):
         self.nb.set_sensitive(True)
@@ -266,6 +274,7 @@ class MainWindow (gtk.Window):
 
     def config_next_clicked_cb(self, button):
         self.nb.set_current_page(1)
+
     
         self.handler.init_cooker()
         self.handler.set_bblayers(self.layers)
@@ -815,10 +824,10 @@ class MainWindow (gtk.Window):
         image_combo_cell = gtk.CellRendererText()
         self.image_combo.pack_start(image_combo_cell, True)
         self.image_combo.add_attribute(image_combo_cell, 'text', self.recipe_model.COL_NAME)
+        self.create_recipe_progress = MyProgressBar()
+        self.create_recipe_progress.set_size_request(500, -1)
         hbox.pack_start(self.image_combo, expand=False, fill=False, padding=6)
-        self.progress = gtk.ProgressBar()
-        self.progress.set_size_request(250, -1)
-        hbox.pack_end(self.progress, expand=False, fill=False, padding=6)
+        hbox.pack_end(self.create_recipe_progress, expand=False, fill=False, padding=6)
 
         ins = gtk.Notebook()
         vbox.pack_start(ins, expand=True, fill=True)
@@ -867,7 +876,13 @@ class MainWindow (gtk.Window):
         scrolled_view.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scrolled_view.add(build_tv)
         scrolled_view.show()
+        hbox = gtk.HBox(False, 12)
+        hbox.show()
+        vbox.pack_start(hbox, expand=False, fill=False)
         vbox.pack_start(scrolled_view, expand=True, fill=True)
+        self.view_build_progress = MyProgressBar()
+        self.view_build_progress.set_size_request(1000, -1)
+        hbox.pack_start(self.view_build_progress, expand=True, fill=False, padding=6)
         hbox = gtk.HBox(False, 12)
         hbox.show()
         vbox.pack_start(hbox, expand=False, fill=False)
@@ -933,7 +948,7 @@ def main (server, eventHandler):
     gobject.timeout_add (100,
                          handler.event_handle_idle_func,
                          eventHandler,
-                         window.build)
+                         window)
 
     try:
         gtk.main()
