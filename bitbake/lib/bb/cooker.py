@@ -839,6 +839,7 @@ class BBCooker:
         bb.parse.init_parser(data)
         bb.event.fire(bb.event.ConfigParsed(), data)
         self.configuration.data = data
+        self.configuration.data_hash = data.get_hash()
 
     def handleCollections( self, collections ):
         """Handle collections"""
@@ -1406,6 +1407,7 @@ class CookerParser(object):
         self.filelist = filelist
         self.cooker = cooker
         self.cfgdata = cooker.configuration.data
+        self.cfghash = cooker.configuration.data_hash
 
         # Accounting statistics
         self.parsed = 0
@@ -1421,7 +1423,7 @@ class CookerParser(object):
         self.num_processes = int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
                                  multiprocessing.cpu_count())
 
-        self.bb_cache = bb.cache.Cache(self.cfgdata, cooker.caches_array)
+        self.bb_cache = bb.cache.Cache(self.cfgdata, self.cfghash, cooker.caches_array)
         self.fromcache = []
         self.willparse = []
         for filename in self.filelist:
