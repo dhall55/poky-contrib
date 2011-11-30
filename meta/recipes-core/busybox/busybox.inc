@@ -8,6 +8,8 @@ BUGTRACKER = "https://bugs.busybox.net/"
 LICENSE = "GPLv2 & bzip2"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=de10de48642ab74318e893a61105afbb"
 
+INC_PR = "r1"
+
 SECTION = "base"
 
 export EXTRA_CFLAGS = "${CFLAGS}"
@@ -242,10 +244,35 @@ pkg_postinst_${PN} () {
 	# so the update-alternatives script will get the utilities it needs
 	# (update-alternatives have no problem replacing links later anyway)
 	test -n 2> /dev/null || alias test='busybox test'
-	if test "x$D" = "x"; then while read link; do if test ! -h "$link"; then case "$link" in /*/*/*) to="../../bin/busybox";; /bin/*) to="busybox";; /*/*) to="../bin/busybox";; esac; busybox ln -s $to $link; fi; done </etc/busybox.links; fi
+	if test "x$D" = "x"; then
+		while read link; do
+			if test ! -h "$link"; then
+				case "$link" in
+					/*/*/*) to="../../bin/busybox";;
+					/bin/*) to="busybox";;
+					/*/*) to="../bin/busybox";;
+					/*) to="./bin/busybox";;
+				esac
+				busybox ln -s $to $link
+			fi
+		done </etc/busybox.links
+	fi
 	
 	# This adds the links, remember that this has to work when building an image too, hence the $D
-	while read link; do case "$link" in /*/*/*) to="../../bin/busybox";; /bin/*) to="busybox";; /*/*) to="../bin/busybox";; esac; bn=`basename $link`; update-alternatives --install $link $bn $to 50; done <$D/etc/busybox.links
+	while read link; do
+		case "$link" in
+			/*/*/*) to="../../bin/busybox";;
+			/bin/*) to="busybox";;
+			/*/*) to="../bin/busybox";;
+			/*) to="./bin/busybox";;
+		esac
+		bn=`basename $link`
+		if [ "$link" = "/init" ]; then
+			bn="rootinit"
+		fi
+		update-alternatives --install $link $bn $to 50
+		echo "busybox.links: $link -> $to"
+	done < $D/etc/busybox.links
 }
 
 pkg_postinst_${PN}-syslog () {
@@ -278,8 +305,12 @@ pkg_prerm_${PN} () {
 			/*/*/*) to="../../bin/busybox";;
 			/bin/*) to="busybox";;
 			/*/*) to="../bin/busybox";;
+			/*) to="./bin/busybox";;
 		esac
 		bn=`basename $link`
+		if [ "$link" = "/init" ]; then
+			bn="rootinit"
+		fi
 		sh /usr/bin/update-alternatives --remove $bn $to
 	done </etc/busybox.links
 }
