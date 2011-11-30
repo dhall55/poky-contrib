@@ -459,3 +459,12 @@ class LogHandler(logging.Handler):
     def filter(self, record):
         record.taskpid = worker_pid
         return True
+
+class PackageInfo(Event):
+    """
+    Package information for GUI
+    """
+    def __init__(self, recipe, pkginfolist):
+        Event.__init__(self)
+        self._recipe = recipe
+        self._pkginfolist = pkginfolist
