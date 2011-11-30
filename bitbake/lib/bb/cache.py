@@ -42,10 +42,10 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "142"
+__cache_version__ = "143"
 
-def getCacheFile(path, filename):
-    return os.path.join(path, filename)
+def getCacheFile(path, filename, data_hash):
+    return os.path.join(path, filename + "." + data_hash)
 
 # RecipeInfoCommon defines common data retrieving methods
 # from meta data for caches. CoreRecipeInfo as well as other
@@ -254,7 +254,7 @@ class Cache(object):
     BitBake Cache implementation
     """
 
-    def __init__(self, data, caches_array):
+    def __init__(self, data, data_hash, caches_array):
         # Pass caches_array information into Cache Constructor
         # It will be used in later for deciding whether we 
         # need extra cache file dump/load support 
@@ -266,6 +266,7 @@ class Cache(object):
         self.data = None
         self.data_fn = None
         self.cacheclean = True
+        self.data_hash = data_hash
 
         if self.cachedir in [None, '']:
             self.has_cache = False
@@ -274,26 +275,17 @@ class Cache(object):
             return
 
         self.has_cache = True
-        self.cachefile = getCacheFile(self.cachedir, "bb_cache.dat")
+        self.cachefile = getCacheFile(self.cachedir, "bb_cache.dat", self.data_hash)
 
         logger.debug(1, "Using cache in '%s'", self.cachedir)
         bb.utils.mkdirhier(self.cachedir)
-
-        # If any of configuration.data's dependencies are newer than the
-        # cache there isn't even any point in loading it...
-        newest_mtime = 0
-        deps = data.getVar("__base_depends")
-
-        old_mtimes = [old_mtime for _, old_mtime in deps]
-        old_mtimes.append(newest_mtime)
-        newest_mtime = max(old_mtimes)
 
         cache_ok = True
         if self.caches_array:
             for cache_class in self.caches_array:
                 if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                    cachefile = getCacheFile(self.cachedir, cache_class.cachefile)
-                    cache_ok = cache_ok and (bb.parse.cached_mtime_noerror(cachefile) >= newest_mtime)
+                    cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
+                    cache_ok = cache_ok and os.path.exists(cachefile)
                     cache_class.init_cacheData(self)
         if cache_ok:
             self.load_cachefile()
@@ -327,7 +319,7 @@ class Cache(object):
         # Calculate the correct cachesize of all those cache files
         for cache_class in self.caches_array:
             if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                cachefile = getCacheFile(self.cachedir, cache_class.cachefile)
+                cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
                 with open(cachefile, "rb") as cachefile:
                     cachesize += os.fstat(cachefile.fileno()).st_size
 
@@ -335,7 +327,7 @@ class Cache(object):
         
         for cache_class in self.caches_array:
             if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                cachefile = getCacheFile(self.cachedir, cache_class.cachefile)
+                cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
                 with open(cachefile, "rb") as cachefile:
                     pickled = pickle.Unpickler(cachefile)                    
                     while cachefile:
@@ -588,7 +580,7 @@ class Cache(object):
         for cache_class in self.caches_array:
             if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
                 cache_class_name = cache_class.__name__
-                cachefile = getCacheFile(self.cachedir, cache_class.cachefile)
+                cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
                 file_dict[cache_class_name] = open(cachefile, "wb")
                 pickler_dict[cache_class_name] =  pickle.Pickler(file_dict[cache_class_name], pickle.HIGHEST_PROTOCOL)
                    
@@ -693,7 +685,7 @@ def init(cooker):
     Files causing parsing errors are evicted from the cache.
 
     """
-    return Cache(cooker.configuration.data)
+    return Cache(cooker.configuration.data, cooker.configuration.data_hash)
 
 
 class CacheData(object):
