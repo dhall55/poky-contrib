@@ -1,0 +1,24 @@
+busybox: Add a link for /init for initramfs images
+
+initramfs images require a /init. If busybox supports INITRD, add the link.
+INITRD aren't the same thing, but there isn't an INITRAMFS feature as of yet.
+
+Upstream-Status: Submitted [busybox@busybox.net]
+
+Signed-off-by: Darren Hart <dvhart@linux.intel.com>
+---
+ init/init.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+Index: busybox-1.18.5/init/init.c
+===================================================================
+--- busybox-1.18.5.orig/init/init.c
++++ busybox-1.18.5/init/init.c
+@@ -11,6 +11,7 @@
+ 
+ //applet:IF_INIT(APPLET(init, _BB_DIR_SBIN, _BB_SUID_DROP))
+ //applet:IF_FEATURE_INITRD(APPLET_ODDNAME(linuxrc, init, _BB_DIR_ROOT, _BB_SUID_DROP, linuxrc))
++//applet:IF_FEATURE_INITRD(APPLET_ODDNAME(init, init, _BB_DIR_ROOT, _BB_SUID_DROP, init))
+ 
+ //kbuild:lib-$(CONFIG_INIT) += init.o
+ 
