@@ -23,6 +23,7 @@ import glib
 import gobject
 import gtk
 from bb.ui.crumbs2.recipelistmodel import RecipeListModel
+from bb.ui.crumbs2.packagelistmodel import PackageListModel
 from bb.ui.crumbs2.hobeventhandler import HobHandler
 from bb.ui.crumbs2.hig import CrumbsDialog
 from bb.ui.crumbs2.runningbuild import RunningBuildTreeView, RunningBuild, Colors
@@ -52,7 +53,7 @@ class MyProgressBar (gtk.ProgressBar):
 
 class MainWindow (gtk.Window):
 
-    def __init__(self, recipemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror):
+    def __init__(self, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror):
         gtk.Window.__init__(self)
         # global state
         self.layers = layers.split()
@@ -74,10 +75,14 @@ class MainWindow (gtk.Window):
         self.selected_recipes = None
         self.build_succeeded = False
         self.stopping = False
+        self.image_install = ""
 
         self.recipe_model = recipemodel
         self.recipe_model.connect("recipelist-populated", self.update_recipe_model)
         self.recipe_model.connect("image-changed", self.image_changed_string_cb)
+
+        self.package_model = packagemodel
+        self.package_model.connect("packagelist-populated", self.update_package_model)
 
         self.handler = handler
 
@@ -99,10 +104,12 @@ class MainWindow (gtk.Window):
         configview = self.create_config_gui()
         recipeview = self.create_recipe_gui()
         buildview = self.view_build_gui()
+        packageview = self.create_package_gui()
         self.nb = gtk.Notebook()
         self.nb.append_page(configview)
         self.nb.append_page(recipeview)
         self.nb.append_page(buildview)
+        self.nb.append_page(packageview)
         self.nb.set_current_page(0)
         self.nb.set_show_tabs(False)
         vbox.pack_start(self.nb, expand=True, fill=True)
@@ -286,6 +293,7 @@ class MainWindow (gtk.Window):
         self.handler.set_sstate_mirror(self.sstatemirror_text.get_text())
         self.handler.set_pmake(self.pmake_spinner.get_value_as_int())
         self.handler.set_bbthreads(self.bb_spinner.get_value_as_int())
+        self.handler.set_extra_inherit("packageinfo")
 
         self.handler.generate_data()
 
@@ -326,6 +334,20 @@ class MainWindow (gtk.Window):
         if self.selected_recipes:
             self.recipe_model.set_selected_recipes(self.selected_recipes)
 
+    def update_package_model(self, model):
+        # We want the packages model to be alphabetised and sortable so create
+        # a TreeModelSort to use in the view
+        packagesaz_model = gtk.TreeModelSort(self.package_model.packages_model())
+        packagesaz_model.set_sort_column_id(self.package_model.COL_PKGNAME, gtk.SORT_ASCENDING)
+        # Unset default sort func so that we only toggle between A-Z and
+        # Z-A sorting
+        packagesaz_model.set_default_sort_func(None)
+        self.packagesaz_tree.set_model(packagesaz_model)
+        self.packagesaz_tree.expand_all()
+
+        if self.image_install:
+            self.package_model.set_selected_packages(self.image_install.split())
+
     def image_changed_string_cb(self, model, new_image):
         self.selected_image = new_image
         # disconnect the image combo's signal handler
@@ -338,6 +360,7 @@ class MainWindow (gtk.Window):
             path = self.recipe_model.images.get_path(it)
             if self.recipe_model.images[path][self.recipe_model.COL_NAME] == new_image:
                 self.image_combo.set_active(cnt)
+                self.image_install = self.recipe_model.images[path][self.recipe_model.COL_DEPS]
                 break
             it = self.recipe_model.images.iter_next(it)
             cnt = cnt + 1
@@ -359,6 +382,7 @@ class MainWindow (gtk.Window):
             if len(userp):
                 self.recipe_model.set_selected_recipes(userp)
             self.selected_image = model[path][self.recipe_model.COL_NAME]
+            self.image_install = model[path][self.recipe_model.COL_DEPS]
 
     def toggle_item_idle_cb(self, model, listmodel, opath, image):
         """
@@ -486,6 +510,89 @@ class MainWindow (gtk.Window):
         vbox.pack_start(hb, False, False, 0)
 
         return vbox
+
+    def packagesaz(self):
+        vbox = gtk.VBox(False, 6)
+        vbox.show()
+        self.packagesaz_tree = gtk.TreeView()
+        self.packagesaz_tree.set_headers_visible(True)
+        self.packagesaz_tree.set_headers_clickable(True)
+        self.packagesaz_tree.set_enable_search(True)
+        self.packagesaz_tree.set_search_column(0)
+        self.packagesaz_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
+
+        col = gtk.TreeViewColumn('Package')
+        col.set_clickable(True)
+        col.set_sort_column_id(self.package_model.COL_PKGNAME)
+        col.set_resizable(True)
+        col.set_min_width(220)
+        col.set_max_width(240)
+        col1 = gtk.TreeViewColumn('Version')
+        col1.set_resizable(True)
+        col1.set_min_width(150)
+        col2 = gtk.TreeViewColumn('Revision')
+        col2.set_resizable(True)
+        col2.set_clickable(True)
+        col2.set_min_width(150)
+        col3 = gtk.TreeViewColumn('Size')
+        col3.set_clickable(True)
+        col3.set_min_width(150)
+        col4 = gtk.TreeViewColumn('Included')
+        col4.set_min_width(80)
+        col4.set_max_width(90)
+        col4.set_sort_column_id(self.package_model.COL_INC)
+
+        self.packagesaz_tree.append_column(col)
+        self.packagesaz_tree.append_column(col1)
+        self.packagesaz_tree.append_column(col2)
+        self.packagesaz_tree.append_column(col3)
+        self.packagesaz_tree.append_column(col4)
+
+        cell = gtk.CellRendererText()
+        cell1 = gtk.CellRendererText()
+        cell1.set_property('width-chars', 20)
+        cell2 = gtk.CellRendererText()
+        cell2.set_property('width-chars', 20)
+        cell3 = gtk.CellRendererText()
+        cell4 = gtk.CellRendererToggle()
+        cell4.set_property('activatable', True)
+        cell4.connect("toggled", self.toggle_selection_include_cb, self.packagesaz_tree, self.package_model)
+
+        col.pack_start(cell, True)
+        col1.pack_start(cell1, True)
+        col2.pack_start(cell2, True)
+        col3.pack_start(cell3, True)
+        col4.pack_end(cell4, True)
+
+        col.set_attributes(cell, text=self.package_model.COL_PKGNAME)
+        col1.set_attributes(cell1, text=self.package_model.COL_VER)
+        col2.set_attributes(cell2, text=self.package_model.COL_REV)
+        col3.set_attributes(cell3, text=self.package_model.COL_SIZE)
+        col4.set_attributes(cell4, active=self.package_model.COL_INC)
+
+        self.packagesaz_tree.show()
+
+        scroll = gtk.ScrolledWindow()
+        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+        scroll.set_shadow_type(gtk.SHADOW_IN)
+        scroll.add(self.packagesaz_tree)
+        vbox.pack_start(scroll, True, True, 0)
+
+        hb = gtk.HBox(False, 0)
+        hb.show()
+        self.search = gtk.Entry()
+        self.search.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, "gtk-clear")
+        self.search.connect("icon-release", self.search_entry_clear_cb)
+        self.search.show()
+        self.packagesaz_tree.set_search_entry(self.search)
+        hb.pack_end(self.search, False, False, 0)
+        label = gtk.Label("Search Packages:")
+        label.show()
+        hb.pack_end(label, False, False, 6)
+        vbox.pack_start(hb, False, False, 0)
+
+        return vbox
+
 
     def search_entry_clear_cb(self, entry, icon_pos, event):
         entry.set_text("")
@@ -634,10 +741,18 @@ class MainWindow (gtk.Window):
         self.handler.build_targets(all_recipes)
         self.build.reset()
         self.nb.set_current_page(2)
+        self.package_model.clear()
         return
 
     def scroll_tv_cb(self, model, path, it, view):
         view.scroll_to_cell(path)
+
+    def package_previous_clicked_cb(self, button):
+        self.nb.set_current_page(1)
+
+    def package_next_clicked_cb(self, button):
+        return
+
 
     def build_started_cb(self, running_build):
         self.back.set_sensitive(False)
@@ -653,6 +768,7 @@ class MainWindow (gtk.Window):
         self.back.connect("clicked", self.build_back_clicked_cb)
         self.back.set_sensitive(True)
         self.cancel.set_sensitive(False)
+        self.nb.set_current_page(3)
 
     def running_build_succeeded_cb(self, running_build):
         self.build_succeeded = True
@@ -864,6 +980,40 @@ class MainWindow (gtk.Window):
 
         return vbox
 
+    def create_package_gui(self):
+        vbox = gtk.VBox(False, 12)
+        vbox.set_border_width(6)
+        vbox.show()
+
+        hbox = gtk.HBox(False, 12)
+        hbox.show()
+        vbox.pack_start(hbox, expand=False, fill=False)
+
+        ins = gtk.Notebook()
+        vbox.pack_start(ins, expand=True, fill=True)
+        ins.set_show_tabs(True)
+        label = gtk.Label("Packages")
+        label.show()
+        ins.append_page(self.packagesaz(), tab_label=label)
+        ins.set_current_page(0)
+        ins.show_all()
+
+        bbox = gtk.HButtonBox()
+        bbox.set_spacing(12)
+        bbox.set_layout(gtk.BUTTONBOX_END)
+        bbox.show()
+        vbox.pack_start(bbox, expand=False, fill=False)
+        reset = gtk.Button("Previous")
+        reset.connect("clicked", self.package_previous_clicked_cb)
+        reset.show()
+        bbox.add(reset)
+        bake = gtk.Button("Generate Images")
+        bake.connect("clicked", self.package_next_clicked_cb)
+        bake.show()
+        bbox.add(bake)
+
+        return vbox
+
     def view_build_gui(self):
         vbox = gtk.VBox(False, 12)
         vbox.set_border_width(6)
@@ -901,7 +1051,8 @@ def main (server, eventHandler):
     gobject.threads_init()
 
     recipemodel = RecipeListModel()
-    handler = HobHandler(recipemodel, server)
+    packagemodel = PackageListModel()
+    handler = HobHandler(recipemodel, packagemodel, server)
 
     layers = server.runCommand(["getVariable", "BBLAYERS"])
     dldir = server.runCommand(["getVariable", "DL_DIR"])
@@ -933,7 +1084,7 @@ def main (server, eventHandler):
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
-    window = MainWindow(recipemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror)
+    window = MainWindow(recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror)
     window.show_all ()
     handler.connect("machines-updated", window.update_machines)
     handler.connect("distros-updated", window.update_distros)

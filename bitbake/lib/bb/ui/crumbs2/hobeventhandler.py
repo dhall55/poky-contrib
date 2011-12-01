@@ -55,17 +55,20 @@ class HobHandler(gobject.GObject):
                                   ()),
     }
 
-    (CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, BUILD_RECIPES, CMD_END) = range(8)
+    (CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, BUILD_RECIPES, PACKAGE_INFO, CMD_END) = range(9)
 
-    def __init__(self, recipemodel, server):
+    def __init__(self, recipemodel, packagemodel, server):
         gobject.GObject.__init__(self)
 
         self.next_command = None
         self.generating = False
         self.current_phase = None
         self.building = False
+        self.build_queue = []
+        self.build_queue_len = 0
 
         self.recipe_model = recipemodel
+        self.package_model = packagemodel
         self.server = server
 
     def set_busy(self):
@@ -104,8 +107,14 @@ class HobHandler(gobject.GObject):
             self.clear_busy()
             self.building = True
             self.server.runCommand(["buildTargets", self.build_queue, "build"])
+            self.next_command = self.PACKAGE_INFO
+
+        elif self.next_command == self.PACKAGE_INFO:
+            self.building = False
+            self.build_queue_len = len(self.build_queue)
+            self.server.runCommand(["buildTargets", self.build_queue, "package_info"])
             self.build_queue = []
-            self.next_command = None
+            self.next_command = self.CMD_END
 
         elif self.next_command == self.CMD_END:
             self.clear_busy()
@@ -118,6 +127,15 @@ class HobHandler(gobject.GObject):
         if self.building:
             self.current_phase = "building"
             window.build.handle_event(event, window.view_build_progress)
+        elif isinstance(event, bb.event.PackageInfo):
+            self.build_queue_len -= 1
+            if event._pkginfolist:
+                pniter = self.package_model.populate_recipe(event._recipe)
+                for pkginfo in event._pkginfolist:
+                    self.package_model.populate(pniter, pkginfo)
+            if self.build_queue_len == 0:
+                self.package_model.emit("packagelist-populated")
+
         elif isinstance(event, bb.event.TargetsTreeGenerated):
             self.current_phase = "data generation"
             if event._model:
@@ -182,6 +200,11 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["parseConfigurationFiles", "", ""])
         self.next_command = self.CFG_FILES_DISTRO
         self.run_next_command()
+
+    def set_extra_inherit(self, bbclass):
+        inherits = self.server.runCommand(["getVariable", "INHERIT"]) or ""
+        inherits = inherits + " " + bbclass
+        self.server.runCommand(["setVariable", "INHERIT", inherits])
 
     def set_bblayers(self, bblayers):
         self.server.runCommand(["setVariable", "BBLAYERS", " ".join(bblayers)])
