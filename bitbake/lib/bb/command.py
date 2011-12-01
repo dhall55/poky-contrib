@@ -252,6 +252,20 @@ class CommandsAsync:
         command.finishAsyncCommand()
     generateTargetsTree.needcache = True
 
+    def generateTargetsTreePro(self, command, params):
+        """
+        A pro version of generateTargetsTree
+        """
+        klass = params[0]
+        if len(params) > 1:
+            pkg_list = params[1]
+        else:
+            pkg_list = []
+
+        command.cooker.generateTargetsTreePro(klass, pkg_list)
+        command.finishAsyncCommand()
+    generateTargetsTreePro.needcache = True
+
     def findConfigFiles(self, command, params):
         """
         Find config files which provide appropriate values
