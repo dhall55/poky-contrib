@@ -62,6 +62,9 @@ fakeroot rootfs_ipk_do_rootfs () {
 
 	package_install_internal_ipk
 
+    # create license manifest
+    license_create_manifest
+
 	#post install
 	export D=${IMAGE_ROOTFS}
 	export OFFLINE_ROOT=${IMAGE_ROOTFS}

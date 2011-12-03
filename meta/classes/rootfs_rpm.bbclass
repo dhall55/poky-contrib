@@ -99,6 +99,9 @@ EOF
 
 	package_install_internal_rpm
 
+    # create license manifest
+    license_create_manifest
+
 	export D=${IMAGE_ROOTFS}
 	export OFFLINE_ROOT=${IMAGE_ROOTFS}
 	export IPKG_OFFLINE_ROOT=${IMAGE_ROOTFS}
