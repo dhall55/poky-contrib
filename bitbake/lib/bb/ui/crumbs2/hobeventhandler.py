@@ -55,7 +55,7 @@ class HobHandler(gobject.GObject):
                                   ()),
     }
 
-    (CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, BUILD_RECIPES, PACKAGE_INFO, CMD_END) = range(9)
+    (CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, BUILD_RECIPES, PACKAGE_INFO, GENERATE_IMAGE, CMD_END) = range(10)
 
     def __init__(self, recipemodel, packagemodel, server):
         gobject.GObject.__init__(self)
@@ -66,6 +66,7 @@ class HobHandler(gobject.GObject):
         self.building = False
         self.build_queue = []
         self.build_queue_len = 0
+        self.package_queue = []
 
         self.recipe_model = recipemodel
         self.package_model = packagemodel
@@ -114,6 +115,13 @@ class HobHandler(gobject.GObject):
             self.build_queue_len = len(self.build_queue)
             self.server.runCommand(["buildTargets", self.build_queue, "package_info"])
             self.build_queue = []
+            self.next_command = self.CMD_END
+
+        elif self.next_command == self.GENERATE_IMAGE:
+            self.clear_busy()
+            self.building = True
+            self.server.runCommand(["setVariable", "IMAGE_INSTALL", " ".join(self.package_queue)])
+            self.server.runCommand(["buildTargets", ["hob"], "build"])
             self.next_command = self.CMD_END
 
         elif self.next_command == self.CMD_END:
@@ -243,6 +251,11 @@ class HobHandler(gobject.GObject):
         targets.extend(tgts)
         self.build_queue = targets
         self.next_command = self.BUILD_RECIPES
+        self.run_next_command()
+
+    def generate_image(self, tgts):
+        self.package_queue = tgts
+        self.next_command = self.GENERATE_IMAGE
         self.run_next_command()
 
     def cancel_build(self, force=False):
