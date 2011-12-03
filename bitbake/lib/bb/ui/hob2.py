@@ -751,6 +751,20 @@ class MainWindow (gtk.Window):
         self.nb.set_current_page(1)
 
     def package_next_clicked_cb(self, button):
+        # If no base image and no selected packages don't build anything
+        if not self.package_model.get_selected_packages():
+            lbl = "<b>No selections made</b>\nYou have not made any selections"
+            lbl = lbl + " so there isn't anything to bake at this time."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            dialog.run()
+            dialog.destroy()
+            return
+
+        selected_packages = self.package_model.get_selected_packages()
+        self.handler.generate_image(selected_packages)
+        self.build.reset()
+        self.nb.set_current_page(2)
         return
 
 
