@@ -54,7 +54,7 @@ class MyProgressBar (gtk.ProgressBar):
 class MainWindow (gtk.Window):
 
     (CONFIGURATION, RECIPE_SELECTION, RECIPE_BUILDING, PACKAGE_SELECTION, IMAGE_GENERATING, IMAGE_GENERATED) = range(6)
-    def __init__(self, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror):
+    def __init__(self, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr):
         gtk.Window.__init__(self)
         # global state
         self.layers = layers.split()
@@ -70,6 +70,7 @@ class MainWindow (gtk.Window):
         self.dldir = dldir
         self.sstatedir = sstatedir
         self.sstatemirror = sstatemirror
+        self.image_addr = image_addr
         self.image_combo_id = None
         self.generating = False
         self.selected_image = None
@@ -107,11 +108,13 @@ class MainWindow (gtk.Window):
         recipeview = self.create_recipe_gui()
         buildview = self.view_build_gui()
         packageview = self.create_package_gui()
+        imageview = self.create_image_gui()
         self.nb = gtk.Notebook()
         self.nb.append_page(configview)
         self.nb.append_page(recipeview)
         self.nb.append_page(buildview)
         self.nb.append_page(packageview)
+        self.nb.append_page(imageview)
         self.nb.set_current_page(0)
         self.nb.set_show_tabs(False)
         vbox.pack_start(self.nb, expand=True, fill=True)
@@ -797,6 +800,9 @@ class MainWindow (gtk.Window):
             if self.current_step == self.RECIPE_BUILDING:
                 self.current_step = self.PACKAGE_SELECTION
                 self.nb.set_current_page(3)
+            elif self.current_step == self.IMAGE_GENERATING:
+                self.current_step = self.IMAGE_GENERATED
+                self.nb.set_current_page(4)
 
     def running_build_succeeded_cb(self, running_build):
         self.build_succeeded = True
@@ -1075,6 +1081,39 @@ class MainWindow (gtk.Window):
 
         return vbox
 
+    def image_previous_clicked_cb(self, button):
+        self.current_step = self.PACKAGE_SELECTION
+        self.nb.set_current_page(3)
+
+    def image_next_clicked_cb(self, button):
+        gtk.main_quit()
+
+    def create_image_gui(self):
+        vbox = gtk.VBox(False, 12)
+        vbox.set_border_width(6)
+        vbox.show()
+
+        text = "Congratulations! You have built out the image! \n\nFind your image at the following path: \n\n" + self.image_addr
+        label = gtk.Label(text)
+        label.show()
+        vbox.pack_start(label, expand=True, fill=False, padding=0)
+
+        bbox = gtk.HButtonBox()
+        bbox.set_spacing(12)
+        bbox.set_layout(gtk.BUTTONBOX_END)
+        bbox.show()
+        vbox.pack_end(bbox, expand=False, fill=False)
+        reset = gtk.Button("Previous")
+        reset.connect("clicked", self.image_previous_clicked_cb)
+        reset.show()
+        bbox.add(reset)
+        finish = gtk.Button("Finished")
+        finish.connect("clicked", self.image_next_clicked_cb)
+        finish.show()
+        bbox.add(finish)
+ 
+        return vbox
+ 
 def main (server, eventHandler):
     gobject.threads_init()
 
@@ -1104,6 +1143,8 @@ def main (server, eventHandler):
     else:
         pmake = int(pmake.lstrip("-j "))
 
+    image_addr = server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"])
+
     try:
         # kick the while thing off
         handler.next_command = handler.CFG_PATH_LAYERS
@@ -1112,7 +1153,7 @@ def main (server, eventHandler):
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
-    window = MainWindow(recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror)
+    window = MainWindow(recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr)
     window.show_all ()
     handler.connect("machines-updated", window.update_machines)
     handler.connect("distros-updated", window.update_distros)
