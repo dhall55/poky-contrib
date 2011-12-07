@@ -27,10 +27,12 @@ from bb.ui.crumbs2.packagelistmodel import PackageListModel
 from bb.ui.crumbs2.hobeventhandler import HobHandler
 from bb.ui.crumbs2.hig import CrumbsDialog
 from bb.ui.crumbs2.runningbuild import RunningBuildTreeView, RunningBuild, Colors
+from bb.ui.crumbs2.template import TemplateMgr
 import xmlrpclib
 import logging
 import Queue
 import copy
+import string
 
 class MyProgressBar (gtk.ProgressBar):
     def __init__(self):
@@ -75,6 +77,7 @@ class MainWindow (gtk.Window):
         self.generating = False
         self.selected_image = None
         self.selected_recipes = None
+        self.selected_packages = None
         self.build_succeeded = False
         self.stopping = False
         self.image_install = ""
@@ -118,6 +121,7 @@ class MainWindow (gtk.Window):
         self.switch_page(0, self.CONFIGURATION)
         self.nb.set_show_tabs(False)
         vbox.pack_start(self.nb, expand=True, fill=True)
+        self.tmpmgr = TemplateMgr()
 
     def switch_page(self, page_num, curr_step):
         self.nb.set_current_page(page_num)
@@ -406,6 +410,80 @@ class MainWindow (gtk.Window):
 
         self.handler.generate_data()
 
+    def load_template(self, path):
+        self.tmpmgr.load(path)
+
+        # bblayers.conf
+        self.layer_store.clear()
+        self.layers = self.tmpmgr.getVar("BBLAYERS")
+        for path in self.layers:
+            self.layer_store.append([path])
+        self.handler.layer_refresh(self.layers)
+
+        # local.conf
+        self.curr_mach = self.tmpmgr.getVar("MACHINE")
+        model = self.machine_combo.get_model()
+        if model:
+            active = 0
+            while active < len(model):
+                if model[active][0] == self.curr_mach:
+                    self.machine_combo.set_active(active)
+                    break
+                active += 1
+
+        self.curr_package_format = self.tmpmgr.getVar("__PACKAGE_CLASSES__")
+        model = self.package_combo.get_model()
+        if model:
+            active = 0
+            while active < len(model):
+                if model[active][0] == self.curr_package_format:
+                    self.package_combo.set_active(active)
+                    break
+                active += 1
+
+        self.curr_distro = self.tmpmgr.getVar("DISTRO")
+        model = self.distro_combo.get_model()
+        if model:
+            active = 0
+            while active < len(model):
+                if model[active][0] == self.curr_distro:
+                    self.distro_combo.set_active(active)
+                    break
+                active += 1
+
+        self.dldir = self.tmpmgr.getVar("DL_DIR")
+        self.dldir_text.set_text(self.dldir)
+        self.sstatedir = self.tmpmgr.getVar("SSTATE_DIR")
+        self.sstatedir_text.set_text(self.sstatedir)
+        self.sstatemirror = self.tmpmgr.getVar("SSTATE_MIRROR")
+        self.sstatemirror_text.set_text(self.sstatemirror)
+
+        self.pmake_spinner.set_value(string.atof(self.tmpmgr.getVar("__PARALLEL_MAKE__")))
+        self.bb_spinner.set_value(string.atof(self.tmpmgr.getVar("BB_NUMBER_THREAD")))
+
+        # image.bb
+        self.selected_image = self.tmpmgr.getVar("__SELECTED_IMAGE__")
+        self.selected_recipes = self.tmpmgr.getVar("DEPENDS")
+        self.selected_packages = self.tmpmgr.getVar("IMAGE_INSTALL")
+
+        self.tmpmgr.destroy()
+
+    def config_load_clicked_cb(self, button):
+        dialog = gtk.FileChooserDialog("Load Template Files", self,
+                                       gtk.FILE_CHOOSER_ACTION_OPEN,
+                                       (gtk.STOCK_OPEN, gtk.RESPONSE_YES,
+                                       gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+        filter = gtk.FileFilter()
+        filter.set_name("HOB Files")
+        filter.add_pattern("*.hob")
+        dialog.add_filter(filter)
+
+        response = dialog.run()
+        if response == gtk.RESPONSE_YES:
+            path = dialog.get_filename()
+            self.load_template(path)
+        dialog.destroy()
+
     def update_recipe_model(self, model):
         # We want the recipes model to be alphabetised and sortable so create
         # a TreeModelSort to use in the view
@@ -441,7 +519,7 @@ class MainWindow (gtk.Window):
                 self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
 
         if self.selected_recipes:
-            self.recipe_model.set_selected_recipes(self.selected_recipes)
+            self.recipe_model.set_selected_recipes(self.selected_recipes[:])
 
     def update_package_model(self, model):
         # We want the packages model to be alphabetised and sortable so create
@@ -454,7 +532,9 @@ class MainWindow (gtk.Window):
         self.packagesaz_tree.set_model(packagesaz_model)
         self.packagesaz_tree.expand_all()
 
-        if self.image_install:
+        if self.selected_packages:
+            self.package_model.set_selected_packages(self.selected_packages[:])
+        elif self.image_install:
             self.package_model.set_selected_packages(self.image_install.split())
 
     def image_changed_string_cb(self, model, new_image):
@@ -832,6 +912,48 @@ class MainWindow (gtk.Window):
 
         return scroll
 
+    def save_template(self, path):
+        self.tmpmgr.open(path)
+
+        # bblayers.conf
+        self.tmpmgr.setVar("BBLAYERS", " ".join(self.layers))
+
+        # local.conf
+        self.tmpmgr.setVar("MACHINE", self.machine_combo.get_active_text())
+        self.tmpmgr.setVar("PACKAGE_CLASSES", "package_%s" % self.package_combo.get_active_text())
+        self.tmpmgr.setVar("DISTRO", self.distro_combo.get_active_text())
+        self.tmpmgr.setVar("DL_DIR", self.dldir_text.get_text())
+        self.tmpmgr.setVar("SSTATE_DIR", self.sstatedir_text.get_text())
+        self.tmpmgr.setVar("SSTATE_MIRROR", self.sstatemirror_text.get_text())
+        self.tmpmgr.setVar("PARALLEL_MAKE", "-j %s" % self.pmake_spinner.get_value_as_int())
+        self.tmpmgr.setVar("BB_NUMBER_THREAD", self.bb_spinner.get_value_as_int())
+
+        # image.bb
+        _, all_recipes = self.recipe_model.get_selected_recipes()
+        self.tmpmgr.setVar("DEPENDS", all_recipes)
+        all_packages = self.package_model.get_selected_packages()
+        self.tmpmgr.setVar("IMAGE_INSTALL", all_packages)
+
+        # misc
+        self.tmpmgr.setVar("__SELECTED_IMAGE__", self.selected_image)
+        self.tmpmgr.setVar("__PACKAGE_CLASSES__", self.package_combo.get_active_text())
+        self.tmpmgr.setVar("__PARALLEL_MAKE__", self.pmake_spinner.get_value())
+
+        self.tmpmgr.save()
+        self.tmpmgr.destroy()
+
+    def recipe_save_clicked_cb(self, button):
+        dialog = gtk.FileChooserDialog("Save Template Files", self,
+                                       gtk.FILE_CHOOSER_ACTION_SAVE,
+                                       (gtk.STOCK_SAVE, gtk.RESPONSE_YES,
+                                        gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+        dialog.set_current_name("hob")
+        response = dialog.run()
+        if response == gtk.RESPONSE_YES:
+            path = dialog.get_filename()
+            self.save_template(path)
+        dialog.destroy()
+
     def recipe_previous_clicked_cb(self, button):
         self.switch_page(0, self.CONFIGURATION)
 
@@ -1007,6 +1129,10 @@ class MainWindow (gtk.Window):
         button.connect("clicked", self.config_advanced_clicked_cb)
         button.show()
         hbox_button.pack_start(button, expand=False, fill=False)
+        load = gtk.Button("Load Template")
+        load.connect("clicked", self.config_load_clicked_cb)
+        load.show()
+        hbox_button.pack_start(load, expand=False, fill=False)
         button = gtk.Button("Next")
         button.connect("clicked", self.config_next_clicked_cb)
         button.show()
@@ -1160,6 +1286,10 @@ class MainWindow (gtk.Window):
         bbox.set_layout(gtk.BUTTONBOX_END)
         bbox.show()
         vbox.pack_end(bbox, expand=False, fill=False)
+        save = gtk.Button("Save Template")
+        save.connect("clicked", self.recipe_save_clicked_cb)
+        save.show()
+        bbox.add(save)
         reset = gtk.Button("Previous")
         reset.connect("clicked", self.image_previous_clicked_cb)
         reset.show()
