@@ -56,7 +56,7 @@ class MyProgressBar (gtk.ProgressBar):
 class MainWindow (gtk.Window):
 
     (CONFIGURATION, RECIPE_SELECTION, RECIPE_BUILDING, PACKAGE_SELECTION, IMAGE_GENERATING, IMAGE_GENERATED) = range(6)
-    def __init__(self, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr):
+    def __init__(self, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr, incompatiblelicense):
         gtk.Window.__init__(self)
         # global state
         self.layers = layers.split()
@@ -72,6 +72,7 @@ class MainWindow (gtk.Window):
         self.dldir = dldir
         self.sstatedir = sstatedir
         self.sstatemirror = sstatemirror
+	self.incompatiblelicense = incompatiblelicense
         self.image_addr = image_addr
         self.image_combo_id = None
         self.generating = False
@@ -199,23 +200,21 @@ class MainWindow (gtk.Window):
             if machine == self.curr_mach:
                 self.machine_combo.set_active(active)
             active = active + 1
-
+            
     def update_package_formats(self, handler, formats):
-        active = 0
         # disconnect the signal handler before updating the model
         if self.package_handler_id:
-            self.package_combo.disconnect(self.package_handler_id)
+            self.package_select_tree.disconnect(self.package_handler_id)
             self.package_handler_id = None
 
-        model = self.package_combo.get_model()
+        model = self.package_select_tree.get_model()
         if model:
             model.clear()
 
+        i = 0
         for format in formats:
-            self.package_combo.append_text(format)
-            if format == self.curr_package_format:
-                self.package_combo.set_active(active)
-            active = active + 1
+            model.append([i, format, False])
+            i = i + 1
 
     def update_distros(self, handler, distros):
         active = 0
@@ -365,9 +364,19 @@ class MainWindow (gtk.Window):
         self.pmake_spinner.show()
         window.vbox.pack_start(self.pmake_spinner, expand=False, fill=False)
 
+        exGPLv3checkbutton = gtk.CheckButton("Exclude GPLv3 packages")
+        exGPLv3checkbutton.set_tooltip_text("Check this box to prevent GPLv3 packages from being included in your image")
+        exGPLv3checkbutton.show()
+        if self.incompatiblelicense and self.incompatiblelicense.lower().find("gplv3")!=-1:
+            exGPLv3checkbutton.set_active(True)
+        else:
+            exGPLv3checkbutton.set_active(False)
+        exGPLv3checkbutton.connect("toggled", self.include_gplv3_cb)
+        
         hbox_button = gtk.HBox(False, 0)
         hbox_button.show()
         window.vbox.pack_end(hbox_button, expand=False, fill=False)
+        hbox_button.pack_start(exGPLv3checkbutton, expand=False, fill=False)
         button = gtk.Button("Cancel")
         button.connect("clicked", self.advanced_cancel_cb, window)
         button.show()
@@ -398,12 +407,21 @@ class MainWindow (gtk.Window):
     
         self.handler.init_cooker()
         self.handler.set_bblayers(self.layers)
-        self.handler.set_machine(self.machine_combo.get_active_text())
-        self.handler.set_package_format(self.package_combo.get_active_text())
+        self.handler.set_machine(self.machine_combo.get_active_text())        
+        packages = ""
+        model = self.package_select_tree.get_model()
+        it = model.get_iter_first()
+        while it:
+            value = model.get_value(it, 2)
+            if value:
+                packages = packages + "package_%s " % model.get_value(it, 1)  
+            it = model.iter_next(it) 
+        self.handler.set_package_format(packages)        
         self.handler.set_distro(self.distro_combo.get_active_text())
         self.handler.set_dl_dir(self.dldir_text.get_text())
         self.handler.set_sstate_dir(self.sstatedir_text.get_text())
         self.handler.set_sstate_mirror(self.sstatemirror_text.get_text())
+        self.handler.set_incompatiblelicense(self.incompatiblelicense)
         self.handler.set_pmake(self.pmake_spinner.get_value_as_int())
         self.handler.set_bbthreads(self.bb_spinner.get_value_as_int())
         self.handler.set_extra_inherit("packageinfo")
@@ -1033,6 +1051,122 @@ class MainWindow (gtk.Window):
     def destroy_window(self, widget, event):
         gtk.main_quit()
 
+    def include_gplv3_cb(self, toggle):
+        excluded = toggle.get_active()
+        if excluded:
+            if not self.incompatiblelicense:
+                self.incompatiblelicense = "GPLv3"
+            elif not self.incompatiblelicense.find('GPLv3'):
+                self.incompatiblelicense = "%s GPLv3" % self.incompatiblelicense
+        else:
+            self.incompatiblelicense = self.incompatiblelicense.replace('GPLv3', '')
+    
+    def package_include_cb(self, cell, path, model):
+        it = model.get_iter(path)
+        val = model.get_value(it, 2)
+        val = not val
+        model.set(it, 2, val)
+        
+    def package_up_clicked_cb(self, button):
+        (model, it) = self.package_select_tree.get_selection().get_selected()
+        if not it:
+            return              
+        path = model.get_path(it)
+        if path[0] <= 0:
+            return
+        
+        pre_it = model.get_iter_first()
+        if not pre_it:
+            return
+        else:
+            while model.iter_next(pre_it) :
+                if model.get_value(model.iter_next(pre_it), 1) != model.get_value(it, 1):
+                    pre_it = model.iter_next(pre_it)                    
+                else:
+                    break
+                
+            cur_index = model.get_value(it, 0)
+            pre_index = cur_index
+            if pre_it:
+                model.set(pre_it, 0, pre_index)
+            cur_index = cur_index - 1
+            model.set(it, 0, cur_index)
+        
+    def package_down_clicked_cb(self, button):
+        (model, it) = self.package_select_tree.get_selection().get_selected()
+        if not it:
+            return       
+        next_it = model.iter_next(it)
+        if not next_it:
+            return   
+                
+        cur_index = model.get_value(it, 0)
+        next_index = cur_index
+        model.set(next_it, 0, next_index)
+        cur_index = cur_index + 1
+        model.set(it, 0, cur_index)
+
+    def sort_func(self, model, iter1, iter2, data):
+        val1 = model.get_value(iter1, 0)
+        val2 = model.get_value(iter2, 0)
+        return val1 - val2
+    
+    def package_select(self):     
+        packagebox = gtk.HBox(False, 6)
+        packagebox.show()
+        
+        self.package_store = gtk.ListStore(int, str, gobject.TYPE_BOOLEAN)            
+        self.package_select_tree = gtk.TreeView(self.package_store)
+        self.package_select_tree.set_headers_clickable(True)
+        self.package_select_tree.set_search_column(1)
+        self.package_select_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
+
+        col = gtk.TreeViewColumn('')        
+        col.set_sort_column_id(0)
+        col.set_sort_order(gtk.SORT_ASCENDING)
+        col.set_clickable(False)
+        col1 = gtk.TreeViewColumn('type')
+        col2 = gtk.TreeViewColumn('Included')
+        self.package_select_tree.append_column(col)
+        self.package_select_tree.append_column(col1)
+        self.package_select_tree.append_column(col2)
+        cell = gtk.CellRendererText()
+        cell1 = gtk.CellRendererText()
+        cell1.set_property('width-chars', 20)       
+        cell2 = gtk.CellRendererToggle()
+        cell2.set_property('activatable', True)
+        cell2.connect("toggled", self.package_include_cb, self.package_store)
+        col.pack_start(cell, True)
+        col1.pack_start(cell1, True)
+        col2.pack_end(cell2, True)
+        col.set_attributes(cell, text=0)
+        col1.set_attributes(cell1, text=1)
+        col2.set_attributes(cell2, active=2)
+        
+        self.package_store.set_sort_func(0, self.sort_func, None)
+        self.package_store.set_sort_column_id(0, gtk.SORT_ASCENDING)        
+        self.package_select_tree.show()
+
+        scroll = gtk.ScrolledWindow()
+        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+        scroll.set_shadow_type(gtk.SHADOW_IN)
+        scroll.add(self.package_select_tree)
+        packagebox.pack_start(scroll, True, True, 5)
+        
+        vbox = gtk.VBox(False, 2)
+        packagebox.pack_start(vbox, True, True, 5)
+        
+        up = gtk.Button("Up")
+        up.connect("clicked", self.package_up_clicked_cb)
+        up.show()
+        vbox.pack_start(up, True, True, 5)
+        down = gtk.Button("Down")
+        down.connect("clicked", self.package_down_clicked_cb)
+        down.show()
+        vbox.pack_start(down, True, True, 5)
+        
+        return packagebox
+    
     def create_config_gui(self):
         vbox = gtk.VBox(False, 0)
         vbox.set_border_width(50)
@@ -1096,9 +1230,7 @@ class MainWindow (gtk.Window):
         label.show()
         vbox.pack_start(label, expand=False, fill=False)
 
-        self.package_combo = gtk.combo_box_new_text()
-        self.package_combo.show()
-        vbox.pack_start(self.package_combo, expand=False, fill=False)
+        vbox.pack_start(self.package_select(), expand=False, fill=False)
 
         label = gtk.Label("\n4.\tSelect Distro:\nThis is the Yocto distribution you would like to use.\n")
         label.set_alignment(0, 0)
@@ -1316,6 +1448,7 @@ def main (server, eventHandler):
     distro = server.runCommand(["getVariable", "DISTRO"]) or "defaultsetup"
     sstatedir = server.runCommand(["getVariable", "SSTATE_DIR"])
     sstatemirror = server.runCommand(["getVariable", "SSTATE_MIRROR"])
+    incompatiblelicense = server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"])
 
     pclasses = server.runCommand(["getVariable", "PACKAGE_CLASSES"]).split(" ")
     pkg, sep, pclass = pclasses[0].rpartition("_")
@@ -1342,7 +1475,7 @@ def main (server, eventHandler):
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
-    window = MainWindow(recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr)
+    window = MainWindow(recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr, incompatiblelicense)
     window.show_all ()
     handler.connect("machines-updated", window.update_machines)
     handler.connect("distros-updated", window.update_distros)

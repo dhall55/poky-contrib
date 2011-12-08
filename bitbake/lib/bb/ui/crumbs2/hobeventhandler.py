@@ -242,6 +242,9 @@ class HobHandler(gobject.GObject):
     def set_sstate_mirror(self, url):
         self.server.runCommand(["setVariable", "SSTATE_MIRROR", url])
 
+    def set_incompatiblelicense(self, incompatiblelicense):
+        self.server.runCommand(["setVariable", "INCOMPATIBLE_LICENSE", incompatiblelicense])
+    
     def generate_data(self, config=None):
         self.next_command = self.PARSE_CONFIG
         self.run_next_command()
