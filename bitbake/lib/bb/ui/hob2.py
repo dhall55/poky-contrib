@@ -230,8 +230,8 @@ class MainWindow (gtk.Window):
                 self.distro_combo.set_active(active)
             active = active + 1
 
-    def select_dldir_cb(self, action):
-        dialog = gtk.FileChooserDialog("Select Download Directory", None,
+    def select_dldir_cb(self, action, window):
+        dialog = gtk.FileChooserDialog("Select Download Directory", window,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
                                        (gtk.STOCK_OK, gtk.RESPONSE_YES,
                                         gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
@@ -242,8 +242,8 @@ class MainWindow (gtk.Window):
 
         dialog.destroy()
 
-    def select_sstatedir_cb(self, action):
-        dialog = gtk.FileChooserDialog("Select Sstate Directory", None,
+    def select_sstatedir_cb(self, action, window):
+        dialog = gtk.FileChooserDialog("Select Sstate Directory", window,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
                                        (gtk.STOCK_OK, gtk.RESPONSE_YES,
                                         gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
@@ -291,6 +291,108 @@ class MainWindow (gtk.Window):
 
     def disable_widgets(self):
         self.nb.set_sensitive(False)
+
+    def config_advanced_clicked_cb(self, button):
+        window = gtk.Dialog()
+        window.set_title("Advanced Settings")
+        window.set_size_request(800, 600)
+
+        label = gtk.Label("\nSet Download Directory:\nSelect a folder that caches the upstream project source code.\n")
+        label.set_alignment(0, 0)
+        label.show()
+        window.vbox.pack_start(label, expand=False, fill=False)
+
+        table_dldir = gtk.Table(1, 20, True)
+        table_dldir.show()
+        window.vbox.pack_start(table_dldir, expand=False, fill=False)
+
+        self.dldir_text.set_text(self.dldir)
+        self.dldir_text.show()
+        table_dldir.attach(self.dldir_text, 0, 19, 0, 1)
+
+        image = gtk.Image()
+        image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
+        open_button = gtk.Button()
+        open_button.set_image(image)
+        open_button.connect("clicked", self.select_dldir_cb, window)
+        open_button.show()
+        table_dldir.attach(open_button, 19, 20, 0, 1)
+
+        label = gtk.Label("\nSelect SSTATE Directory:\nSelect a folder that caches your prebuilt results.\n")
+        label.set_alignment(0, 0)
+        label.show()
+        window.vbox.pack_start(label, expand=False, fill=False)
+
+        table_sstatedir = gtk.Table(1, 20, True)
+        table_sstatedir.show()
+        window.vbox.pack_start(table_sstatedir, expand=False, fill=False)
+
+        self.sstatedir_text.set_text(self.sstatedir or "")
+        self.sstatedir_text.show()
+        table_sstatedir.attach(self.sstatedir_text, 0, 19, 0, 1)
+
+        image = gtk.Image()
+        image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
+        open_button = gtk.Button()
+        open_button.set_image(image)
+        open_button.connect("clicked", self.select_sstatedir_cb)
+        open_button.show()
+        table_sstatedir.attach(open_button, 19, 20, 0, 1)
+
+        label = gtk.Label("\nSelect SSTATE Mirror:\nSelect the prebuilt mirror that will fasten your build speed.\n")
+        label.set_alignment(0, 0)
+        label.show()
+        window.vbox.pack_start(label, expand=False, fill=False)
+
+        self.sstatemirror_text.set_text(self.sstatemirror or "")
+        self.sstatemirror_text.show()
+        window.vbox.pack_start(self.sstatemirror_text, expand=False, fill=False)
+
+        label = gtk.Label("\nBB_NUMBER_THREADS:\nSets the number of threads that bitbake tasks can run simultaneously.\n")
+        label.set_alignment(0, 0)
+        label.show()
+        window.vbox.pack_start(label, expand=False, fill=False)
+
+        self.bb_spinner.set_value(self.bbthread)
+        self.bb_spinner.show()
+        window.vbox.pack_start(self.bb_spinner, expand=False, fill=False)
+
+        label = gtk.Label("\nPARALLEL_MAKE:\nSets the make parallism, as known as 'make -j'.\n")
+        label.set_alignment(0, 0)
+        label.show()
+        window.vbox.pack_start(label, expand=False, fill=False)
+
+        self.pmake_spinner.set_value(self.pmake)
+        self.pmake_spinner.show()
+        window.vbox.pack_start(self.pmake_spinner, expand=False, fill=False)
+
+        hbox_button = gtk.HBox(False, 0)
+        hbox_button.show()
+        window.vbox.pack_end(hbox_button, expand=False, fill=False)
+        button = gtk.Button("Cancel")
+        button.connect("clicked", self.advanced_cancel_cb, window)
+        button.show()
+        hbox_button.pack_end(button, expand=False, fill=False)
+        button = gtk.Button(" Save ")
+        button.connect("clicked", self.advanced_ok_cb, window)
+        button.show()
+        hbox_button.pack_end(button, expand=False, fill=False)
+
+        response = window.run()
+        window.destroy()
+        return
+
+    def advanced_ok_cb(self, button, window):
+        self.dldir = self.dldir_text.get_text()
+        self.sstatedir = self.sstatedir_text.get_text()
+        self.sstatemirror = self.sstatemirror_text.get_text()
+        self.bbthread = self.bb_spinner.get_value_as_int()
+        self.pmake = self.pmake_spinner.get_value_as_int()
+        window.destroy()
+
+    def advanced_cancel_cb(self, button, window):
+        window.destroy()
+
 
     def config_next_clicked_cb(self, button):
         self.switch_page(1, self.RECIPE_SELECTION)
@@ -813,17 +915,18 @@ class MainWindow (gtk.Window):
         gtk.main_quit()
 
     def create_config_gui(self):
-        vbox = gtk.VBox(False, 5)
-        vbox.set_border_width(5)
+        vbox = gtk.VBox(False, 0)
+        vbox.set_border_width(50)
         vbox.show()
 
-        table = gtk.Table(10, 5, False)
-        table.show()
-        vbox.pack_start(table, expand=False, fill=False)
-
-        label = gtk.Label("Layers:")
+        label = gtk.Label("1.\tSelect Layers:\nLayer is a collection of bb files and conf files.\n")
+        label.set_alignment(0, 0)
         label.show()
-        table.attach(label, 1, 2, 0, 2)
+        vbox.pack_start(label, expand=False, fill=False)
+
+        table_layer = gtk.Table(2, 10, True)
+        table_layer.show()
+        vbox.pack_start(table_layer, expand=False, fill=False)
 
         self.layer_store = gtk.ListStore(gobject.TYPE_STRING)
 
@@ -844,114 +947,75 @@ class MainWindow (gtk.Window):
         scroll.set_shadow_type(gtk.SHADOW_IN)
         scroll.add(self.ltv)
 
-        table.attach(scroll, 2, 3, 0, 2)
+        table_layer.attach(scroll, 0, 9, 0, 2)
 
         image = gtk.Image()
         image.set_from_stock(gtk.STOCK_ADD,gtk.ICON_SIZE_MENU)
         add_button = gtk.Button()
         add_button.set_image(image)
         add_button.connect("clicked", self.add_layer_cb)
-        table.attach(add_button, 3, 4, 0, 1)
+        table_layer.attach(add_button, 9, 10, 0, 1)
 
         image = gtk.Image()
         image.set_from_stock(gtk.STOCK_REMOVE,gtk.ICON_SIZE_MENU)
         del_button = gtk.Button()
         del_button.set_image(image)
         del_button.connect("clicked", self.del_layer_cb)
-        table.attach(del_button, 3, 4, 1, 2)
-        label = gtk.Label("Machine:")
+        table_layer.attach(del_button, 9, 10, 1, 2)
+
+        label = gtk.Label("\n2.\tSelect Machine:\nThis is the architecture of the target board for which you are building the image.\n")
+        label.set_alignment(0, 0)
         label.show()
-        table.attach(label, 1, 2, 2, 3)
+        vbox.pack_start(label, expand=False, fill=False)
 
         self.machine_combo = gtk.combo_box_new_text()
         self.machine_combo.show()
-        self.machine_combo.set_tooltip_text("Selects the architecture of the target board for which you would like to build an image.")
-        table.attach(self.machine_combo, 2, 4, 2, 3)
+        vbox.pack_start(self.machine_combo, expand=False, fill=False)
 
-        label = gtk.Label("Packaging:")
+        label = gtk.Label("\n3.\tPackaging Format:\nThis is the packaging type that will be used for final image and all packages.\n")
+        label.set_alignment(0, 0)
         label.show()
-        table.attach(label, 1, 2, 3, 4)
+        vbox.pack_start(label, expand=False, fill=False)
 
         self.package_combo = gtk.combo_box_new_text()
         self.package_combo.show()
-        table.attach(self.package_combo, 2, 4, 3, 4)
+        vbox.pack_start(self.package_combo, expand=False, fill=False)
 
-        label = gtk.Label("Distro:")
+        label = gtk.Label("\n4.\tSelect Distro:\nThis is the Yocto distribution you would like to use.\n")
+        label.set_alignment(0, 0)
         label.show()
-        table.attach(label, 1, 2, 4, 5)
+        vbox.pack_start(label, expand=False, fill=False)
 
         self.distro_combo = gtk.combo_box_new_text()
-        self.distro_combo.set_tooltip_text("Select the Yocto distribution you would like to use")
         self.distro_combo.show()
-        table.attach(self.distro_combo, 2, 4, 4, 5)
-
-        label = gtk.Label("DL_DIR:")
-        label.show()
-        table.attach(label, 1, 2, 5, 6)
+        vbox.pack_start(self.distro_combo, expand=False, fill=False)
 
         self.dldir_text = gtk.Entry()
         self.dldir_text.set_text(self.dldir or "")
-        self.dldir_text.show()
-        table.attach(self.dldir_text, 2, 3, 5, 6)
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
-        open_button = gtk.Button()
-        open_button.set_image(image)
-        open_button.connect("clicked", self.select_dldir_cb)
-        table.attach(open_button, 3, 4, 5, 6)
-
-
-        label = gtk.Label("SSTATE_DIR:")
-        label.show()
-        table.attach(label, 1, 2, 6, 7)
 
         self.sstatedir_text = gtk.Entry()
         self.sstatedir_text.set_text(self.sstatedir or "")
-        self.sstatedir_text.show()
-        table.attach(self.sstatedir_text, 2, 3, 6, 7)
-
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
-        open_button = gtk.Button()
-        open_button.set_image(image)
-        open_button.connect("clicked", self.select_sstatedir_cb)
-        table.attach(open_button, 3, 4, 6, 7)
-
-        label = gtk.Label("SSTATE_MIRROR:")
-        label.show()
-        table.attach(label, 1, 2, 7, 8)
 
         self.sstatemirror_text = gtk.Entry()
         self.sstatemirror_text.set_text(self.sstatemirror or "")
-        self.sstatemirror_text.show()
-        table.attach(self.sstatemirror_text, 2, 4, 7, 8)
 
-        label = gtk.Label("BB_NUMBER_THREADS:")
-        label.show()
-        table.attach(label, 1, 2, 8, 9)
         bb_adjust = gtk.Adjustment(value=self.bbthread, lower=1, upper=16, step_incr=1)
         self.bb_spinner = gtk.SpinButton(adjustment=bb_adjust, climb_rate=1, digits=0)
-        self.bb_spinner.show()
-        table.attach(self.bb_spinner, 2, 4, 8, 9)
-
-        label = gtk.Label("PARALLEL_MAKE:")
-        label.show()
-        table.attach(label, 1, 2, 9, 10)
 
         pmake_adjust = gtk.Adjustment(value=self.pmake, lower=1, upper=16, step_incr=1)
         self.pmake_spinner = gtk.SpinButton(adjustment=pmake_adjust, climb_rate=1, digits=0)
-        self.pmake_spinner.show()
-        table.attach(self.pmake_spinner, 2, 4, 9, 10)
 
-        bbox = gtk.HButtonBox()
-        bbox.set_spacing(12)
-        bbox.set_layout(gtk.BUTTONBOX_END)
-        bbox.show()
-        vbox.pack_start(bbox, expand=False, fill=False)
-        bake = gtk.Button("Next")
-        bake.connect("clicked", self.config_next_clicked_cb)
-        bake.show()
-        bbox.add(bake)
+        hbox_button = gtk.HBox(False, 0)
+        hbox_button.show()
+        vbox.pack_end(hbox_button, expand=False, fill=False)
+        button = gtk.Button("Advanced Settings")
+        button.connect("clicked", self.config_advanced_clicked_cb)
+        button.show()
+        hbox_button.pack_start(button, expand=False, fill=False)
+        button = gtk.Button("Next")
+        button.connect("clicked", self.config_next_clicked_cb)
+        button.show()
+        hbox_button.pack_end(button, expand=False, fill=False)
 
         return vbox
 
