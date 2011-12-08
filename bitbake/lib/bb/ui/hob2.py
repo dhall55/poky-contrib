@@ -485,6 +485,7 @@ class MainWindow (gtk.Window):
         dialog.destroy()
 
     def update_recipe_model(self, model):
+        gtk.ProgressBar.hide(self.create_recipe_progress)
         # We want the recipes model to be alphabetised and sortable so create
         # a TreeModelSort to use in the view
         recipesaz_model = gtk.TreeModelSort(self.recipe_model.recipes_model())
@@ -1011,6 +1012,7 @@ class MainWindow (gtk.Window):
 
     def build_complete_cb(self, running_build):
         # Have the handler process BB events again
+        gtk.ProgressBar.hide(self.view_build_progress)
         self.handler.building = False
         self.stopping = False
         self.back.connect("clicked", self.build_back_clicked_cb)
