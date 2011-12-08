@@ -5,6 +5,6 @@ IMAGE_INSTALL = "\
     task-core-basic \
     "
 
-#    ${POKY_BASE_INSTALL} 
+#    ${OE_BASE_INSTALL} 
 
 inherit core-image
