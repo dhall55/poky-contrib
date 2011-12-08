@@ -78,7 +78,7 @@ class MainWindow (gtk.Window):
         self.build_succeeded = False
         self.stopping = False
         self.image_install = ""
-        self.current_step = self.CONFIGURATION
+        self.current_step = None
 
         self.recipe_model = recipemodel
         self.recipe_model.connect("recipelist-populated", self.update_recipe_model)
@@ -92,7 +92,7 @@ class MainWindow (gtk.Window):
         self.connect("delete-event", self.destroy_window)
         self.set_title("HOB")
         self.set_icon_name("applications-development")
-        self.set_default_size(1000, 650)
+        self.set_size_request(650, 650)
 
         self.build = RunningBuild(sequential=True)
         self.build.connect("build-failed", self.running_build_failed_cb)
@@ -115,9 +115,17 @@ class MainWindow (gtk.Window):
         self.nb.append_page(buildview)
         self.nb.append_page(packageview)
         self.nb.append_page(imageview)
-        self.nb.set_current_page(0)
+        self.switch_page(0, self.CONFIGURATION)
         self.nb.set_show_tabs(False)
         vbox.pack_start(self.nb, expand=True, fill=True)
+
+    def switch_page(self, page_num, curr_step):
+        self.nb.set_current_page(page_num)
+        self.current_step = curr_step
+        if page_num == 0 or page_num == 4:
+            self.resize(650, 650)
+        else:
+            self.resize(1000, 650)
 
     def load_current_layers(self, data):
         for layer in self.layers:
@@ -285,8 +293,7 @@ class MainWindow (gtk.Window):
         self.nb.set_sensitive(False)
 
     def config_next_clicked_cb(self, button):
-        self.nb.set_current_page(1)
-        self.current_step = self.RECIPE_SELECTION
+        self.switch_page(1, self.RECIPE_SELECTION)
     
         self.handler.init_cooker()
         self.handler.set_bblayers(self.layers)
@@ -729,8 +736,7 @@ class MainWindow (gtk.Window):
         return scroll
 
     def recipe_previous_clicked_cb(self, button):
-        self.current_step = self.CONFIGURATION
-        self.nb.set_current_page(0)
+        self.switch_page(0, self.CONFIGURATION)
 
     def recipe_next_clicked_cb(self, button):
         # If no base image and no selected packages don't build anything
@@ -743,11 +749,10 @@ class MainWindow (gtk.Window):
             dialog.destroy()
             return
 
-        self.current_step = self.RECIPE_BUILDING
         _, all_recipes = self.recipe_model.get_selected_recipes()
         self.handler.build_targets(all_recipes)
         self.build.reset()
-        self.nb.set_current_page(2)
+        self.switch_page(2, self.RECIPE_BUILDING)
         self.package_model.clear()
         return
 
@@ -755,8 +760,7 @@ class MainWindow (gtk.Window):
         view.scroll_to_cell(path)
 
     def package_previous_clicked_cb(self, button):
-        self.current_step = self.RECIPE_SELECTION
-        self.nb.set_current_page(1)
+        self.switch_page(1, self.RECIPE_SELECTION)
 
     def package_next_clicked_cb(self, button):
         # If no base image and no selected packages don't build anything
@@ -772,8 +776,7 @@ class MainWindow (gtk.Window):
         selected_packages = self.package_model.get_selected_packages()
         self.handler.generate_image(selected_packages)
         self.build.reset()
-        self.current_step = self.IMAGE_GENERATING
-        self.nb.set_current_page(2)
+        self.switch_page(2, self.IMAGE_GENERATING)
         return
 
 
@@ -783,11 +786,9 @@ class MainWindow (gtk.Window):
 
     def build_back_clicked_cb(self, button):
         if self.current_step == self.RECIPE_BUILDING:
-            self.current_step = self.RECIPE_SELECTION
-            self.nb.set_current_page(1)
+            self.switch_page(1, self.RECIPE_SELECTION)
         elif self.current_step == self.IMAGE_GENERATING:
-            self.current_step == self.PACKAGE_SELECTION
-            self.nb.set_current_page(3)
+            self.switch_page(3, self.PACKAGE_SELECTION)
 
     def build_complete_cb(self, running_build):
         # Have the handler process BB events again
@@ -798,11 +799,9 @@ class MainWindow (gtk.Window):
         self.cancel.set_sensitive(False)
         if self.build_succeeded:
             if self.current_step == self.RECIPE_BUILDING:
-                self.current_step = self.PACKAGE_SELECTION
-                self.nb.set_current_page(3)
+                self.switch_page(3, self.PACKAGE_SELECTION)
             elif self.current_step == self.IMAGE_GENERATING:
-                self.current_step = self.IMAGE_GENERATED
-                self.nb.set_current_page(4)
+                self.switch_page(4, self.IMAGE_GENERATED)
 
     def running_build_succeeded_cb(self, running_build):
         self.build_succeeded = True
@@ -1082,8 +1081,7 @@ class MainWindow (gtk.Window):
         return vbox
 
     def image_previous_clicked_cb(self, button):
-        self.current_step = self.PACKAGE_SELECTION
-        self.nb.set_current_page(3)
+        self.switch_page(3, self.PACKAGE_SELECTION)
 
     def image_next_clicked_cb(self, button):
         gtk.main_quit()
