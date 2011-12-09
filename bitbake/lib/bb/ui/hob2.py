@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # BitBake Graphical GTK User Interface
 #
@@ -22,6 +23,15 @@
 import glib
 import gobject
 import gtk
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+try:
+    import bb
+except RuntimeError as exc:
+    sys.exit(str(exc))
+
+from bb.ui import uihelper
 from bb.ui.crumbs2.recipelistmodel import RecipeListModel
 from bb.ui.crumbs2.packagelistmodel import PackageListModel
 from bb.ui.crumbs2.hobeventhandler import HobHandler
@@ -1308,7 +1318,12 @@ class MainWindow (gtk.Window):
  
         return vbox
  
-def main (server, eventHandler):
+def main (server = None, eventHandler = None):
+    if not eventHandler:
+        helper = uihelper.BBUIHelper()
+        server, eventHandler = helper.findServerDetails()
+        server.runCommand(["resetCooker"])
+
     gobject.threads_init()
 
     recipemodel = RecipeListModel()
@@ -1372,3 +1387,12 @@ def main (server, eventHandler):
             pass
     finally:
         server.runCommand(["stateStop"])
+
+if __name__ == "__main__":
+    try:
+        ret = main()
+    except Exception:
+        ret = 1
+        import traceback
+        traceback.print_exc(5)
+    sys.exit(ret)

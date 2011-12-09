@@ -40,3 +40,38 @@ class BBUIHelper:
     def getTasks(self):
         self.needUpdate = False
         return (self.running_tasks, self.failed_tasks)
+
+    def findServerDetails(self):
+        import sys
+        import optparse
+        from bb.server.xmlrpc import BitbakeServerInfo, BitBakeServerConnection
+        host = ""
+        port = 0
+        parser = optparse.OptionParser(
+            usage = """%prog -H address -P port""")
+
+        parser.add_option("-H", "--host", help = "Bitbake server's IP address",
+                   action = "store", dest = "host", default = None)
+
+        parser.add_option("-P", "--port", help = "Bitbake server's Port number",
+                   action = "store", dest = "port", default = None)
+
+        options, args = parser.parse_args(sys.argv)
+        for key, val in options.__dict__.items():
+            if key == 'host' and val:
+                host = val
+            elif key == 'port' and val:
+                port = int(val)
+
+        if not host or not port:
+            parser.print_usage()
+            sys.exit(1)
+
+        serverinfo = BitbakeServerInfo(host, port)
+        connection = BitBakeServerConnection(serverinfo)
+
+        server = connection.connection
+        eventHandler = connection.events
+
+        return server, eventHandler
+
