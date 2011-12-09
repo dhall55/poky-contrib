@@ -1,0 +1,98 @@
+UpstreamStatus: Pending
+
+Add abi awareness to configure & makefile so that correct 
+library path & compiler gcc options are set.
+
+Without this patch while building with x32 toolchain pseudo 
+tries to pass -m32 option to compiler causing compile failure;
+and the library location is incorrect causing linking failures.
+
+Signed-Off-By: Nitin A Kamble <nitin.a.kamble@intel.com> 2011/12/09
+
+
+Index: pseudo-1.2/Makefile.in
+===================================================================
+--- pseudo-1.2.orig/Makefile.in
++++ pseudo-1.2/Makefile.in
+@@ -24,6 +24,8 @@ SUFFIX=@SUFFIX@
+ SQLITE=@SQLITE@
+ BITS=@BITS@
+ MARK64=@MARK64@
++ABI=@ABI@
++ABILIBDIR=@ABILIBDIR@
+ RPATH=@RPATH@
+ VERSION=1.2
+ 
+@@ -35,12 +37,12 @@ LOCALSTATEDIR=$(PREFIX)/$(LOCALSTATE)
+ 
+ CFLAGS_BASE=-pipe -std=gnu99 -Wall -W -Wextra
+ CFLAGS_CODE=-fPIC -D_LARGEFILE64_SOURCE -D_ATFILE_SOURCE
+-ifneq ($(BITS),)
+-    CFLAGS_CODE += -m$(BITS)
++ifneq ($(ABI),)
++    CFLAGS_CODE += -m$(ABI)
+ endif
+ CFLAGS_DEFS=-DPSEUDO_PREFIX='"$(PREFIX)"' -DPSEUDO_SUFFIX='"$(SUFFIX)"' -DPSEUDO_BINDIR='"$(BIN)"' -DPSEUDO_LIBDIR='"$(LIB)"' -DPSEUDO_LOCALSTATEDIR='"$(LOCALSTATE)"' -DPSEUDO_VERSION='"$(VERSION)"'
+ CFLAGS_DEBUG=-O2 -g
+-CFLAGS_SQL=-L$(SQLITE)/lib -I$(SQLITE)/include $(RPATH)
++CFLAGS_SQL=-L$(SQLITE)/lib${ABILIBDIR} -I$(SQLITE)/include $(RPATH)
+ CFLAGS_PSEUDO=$(CFLAGS_BASE) $(CFLAGS_CODE) $(CFLAGS_DEFS) \
+ 	$(CFLAGS_DEBUG) $(CFLAGS_SQL)
+ 
+@@ -56,7 +58,7 @@ WRAPOBJS=pseudo_wrappers.o
+ 
+ # needed for anything that links with pseduo_client.o, pretty much
+ CLIENT_LDFLAGS=-ldl -lpthread
+-DB_LDFLAGS=$(SQLITE)/lib/libsqlite3.a -lpthread
++DB_LDFLAGS=$(SQLITE)/lib${ABILIBDIR}/libsqlite3.a -lpthread
+ 
+ PSEUDO=$(BIN)/pseudo
+ PSEUDODB=$(BIN)/pseudodb
+Index: pseudo-1.2/configure
+===================================================================
+--- pseudo-1.2.orig/configure
++++ pseudo-1.2/configure
+@@ -22,6 +22,8 @@ opt_prefix=
+ opt_libdir=
+ opt_suffix=
+ opt_bits=
++opt_abi=
++abi_libdir=
+ opt_sqlite=/usr
+ 
+ usage()
+@@ -70,6 +72,17 @@ do
+ 			;;
+ 		esac
+ 		;;
++	--abi=*)
++		opt_abi=${arg#--abi=}
++		case $opt_abi in
++		64)	abi_libdir="64";;
++		x32)	abi_libdir="x32";;
++		32)	abi_libdir="";;
++		*)	echo >&2 "Unknown ABI $opt_abi (only 32, 64 & x32 known)."
++			abi_libdir=
++			;;
++		esac
++		;;
+ 	*)
+ 		echo >&2 "warning: Unrecognized option '$arg'"
+ 		;;
+@@ -81,7 +94,7 @@ if [ -z "$opt_prefix" ]; then
+ fi
+ 
+ if [ -z "$opt_libdir" ]; then
+-    opt_libdir=$opt_prefix/lib$opt_mark64
++    opt_libdir=$opt_prefix/lib$abi_libdir
+ fi
+ 
+ # We need to find the libdir relative to the prefix, this is required
+@@ -116,5 +129,7 @@ sed -e '
+   s,@SQLITE@,'"$opt_sqlite"',g
+   s!@RPATH@!'"$opt_rpath"'!g
+   s,@MARK64@,'"$opt_mark64"',g
++  s,@ABI@,'"$opt_abi"',g
++  s,@ABILIBDIR@,'"$abi_libdir"',g
+   s,@BITS@,'"$opt_bits"',g
+ ' < Makefile.in > Makefile
