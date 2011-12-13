@@ -1319,9 +1319,11 @@ class MainWindow (gtk.Window):
         return vbox
  
 def main (server = None, eventHandler = None):
+    image_addr_prefix = ""
     if not eventHandler:
         helper = uihelper.BBUIHelper()
-        server, eventHandler = helper.findServerDetails()
+        server, eventHandler, server_addr = helper.findServerDetails()
+        image_addr_prefix = 'http://' + server_addr + ':'
         server.runCommand(["resetCooker"])
 
     gobject.threads_init()
@@ -1353,6 +1355,8 @@ def main (server = None, eventHandler = None):
         pmake = int(pmake.lstrip("-j "))
 
     image_addr = server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"])
+    if image_addr_prefix:
+        image_addr = image_addr_prefix + image_addr
 
     try:
         # kick the while thing off
