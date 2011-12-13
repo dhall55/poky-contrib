@@ -168,6 +168,8 @@ Default BBFILES are the .bb files in the current directory.""")
     parser.add_option("", "--server-only", help = "Run bitbake without UI,  the frontend can connect with bitbake server itself",
                action = "store_true", dest = "server_only", default = False)
 
+    parser.add_option("-B", "--bind", help = "Bind bitbake server with certain address",
+               action = "store", dest = "bind", default = False)
     options, args = parser.parse_args(sys.argv)
 
     configuration = BBConfiguration(options)
@@ -189,9 +191,6 @@ Default BBFILES are the .bb files in the current directory.""")
         sys.exit("FATAL: Invalid server type '%s' specified.\n"
                  "Valid interfaces: xmlrpc, process [default], none." % servertype)
 
-    if configuration.server_only and configuration.servertype != "xmlrpc":
-        sys.exit("FATAL: If '--server-only' is defined, we must set the servertype as 'xmlrpc'.\n")
-
     # Save a logfile for cooker into the current working directory. When the
     # server is daemonized this logfile will be truncated.
     cooker_logfile = os.path.join(os.getcwd(), "cooker.log")
@@ -211,9 +210,17 @@ Default BBFILES are the .bb files in the current directory.""")
     # of the UIs (e.g. for DISPLAY, etc.)
     bb.utils.clean_environment()
 
-    server = server.BitBakeServer()
+    if configuration.server_only:
+        if configuration.servertype != "xmlrpc":
+            sys.exit("FATAL: If '--server-only' is defined, we must set the servertype as 'xmlrpc'.\n")
+        if not configuration.bind:
+            sys.exit("FATAL: If '--server-only' is defined, we need to bind the server with certain address'.\n")
+        server = server.BitBakeServer()
+        server.initServer((configuration.bind, 0))
+    else:
+        server = server.BitBakeServer()
+        server.initServer()
 
-    server.initServer()
     idle = server.getServerIdleCB()
 
     cooker = bb.cooker.BBCooker(configuration, idle, initialenv)
