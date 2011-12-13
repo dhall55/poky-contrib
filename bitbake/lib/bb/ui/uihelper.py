@@ -47,8 +47,9 @@ class BBUIHelper:
         from bb.server.xmlrpc import BitbakeServerInfo, BitBakeServerConnection
         host = ""
         port = 0
+        bind = ""
         parser = optparse.OptionParser(
-            usage = """%prog -H address -P port""")
+            usage = """%prog -H host -P port -B bindaddr""")
 
         parser.add_option("-H", "--host", help = "Bitbake server's IP address",
                    action = "store", dest = "host", default = None)
@@ -56,19 +57,25 @@ class BBUIHelper:
         parser.add_option("-P", "--port", help = "Bitbake server's Port number",
                    action = "store", dest = "port", default = None)
 
+        parser.add_option("-B", "--bind", help = "Hob2 local bind address",
+                   action = "store", dest = "bind", default = None)
+
         options, args = parser.parse_args(sys.argv)
         for key, val in options.__dict__.items():
             if key == 'host' and val:
                 host = val
             elif key == 'port' and val:
                 port = int(val)
+            elif key == 'bind' and val:
+                bind = val
 
-        if not host or not port:
+        if not host or not port or not bind:
             parser.print_usage()
             sys.exit(1)
 
         serverinfo = BitbakeServerInfo(host, port)
-        connection = BitBakeServerConnection(serverinfo)
+        clientinfo = (bind, 0)
+        connection = BitBakeServerConnection(serverinfo, clientinfo)
 
         server = connection.connection
         eventHandler = connection.events
