@@ -1,0 +1,44 @@
+Update the gettext macro version numbers as Yocto uses gettext 0.18
+
+Upstream-status: Inappropriate
+Signed-off-by: Joshua Lock <josh@linux.intel.com>
+
+Index: libnih-1.0.3/configure.ac
+===================================================================
+--- libnih-1.0.3.orig/configure.ac	2010-09-20 16:17:01.000000000 -0700
++++ libnih-1.0.3/configure.ac	2011-12-12 21:03:11.286967442 -0800
+@@ -15,7 +15,7 @@
+ LT_PREREQ(2.2.4)
+ LT_INIT
+ 
+-AM_GNU_GETTEXT_VERSION([0.17])
++AM_GNU_GETTEXT_VERSION([0.18])
+ AM_GNU_GETTEXT()
+ 
+ # Checks for programs.
+Index: libnih-1.0.3/po/Makefile.in.in
+===================================================================
+--- libnih-1.0.3.orig/po/Makefile.in.in	2010-10-24 19:26:00.000000000 -0700
++++ libnih-1.0.3/po/Makefile.in.in	2011-12-12 21:03:11.287967453 -0800
+@@ -9,7 +9,7 @@
+ # General Public License and is *not* in the public domain.
+ #
+ # Origin: gettext-0.17
+-GETTEXT_MACRO_VERSION = 0.17
++GETTEXT_MACRO_VERSION = 0.18
+ 
+ PACKAGE = @PACKAGE@
+ VERSION = @VERSION@
+Index: libnih-1.0.3/m4/po.m4
+===================================================================
+--- libnih-1.0.3.orig/m4/po.m4	2010-10-24 19:26:00.000000000 -0700
++++ libnih-1.0.3/m4/po.m4	2011-12-12 21:03:29.930170086 -0800
+@@ -29,7 +29,7 @@
+ 
+   dnl Release version of the gettext macros. This is used to ensure that
+   dnl the gettext macros and po/Makefile.in.in are in sync.
+-  AC_SUBST([GETTEXT_MACRO_VERSION], [0.17])
++  AC_SUBST([GETTEXT_MACRO_VERSION], [0.18])
+ 
+   dnl Perform the following tests also if --disable-nls has been given,
+   dnl because they are needed for "make dist" to work.
