@@ -80,5 +80,5 @@ class BBUIHelper:
         server = connection.connection
         eventHandler = connection.events
 
-        return server, eventHandler, host
+        return server, eventHandler, host, bind
 

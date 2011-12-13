@@ -66,9 +66,10 @@ class MyProgressBar (gtk.ProgressBar):
 class MainWindow (gtk.Window):
 
     (CONFIGURATION, RECIPE_SELECTION, RECIPE_BUILDING, PACKAGE_SELECTION, IMAGE_GENERATING, IMAGE_GENERATED) = range(6)
-    def __init__(self, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr):
+    def __init__(self, split_model, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr):
         gtk.Window.__init__(self)
         # global state
+        self.split_model = split_model
         self.layers = layers.split()
         self.layers_default = copy.copy(self.layers)
         self.curr_mach = mach
@@ -142,8 +143,17 @@ class MainWindow (gtk.Window):
             self.resize(1000, 650)
 
     def load_current_layers(self, data):
-        for layer in self.layers:
-            self.layer_store.append([layer])
+        if self.split_model:
+            for layer in self.layers:
+                self.layer_store.append([layer, True])
+                self.layers_avail.append(layer)
+            for layer in self.layers_avail:
+                if layer not in self.layers:
+                    self.layer_store.append([layer, False])
+            self.layers_avail = list(set(self.layers_avail))
+        else:
+            for layer in self.layers:
+                self.layer_store.append([layer])
 
     def conf_error(self, lbl):
         dialog = CrumbsDialog(self, lbl)
@@ -192,6 +202,19 @@ class MainWindow (gtk.Window):
                 self.layer_store.remove(iter)
                 self.layers.remove(layer)
                 self.handler.layer_refresh(self.layers)
+
+    def load_avail_layers(self, handler, layers):
+        self.layers_avail = layers
+
+    def toggle_layer_cb(self, cell, path):
+        name = self.layer_store[path][0]
+        toggle = not self.layer_store[path][1]
+        if toggle:
+            self.layers.append(name)
+        else:
+            self.layers.remove(name)
+        self.handler.layer_refresh(self.layers)
+        self.layer_store[path][1] = toggle
 
     def update_machines(self, handler, machines):
         active = 0
@@ -316,42 +339,48 @@ class MainWindow (gtk.Window):
         label.show()
         window.vbox.pack_start(label, expand=False, fill=False)
 
-        table_dldir = gtk.Table(1, 20, True)
-        table_dldir.show()
-        window.vbox.pack_start(table_dldir, expand=False, fill=False)
-
         self.dldir_text.set_text(self.dldir)
         self.dldir_text.show()
-        table_dldir.attach(self.dldir_text, 0, 19, 0, 1)
+        if self.split_model:
+            window.vbox.pack_start(self.dldir_text, expand=False, fill=False)
+        else:
+            table_dldir = gtk.Table(1, 20, True)
+            table_dldir.show()
+            window.vbox.pack_start(table_dldir, expand=False, fill=False)
 
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
-        open_button = gtk.Button()
-        open_button.set_image(image)
-        open_button.connect("clicked", self.select_dldir_cb, window)
-        open_button.show()
-        table_dldir.attach(open_button, 19, 20, 0, 1)
+            table_dldir.attach(self.dldir_text, 0, 19, 0, 1)
+
+            image = gtk.Image()
+            image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
+            open_button = gtk.Button()
+            open_button.set_image(image)
+            open_button.connect("clicked", self.select_dldir_cb, window)
+            open_button.show()
+            table_dldir.attach(open_button, 19, 20, 0, 1)
 
         label = gtk.Label("\nSelect SSTATE Directory:\nSelect a folder that caches your prebuilt results.\n")
         label.set_alignment(0, 0)
         label.show()
         window.vbox.pack_start(label, expand=False, fill=False)
 
-        table_sstatedir = gtk.Table(1, 20, True)
-        table_sstatedir.show()
-        window.vbox.pack_start(table_sstatedir, expand=False, fill=False)
-
         self.sstatedir_text.set_text(self.sstatedir or "")
         self.sstatedir_text.show()
-        table_sstatedir.attach(self.sstatedir_text, 0, 19, 0, 1)
+        if self.split_model:
+            window.vbox.pack_start(self.sstatedir_text, expand=False, fill=False)
+        else:
+            table_sstatedir = gtk.Table(1, 20, True)
+            table_sstatedir.show()
+            window.vbox.pack_start(table_sstatedir, expand=False, fill=False)
 
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
-        open_button = gtk.Button()
-        open_button.set_image(image)
-        open_button.connect("clicked", self.select_sstatedir_cb)
-        open_button.show()
-        table_sstatedir.attach(open_button, 19, 20, 0, 1)
+            table_sstatedir.attach(self.sstatedir_text, 0, 19, 0, 1)
+
+            image = gtk.Image()
+            image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
+            open_button = gtk.Button()
+            open_button.set_image(image)
+            open_button.connect("clicked", self.select_sstatedir_cb)
+            open_button.show()
+            table_sstatedir.attach(open_button, 19, 20, 0, 1)
 
         label = gtk.Label("\nSelect SSTATE Mirror:\nSelect the prebuilt mirror that will fasten your build speed.\n")
         label.set_alignment(0, 0)
@@ -429,10 +458,30 @@ class MainWindow (gtk.Window):
         self.tmpmgr.load(path)
 
         # bblayers.conf
+        layers = self.tmpmgr.getVar("BBLAYERS")
+
+        lbl = "<b>Error</b>\nError in loading template because "
+        lbl += "some layer in the template is not exist in all available layers"
+
+        if self.split_model:
+            if not set(layers) <= set(self.layers_avail):
+                self.conf_error(lbl)
+                return
+        else:
+            for layer in layers:
+                if not os.path.exists(layer+'/conf/layer.conf'):
+                    self.conf_error(lbl)
+                    return
+
+        self.layers = layers
         self.layer_store.clear()
-        self.layers = self.tmpmgr.getVar("BBLAYERS")
-        for path in self.layers:
-            self.layer_store.append([path])
+
+        if self.split_model:
+            for layer in self.layers:
+                self.layer_store.append([layer, True])
+        else:
+            for layer in self.layers:
+                self.layer_store.append([layer])
         self.handler.layer_refresh(self.layers)
 
         # local.conf
@@ -1058,14 +1107,7 @@ class MainWindow (gtk.Window):
         label.show()
         vbox.pack_start(label, expand=False, fill=False)
 
-        table_layer = gtk.Table(2, 10, True)
-        table_layer.show()
-        vbox.pack_start(table_layer, expand=False, fill=False)
-
-        self.layer_store = gtk.ListStore(gobject.TYPE_STRING)
-
         self.ltv = gtk.TreeView()
-        self.ltv.set_model(self.layer_store)
         self.ltv.set_headers_visible(False)
         self.ltv.get_selection().set_mode(gtk.SELECTION_SINGLE)
 
@@ -1081,21 +1123,41 @@ class MainWindow (gtk.Window):
         scroll.set_shadow_type(gtk.SHADOW_IN)
         scroll.add(self.ltv)
 
-        table_layer.attach(scroll, 0, 9, 0, 2)
+        if self.split_model:
+            vbox.pack_start(scroll, expand=False, fill=False)
 
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_ADD,gtk.ICON_SIZE_MENU)
-        add_button = gtk.Button()
-        add_button.set_image(image)
-        add_button.connect("clicked", self.add_layer_cb)
-        table_layer.attach(add_button, 9, 10, 0, 1)
+            self.layer_store = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_BOOLEAN)
+            col1 = gtk.TreeViewColumn('Included')
+            self.ltv.append_column(col1)
 
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_REMOVE,gtk.ICON_SIZE_MENU)
-        del_button = gtk.Button()
-        del_button.set_image(image)
-        del_button.connect("clicked", self.del_layer_cb)
-        table_layer.attach(del_button, 9, 10, 1, 2)
+            cell1 = gtk.CellRendererToggle()
+            cell1.connect("toggled", self.toggle_layer_cb)
+            col1.pack_start(cell1, True)
+            col1.set_attributes(cell1, active=1)
+
+        else:
+            table_layer = gtk.Table(2, 10, True)
+            table_layer.show()
+            table_layer.attach(scroll, 0, 9, 0, 2)
+            vbox.pack_start(table_layer, expand=False, fill=False)
+
+            self.layer_store = gtk.ListStore(gobject.TYPE_STRING)
+
+            image = gtk.Image()
+            image.set_from_stock(gtk.STOCK_ADD,gtk.ICON_SIZE_MENU)
+            add_button = gtk.Button()
+            add_button.set_image(image)
+            add_button.connect("clicked", self.add_layer_cb)
+            table_layer.attach(add_button, 9, 10, 0, 1)
+
+            image = gtk.Image()
+            image.set_from_stock(gtk.STOCK_REMOVE,gtk.ICON_SIZE_MENU)
+            del_button = gtk.Button()
+            del_button.set_image(image)
+            del_button.connect("clicked", self.del_layer_cb)
+            table_layer.attach(del_button, 9, 10, 1, 2)
+
+        self.ltv.set_model(self.layer_store)
 
         label = gtk.Label("\n2.\tSelect Machine:\nThis is the architecture of the target board for which you are building the image.\n")
         label.set_alignment(0, 0)
@@ -1319,12 +1381,17 @@ class MainWindow (gtk.Window):
         return vbox
  
 def main (server = None, eventHandler = None):
+    # split_model indicates whether the Hob GUI and the bitbake server are
+    # running on the same machine.
+    split_model = False
     image_addr_prefix = ""
     if not eventHandler:
         helper = uihelper.BBUIHelper()
-        server, eventHandler, server_addr = helper.findServerDetails()
+        server, eventHandler, server_addr, client_addr = helper.findServerDetails()
         image_addr_prefix = 'http://' + server_addr + ':'
         server.runCommand(["resetCooker"])
+        if server_addr != client_addr:
+            split_model = True
 
     gobject.threads_init()
 
@@ -1360,18 +1427,22 @@ def main (server = None, eventHandler = None):
 
     try:
         # kick the while thing off
-        handler.next_command = handler.CFG_PATH_LAYERS
+        if split_model:
+            handler.next_command = handler.CFG_AVAIL_LAYERS
+        else:
+            handler.next_command = handler.CFG_PATH_LAYERS
         handler.run_next_command()
     except xmlrpclib.Fault:
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
-    window = MainWindow(recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr)
+    window = MainWindow(split_model, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr)
     window.show_all ()
     handler.connect("machines-updated", window.update_machines)
     handler.connect("distros-updated", window.update_distros)
     handler.connect("package-formats-found", window.update_package_formats)
     handler.connect("layers-found", window.load_current_layers)
+    handler.connect("layers-avail", window.load_avail_layers)
     handler.connect("generating-data", window.busy)
     handler.connect("data-generated", window.data_generated)
     

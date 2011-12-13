@@ -35,6 +35,9 @@ class HobHandler(gobject.GObject):
          "layers-found"       : (gobject.SIGNAL_RUN_LAST,
                                  gobject.TYPE_NONE,
                                  ()),
+         "layers-avail"       : (gobject.SIGNAL_RUN_LAST,
+                                 gobject.TYPE_NONE,
+                                 (gobject.TYPE_PYOBJECT,)),
          "package-formats-found" : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_PYOBJECT,)),
@@ -55,7 +58,7 @@ class HobHandler(gobject.GObject):
                                   ()),
     }
 
-    (CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, BUILD_RECIPES, PACKAGE_INFO, GENERATE_IMAGE, CMD_END) = range(10)
+    (CFG_AVAIL_LAYERS, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, BUILD_RECIPES, PACKAGE_INFO, GENERATE_IMAGE, CMD_END) = range(11)
 
     def __init__(self, recipemodel, packagemodel, server):
         gobject.GObject.__init__(self)
@@ -84,18 +87,21 @@ class HobHandler(gobject.GObject):
 
     def run_next_command(self):
         self.set_busy()
-        if self.next_command == self.CFG_PATH_LAYERS:
+        if self.next_command == self.CFG_AVAIL_LAYERS:
+            self.next_command = self.CFG_PATH_LAYERS
+            self.server.runCommand(["findCoreBaseFiles", "layers", "conf/layer.conf"])
+        elif self.next_command == self.CFG_PATH_LAYERS:
             self.next_command = self.CFG_FILES_DISTRO
-            ret = self.server.runCommand(["findConfigFilePath", "bblayers.conf"])
+            self.server.runCommand(["findConfigFilePath", "bblayers.conf"])
         elif self.next_command == self.CFG_FILES_DISTRO:
             self.next_command = self.CFG_FILES_MACH
-            ret = self.server.runCommand(["findConfigFiles", "DISTRO"])
+            self.server.runCommand(["findConfigFiles", "DISTRO"])
         elif self.next_command == self.CFG_FILES_MACH:
             self.next_command = self.FILES_MATCH_CLASS
-            ret = self.server.runCommand(["findConfigFiles", "MACHINE"])
+            self.server.runCommand(["findConfigFiles", "MACHINE"])
         elif self.next_command == self.FILES_MATCH_CLASS:
             self.next_command = self.CMD_END
-            ret = self.server.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
+            self.server.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
 
         elif self.next_command == self.PARSE_CONFIG:
             self.next_command = self.GENERATE_TGTS
@@ -148,6 +154,10 @@ class HobHandler(gobject.GObject):
             self.current_phase = "data generation"
             if event._model:
                 self.recipe_model.populate(event._model)
+        elif isinstance(event, bb.event.CoreBaseFilesFound):
+            self.current_phase = "configuration lookup"
+            paths = event._paths
+            self.emit('layers-avail', paths)
         elif isinstance(event, bb.event.ConfigFilesFound):
             self.current_phase = "configuration lookup"
             var = event._variable
