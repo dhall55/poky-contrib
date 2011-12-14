@@ -109,7 +109,7 @@ do_generate_swabber_report () {
     # -f, directory of filter files containing (blacklist, whitelist, etc)
     #  - the remaining paths are directories to ignore, directories we're sure
     # aren't causing host infection
-    swabber -d ${HOST_DATA} -l ${SWABBER_LOGS} -o ${SWABBER_REPORT}/report-${REPORTSTAMP}.txt -r ${SWABBER_REPORT}/extra_report-${REPORTSTAMP}.txt -c all -p ${TOPDIR} -f ${COREBASE}/meta/conf/swabber ${TOPDIR} ${COREBASE} ${CCACHE_DIR}
+    swabber -d ${HOST_DATA} -l ${SWABBER_LOGS} -o ${SWABBER_REPORT}/report-${REPORTSTAMP}.txt -r ${SWABBER_REPORT}/extra_report-${REPORTSTAMP}.txt -c all -p ${TMPDIR} -f ${COREBASE}/meta/conf/swabber ${TOPDIR} ${COREBASE} ${CCACHE_DIR}
   else
     echo "No host data, cannot generate swabber report."
   fi
