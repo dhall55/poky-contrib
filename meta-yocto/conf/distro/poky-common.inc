@@ -1,0 +1,55 @@
+DISTRO = ""
+DISTRO_NAME = "Yocto (Built by Poky 6.0)"
+DISTRO_VERSION = "1.1+snapshot-${DATE}"
+SDK_VENDOR = "-pokysdk"
+SDK_VERSION := "${@'${DISTRO_VERSION}'.replace('snapshot-${DATE}','snapshot')}"
+
+MAINTAINER = "Poky <poky@yoctoproject.org>"
+
+TARGET_VENDOR = "-poky"
+
+LOCALCONF_VERSION = "1"
+
+DISTRO_FEATURES_append = ""
+
+SDK_NAME = "${DISTRO}-${TCLIBC}-${SDK_ARCH}-${TARGET_ARCH}"
+SDKPATH = "/opt/${DISTRO}/${SDK_VERSION}"
+
+EXTRAOPKGCONFIG = "poky-feed-config-opkg"
+
+DISTRO_EXTRA_RDEPENDS += "task-core-boot"
+
+POKYQEMUDEPS = "${@base_contains("INCOMPATIBLE_LICENSE", "GPLv3", "", "qemu-config",d)}"
+DISTRO_EXTRA_RDEPENDS_append_qemuarm = " ${POKYQEMUDEPS}"
+DISTRO_EXTRA_RDEPENDS_append_qemumips = " ${POKYQEMUDEPS}"
+DISTRO_EXTRA_RDEPENDS_append_qemuppc = " ${POKYQEMUDEPS}"
+DISTRO_EXTRA_RDEPENDS_append_qemux86 = " ${POKYQEMUDEPS}"
+DISTRO_EXTRA_RDEPENDS_append_qemux86-64 = " ${POKYQEMUDEPS}"
+
+TCLIBCAPPEND = ""
+
+QEMU_TARGETS ?= "arm i386 mips mipsel ppc x86_64"
+# Other QEMU_TARGETS "mips64 mips64el sh4"
+
+PREMIRRORS ?= "\
+bzr://.*/.*   http://autobuilder.yoctoproject.org/sources/ \n \
+cvs://.*/.*   http://autobuilder.yoctoproject.org/sources/ \n \
+git://.*/.*   http://autobuilder.yoctoproject.org/sources/ \n \
+hg://.*/.*    http://autobuilder.yoctoproject.org/sources/ \n \
+osc://.*/.*   http://autobuilder.yoctoproject.org/sources/ \n \
+p4://.*/.*    http://autobuilder.yoctoproject.org/sources/ \n \
+svk://.*/.*   http://autobuilder.yoctoproject.org/sources/ \n \
+svn://.*/.*   http://autobuilder.yoctoproject.org/sources/ \n"
+
+MIRRORS =+ "\
+ftp://.*/.*      http://autobuilder.yoctoproject.org/sources/ \n \
+http://.*/.*     http://autobuilder.yoctoproject.org/sources/ \n \
+https://.*/.*    http://autobuilder.yoctoproject.org/sources/ \n"
+
+# The CONNECTIVITY_CHECK_URI's are used to test whether we can succesfully
+# fetch from the network (and warn you if not). To disable the test set
+# the variable to be empty.
+CONNECTIVITY_CHECK_URIS ?= "git://git.yoctoproject.org/yocto-firewall-test;protocol=git;rev=HEAD \
+                          https://eula-downloads.yoctoproject.org/index.php \
+                          http://bugzilla.yoctoproject.org/report.cgi"
+
