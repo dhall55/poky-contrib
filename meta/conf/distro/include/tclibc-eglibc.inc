@@ -19,9 +19,6 @@ CXXFLAGS += "-fvisibility-inlines-hidden"
 
 LIBC_DEPENDENCIES = "libsegfault \
 		     eglibc \
-    		     eglibc-dbg \
-    		     eglibc-dev \
-    		     eglibc-utils \
     		     eglibc-thread-db \
     		     eglibc-localedata-i18n \
     		     eglibc-gconv-ibm850 \
@@ -30,3 +27,8 @@ LIBC_DEPENDENCIES = "libsegfault \
     		     eglibc-gconv-iso8859-15 \
     		     locale-base-en-us \
     		     locale-base-en-gb "
+
+# Dropped for poky-tiny...
+#    		     eglibc-dbg \
+#    		     eglibc-dev \
+#    		     eglibc-utils \
