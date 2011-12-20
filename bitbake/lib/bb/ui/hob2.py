@@ -66,7 +66,7 @@ class MyProgressBar (gtk.ProgressBar):
 class MainWindow (gtk.Window):
 
     (CONFIGURATION, RECIPE_SELECTION, RECIPE_BUILDING, PACKAGE_SELECTION, IMAGE_GENERATING, IMAGE_GENERATED) = range(6)
-    def __init__(self, split_model, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr):
+    def __init__(self, split_model, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr, incompatiblelicense):
         gtk.Window.__init__(self)
         # global state
         self.split_model = split_model
@@ -83,6 +83,7 @@ class MainWindow (gtk.Window):
         self.dldir = dldir
         self.sstatedir = sstatedir
         self.sstatemirror = sstatemirror
+        self.incompatiblelicense = incompatiblelicense
         self.image_addr = image_addr
         self.image_combo_id = None
         self.generating = False
@@ -234,21 +235,19 @@ class MainWindow (gtk.Window):
             active = active + 1
 
     def update_package_formats(self, handler, formats):
-        active = 0
         # disconnect the signal handler before updating the model
         if self.package_handler_id:
             self.package_combo.disconnect(self.package_handler_id)
             self.package_handler_id = None
 
-        model = self.package_combo.get_model()
+        model = self.package_format_tree.get_model()
         if model:
             model.clear()
 
+        i = 0
         for format in formats:
-            self.package_combo.append_text(format)
-            if format == self.curr_package_format:
-                self.package_combo.set_active(active)
-            active = active + 1
+            model.append([i, format, False])
+            i = i + 1
 
     def update_distros(self, handler, distros):
         active = 0
@@ -290,6 +289,18 @@ class MainWindow (gtk.Window):
             self.sstatedir_text.set_text(path)
 
         dialog.destroy()
+        
+    def select_sstatemirror_cb(self, action, window):
+        dialog = gtk.FileChooserDialog("Select Sstate Mirror", window,
+                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                       (gtk.STOCK_OK, gtk.RESPONSE_YES,
+                                        gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+        response = dialog.run()
+        if response == gtk.RESPONSE_YES:
+            path = dialog.get_filename()
+            self.sstatemirror_text.set_text(path)
+
+        dialog.destroy()
 
     def set_busy_cursor(self, busy=True):
         """
@@ -328,90 +339,198 @@ class MainWindow (gtk.Window):
 
     def disable_widgets(self):
         self.nb.set_sensitive(False)
-
+        
+    def show_advanced_setting_info(self, button, info=None):
+        dialog = gtk.Dialog()
+        dialog.show()
+        label = gtk.Label(info)
+        label.show()
+        dialog.vbox.pack_start(label, False, False, 0)
+        dialog.run()
+        dialog.destroy()
+        return
+    
     def config_advanced_clicked_cb(self, button):
         window = gtk.Dialog()
         window.set_title("Advanced Settings")
-        window.set_size_request(800, 600)
-
-        label = gtk.Label("\nSet Download Directory:\nSelect a folder that caches the upstream project source code.\n")
+        window.set_size_request(450, 600)
+        box_advanced = gtk.VBox(False, 0)
+        box_advanced.set_border_width(20)
+        box_advanced.show()
+        
+        viewport_advanced = gtk.Viewport()
+        viewport_advanced.add(box_advanced)
+        viewport_advanced.show()
+        
+        scroll = gtk.ScrolledWindow()
+        scroll.show()
+        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+        scroll.set_shadow_type(gtk.SHADOW_IN)
+        scroll.add_with_viewport(viewport_advanced)
+        window.vbox.pack_start(scroll, True, True, 5)        
+        
+        box_package = gtk.HBox(False, 10)
+        box_package.show()
+        box_advanced.pack_start(box_package, expand=False, fill=False)
+        label = gtk.Label("Packaging Format")
         label.set_alignment(0, 0)
         label.show()
-        window.vbox.pack_start(label, expand=False, fill=False)
-
+        box_package.pack_start(label, expand=False, fill=False)
+        image_package = gtk.Image()
+        image_package.show()
+        image_package.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
+        image_package.set_tooltip_text("This is the packaging type that will be used for final image and all packages")
+        box_package.pack_start(image_package, expand=False, fill=False)  
+        self.package_select_box.show()
+        box_advanced.pack_start(self.package_select_box, expand=False, fill=False)
+        
+        label = gtk.Label("\nSelect Distro")
+        label.set_alignment(0, 0)
+        label.show()
+        box_advanced.pack_start(label, expand=False, fill=False)
+        box_distro = gtk.HBox(False, 10)
+        box_distro.show()
+        box_advanced.pack_start(box_distro, expand=False, fill=False)
+        self.distro_combo.show()
+        box_distro.pack_start(self.distro_combo, expand=False, fill=False)
+        image_distro = gtk.Image()
+        image_distro.show()
+        image_distro.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
+        image_distro.set_tooltip_text("This is the Yocto distribution you would like to use")
+        box_distro.pack_start(image_distro, expand=False, fill=False)
+        
+        label = gtk.Label("\nSet Download Directory")
+        label.set_alignment(0, 0)
+        label.show()
+        box_advanced.pack_start(label, expand=False, fill=False)        
+        box_dldir = gtk.HBox(False, 10)
+        box_dldir.show()
+        box_advanced.pack_start(box_dldir, expand=False, fill=False)
         self.dldir_text.set_text(self.dldir)
         self.dldir_text.show()
         if self.split_model:
-            window.vbox.pack_start(self.dldir_text, expand=False, fill=False)
+            box_dldir.pack_start(self.dldir_text, expand=False, fill=False)
         else:
-            table_dldir = gtk.Table(1, 20, True)
+            table_dldir = gtk.Table(1, 12, True)
             table_dldir.show()
-            window.vbox.pack_start(table_dldir, expand=False, fill=False)
-
-            table_dldir.attach(self.dldir_text, 0, 19, 0, 1)
-
+            box_dldir.pack_start(table_dldir, expand=False, fill=False)
+            table_dldir.attach(self.dldir_text, 0, 11, 0, 1)
             image = gtk.Image()
-            image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
+            image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_BUTTON)
             open_button = gtk.Button()
             open_button.set_image(image)
             open_button.connect("clicked", self.select_dldir_cb, window)
             open_button.show()
-            table_dldir.attach(open_button, 19, 20, 0, 1)
+            table_dldir.attach(open_button, 11, 12, 0, 1)
+        image_dldir = gtk.Image()
+        image_dldir.show()
+        image_dldir.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
+        image_dldir.set_tooltip_text("Select a folder that caches the upstream project source code")
+        box_dldir.pack_start(image_dldir, expand=False, fill=False)
 
-        label = gtk.Label("\nSelect SSTATE Directory:\nSelect a folder that caches your prebuilt results.\n")
+        label = gtk.Label("\nSelect SSTATE Directory")
         label.set_alignment(0, 0)
         label.show()
-        window.vbox.pack_start(label, expand=False, fill=False)
-
+        box_advanced.pack_start(label, expand=False, fill=False)
+        box_sstatedir = gtk.HBox(False, 10)
+        box_sstatedir.show()
+        box_advanced.pack_start(box_sstatedir, expand=False, fill=False)
         self.sstatedir_text.set_text(self.sstatedir or "")
         self.sstatedir_text.show()
         if self.split_model:
-            window.vbox.pack_start(self.sstatedir_text, expand=False, fill=False)
+            box_sstatedir.pack_start(self.sstatedir_text, expand=False, fill=False)
         else:
-            table_sstatedir = gtk.Table(1, 20, True)
+            table_sstatedir = gtk.Table(1, 12, True)
             table_sstatedir.show()
-            window.vbox.pack_start(table_sstatedir, expand=False, fill=False)
-
-            table_sstatedir.attach(self.sstatedir_text, 0, 19, 0, 1)
-
+            box_sstatedir.pack_start(table_sstatedir, expand=False, fill=False)
+            table_sstatedir.attach(self.sstatedir_text, 0, 11, 0, 1)
             image = gtk.Image()
-            image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_MENU)
+            image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_BUTTON)
             open_button = gtk.Button()
             open_button.set_image(image)
-            open_button.connect("clicked", self.select_sstatedir_cb)
+            open_button.connect("clicked", self.select_sstatedir_cb, window)
             open_button.show()
-            table_sstatedir.attach(open_button, 19, 20, 0, 1)
+            table_sstatedir.attach(open_button, 11, 12, 0, 1)
+        image_sstatedir = gtk.Image()
+        image_sstatedir.show()
+        image_sstatedir.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
+        image_sstatedir.set_tooltip_text("Select a folder that caches your prebuilt results")
+        box_sstatedir.pack_start(image_sstatedir, expand=False, fill=False)
 
-        label = gtk.Label("\nSelect SSTATE Mirror:\nSelect the prebuilt mirror that will fasten your build speed.\n")
+        label = gtk.Label("\nSelect SSTATE Mirror")
         label.set_alignment(0, 0)
         label.show()
-        window.vbox.pack_start(label, expand=False, fill=False)
-
+        box_advanced.pack_start(label, expand=False, fill=False)
+        box_sstatemirror = gtk.HBox(False, 10)
+        box_sstatemirror.show()
+        box_advanced.pack_start(box_sstatemirror, expand=False, fill=False)
         self.sstatemirror_text.set_text(self.sstatemirror or "")
-        self.sstatemirror_text.show()
-        window.vbox.pack_start(self.sstatemirror_text, expand=False, fill=False)
+        self.sstatemirror_text.show()        
+        if self.split_model:
+            box_sstatemirror.pack_start(self.sstatemirror_text, expand=False, fill=False)
+        else:
+            table_sstatemirror = gtk.Table(1, 12, True)
+            table_sstatemirror.show()
+            box_sstatemirror.pack_start(table_sstatemirror, expand=False, fill=False)
+            table_sstatemirror.attach(self.sstatemirror_text, 0, 11, 0, 1)
+            image = gtk.Image()
+            image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_BUTTON)
+            open_button = gtk.Button()
+            open_button.set_image(image)
+            open_button.connect("clicked", self.select_sstatemirror_cb, window)
+            open_button.show()
+            table_sstatemirror.attach(open_button, 11, 12, 0, 1)                
+        image_sstatemirror = gtk.Image()
+        image_sstatemirror.show()
+        image_sstatemirror.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
+        image_sstatemirror.set_tooltip_text("Select the prebuilt mirror that will fasten your build speed")
+        box_sstatemirror.pack_start(image_sstatemirror, expand=False, fill=False)
 
-        label = gtk.Label("\nBB_NUMBER_THREADS:\nSets the number of threads that bitbake tasks can run simultaneously.\n")
+        label = gtk.Label("\nBB_NUMBER_THREADS")
         label.set_alignment(0, 0)
         label.show()
-        window.vbox.pack_start(label, expand=False, fill=False)
-
+        box_advanced.pack_start(label, expand=False, fill=False)
+        box_bb = gtk.HBox(False, 10)
+        box_bb.show()
+        box_advanced.pack_start(box_bb, expand=False, fill=False)
         self.bb_spinner.set_value(self.bbthread)
         self.bb_spinner.show()
-        window.vbox.pack_start(self.bb_spinner, expand=False, fill=False)
+        box_bb.pack_start(self.bb_spinner, expand=False, fill=False)
+        image_bb = gtk.Image()
+        image_bb.show()
+        image_bb.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
+        image_bb.set_tooltip_text("Sets the number of threads that bitbake tasks can run simultaneously")
+        box_bb.pack_start(image_bb, expand=False, fill=False)
 
-        label = gtk.Label("\nPARALLEL_MAKE:\nSets the make parallism, as known as 'make -j'.\n")
+        label = gtk.Label("\nPARALLEL_MAKE")
         label.set_alignment(0, 0)
         label.show()
-        window.vbox.pack_start(label, expand=False, fill=False)
-
+        box_advanced.pack_start(label, expand=False, fill=False)
+        box_pmake = gtk.HBox(False, 10)
+        box_pmake.show()
+        box_advanced.pack_start(box_pmake, expand=False, fill=False)
         self.pmake_spinner.set_value(self.pmake)
         self.pmake_spinner.show()
-        window.vbox.pack_start(self.pmake_spinner, expand=False, fill=False)
+        box_pmake.pack_start(self.pmake_spinner, expand=False, fill=False)
+        image_pmake = gtk.Image()
+        image_pmake.show()
+        image_pmake.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
+        image_pmake.set_tooltip_text("Sets the make parallism, as known as 'make -j'")
+        box_pmake.pack_start(image_pmake, expand=False, fill=False)        
 
+        exGPLv3checkbutton = gtk.CheckButton("Exclude GPLv3 packages")
+        box_advanced.pack_start(exGPLv3checkbutton, False, False, 10)
+        exGPLv3checkbutton.set_tooltip_text("Check this box to prevent GPLv3 packages from being included in your image")
+        exGPLv3checkbutton.show()
+        if self.incompatiblelicense and self.incompatiblelicense.lower().find("gplv3")!=-1:
+            exGPLv3checkbutton.set_active(True)
+        else:
+            exGPLv3checkbutton.set_active(False)
+        exGPLv3checkbutton.connect("toggled", self.include_gplv3_cb)
+        
         hbox_button = gtk.HBox(False, 0)
         hbox_button.show()
-        window.vbox.pack_end(hbox_button, expand=False, fill=False)
+        box_advanced.pack_end(hbox_button, expand=False, fill=False)        
         button = gtk.Button("Cancel")
         button.connect("clicked", self.advanced_cancel_cb, window)
         button.show()
@@ -421,7 +540,7 @@ class MainWindow (gtk.Window):
         button.show()
         hbox_button.pack_end(button, expand=False, fill=False)
 
-        response = window.run()
+        window.run()
         window.destroy()
         return
 
@@ -431,6 +550,14 @@ class MainWindow (gtk.Window):
         self.sstatemirror = self.sstatemirror_text.get_text()
         self.bbthread = self.bb_spinner.get_value_as_int()
         self.pmake = self.pmake_spinner.get_value_as_int()
+        self.packages = ""
+        model = self.package_format_tree.get_model()
+        it = model.get_iter_first()
+        while it:
+            value = model.get_value(it, 2)
+            if value:
+                self.packages = self.packages + "package_%s " % model.get_value(it, 1)  
+            it = model.iter_next(it)
         window.destroy()
 
     def advanced_cancel_cb(self, button, window):
@@ -443,7 +570,7 @@ class MainWindow (gtk.Window):
         self.handler.init_cooker()
         self.handler.set_bblayers(self.layers)
         self.handler.set_machine(self.machine_combo.get_active_text())
-        self.handler.set_package_format(self.package_combo.get_active_text())
+        self.handler.set_package_format(self.packages)
         self.handler.set_distro(self.distro_combo.get_active_text())
         self.handler.set_dl_dir(self.dldir_text.get_text())
         self.handler.set_sstate_dir(self.sstatedir_text.get_text())
@@ -1097,6 +1224,127 @@ class MainWindow (gtk.Window):
     def destroy_window(self, widget, event):
         gtk.main_quit()
 
+    def include_gplv3_cb(self, toggle):
+        excluded = toggle.get_active()
+        if excluded:
+            if not self.incompatiblelicense:
+                self.incompatiblelicense = "GPLv3"
+            elif not self.incompatiblelicense.find('GPLv3'):
+                self.incompatiblelicense = "%s GPLv3" % self.incompatiblelicense
+        else:
+            self.incompatiblelicense = self.incompatiblelicense.replace('GPLv3', '')
+            
+    def package_include_cb(self, cell, path, model):
+        it = model.get_iter(path)
+        val = model.get_value(it, 2)
+        val = not val
+        model.set(it, 2, val)
+        
+    def package_up_clicked_cb(self, button):
+        (model, it) = self.package_format_tree.get_selection().get_selected()
+        if not it:
+            return              
+        path = model.get_path(it)
+        if path[0] <= 0:
+            return
+        
+        pre_it = model.get_iter_first()
+        if not pre_it:
+            return
+        else:
+            while model.iter_next(pre_it) :
+                if model.get_value(model.iter_next(pre_it), 1) != model.get_value(it, 1):
+                    pre_it = model.iter_next(pre_it)                    
+                else:
+                    break
+                
+            cur_index = model.get_value(it, 0)
+            pre_index = cur_index
+            if pre_it:
+                model.set(pre_it, 0, pre_index)
+            cur_index = cur_index - 1
+            model.set(it, 0, cur_index)
+        
+    def package_down_clicked_cb(self, button):
+        (model, it) = self.package_format_tree.get_selection().get_selected()
+        if not it:
+            return       
+        next_it = model.iter_next(it)
+        if not next_it:
+            return   
+                
+        cur_index = model.get_value(it, 0)
+        next_index = cur_index
+        model.set(next_it, 0, next_index)
+        cur_index = cur_index + 1
+        model.set(it, 0, cur_index)
+
+    def sort_func(self, model, iter1, iter2, data):
+        val1 = model.get_value(iter1, 0)
+        val2 = model.get_value(iter2, 0)
+        return val1 - val2
+    
+    def package_format(self):     
+        packagebox = gtk.HBox(False, 15)
+        
+        self.package_store = gtk.ListStore(int, str, gobject.TYPE_BOOLEAN)          
+        self.package_format_tree = gtk.TreeView(self.package_store)
+        self.package_format_tree.set_headers_clickable(True)
+        self.package_format_tree.set_search_column(1)
+        self.package_format_tree.set_headers_visible(False)
+        self.package_format_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
+
+        col = gtk.TreeViewColumn('NO')        
+        col.set_sort_column_id(0)
+        col.set_sort_order(gtk.SORT_ASCENDING)
+        col.set_clickable(False)
+        col1 = gtk.TreeViewColumn('TYPE')
+        col2 = gtk.TreeViewColumn('INCLUDED')
+#        self.package_format_tree.append_column(col)
+        self.package_format_tree.append_column(col1)
+        self.package_format_tree.append_column(col2)
+        cell = gtk.CellRendererText()
+        cell1 = gtk.CellRendererText()
+        cell1.set_property('width-chars', 10)       
+        cell2 = gtk.CellRendererToggle()
+        cell2.set_property('activatable', True)
+        cell2.connect("toggled", self.package_include_cb, self.package_store)
+        col.pack_start(cell, True)
+        col1.pack_start(cell1, True)
+        col2.pack_end(cell2, True)
+        col.set_attributes(cell, text=0)
+        col1.set_attributes(cell1, text=1)
+        col2.set_attributes(cell2, active=2)
+        
+        self.package_store.set_sort_func(0, self.sort_func, None)
+        self.package_store.set_sort_column_id(0, gtk.SORT_ASCENDING)        
+        self.package_format_tree.show()
+
+        scroll = gtk.ScrolledWindow()
+        scroll.show()
+        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        scroll.set_shadow_type(gtk.SHADOW_IN)
+        scroll.add(self.package_format_tree)
+        scroll.set_size_request(200,60)
+        packagebox.pack_start(scroll, False, False, 0)
+        
+        vbox = gtk.VBox(False, 5)
+        vbox.show()
+        packagebox.pack_start(vbox, False, False, 15)
+        
+        up = gtk.Button("Up")
+        up.set_size_request(50,30)
+        up.connect("clicked", self.package_up_clicked_cb)
+        up.show()
+        vbox.pack_start(up, False, False, 5)
+        down = gtk.Button("Down")
+        down.set_size_request(50,30)
+        down.connect("clicked", self.package_down_clicked_cb)
+        down.show()
+        vbox.pack_start(down, False, False, 5)
+        
+        return packagebox
+    
     def create_config_gui(self):
         vbox = gtk.VBox(False, 0)
         vbox.set_border_width(50)
@@ -1168,23 +1416,9 @@ class MainWindow (gtk.Window):
         self.machine_combo.show()
         vbox.pack_start(self.machine_combo, expand=False, fill=False)
 
-        label = gtk.Label("\n3.\tPackaging Format:\nThis is the packaging type that will be used for final image and all packages.\n")
-        label.set_alignment(0, 0)
-        label.show()
-        vbox.pack_start(label, expand=False, fill=False)
-
-        self.package_combo = gtk.combo_box_new_text()
-        self.package_combo.show()
-        vbox.pack_start(self.package_combo, expand=False, fill=False)
-
-        label = gtk.Label("\n4.\tSelect Distro:\nThis is the Yocto distribution you would like to use.\n")
-        label.set_alignment(0, 0)
-        label.show()
-        vbox.pack_start(label, expand=False, fill=False)
-
+        self.package_select_box = self.package_format()
+        
         self.distro_combo = gtk.combo_box_new_text()
-        self.distro_combo.show()
-        vbox.pack_start(self.distro_combo, expand=False, fill=False)
 
         self.dldir_text = gtk.Entry()
         self.dldir_text.set_text(self.dldir or "")
@@ -1405,6 +1639,7 @@ def main (server = None, eventHandler = None):
     distro = server.runCommand(["getVariable", "DISTRO"]) or "defaultsetup"
     sstatedir = server.runCommand(["getVariable", "SSTATE_DIR"])
     sstatemirror = server.runCommand(["getVariable", "SSTATE_MIRROR"])
+    incompatiblelicense = server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"])
 
     pclasses = server.runCommand(["getVariable", "PACKAGE_CLASSES"]).split(" ")
     pkg, sep, pclass = pclasses[0].rpartition("_")
@@ -1436,7 +1671,7 @@ def main (server = None, eventHandler = None):
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
-    window = MainWindow(split_model, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr)
+    window = MainWindow(split_model, recipemodel, packagemodel, handler, layers, mach, pclass, distro, bbthread, pmake, dldir, sstatedir, sstatemirror, image_addr, incompatiblelicense)
     window.show_all ()
     handler.connect("machines-updated", window.update_machines)
     handler.connect("distros-updated", window.update_distros)

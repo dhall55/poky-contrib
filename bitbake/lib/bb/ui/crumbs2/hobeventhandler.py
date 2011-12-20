@@ -234,7 +234,7 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["setVariable", "DISTRO", distro])
 
     def set_package_format(self, format):
-        self.server.runCommand(["setVariable", "PACKAGE_CLASSES", "package_%s" % format])
+        self.server.runCommand(["setVariable", "PACKAGE_CLASSES", format])
 
     def set_bbthreads(self, threads):
         self.server.runCommand(["setVariable", "BB_NUMBER_THREADS", threads])
@@ -251,6 +251,9 @@ class HobHandler(gobject.GObject):
 
     def set_sstate_mirror(self, url):
         self.server.runCommand(["setVariable", "SSTATE_MIRROR", url])
+        
+    def set_incompatiblelicense(self, incompatiblelicense):
+        self.server.runCommand(["setVariable", "INCOMPATIBLE_LICENSE", incompatiblelicense])
 
     def generate_data(self, config=None):
         self.next_command = self.PARSE_CONFIG
