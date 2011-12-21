@@ -42,23 +42,16 @@ python do_package_deb_install () {
     f = open(os.path.join(tmpdir, "stamps", "DEB_PACKAGE_INDEX_CLEAN"), "w")
     f.close()
 
-    # NOTE: this env stuff is racy at best, we need something more capable
-    # than 'commands' for command execution, which includes manipulating the
-    # env of the fork+execve'd processs
-
-    # Set up environment
-    apt_config_backup = os.getenv('APT_CONFIG')
-    os.putenv('APT_CONFIG', apt_config)
-    path = os.getenv('PATH')
-    os.putenv('PATH', '%s:%s' % (stagingbindir, os.getenv('PATH')))
+    # create an appropriate environment for apt
+    apt_config_env = os.getenv('APT_CONFIG')
+    apt_config_env['APT_CONFIG'] = apt_config
+    path = "%s:%s" % (stagingbindir, apt_config_env['PATH'])
+    apt_config_env['PATH'] = path
 
     # install package
-    commands.getstatusoutput('apt-get update')
-    commands.getstatusoutput('apt-get install -y %s' % pkgfn)
-
-    # revert environment
-    os.putenv('APT_CONFIG', apt_config_backup)
-    os.putenv('PATH', path)
+    from bb.process import Popen
+    Popen(['apt-get', 'update'], env=apt_config_env)
+    Popen(['apt-get', 'install', '-y', pkgfn], env=apt_config_env)
 }
 
 #
