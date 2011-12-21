@@ -5,7 +5,8 @@ DEPENDS += "dpkg-native gettext-native"
 PACKAGES = ""
 USE_NLS = "yes"
 
-SRC_URI += "file://db_linking_hack.patch"
+SRC_URI += "file://db_linking_hack.patch \
+            file://apt.conf"
 
 python do_install () {
 	bb.build.exec_func('do_install_base', d)
@@ -13,8 +14,8 @@ python do_install () {
 }
 
 python do_install_config () {
-	indir = os.path.dirname(d.getVar('FILE',1))
-	infile = file(os.path.join(indir, 'files', 'apt.conf'), 'r')
+	indir = os.path.dirname(d.getVar('S', 1))
+	infile = file(os.path.join(indir, 'apt.conf'), 'r')
 	data = infile.read()
 	infile.close()
 
