@@ -164,7 +164,7 @@ def preferred_ml_updates(d):
     for v in versions:
         val = d.getVar(v, False)
         pkg = v.replace("PREFERRED_VERSION_", "")
-        if pkg.endswith("-native") or pkg.endswith("-nativesdk"):
+        if pkg.endswith("-native") or pkg.startswith("nativesdk-"):
             continue
         for p in prefixes:
             newname = "PREFERRED_VERSION_" + p + "-" + pkg
@@ -174,7 +174,7 @@ def preferred_ml_updates(d):
     for prov in providers:
         val = d.getVar(prov, False)
         pkg = prov.replace("PREFERRED_PROVIDER_", "")
-        if pkg.endswith("-native") or pkg.endswith("-nativesdk"):
+        if pkg.endswith("-native") or pkg.startswith("-nativesdk"):
             continue
         virt = ""
         if pkg.startswith("virtual/"):
@@ -191,7 +191,7 @@ def preferred_ml_updates(d):
     mp = (d.getVar("MULTI_PROVIDER_WHITELIST", True) or "").split()
     extramp = []
     for p in mp:
-        if p.endswith("-native") or p.endswith("-nativesdk"):
+        if p.endswith("-native") or p.startswith("-nativesdk"):
             continue
         virt = ""
         if p.startswith("virtual/"):

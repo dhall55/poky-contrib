@@ -50,7 +50,7 @@ CFLAGS = "${BUILDSDK_CFLAGS}"
 CXXFLAGS = "${BUILDSDK_CFLAGS}"
 LDFLAGS = "${BUILDSDK_LDFLAGS}"
 
-DEPENDS_GETTEXT = "gettext-native gettext-nativesdk"
+DEPENDS_GETTEXT = "gettext-native nativesdk-gettext"
 
 # Path mangling needed by the cross packaging
 # Note that we use := here to ensure that libdir and includedir are

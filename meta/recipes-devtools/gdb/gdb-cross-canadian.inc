@@ -4,9 +4,9 @@ DESCRIPTION = "cross-canadian gdb for ${TARGET_ARCH} target - GNU debugger"
 PN = "gdb-cross-canadian-${TRANSLATED_TARGET_ARCH}"
 BPN = "gdb"
 
-DEPENDS = "ncurses-nativesdk expat-nativesdk gettext-nativesdk readline-nativesdk python-nativesdk"
-RDEPENDS += "python-nativesdk-core python-nativesdk-lang python-nativesdk-re \
-             python-nativesdk-codecs python-nativesdk-netclient"
+DEPENDS = "nativesdk-ncurses nativesdk-expat nativesdk-gettext nativesdk-readline nativesdk-python"
+RDEPENDS += "nativesdk-python-core nativesdk-python-lang nativesdk-python-re \
+             nativesdk-python-codecs nativesdk-python-netclient"
 
 EXTRA_OECONF_append = "--with-python=${WORKDIR}/python"
 
@@ -23,3 +23,4 @@ exit 0
 EOF
         chmod +x ${WORKDIR}/python
 }
+
