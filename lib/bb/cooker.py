@@ -138,7 +138,9 @@ class BBCooker:
         # Take a lock so only one copy of bitbake can run against a given build
         # directory at a time
         lockfile = bb.data.expand("${TOPDIR}/bitbake.lock", self.configuration.data)
-        self.lock = bb.utils.lockfile(lockfile, False, False)
+
+        # We take an exclusive lock, unless we've been explicitly requested to take a shared_lock
+        self.lock = bb.utils.lockfile(lockfile, self.configuration.shared_lock or False, False)
         if not self.lock:
             bb.fatal("Only one copy of bitbake should be run against a build directory")
 

@@ -53,7 +53,7 @@ class BBConfiguration(object):
         for key, val in options.__dict__.items():
             setattr(self, key, val)
         self.pkgs_to_build = []
-
+        self.shared_lock = False
 
 def get_ui(config):
     if config.ui:
