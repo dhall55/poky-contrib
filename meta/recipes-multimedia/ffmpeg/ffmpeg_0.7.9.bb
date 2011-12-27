@@ -19,6 +19,7 @@ EXTRA_OECONF = " \
         --arch=${TARGET_ARCH} \
         --cross-prefix=${TARGET_PREFIX} \
         --disable-stripping \
+        --disable-yasm \
         --enable-cross-compile \
         --enable-libmp3lame \
         --enable-libtheora  \
