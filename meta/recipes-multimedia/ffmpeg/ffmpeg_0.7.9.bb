@@ -2,7 +2,6 @@ require ffmpeg.inc
 
 #LICENSE = "LGPLv2.1+"
 LICENSE = "LGPLv2.1+ & GPLv2+"
-DEPENDS += "libgsm"
 PR = "${INC_PR}.1"
 
 SRC_URI = "http://ffmpeg.org/releases/ffmpeg-${PV}.tar.bz2"
@@ -21,7 +20,6 @@ EXTRA_OECONF = " \
         --cross-prefix=${TARGET_PREFIX} \
         --disable-stripping \
         --enable-cross-compile \
-        --enable-libgsm \
         --enable-libmp3lame \
         --enable-libtheora  \
         --enable-libvorbis \
