@@ -11,7 +11,6 @@ PR = "r0"
 inherit autotools
 
 SRC_URI = "${SOURCEFORGE_MIRROR}/faac/${PN}-${PV}.tar.gz"
-S = "${WORKDIR}/${PN}"
 
 PACKAGES =+ "lib${PN} lib${PN}-dev"
 
