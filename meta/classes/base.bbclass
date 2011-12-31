@@ -350,6 +350,25 @@ python () {
     if license == "INVALID":
         bb.fatal('This recipe does not have the LICENSE field set (%s)' % pn)
 
+    def skip_package(pn, flag):
+        bb.debug(1, "Skipping %s because it has a restricted license (%s) not"
+             " whitelisted in LICENSE_FLAGS_WHITELIST" % (pn, flag))
+        raise bb.parse.SkipPackage("because it may require a special license"
+            " to ship in a product (listed in LICENSE_FLAGS)")
+
+    def all_license_flags_match(flags, whitelist):
+        for flag in flags.split():
+            if not flag in whitelist.split():
+                return False
+        return True
+
+    license_flags = d.getVar('LICENSE_FLAGS', True)
+    if license_flags:
+        license_flags_whitelist = d.getVar('LICENSE_FLAGS_WHITELIST', True)
+        if not license_flags_whitelist or not all_license_flags_match(
+                license_flags, license_flags_whitelist):
+            skip_package(pn, license_flags)
+
     commercial_license = " %s " % d.getVar('COMMERCIAL_LICENSE', 1)
     import re
     pnr = "[ \t]%s[ \t]" % pn.replace('+', "\+")
