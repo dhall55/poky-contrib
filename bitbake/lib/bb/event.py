@@ -223,7 +223,7 @@ class OperationProgress(Event):
         Event.__init__(self)
         self.current = current
         self.total = total
-        self.msg = msg + ": %s/%s (%.0f%%)" % (current, total, (current*1.0/total)*100);
+        self.msg = msg + ": %s/%s" % (current, total);
 
 class ConfigParsed(Event):
     """Configuration Parsing Complete"""

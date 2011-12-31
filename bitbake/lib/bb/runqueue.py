@@ -1614,8 +1614,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 self.task_skip(task)
                 return True
 
-            logger.info("Running setscene task %d of %d (%s:%s)" % (self.stats.completed + self.stats.active + self.stats.failed + 1,
-                                                                         self.stats.total, fn, taskname))
+            startevent = sceneQueueTaskStarted(task, self.stats, self.rq)
+            bb.event.fire(startevent, self.cfgData)
 
             pid, pipein, pipeout = self.fork_off_task(fn, realtask, taskname)
 
@@ -1683,6 +1683,13 @@ class runQueueTaskStarted(runQueueEvent):
     def __init__(self, task, stats, rq, noexec=False):
         runQueueEvent.__init__(self, task, stats, rq)
         self.noexec = noexec
+
+class sceneQueueTaskStarted(runQueueTaskStarted):
+    """
+    Event notifing a setscene task was started
+    """
+    def __init__(self, task, stats, rq, noexec=False):
+        runQueueTaskStarted.__init__(self, task, stats, rq, noexec)
 
 class runQueueTaskFailed(runQueueEvent):
     """
