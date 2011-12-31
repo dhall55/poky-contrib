@@ -1,6 +1,7 @@
 DESCRIPTION = "Bellagio OpenMAX Integration Layer"
 HOMEPAGE = "http://omxil.sourceforge.net/"
 LICENSE = "LGPLv2.1+"
+LICENSE_FLAGS = "Commercial"
 LIC_FILES_CHKSUM = "file://COPYING;md5=ae6f0f4dbc7ac193b50f323a6ae191cb \
                     file://src/omxcore.h;beginline=1;endline=27;md5=c2e37f68ba9652ca9b2431f466944174"
 DEPENDS = "libvorbis libogg alsa-lib libmad"
