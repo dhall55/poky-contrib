@@ -282,6 +282,36 @@ def incompatible_license(d,dont_want_license):
 		return True
     return False
 
+
+def check_license_flags(d):
+    """
+    This function checks if a recipe has any LICENSE_FLAGs that aren't whitelisted.
+
+    If it does, it returns the first LICENSE_FLAG missing from the whitelist, or all the
+    the LICENSE_FLAGs if there is no whitelist.
+
+    If everything is is properly whitelisted, it returns None.
+    """
+
+    def all_license_flags_match(flags, whitelist):
+        """ Return first unmatched flag, None if all flags match """
+
+        for flag in flags.split():
+            if not flag in whitelist.split():
+                return flag
+        return None
+
+    license_flags = d.getVar('LICENSE_FLAGS', True)
+    if license_flags:
+        license_flags_whitelist = d.getVar('LICENSE_FLAGS_WHITELIST', True)
+        if not license_flags_whitelist:
+            return license_flags
+        unmatched_flag = all_license_flags_match(license_flags, license_flags_whitelist)
+        if unmatched_flag:
+            return unmatched_flag
+    return None
+
+
 SSTATETASKS += "do_populate_lic"
 do_populate_lic[sstate-name] = "populate-lic"
 do_populate_lic[sstate-inputdirs] = "${LICSSTATEDIR}"
