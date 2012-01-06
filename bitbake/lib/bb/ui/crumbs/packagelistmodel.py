@@ -4,7 +4,8 @@
 # Copyright (C) 2011        Intel Corporation
 #
 # Authored by Joshua Lock <josh@linux.intel.com>
-# Authored by Dongxiao xu <dongxiao.xu@intel.com>
+# Authored by Dongxiao Xu <dongxiao.xu@intel.com>
+# Authored by Shane Wang <shane.wang@intel.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -341,6 +342,7 @@ class PackageSelection (gtk.Window):
         gtk.Window.__init__(self)
         self.package_model = packagemodel
         self.selected_packages = []
+        self.last_selected_packages = []
 
     def update_image_info(self, model):
         size = model.image_size
@@ -353,6 +355,12 @@ class PackageSelection (gtk.Window):
             size_label = str(size) + ' KB'
         self.expand.set_label("Selected %s (%s) packages" % (pkgnum, size_label))
         self.add_selected_packages(self.package_model, self.package_buffer)
+
+    def save_last_selected_packages(self):
+        self.last_selected_packages = self.selected_packages[:len(self.selected_packages)]
+
+    def clear_last_selected_packages(self):
+        self.last_selected_packages = []
 
     def update_package_model(self):
         # We want the packages model to be alphabetised and sortable so create
@@ -369,6 +377,10 @@ class PackageSelection (gtk.Window):
             self.package_model.set_selected_packages(self.selected_packages)
 
         self.update_image_info(self.package_model)
+
+    def recipesaz_cell2_toggled_cb(self, cell, path, tree):
+        self.save_last_selected_packages()
+        HobWidget.toggle_selection_include_cb(cell, path, self, tree, self.package_model)
 
     def packagesaz(self):
         vbox = gtk.VBox(False, 6)
@@ -404,7 +416,7 @@ class PackageSelection (gtk.Window):
         cell1 = gtk.CellRendererText()
         cell2 = gtk.CellRendererToggle()
         cell2.set_property('activatable', True)
-        cell2.connect("toggled", HobWidget.toggle_selection_include_cb, self, self.packagesaz_tree, self.package_model)
+        cell2.connect("toggled", self.recipesaz_cell2_toggled_cb, self.packagesaz_tree)
 
         col.pack_start(cell, True)
         col1.pack_start(cell1, True)
@@ -443,6 +455,7 @@ class PackageSelection (gtk.Window):
     def reset_clicked_cb(self, tbutton):
         self.selected_packages = None
         self.package_model.reset()
+        self.clear_last_selected_packages()
 
     def show_binb_info(self, model, path, parent):
         it = model.get_iter(path)
@@ -470,8 +483,11 @@ class PackageSelection (gtk.Window):
 
         return False
 
-    def insert_text_with_tag(self, package_buffer, it, text, path):
-        tag = package_buffer.create_tag(None, foreground="blue")
+    def insert_text_with_tag(self, package_buffer, it, text, path, highlight=False):
+        if highlight:
+            tag = package_buffer.create_tag(None, foreground="blue", background="yellow")
+        else:
+            tag = package_buffer.create_tag(None, foreground="blue")
         tag.set_data("path", path)
         package_buffer.insert_with_tags(it, text, tag)
 
@@ -486,7 +502,10 @@ class PackageSelection (gtk.Window):
                 path = model.get_path(child_it)
                 if inc:
                     tit = package_buffer.get_end_iter()
-                    self.insert_text_with_tag(package_buffer, tit, name + "  ", path)
+                    if name in self.last_selected_packages:
+                        self.insert_text_with_tag(package_buffer, tit, name + "  ", path)
+                    else:
+                        self.insert_text_with_tag(package_buffer, tit, name + "  ", path, True)
                 child_it = model.iter_next(child_it)
             it = model.iter_next(it)
 

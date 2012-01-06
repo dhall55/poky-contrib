@@ -4,7 +4,8 @@
 # Copyright (C) 2011        Intel Corporation
 #
 # Authored by Joshua Lock <josh@linux.intel.com>
-# Authored by Dongxiao xu <dongxiao.xu@intel.com>
+# Authored by Dongxiao Xu <dongxiao.xu@intel.com>
+# Authored by Shane Wang <shane.wang@intel.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -418,6 +419,12 @@ class RecipeSelection (gtk.Window):
             self.expand.set_label("Selected %s recipes" % len(self.selected_recipes))
             self.add_selected_recipes(self.recipe_model, self.recipe_buffer)
 
+    def save_last_selected_recipes(self):
+        self.last_selected_recipes = self.selected_recipes[:len(self.selected_recipes)]
+
+    def clear_last_selected_recipes(self):
+        self.last_selected_recipes = []
+
     def update_recipe_model(self):
         # We want the recipes model to be alphabetised and sortable so create
         # a TreeModelSort to use in the view
@@ -440,6 +447,11 @@ class RecipeSelection (gtk.Window):
         self.selected_recipes = None
         self.recipe_model.reset()
         self.emit("recipe-selection-reset")
+        self.clear_last_selected_recipes()
+
+    def recipesaz_cell3_toggled_cb(self, cell, path, tree):
+        self.save_last_selected_recipes()
+        HobWidget.toggle_selection_include_cb(cell, path, self, tree, self.recipe_model)
 
     def recipesaz(self):
         vbox = gtk.VBox(False, 6)
@@ -486,7 +498,7 @@ class RecipeSelection (gtk.Window):
         cell2 = gtk.CellRendererText()
         cell3 = gtk.CellRendererToggle()
         cell3.set_property('activatable', True)
-        cell3.connect("toggled", HobWidget.toggle_selection_include_cb, self, self.recipesaz_tree, self.recipe_model)
+        cell3.connect("toggled", self.recipesaz_cell3_toggled_cb, self.recipesaz_tree)
 
         col.pack_start(cell, True)
         col1.pack_start(cell1, True)
@@ -524,6 +536,7 @@ class RecipeSelection (gtk.Window):
         vbox.pack_start(hb, False, False, 0)
 
         return vbox
+
 
     def mlrecipesaz(self):
         vbox = gtk.VBox(False, 6)
@@ -570,7 +583,7 @@ class RecipeSelection (gtk.Window):
         cell2 = gtk.CellRendererText()
         cell3 = gtk.CellRendererToggle()
         cell3.set_property('activatable', True)
-        cell3.connect("toggled", HobWidget.toggle_selection_include_cb, self, self.mlrecipesaz_tree, self.recipe_model)
+        cell3.connect("toggled", self.recipesaz_cell3_toggled_cb, self.mlrecipesaz_tree)
 
         col.pack_start(cell, True)
         col1.pack_start(cell1, True)
@@ -609,6 +622,9 @@ class RecipeSelection (gtk.Window):
 
         return vbox
 
+    def tasks_cell2_toggled_cb(self, cell, path, tree):
+        self.save_last_selected_recipes()
+        HobWidget.toggle_include_cb(cell, path, self, tree, self.recipe_model)
 
     def tasks(self):
         vbox = gtk.VBox(False, 6)
@@ -647,7 +663,7 @@ class RecipeSelection (gtk.Window):
         cell1 = gtk.CellRendererText()
         cell2 = gtk.CellRendererToggle()
         cell2.set_property('activatable', True)
-        cell2.connect("toggled", HobWidget.toggle_include_cb, self, self.tasks_tree, self.recipe_model)
+        cell2.connect("toggled", self.tasks_cell2_toggled_cb, self.tasks_tree)
 
         col.pack_start(cell, True)
         col1.pack_start(cell1, True)
@@ -719,7 +735,7 @@ class RecipeSelection (gtk.Window):
         cell1 = gtk.CellRendererText()
         cell2 = gtk.CellRendererToggle()
         cell2.set_property('activatable', True)
-        cell2.connect("toggled", HobWidget.toggle_include_cb, self, self.mltasks_tree, self.recipe_model)
+        cell2.connect("toggled", self.tasks_cell2_toggled_cb, self.mltasks_tree)
 
         col.pack_start(cell, True)
         col1.pack_start(cell1, True)
@@ -780,8 +796,11 @@ class RecipeSelection (gtk.Window):
 
         return False
 
-    def insert_text_with_tag(self, recipe_buffer, it, text, path):
-        tag = recipe_buffer.create_tag(None, foreground="blue")
+    def insert_text_with_tag(self, recipe_buffer, it, text, path, highlight=False):
+        if highlight:
+            tag = recipe_buffer.create_tag(None, foreground="blue", background="yellow")
+        else:
+            tag = recipe_buffer.create_tag(None, foreground="blue")
         tag.set_data("path", path)
         recipe_buffer.insert_with_tags(it, text, tag)
 
@@ -790,7 +809,10 @@ class RecipeSelection (gtk.Window):
         for i in self.selected_recipes:
             path = model.pn_path[i]
             tit = recipe_buffer.get_end_iter()
-            self.insert_text_with_tag(recipe_buffer, tit, i + "  ", path)
+            if i in self.last_selected_recipes:
+                self.insert_text_with_tag(recipe_buffer, tit, i + "  ", path)
+            else:
+                self.insert_text_with_tag(recipe_buffer, tit, i + "  ", path, True)
 
     def motion_cb(self, textview, event):
         x, y = textview.window_to_buffer_coords(gtk.TEXT_WINDOW_WIDGET, int(event.x), int(event.y))
