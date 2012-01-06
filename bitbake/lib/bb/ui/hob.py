@@ -54,6 +54,8 @@ import string
 class MainWindow (gtk.Window):
 
     __dummy_machine__ = "--select a machine--"
+    __build_image_color__ = gtk.gdk.Color(62976, 41984, 33280) #orange
+
     def __init__(self, split_model, recipemodel, packagemodel, handler, params):
         gtk.Window.__init__(self)
         # global state
@@ -490,7 +492,7 @@ class MainWindow (gtk.Window):
             self.save_template(path)
         dialog.destroy()
 
-    def generate_packages(self, button):
+    def generate_packages(self, button, url):
         # If no base image and no selected packages don't build anything
         user_recipes, all_recipes = self.recipe_model.get_selected_recipes()
         if not self.recipe_selection.selected_image and not user_recipes and not all_recipes:
@@ -731,11 +733,26 @@ You can build these images as they are, or customize them to your specific needs
     def create_config_build_button(self):
         hbox_button = gtk.HBox(False, 5)
         hbox_button.show_all()
-        button = gtk.Button(" Build Image ")
+        button = gtk.Button("Build Image")
+        button.set_size_request(150, 50)
+        button.modify_bg(gtk.STATE_NORMAL, MainWindow.__build_image_color__)
+        button.modify_bg(gtk.STATE_PRELIGHT, MainWindow.__build_image_color__)
+        button.modify_bg(gtk.STATE_SELECTED, MainWindow.__build_image_color__)
+        button.set_tooltip_text("Build image to get your target image")
         button.connect("clicked", self.generate_image)
         hbox_button.pack_end(button, expand=False, fill=False)
-        button = gtk.Button("Build Packages")
-        button.connect("clicked", self.generate_packages)
+        button.set_flags(gtk.CAN_DEFAULT)
+        button.grab_default()
+
+        label = gtk.Label(" or ")
+        hbox_button.pack_end(label, expand=False, fill=False)
+
+        if hasattr(gtk, "LinkButton"):
+            button = gtk.LinkButton("Build packages first based on recipe selection for late customization on packages for the target image", "Build Packages")
+            gtk.link_button_set_uri_hook(self.generate_packages)
+        else:
+            button = gtk.Button("Build Packages")
+            button.connect("clicked", self.generate_packages, "http://www.yoctoproject.org")
         hbox_button.pack_end(button, expand=False, fill=False)
         hbox_button.show_all()
         return hbox_button
