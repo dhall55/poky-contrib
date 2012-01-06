@@ -30,6 +30,7 @@ Commands are queued in a CommandQueue
 
 import bb.event
 import bb.cooker
+import bb.helper
 
 class CommandCompleted(bb.event.Event):
     pass
@@ -170,6 +171,17 @@ class CommandsSync:
         """
         command.cooker.reset()
 
+    def getDefaultNumOfThreads(self, command, params):
+        """
+        Get the default number of threads on the server = number of CPUs
+        """
+        return bb.helper.CpuInfo.getNumOfCpus()
+
+    def getMaxNumOfThreads(self, command, params):
+        """
+        Get the max number of threads that the server can tolerate
+        """
+        return bb.helper.CpuInfo.getNumOfCpus() * bb.helper.CpuInfo.coefficient
 
 class CommandsAsync:
     """
