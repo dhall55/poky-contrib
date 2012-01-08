@@ -24,6 +24,7 @@ import gtk
 import gobject
 import re
 from bb.ui.crumbs.hobwidget import HobWidget
+from bb.ui.crumbs.detaildialog import DetailDialog
 
 class PackageListModel(gtk.TreeStore):
     """
@@ -460,9 +461,9 @@ class PackageSelection (gtk.Window):
     def show_binb_info(self, model, path, parent):
         it = model.get_iter(path)
         binb = model.get_value(it, model.COL_BINB)
-        w = gtk.MessageDialog(parent, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_INFO, gtk.BUTTONS_CLOSE, "Brought in by: " + binb)
-        w.run()
-        w.destroy()
+        w = DetailDialog(title="", content="Brought in by: " + binb, parent=self)
+        w.show()
+        del w
 
     def selection_clicked_cb(self, textview, event, model):
         if event.type != gtk.gdk.BUTTON_RELEASE:
