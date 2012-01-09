@@ -438,17 +438,11 @@ class PackageSelection (gtk.Window):
 
         hb = gtk.HBox(False, 10)
         hb.show()
-        self.search = gtk.Entry()
-        self.search.show()
         self.packagesaz_tree.set_search_entry(self.search)
-        hb.pack_end(self.search, False, False, 0)
-        label = gtk.Label("Search:")
-        label.show()
-        hb.pack_end(label, False, False, 6)
 
         button = gtk.Button("Reset")
         button.connect('clicked', self.reset_clicked_cb)
-        hb.pack_start(button, False, False, 0)
+        hb.pack_end(button, False, False, 0)
 
         vbox.pack_start(hb, False, False, 0)
 
@@ -546,6 +540,46 @@ class PackageSelection (gtk.Window):
 
         return vbox
 
+    def notebook_switch_page_cb(self, widget, page_num):
+        if not self.ins:
+            return
+        if page_num > 0:
+            return
+        self.ins.set_current_page(page_num)
+
+    def packagesel_toolbar(self):
+        toolbar = gtk.Toolbar()
+        toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+        toolbar.set_style(gtk.TOOLBAR_TEXT)
+        toolbar.set_border_width(5)
+
+        style = self.ins.get_style()
+        l_group = ["Packags"]
+        for page_index in range(1):
+            label=l_group[page_index]
+            tip_text = 'switch to ' + label + ' page'
+            pg_switch = toolbar.append_element(gtk.TOOLBAR_CHILD_RADIOBUTTON, None,
+                                label, tip_text, "Private text", None,
+                                self.notebook_switch_page_cb, page_index)
+            pg_switch.modify_bg(gtk.STATE_NORMAL, style.bg[gtk.STATE_NORMAL])
+            pg_switch.modify_bg(gtk.STATE_ACTIVE, gtk.gdk.Color(HobColors.WHITE))
+            pg_switch.modify_bg(gtk.STATE_SELECTED, gtk.gdk.Color(HobColors.WHITE))
+            pg_switch.modify_bg(gtk.STATE_PRELIGHT, style.bg[gtk.STATE_PRELIGHT])
+
+        toolbar.append_space()
+
+        label = gtk.Label(" Search: ")
+        label.set_alignment(0.5, 0.5)
+        toolbar.append_widget(label, "", "Private")
+
+        self.search = gtk.Entry()
+        align = gtk.Alignment(xalign=0.5, yalign=0.5)
+        align.add(self.search)
+        toolbar.append_widget(align, "Input the selected packages", "Private")
+
+        toolbar.show_all()
+
+        return toolbar
 
     def main(self, button):
         window = gtk.Dialog("Package List", None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
@@ -556,16 +590,37 @@ class PackageSelection (gtk.Window):
         table.set_col_spacings(3)
         window.vbox.add(table)
 
-        ins = gtk.Notebook()
-        ins.set_show_tabs(True)
-        label = gtk.Label("Packages")
-        ins.append_page(self.packagesaz(), tab_label=label)
-        ins.set_current_page(0)
+        # Left Part
+        eventbox = gtk.EventBox()
+        eventbox.set_border_width(2)
+        style = eventbox.get_style().copy()
+        style.bg[gtk.STATE_NORMAL] = eventbox.get_colormap().alloc_color (HobColors.GRAY, False, False)
+        eventbox.set_style(style)
+        table.attach(eventbox, 0, 7, 0, 1, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
 
-        table.attach(ins, 0, 7, 0, 10, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
+        self.ins = gtk.Notebook()
+        self.ins.set_show_tabs(False)
+        page_sw_search = self.packagesel_toolbar() # make the buttons in toolbox same as ins
+        eventbox.add(page_sw_search)
+        label = gtk.Label("Packages")
+        self.ins.append_page(self.packagesaz(), tab_label=label)
+        self.ins.set_current_page(0)
+        table.attach(self.ins, 0, 7, 1, 10, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
+
+        # Right Part
+        eventbox = gtk.EventBox()
+        eventbox.set_border_width(2)
+        style = eventbox.get_style().copy()
+        style.bg[gtk.STATE_NORMAL] = eventbox.get_colormap().alloc_color (HobColors.GRAY, False, False)
+        eventbox.set_style(style)
+        label = gtk.Label()
+        label.set_alignment(0.5, 0.5)
+        label.set_markup("<span font_desc='14'><i>Your Image</i></span>")
+        eventbox.add(label)
+        table.attach(eventbox, 7, 10, 0, 1, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
 
         selections = self.selections()
-        table.attach(selections, 7, 10, 0, 10, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)        
+        table.attach(selections, 7, 10, 1, 10, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)        
 
         self.update_package_model()
 

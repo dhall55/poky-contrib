@@ -243,7 +243,7 @@ class MainWindow (gtk.Window):
             self.switch_page(RECIPE_GENERATED)
 
     def update_image_model(self):
-        self.image_combo.set_model(self.recipe_model.images_model())
+        self.image_combo.set_model(self.recipe_model.tree_model('image'))
         self.image_combo.set_active(0)
 
         if not self.image_combo_id:

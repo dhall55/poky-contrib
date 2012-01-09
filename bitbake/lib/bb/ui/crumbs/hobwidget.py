@@ -21,6 +21,7 @@ import gtk
 import glib
 import gobject
 from bb.ui.crumbs.hig import CrumbsDialog
+from bb.ui.crumbs.hobcolors import HobColors
 
 class HobWidget():
     @classmethod
@@ -522,3 +523,109 @@ class HobWidget():
 
         return setting_hbox, setting_store
 
+
+class HobViewBar:
+
+    def __init__(self, notebook):
+        if not notebook:
+            return
+        self.notebook = notebook
+
+        # setup an event box
+        self.eventbox = gtk.EventBox()
+        self.eventbox.set_border_width(2)
+        style = self.eventbox.get_style().copy()
+        style.bg[gtk.STATE_NORMAL] = self.eventbox.get_colormap().alloc_color (HobColors.GRAY, False, False)
+        self.eventbox.set_style(style)
+
+        # setup a tool bar in the event box
+        self.toolbar = gtk.Toolbar()
+        self.toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+        self.toolbar.set_style(gtk.TOOLBAR_TEXT)
+        self.toolbar.set_border_width(5)
+
+        style = self.notebook.get_style()
+        self.toolbuttons = []
+        for index in range(self.notebook.get_n_pages()):
+            child = self.notebook.get_nth_page(index)
+            label = self.notebook.get_tab_label_text(child)
+            tip_text = 'switch to ' + label + ' page'
+            toolbutton = self.toolbar.append_element(gtk.TOOLBAR_CHILD_RADIOBUTTON, None,
+                                label, tip_text, "Private text", None,
+                                self.toolbutton_cb, index)
+            toolbutton.modify_bg(gtk.STATE_NORMAL, style.bg[gtk.STATE_NORMAL])
+            toolbutton.modify_bg(gtk.STATE_ACTIVE, gtk.gdk.Color(HobColors.WHITE))
+            toolbutton.modify_bg(gtk.STATE_SELECTED, gtk.gdk.Color(HobColors.WHITE))
+            toolbutton.modify_bg(gtk.STATE_PRELIGHT, style.bg[gtk.STATE_PRELIGHT])
+            self.toolbuttons.append(toolbutton)
+
+        self.toolbar.append_space()
+
+        self.label = gtk.Label(" Search: ")
+        self.label.set_alignment(0.5, 0.5)
+        self.toolbar.append_widget(self.label, "", "Private")
+
+        self.search = gtk.Entry()
+        self.align = gtk.Alignment(xalign=0.5, yalign=0.5)
+        self.align.add(self.search)
+        self.toolbar.append_widget(self.align, "Input the selected items", "Private")
+
+        # add the tool bar into the event box
+        self.eventbox.add(self.toolbar)
+
+    def toolbutton_cb(self, widget, index):
+        if index >= self.notebook.get_n_pages():
+            return
+        self.notebook.set_current_page(index)
+
+class HobSaz:
+
+    def __init__(self, columns, toggled_id, reset_clicked_cb=None, toggled_cb=None):
+        self.reset_clicked_cb = reset_clicked_cb
+        self.saz_cell_toggled_cb = toggled_cb
+
+        self.vbox = gtk.VBox(False, 6)
+        self.saz_tree = gtk.TreeView()
+        self.saz_tree.set_headers_visible(True)
+        self.saz_tree.set_headers_clickable(True)
+        self.saz_tree.set_enable_search(True)
+        self.saz_tree.set_search_column(0)
+        self.saz_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
+
+        for i in range(0, len(columns)):
+            col = gtk.TreeViewColumn(columns[i]['title'])
+            col.set_clickable(True)
+            col.set_resizable(True)
+            col.set_sort_column_id(columns[i]['column_id'])
+            col.set_min_width(columns[i]['min_width'])
+            col.set_max_width(columns[i]['max_width'])
+            self.saz_tree.append_column(col)
+
+            if i == toggled_id:
+                cell = gtk.CellRendererToggle()
+                cell.set_property('activatable', True)
+                if self.saz_cell_toggled_cb:
+                    cell.connect("toggled", self.saz_cell_toggled_cb, self.saz_tree)
+                col.pack_end(cell, True)
+                col.set_attributes(cell, active=columns[i]['column_id'])
+            else:
+                cell = gtk.CellRendererText()
+                col.pack_start(cell, True)
+                col.set_attributes(cell, text=columns[i]['column_id'])
+
+        self.scroll = gtk.ScrolledWindow()
+        self.scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+        self.scroll.set_shadow_type(gtk.SHADOW_IN)
+        self.scroll.add(self.saz_tree)
+        self.vbox.pack_start(self.scroll, True, True, 0)
+
+        self.hbox = gtk.HBox(False, 5)
+        self.button = gtk.Button("Reset")
+        if self.reset_clicked_cb:
+            self.button.connect('clicked', self.reset_clicked_cb)
+        self.hbox.pack_end(self.button, False, False, 0)
+
+        self.vbox.pack_start(self.hbox, False, False, 0)
+
+    def set_search_entry(self, entry):
+        self.saz_tree.set_search_entry(entry)

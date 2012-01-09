@@ -24,7 +24,7 @@ import gtk
 import gobject
 import re
 import pango
-from bb.ui.crumbs.hobwidget import HobWidget
+from bb.ui.crumbs.hobwidget import HobWidget, HobViewBar, HobSaz
 from bb.ui.crumbs.detaildialog import DetailDialog
 from bb.ui.crumbs.hobcolors import HobColors
 
@@ -46,16 +46,18 @@ class RecipeListModel(gtk.ListStore):
                                 ()),
         }
 
+    __model_keywords__ = ["recipe", "task", "mlrecipe", "mltask", "image"]
+
+
     """
     """
     def __init__(self):
-        self.tasks = None
-        self.mltasks = None
-        self.recipes = None
-        self.mlrecipes = None
-        self.images = None
+        self.models = {}
+        for key in RecipeListModel.__model_keywords__:
+            self.models[key] = None
+
         self.selected_image = None
-        
+ 
         gtk.ListStore.__init__ (self,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
@@ -78,86 +80,14 @@ class RecipeListModel(gtk.ListStore):
             return True
         return False
 
-    """
-    Helper function to determine whether an item is a task
-    """
-    def mltask_model_filter(self, model, it):
-        if model.get_value(it, self.COL_TYPE) == 'mltask':
-            return True
-        else:
-            return False
-
-    """
-    Create, if required, and return a filtered gtk.TreeModel
-    containing only the items which are tasks
-    """
-    def mltasks_model(self):
-        if not self.mltasks:
-            self.mltasks = self.filter_new()
-            self.mltasks.set_visible_func(self.mltask_model_filter)
-        return self.mltasks
-    """
-    Helper function to determine whether an item is a task
-    """
-    def task_model_filter(self, model, it):
-        if model.get_value(it, self.COL_TYPE) == 'task':
-            return True
-        else:
-            return False
-
-    """
-    Create, if required, and return a filtered gtk.TreeModel
-    containing only the items which are tasks
-    """
-    def tasks_model(self):
-        if not self.tasks:
-            self.tasks = self.filter_new()
-            self.tasks.set_visible_func(self.task_model_filter)
-        return self.tasks
-
-    """
-    Helper function to determine whether an item is an image
-    """
-    def image_model_filter(self, model, it):
-        if model.get_value(it, self.COL_TYPE) == 'image':
-            return True
-        else:
-            return False
-
-    """
-    Create, if required, and return a filtered gtk.TreeModel
-    containing only the items which are images
-    """
-    def images_model(self):
-        if not self.images:
-            self.images = self.filter_new()
-            self.images.set_visible_func(self.image_model_filter)
-        return self.images
-
-    """
-    Helper function to determine whether an item is an image
-    """
-    def mlrecipe_model_filter(self, model, it):
-        if model.get_value(it, self.COL_TYPE) == 'mlrecipe':
-            return True
-        else:
-            return False
-
-    """
-    Create, if required, and return a filtered gtk.TreeModel
-    containing only the items which are images
-    """
-    def mlrecipes_model(self):
-        if not self.mlrecipes:
-            self.mlrecipes = self.filter_new()
-            self.mlrecipes.set_visible_func(self.mlrecipe_model_filter)
-        return self.mlrecipes
 
     """
     Helper function to determine whether an item is a recipe
     """
-    def recipe_model_filter(self, model, it):
-        if model.get_value(it, self.COL_TYPE) != 'recipe':
+    def recipe_model_filter(self, model, it, keyword):
+        if keyword != 'recipe':
+            return False
+        if model.get_value(it, self.COL_TYPE) != keyword:
             return False
         else:
             name = model.get_value(it, self.COL_NAME)
@@ -166,14 +96,34 @@ class RecipeListModel(gtk.ListStore):
             return True
 
     """
-    Create, if required, and return a filtered gtk.TreeModel
-    containing only the items which are recipes
+    Helper function to determine whether an item is an item specified by keyword
     """
-    def recipes_model(self):
-        if not self.recipes:
-            self.recipes = self.filter_new()
-            self.recipes.set_visible_func(self.recipe_model_filter)
-        return self.recipes
+    def tree_model_filter(self, model, it, keyword):
+        if model.get_value(it, self.COL_TYPE) == keyword:
+            return True
+        else:
+            return False
+
+    """
+    Create, if required, and return a filtered gtk.TreeModel
+    containing only the items which are items specified by key
+    """
+    def tree_model(self, key):
+        if not self.models[key]:
+            self.models[key] = self.filter_new()
+            if key == 'recipe':
+                self.models[key].set_visible_func(self.recipe_model_filter, key)
+            else:
+                self.models[key].set_visible_func(self.tree_model_filter, key)
+
+        # sort if not 'image'
+        if key == 'image':
+            return self.models[key]
+        else:
+            sort = gtk.TreeModelSort(self.models[key])
+            sort.set_sort_column_id(RecipeListModel.COL_NAME, gtk.SORT_ASCENDING)
+            sort.set_default_sort_func(None)
+            return sort
 
     def map_runtime(self, event_model, runtime, rdep_type, name):
         if rdep_type not in ['pkg', 'pn'] or runtime not in ['rdepends', 'rrecs']:
@@ -403,6 +353,85 @@ class RecipeSelection (gtk.Window):
                                     gobject.TYPE_NONE,
                                     ()),
     }
+
+    __pages__ = {
+            "Recipes" : ["recipe", {
+                            'title' : 'Recipe',
+                            'column_id' : RecipeListModel.COL_NAME,
+                            'min_width' : 100,
+                            'max_width' : 400
+                         }, {
+                            'title' : 'License',
+                            'column_id' : RecipeListModel.COL_LIC,
+                            'min_width' : 100,
+                            'max_width' : 200
+                         }, {
+                            'title' : 'Group',
+                            'column_id' : RecipeListModel.COL_GROUP,
+                            'min_width' : 100,
+                            'max_width' : 200
+                         }, {
+                            'title' : 'Included',
+                            'column_id' : RecipeListModel.COL_INC,
+                            'min_width' : 50,
+                            'max_width' : 50
+                         }],
+            "Recipe Collections" : ["task", {
+                            'title' : 'Recipe Collection',
+                            'column_id' : RecipeListModel.COL_NAME,
+                            'min_width' : 100,
+                            'max_width' : 400
+                         }, {
+                            'title' : 'Description',
+                            'column_id' : RecipeListModel.COL_DESC,
+                            'min_width' : 100,
+                            'max_width' : 200
+                         }, {
+                            'title' : 'Included',
+                            'column_id' : RecipeListModel.COL_INC,
+                            'min_width' : 50,
+                            'max_width' : 50
+                         }],
+            "Multilib Recipes" : ["mlrecipe", {
+                            'title' : 'Recipe',
+                            'column_id' : RecipeListModel.COL_NAME,
+                            'min_width' : 100,
+                            'max_width' : 400
+                         }, {
+                            'title' : 'License',
+                            'column_id' : RecipeListModel.COL_LIC,
+                            'min_width' : 100,
+                            'max_width' : 200
+                         }, {
+                            'title' : 'Group',
+                            'column_id' : RecipeListModel.COL_GROUP,
+                            'min_width' : 100,
+                            'max_width' : 200
+                         }, {
+                            'title' : 'Included',
+                            'column_id' : RecipeListModel.COL_INC,
+                            'min_width' : 50,
+                            'max_width' : 50
+                         }],
+            "Multilib Recipe Collections" : ["mltask", {
+                            'title' : 'Recipe Collection',
+                            'column_id' : RecipeListModel.COL_NAME,
+                            'min_width' : 100,
+                            'max_width' : 250
+                         }, {
+                            'title' : 'Description',
+                            'column_id' : RecipeListModel.COL_DESC,
+                            'min_width' : 100,
+                            'max_width' : 200
+                         }, {
+                            'title' : 'Included',
+                            'column_id' : RecipeListModel.COL_INC,
+                            'min_width' : 60,
+                            'max_width' : 60
+                         }]
+    }
+
+
     def __init__(self, recipemodel, handler):
         gtk.Window.__init__(self)
         self.recipe_model = recipemodel
@@ -410,10 +439,15 @@ class RecipeSelection (gtk.Window):
         self.image_install = []
         self.selected_recipes = []
         self.last_selected_recipes = []
-
         self.recipe_model.connect("selected-recipes-changed", self.selected_recipes_changed_cb)
-
         self.dialog_status = False
+        self.pages = RecipeSelection.__pages__
+        self.page_toggled_cbs = {}
+        for tab in self.pages.keys():
+            if tab in ("Recipes", "Multilib Recipes"):
+                self.page_toggled_cbs[tab] = self.recipesaz_toggled_cb
+            elif tab in ("Recipe Collections", "Multilib Recipe Collections"):
+                self.page_toggled_cbs[tab] = self.tasks_toggled_cb
 
     def selected_recipes_changed_cb(self, model):
         _, self.selected_recipes = self.recipe_model.get_selected_recipes()
@@ -430,16 +464,9 @@ class RecipeSelection (gtk.Window):
     def update_recipe_model(self):
         # We want the recipes model to be alphabetised and sortable so create
         # a TreeModelSort to use in the view
-        recipesaz_model = gtk.TreeModelSort(self.recipe_model.recipes_model())
-        recipesaz_model.set_sort_column_id(self.recipe_model.COL_NAME, gtk.SORT_ASCENDING)
-        recipesaz_model.set_default_sort_func(None)
-        self.recipesaz_tree.set_model(recipesaz_model)
-        self.tasks_tree.set_model(self.recipe_model.tasks_model())
-        mlrecipesaz_model = gtk.TreeModelSort(self.recipe_model.mlrecipes_model())
-        mlrecipesaz_model.set_sort_column_id(self.recipe_model.COL_NAME, gtk.SORT_ASCENDING)
-        mlrecipesaz_model.set_default_sort_func(None)
-        self.mlrecipesaz_tree.set_model(self.recipe_model.mlrecipes_model())
-        self.mltasks_tree.set_model(self.recipe_model.mltasks_model())
+        for tab, stuff in self.pages.items():
+            key = stuff[0] # key
+            self.saz[tab].saz_tree.set_model(self.recipe_model.tree_model(key))
 
         self.expand.set_label("Selected %s recipes" % len(self.selected_recipes))
         self.add_selected_recipes(self.recipe_model, self.recipe_buffer)
@@ -451,326 +478,13 @@ class RecipeSelection (gtk.Window):
         self.emit("recipe-selection-reset")
         self.clear_last_selected_recipes()
 
-    def recipesaz_cell3_toggled_cb(self, cell, path, tree):
+    def recipesaz_toggled_cb(self, cell, path, tree):
         self.save_last_selected_recipes()
         HobWidget.toggle_selection_include_cb(cell, path, self, tree, self.recipe_model)
 
-    def recipesaz(self):
-        vbox = gtk.VBox(False, 6)
-        vbox.show()
-        self.recipesaz_tree = gtk.TreeView()
-        self.recipesaz_tree.set_headers_visible(True)
-        self.recipesaz_tree.set_headers_clickable(True)
-        self.recipesaz_tree.set_enable_search(True)
-        self.recipesaz_tree.set_search_column(0)
-        self.recipesaz_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
-
-        col = gtk.TreeViewColumn('Recipe')
-        col.set_clickable(True)
-        col.set_resizable(True)
-        col.set_sort_column_id(self.recipe_model.COL_NAME)
-        col.set_min_width(100)
-        col.set_max_width(400)
-        col1 = gtk.TreeViewColumn('License')
-        col1.set_resizable(True)
-        col1.set_clickable(True)
-        col1.set_sort_column_id(self.recipe_model.COL_LIC)
-        col1.set_min_width(100)
-        col1.set_max_width(200)
-        col2 = gtk.TreeViewColumn('Group')
-        col2.set_clickable(True)
-        col2.set_resizable(True)
-        col2.set_sort_column_id(self.recipe_model.COL_GROUP)
-        col2.set_min_width(100)
-        col2.set_max_width(200)
-        col3 = gtk.TreeViewColumn('Included')
-        col3.set_clickable(True)
-        col3.set_resizable(True)
-        col3.set_min_width(50)
-        col3.set_max_width(50)
-        col3.set_sort_column_id(self.recipe_model.COL_INC)
-
-        self.recipesaz_tree.append_column(col)
-        self.recipesaz_tree.append_column(col1)
-        self.recipesaz_tree.append_column(col2)
-        self.recipesaz_tree.append_column(col3)
-        cell = gtk.CellRendererText()
-        cell1 = gtk.CellRendererText()
-        cell1.set_property('width-chars', 20)
-        cell2 = gtk.CellRendererText()
-        cell3 = gtk.CellRendererToggle()
-        cell3.set_property('activatable', True)
-        cell3.connect("toggled", self.recipesaz_cell3_toggled_cb, self.recipesaz_tree)
-
-        col.pack_start(cell, True)
-        col1.pack_start(cell1, True)
-        col2.pack_start(cell2, True)
-        col3.pack_end(cell3, True)
-
-        col.set_attributes(cell, text=self.recipe_model.COL_NAME)
-        col1.set_attributes(cell1, text=self.recipe_model.COL_LIC)
-        col2.set_attributes(cell2, text=self.recipe_model.COL_GROUP)
-        col3.set_attributes(cell3, active=self.recipe_model.COL_INC)
-
-        self.recipesaz_tree.show()
-
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
-        scroll.set_shadow_type(gtk.SHADOW_IN)
-        scroll.add(self.recipesaz_tree)
-        vbox.pack_start(scroll, True, True, 0)
-
-        hb = gtk.HBox(False, 5)
-        hb.show()
-        self.search = gtk.Entry()
-        self.search.show()
-        self.recipesaz_tree.set_search_entry(self.search)
-        hb.pack_end(self.search, False, False, 0)
-
-        label = gtk.Label("Search:")
-        label.show()
-        hb.pack_end(label, False, False, 6)
-
-        button = gtk.Button("Reset")
-        button.connect('clicked', self.reset_clicked_cb)
-        hb.pack_start(button, False, False, 0)
-
-        vbox.pack_start(hb, False, False, 0)
-
-        return vbox
-
-
-    def mlrecipesaz(self):
-        vbox = gtk.VBox(False, 6)
-        vbox.show()
-        self.mlrecipesaz_tree = gtk.TreeView()
-        self.mlrecipesaz_tree.set_headers_visible(True)
-        self.mlrecipesaz_tree.set_headers_clickable(True)
-        self.mlrecipesaz_tree.set_enable_search(True)
-        self.mlrecipesaz_tree.set_search_column(0)
-        self.mlrecipesaz_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
-
-        col = gtk.TreeViewColumn('Recipe')
-        col.set_clickable(True)
-        col.set_resizable(True)
-        col.set_sort_column_id(self.recipe_model.COL_NAME)
-        col.set_min_width(100)
-        col.set_max_width(400)
-        col1 = gtk.TreeViewColumn('License')
-        col1.set_resizable(True)
-        col1.set_clickable(True)
-        col1.set_sort_column_id(self.recipe_model.COL_LIC)
-        col1.set_min_width(100)
-        col1.set_max_width(200)
-        col2 = gtk.TreeViewColumn('Group')
-        col2.set_clickable(True)
-        col2.set_resizable(True)
-        col2.set_sort_column_id(self.recipe_model.COL_GROUP)
-        col2.set_min_width(100)
-        col2.set_max_width(200)
-        col3 = gtk.TreeViewColumn('Included')
-        col3.set_clickable(True)
-        col3.set_resizable(True)
-        col3.set_min_width(50)
-        col3.set_max_width(50)
-        col3.set_sort_column_id(self.recipe_model.COL_INC)
-
-        self.mlrecipesaz_tree.append_column(col)
-        self.mlrecipesaz_tree.append_column(col1)
-        self.mlrecipesaz_tree.append_column(col2)
-        self.mlrecipesaz_tree.append_column(col3)
-        cell = gtk.CellRendererText()
-        cell1 = gtk.CellRendererText()
-        cell1.set_property('width-chars', 20)
-        cell2 = gtk.CellRendererText()
-        cell3 = gtk.CellRendererToggle()
-        cell3.set_property('activatable', True)
-        cell3.connect("toggled", self.recipesaz_cell3_toggled_cb, self.mlrecipesaz_tree)
-
-        col.pack_start(cell, True)
-        col1.pack_start(cell1, True)
-        col2.pack_start(cell2, True)
-        col3.pack_end(cell3, True)
-
-        col.set_attributes(cell, text=self.recipe_model.COL_NAME)
-        col1.set_attributes(cell1, text=self.recipe_model.COL_LIC)
-        col2.set_attributes(cell2, text=self.recipe_model.COL_GROUP)
-        col3.set_attributes(cell3, active=self.recipe_model.COL_INC)
-
-        self.mlrecipesaz_tree.show()
-
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
-        scroll.set_shadow_type(gtk.SHADOW_IN)
-        scroll.add(self.mlrecipesaz_tree)
-        vbox.pack_start(scroll, True, True, 0)
-
-        hb = gtk.HBox(False, 5)
-        hb.show()
-        self.search = gtk.Entry()
-        self.search.show()
-        self.mlrecipesaz_tree.set_search_entry(self.search)
-        hb.pack_end(self.search, False, False, 0)
-
-        label = gtk.Label("Search:")
-        label.show()
-        hb.pack_end(label, False, False, 6)
-
-        button = gtk.Button("Reset")
-        button.connect('clicked', self.reset_clicked_cb)
-        hb.pack_start(button, False, False, 0)
-
-        vbox.pack_start(hb, False, False, 0)
-
-        return vbox
-
-    def tasks_cell2_toggled_cb(self, cell, path, tree):
+    def tasks_toggled_cb(self, cell, path, tree):
         self.save_last_selected_recipes()
         HobWidget.toggle_include_cb(cell, path, self, tree, self.recipe_model)
-
-    def tasks(self):
-        vbox = gtk.VBox(False, 6)
-        vbox.show()
-        self.tasks_tree = gtk.TreeView()
-        self.tasks_tree.set_headers_visible(True)
-        self.tasks_tree.set_headers_clickable(False)
-        self.tasks_tree.set_enable_search(True)
-        self.tasks_tree.set_search_column(0)
-        self.tasks_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
-
-        col = gtk.TreeViewColumn('Recipe Collection')
-        col.set_clickable(True)
-        col.set_resizable(True)
-        col.set_min_width(100)
-        col.set_max_width(400)
-        col.set_sort_column_id(self.recipe_model.COL_NAME)
-        col1 = gtk.TreeViewColumn('Description')
-        col1.set_clickable(True)
-        col1.set_resizable(True)
-        col1.set_min_width(100)
-        col1.set_max_width(200)
-        col1.set_sort_column_id(self.recipe_model.COL_DESC)
-        col2 = gtk.TreeViewColumn('Include')
-        col2.set_clickable(True)
-        col2.set_resizable(True)
-        col2.set_min_width(50)
-        col2.set_max_width(50)
-        col2.set_sort_column_id(self.recipe_model.COL_INC)
-
-        self.tasks_tree.append_column(col)
-        self.tasks_tree.append_column(col1)
-        self.tasks_tree.append_column(col2)
-
-        cell = gtk.CellRendererText()
-        cell1 = gtk.CellRendererText()
-        cell2 = gtk.CellRendererToggle()
-        cell2.set_property('activatable', True)
-        cell2.connect("toggled", self.tasks_cell2_toggled_cb, self.tasks_tree)
-
-        col.pack_start(cell, True)
-        col1.pack_start(cell1, True)
-        col2.pack_end(cell2, True)
-
-        col.set_attributes(cell, text=self.recipe_model.COL_NAME)
-        col1.set_attributes(cell1, text=self.recipe_model.COL_DESC)
-        col2.set_attributes(cell2, active=self.recipe_model.COL_INC)
-
-        self.tasks_tree.show()
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
-        scroll.set_shadow_type(gtk.SHADOW_IN)
-        scroll.add(self.tasks_tree)
-        vbox.pack_start(scroll, True, True, 0)
-
-        hb = gtk.HBox(False, 0)
-        hb.show()
-        search = gtk.Entry()
-        search.show()
-        self.tasks_tree.set_search_entry(search)
-        hb.pack_end(search, False, False, 0)
-        label = gtk.Label("Search:")
-        label.show()
-        hb.pack_end(label, False, False, 6)
-
-        button = gtk.Button("Reset")
-        button.connect('clicked', self.reset_clicked_cb)
-        hb.pack_start(button, False, False, 0)
-
-        vbox.pack_start(hb, False, False, 0)
-
-        return vbox
-
-    def mltasks(self):
-        vbox = gtk.VBox(False, 6)
-        vbox.show()
-        self.mltasks_tree = gtk.TreeView()
-        self.mltasks_tree.set_headers_visible(True)
-        self.mltasks_tree.set_headers_clickable(False)
-        self.mltasks_tree.set_enable_search(True)
-        self.mltasks_tree.set_search_column(0)
-        self.mltasks_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
-
-        col = gtk.TreeViewColumn('Recipe Collection')
-        col.set_clickable(True)
-        col.set_resizable(True)
-        col.set_min_width(100)
-        col.set_max_width(250)
-        col.set_sort_column_id(self.recipe_model.COL_NAME)
-        col1 = gtk.TreeViewColumn('Description')
-        col1.set_clickable(True)
-        col1.set_resizable(True)
-        col1.set_min_width(100)
-        col1.set_max_width(200)
-        col1.set_sort_column_id(self.recipe_model.COL_DESC)
-        col2 = gtk.TreeViewColumn('Include')
-        col2.set_clickable(True)
-        col2.set_resizable(True)
-        col2.set_min_width(60)
-        col2.set_max_width(60)
-        col2.set_sort_column_id(self.recipe_model.COL_INC)
-
-        self.mltasks_tree.append_column(col)
-        self.mltasks_tree.append_column(col1)
-        self.mltasks_tree.append_column(col2)
-
-        cell = gtk.CellRendererText()
-        cell1 = gtk.CellRendererText()
-        cell2 = gtk.CellRendererToggle()
-        cell2.set_property('activatable', True)
-        cell2.connect("toggled", self.tasks_cell2_toggled_cb, self.mltasks_tree)
-
-        col.pack_start(cell, True)
-        col1.pack_start(cell1, True)
-        col2.pack_end(cell2, True)
-
-        col.set_attributes(cell, text=self.recipe_model.COL_NAME)
-        col1.set_attributes(cell1, text=self.recipe_model.COL_DESC)
-        col2.set_attributes(cell2, active=self.recipe_model.COL_INC)
-
-        self.mltasks_tree.show()
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
-        scroll.set_shadow_type(gtk.SHADOW_IN)
-        scroll.add(self.mltasks_tree)
-        vbox.pack_start(scroll, True, True, 0)
-
-        hb = gtk.HBox(False, 0)
-        hb.show()
-        search = gtk.Entry()
-        search.show()
-        self.mltasks_tree.set_search_entry(search)
-        hb.pack_end(search, False, False, 0)
-        label = gtk.Label("Search:")
-        label.show()
-        hb.pack_end(label, False, False, 6)
-
-        button = gtk.Button("Reset")
-        button.connect('clicked', self.reset_clicked_cb)
-        hb.pack_start(button, False, False, 0)
-
-        vbox.pack_start(hb, False, False, 0)
-
-        return vbox
 
     def show_binb_info(self, model, path, parent):
         it = model.get_iter(path)
@@ -853,30 +567,46 @@ class RecipeSelection (gtk.Window):
 
     def main(self, button):
         window = gtk.Dialog("Recipe List", None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
-        window.set_size_request(800, 600)
+        window.set_size_request(1000, 600)
         window.set_border_width(5)
 
-        table = gtk.Table(10, 10, True)
+        table = gtk.Table(10, 13, True)
         table.set_col_spacings(3)
         window.vbox.add(table)
 
-        ins = gtk.Notebook()
-        ins.set_show_tabs(True)
-        label = gtk.Label("Recipes")
-        ins.append_page(self.recipesaz(), tab_label=label)
-        label = gtk.Label("Recipe Collections")
-        ins.append_page(self.tasks(), tab_label=label)
+        # Left Part
+        self.ins = gtk.Notebook()
+        self.ins.set_show_tabs(False)
+        self.saz = {}
+        for tab, stuff in self.pages.items():
+            label = gtk.Label(tab)
+            columns = stuff[1:] # skip the first one: key for filter
+            toggled_id = len(columns) - 1
+            self.saz[tab] = HobSaz(columns, toggled_id, self.reset_clicked_cb, self.page_toggled_cbs[tab])
+            self.ins.append_page(self.saz[tab].vbox, tab_label=label)
+        self.ins.set_current_page(0)
+        table.attach(self.ins, 0, 10, 1, 10, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
 
-        label = gtk.Label("Multilib Recipes")
-        ins.append_page(self.mlrecipesaz(), tab_label=label)
-        label = gtk.Label("Multilib Recipe Collections")
-        ins.append_page(self.mltasks(), tab_label=label)
+        self.topbar = HobViewBar(self.ins)
+        table.attach(self.topbar.eventbox, 0, 10, 0, 1, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
 
-        ins.set_current_page(0)
-        table.attach(ins, 0, 7, 0, 10, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
+        for key, saz in self.saz.items():
+            saz.set_search_entry(self.topbar.search)
+
+        # Right Part
+        eventbox = gtk.EventBox()
+        eventbox.set_border_width(2)
+        style = eventbox.get_style().copy()
+        style.bg[gtk.STATE_NORMAL] = eventbox.get_colormap().alloc_color (HobColors.GRAY, False, False)
+        eventbox.set_style(style)
+        label = gtk.Label()
+        label.set_alignment(0.5, 0.5)
+        label.set_markup("<span font_desc='14'><i>Your Recipes to Build</i></span>")
+        eventbox.add(label)
+        table.attach(eventbox, 10, 13, 0, 1, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
 
         selections = self.selections()
-        table.attach(selections, 7, 10, 0, 10, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)        
+        table.attach(selections, 10, 13, 1, 10, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
 
         self.update_recipe_model()
 
