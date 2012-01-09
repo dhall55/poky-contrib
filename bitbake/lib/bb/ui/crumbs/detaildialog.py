@@ -19,20 +19,19 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import gtk
+from bb.ui.crumbs.hobcolors import HobColors
 
 class DetailDialog(gtk.Dialog):
     """
     A dialog widget to show "brought in by" info when a recipe/package is clicked.
     """
-    __bg_color__ = gtk.gdk.Color(15360, 15104, 14080) #black
-    __fg_color__ = gtk.gdk.Color("white")
 
     def __init__(self, title, content, parent=None):
         gtk.Dialog.__init__(self, title, parent, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, None)
 
         self.set_position(gtk.WIN_POS_MOUSE)
         self.set_resizable(False)
-        self.modify_bg(gtk.STATE_NORMAL, DetailDialog.__bg_color__)
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.DARK))
 
         hbox = gtk.HBox(False, 0)
         self.vbox.pack_start(hbox, expand=False, fill=False, padding=10)
@@ -40,7 +39,7 @@ class DetailDialog(gtk.Dialog):
         label = gtk.Label(content)
         label.set_alignment(0, 0)
         label.set_line_wrap(True)
-        label.modify_fg(gtk.STATE_NORMAL, DetailDialog.__fg_color__)
+        label.modify_fg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.WHITE))
 
         hbox.pack_start(label, expand=False, fill=False, padding=10)
 

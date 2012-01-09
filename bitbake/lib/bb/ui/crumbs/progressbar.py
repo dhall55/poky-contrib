@@ -18,7 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import gtk
-from bb.ui.crumbs.runningbuild import Colors
+from bb.ui.crumbs.hobcolors import HobColors
 
 class HobProgressBar (gtk.ProgressBar):
     def __init__(self):
@@ -28,11 +28,11 @@ class HobProgressBar (gtk.ProgressBar):
 
     def set_style(self, status):
         rcstyle = gtk.RcStyle()
-        rcstyle.fg[2] = gtk.gdk.Color(0, 0, 0)
+        rcstyle.fg[2] = gtk.gdk.Color(HobColors.BLACK)
         if status:
-            rcstyle.bg[3] = gtk.gdk.Color(Colors.RUNNING)
+            rcstyle.bg[3] = gtk.gdk.Color(HobColors.RUNNING)
         else:
-            rcstyle.bg[3] = gtk.gdk.Color(Colors.ERROR)
+            rcstyle.bg[3] = gtk.gdk.Color(HobColors.ERROR)
         self.modify_style(rcstyle)
         self.set_size_request(1000, 35)
 

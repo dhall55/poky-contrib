@@ -25,6 +25,7 @@ import gobject
 import re
 from bb.ui.crumbs.hobwidget import HobWidget
 from bb.ui.crumbs.detaildialog import DetailDialog
+from bb.ui.crumbs.hobcolors import HobColors
 
 class PackageListModel(gtk.TreeStore):
     """
@@ -486,9 +487,12 @@ class PackageSelection (gtk.Window):
 
     def insert_text_with_tag(self, package_buffer, it, text, path, highlight=False):
         if highlight:
-            tag = package_buffer.create_tag(None, foreground="blue", background="yellow")
+            tag = package_buffer.create_tag(None,
+                      foreground=gtk.gdk.Color(HobColors.DARK),
+                      background=gtk.gdk.Color(HobColors.ORANGE))
         else:
-            tag = package_buffer.create_tag(None, foreground="blue")
+            tag = package_buffer.create_tag(None,
+                      foreground=gtk.gdk.Color(HobColors.DARK))
         tag.set_data("path", path)
         package_buffer.insert_with_tags(it, text, tag)
 

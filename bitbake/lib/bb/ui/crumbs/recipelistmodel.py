@@ -26,6 +26,7 @@ import re
 import pango
 from bb.ui.crumbs.hobwidget import HobWidget
 from bb.ui.crumbs.detaildialog import DetailDialog
+from bb.ui.crumbs.hobcolors import HobColors
 
 class RecipeListModel(gtk.ListStore):
     """
@@ -799,9 +800,12 @@ class RecipeSelection (gtk.Window):
 
     def insert_text_with_tag(self, recipe_buffer, it, text, path, highlight=False):
         if highlight:
-            tag = recipe_buffer.create_tag(None, foreground="blue", background="yellow")
+            tag = recipe_buffer.create_tag(None,
+                      foreground=gtk.gdk.Color(HobColors.DARK),
+                      background=gtk.gdk.Color(HobColors.ORANGE))
         else:
-            tag = recipe_buffer.create_tag(None, foreground="blue")
+            tag = recipe_buffer.create_tag(None,
+                      foreground=gtk.gdk.Color(HobColors.DARK))
         tag.set_data("path", path)
         recipe_buffer.insert_with_tags(it, text, tag)
 

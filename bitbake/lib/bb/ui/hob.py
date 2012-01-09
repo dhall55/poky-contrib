@@ -44,6 +44,7 @@ from bb.ui.crumbs.progressbar import HobProgressBar
 from bb.ui.crumbs.progressbar import Case
 from bb.ui.crumbs.progressbar import ComplexHobProgressBar
 from bb.ui.crumbs.hobwidget import HobWidget
+from bb.ui.crumbs.hobcolors import HobColors
 import xmlrpclib
 import logging
 import Queue
@@ -54,7 +55,6 @@ import string
 class MainWindow (gtk.Window):
 
     __dummy_machine__ = "--select a machine--"
-    __build_image_color__ = gtk.gdk.Color(62976, 41984, 33280) #orange
 
     def __init__(self, split_model, recipemodel, packagemodel, handler, params):
         gtk.Window.__init__(self)
@@ -735,9 +735,9 @@ You can build these images as they are, or customize them to your specific needs
         hbox_button.show_all()
         button = gtk.Button("Build Image")
         button.set_size_request(150, 50)
-        button.modify_bg(gtk.STATE_NORMAL, MainWindow.__build_image_color__)
-        button.modify_bg(gtk.STATE_PRELIGHT, MainWindow.__build_image_color__)
-        button.modify_bg(gtk.STATE_SELECTED, MainWindow.__build_image_color__)
+        button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.LIGHT_ORANGE))
+        button.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color(HobColors.LIGHT_ORANGE))
+        button.modify_bg(gtk.STATE_SELECTED, gtk.gdk.Color(HobColors.LIGHT_ORANGE))
         button.set_tooltip_text("Build image to get your target image")
         button.connect("clicked", self.generate_image)
         hbox_button.pack_end(button, expand=False, fill=False)
