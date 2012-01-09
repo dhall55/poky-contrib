@@ -141,8 +141,13 @@ python do_populate_lic() {
     import shutil
     import oe.license
 
-    # All the license types for the package
-    license_types = d.getVar('LICENSE', True)
+    pn = d.getVar('PN', True)
+    # check to see if the package has a license
+    # if not, use LICENSE
+    if d.getVar('LICENSE_' + pn, True):
+        license_types = d.getVar('LICENSE_' + pn, True)
+    else:
+        license_types = d.getVar('LICENSE', True)
     # All the license files for the package
     lic_files = d.getVar('LIC_FILES_CHKSUM', True)
     pn = d.getVar('PN', True)
