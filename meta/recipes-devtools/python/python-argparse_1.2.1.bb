@@ -1,6 +1,6 @@
 DESCRIPTION = "Python command-line parsing library"
 SECTION = "devel/python"
-LICENSE = "PSF"
+LICENSE = "Python-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=09d08bb5b7047e2688ea3faad6408aa8"
 SRCNAME = argparse
 PR = "r1"
