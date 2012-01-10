@@ -69,7 +69,9 @@ SPDXLICENSEMAP[AFLv2] = "AFL-2.0"
 SPDXLICENSEMAP[AFLv1] = "AFL-1.2"
 
 #Other variations
-SPDXLICENSEMAP[EPLv1.0] = "EPL-1.0"
+SPDXLICENSEMAP[AFL2.1] = "AFL-2.1"
+SPDXLICENSEMAP[EPLv1.0] = "EPL-1.1"
+SPDXLICENSEMAP[PSFv2] = "Python-2.0"
 
 license_create_manifest() {
     mkdir -p ${LICENSE_DIRECTORY}/${IMAGE_NAME}
@@ -129,7 +131,6 @@ license_create_manifest() {
     fi
 
 }
-
 
 python do_populate_lic() {
     """
