@@ -913,15 +913,13 @@ def main (server = None, eventHandler = None):
     params["sstatedir"] = server.runCommand(["getVariable", "SSTATE_DIR"]) or ""
     params["sstatemirror"] = server.runCommand(["getVariable", "SSTATE_MIRROR"]) or ""
 
-    num_threads = server.runCommand(["getDefaultNumOfThreads"])
+    num_threads = server.runCommand(["getCpuCount"])
     if not num_threads:
         num_threads = 1
-    num_threads = int(num_threads)
-
-    max_threads = server.runCommand(["getMaxNumOfThreads"])
-    if not max_threads:
-        max_threads = 1
-    max_threads = int(max_threads)
+        max_threads = 65536
+    else:
+        num_threads = int(num_threads)
+        max_threads = 16 * num_threads
     params["max_threads"] = max_threads
 
     bbthread = server.runCommand(["getVariable", "BB_NUMBER_THREADS"])
@@ -929,8 +927,6 @@ def main (server = None, eventHandler = None):
         bbthread = num_threads
     else:
         bbthread = int(bbthread)
-        if bbthread > max_threads:
-            bbthread = max_threads
     params["bbthread"] = bbthread
 
     pmake = server.runCommand(["getVariable", "PARALLEL_MAKE"])
@@ -938,8 +934,6 @@ def main (server = None, eventHandler = None):
         pmake = num_threads
     else:
         pmake = int(pmake.lstrip("-j "))
-        if pmake > max_threads:
-            pmake = max_threads
     params["pmake"] = pmake
 
     image_addr = server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"]) or ""
