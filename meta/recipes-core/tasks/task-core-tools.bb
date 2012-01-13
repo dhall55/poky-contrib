@@ -29,6 +29,7 @@ KEXECTOOLS ?= "kexec-tools"
 KEXECTOOLS_mips ?= ""
 KEXECTOOLS_mipsel ?= ""
 KEXECTOOLS_powerpc ?= ""
+KEXECTOOLS_e5500-64b ?= ""
 
 RDEPENDS_task-core-tools-debug = "\
     gdb \
