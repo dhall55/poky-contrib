@@ -34,3 +34,9 @@ BBCLASSEXTEND = "native nativesdk"
 do_configure_prepend() {
 	mkdir -p po
 }
+
+do_install_append_virtclass-native() {
+	install -m 0755  ${D}${bindir}/guile ${D}${bindir}/${HOST_SYS}-guile
+}
+
+export GUILE_FOR_BUILD=${BUILD_SYS}-guile
