@@ -31,3 +31,4 @@ PR = "r0"
 S = "${WORKDIR}/bdwgc"
 
 inherit autotools
+BBCLASSEXTEND = "native nativesdk"
