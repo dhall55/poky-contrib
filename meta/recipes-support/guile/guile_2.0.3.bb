@@ -13,7 +13,13 @@ SECTION = "devel"
 LICENSE = "GPLv3"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d32239bcb673463ab874e80d47fae504" 
 
-SRC_URI = "${GNU_MIRROR}/guile/guile-${PV}.tar.gz"
+SRC_URI = "${GNU_MIRROR}/guile/guile-${PV}.tar.gz \
+           file://debian/0001-Fix-the-SRFI-60-copy-bit-documentation.patch \
+           file://debian/0002-Define-_GNU_SOURCE-to-fix-the-GNU-kFreeBSD-build.patch \
+           file://debian/0003-Include-gc.h-rather-than-gc-gc_version.h-in-pthread-.patch \
+           file://opensuse/guile-64bit.patch \
+           file://opensuse/guile-turn-off-gc-test.patch \
+           "
 
 SRC_URI[md5sum] = "3b8b4e1083037f29d2c4704a6d55f2a8"
 SRC_URI[sha256sum] = "a53b21159befe3e89bbaca71e9e62cf00af0f49fcca297c407944b988d59eb08"
@@ -22,7 +28,8 @@ PR = "r0"
 
 inherit autotools gettext
 
-DEPENDS = "libunistring-native bdwgc-native gmp-native"
+DEPENDS = "libunistring bdwgc gmp"
+BBCLASSEXTEND = "native nativesdk"
 
 do_configure_prepend() {
 	mkdir -p po
