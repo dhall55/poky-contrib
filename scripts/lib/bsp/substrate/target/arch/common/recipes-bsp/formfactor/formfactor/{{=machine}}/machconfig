@@ -1,0 +1,5 @@
+# Assume a USB mouse and keyboard are connected
+{{ input type:"boolean" name:"touchscreen" msg:"Does your BSP have a touchscreen?" }}
+HAVE_TOUCHSCREEN={{=touchscreen}}
+{{ input type:"boolean" name:"keyboard" msg:"Does your BSP have a keyboard?" }}
+HAVE_KEYBOARD={{=keyboard}}
