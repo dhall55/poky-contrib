@@ -1,0 +1,25 @@
+define KMACHINE {{=machine}}
+define KTYPE standard
+{{ if qemuarch == "x86": }}
+define KARCH i386
+{{ if qemuarch == "x86_64": }}
+define KARCH x86_64
+{{ if qemuarch == "arm": }}
+define KARCH arm
+{{ if qemuarch == "powerpc": }}
+define KARCH powerpc
+{{ if qemuarch == "mips": }}
+define KARCH mips
+
+{{ if qemuarch == "x86": }}
+scc_leaf bsp/common-pc/common-pc-standard {{=machine}}
+{{ if qemuarch == "x86_64": }}
+scc_leaf bsp/common-pc/common-pc-64-standard {{=machine}}
+{{ if qemuarch == "arm": }}
+scc_leaf ktypes/standard/arm-versatile-926ejs {{=machine}}
+{{ if qemuarch == "powerpc": }}
+scc_leaf ktypes/standard/qemu-ppc32 {{=machine}}
+{{ if qemuarch == "mips": }}
+scc_leaf ktypes/standard/mti-malta32-be {{=machine}}
+
+include {{=machine}}.scc
