@@ -2,13 +2,12 @@ DESCRIPTION = "Package maintenance system for Debian."
 LICENSE = "GPLv2.0+"
 SECTION = "base"
 
-INC_PR = "r15"
+INC_PR = "r16"
 
 SRC_URI = "${DEBIAN_MIRROR}/main/d/dpkg/dpkg_${PV}.tar.bz2 \
            file://ignore_extra_fields.patch"
-
-DEPENDS = "zlib bzip2 perl"
-DEPENDS_virtclass-native = "bzip2-native zlib-native virtual/update-alternatives-native gettext-native perl-native-runtime"
+DEPENDS = "zlib bzip2"
+DEPENDS_virtclass-native = "bzip2-native zlib-native virtual/update-alternatives-native"
 RDEPENDS_${PN} = "${VIRTUAL-RUNTIME_update-alternatives}"
 RDEPENDS_${PN}_virtclass-native = ""
 
@@ -24,8 +23,9 @@ PERL_LIBDIR_virtclass-native = "${libdir}/perl-native/perl"
 EXTRA_OECONF = "--without-static-progs \
 		--without-dselect \
 		--with-start-stop-daemon \
+		--without-install-info \
 		--with-zlib \
-		--with-bz2lib \
+		--with-bz2 \
 		--without-selinux \
 		--without-sgml-doc"
 
