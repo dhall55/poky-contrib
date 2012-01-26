@@ -1523,7 +1523,6 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
         self.sq_deps = []
         self.sq_revdeps = sq_revdeps_squash
-        self.sq_revdeps2 = copy.deepcopy(self.sq_revdeps)
 
         for task in xrange(len(self.sq_revdeps)):
             self.sq_deps.append(set())
@@ -1531,9 +1530,10 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             for dep in self.sq_revdeps[task]:
                 self.sq_deps[dep].add(task)
 
-        for task in xrange(len(self.sq_revdeps)):
-            if len(self.sq_revdeps[task]) == 0:
+        for task in xrange(len(self.sq_deps)):
+            if len(self.sq_deps[task]) == 0:
                 self.runq_buildable[task] = 1
+        self.sq_deps2 = copy.deepcopy(self.sq_deps)
 
         if self.rq.hashvalidate:
             sq_hash = []
@@ -1543,7 +1543,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             sq_task = []
             noexec = []
             stamppresent = []
-            for task in xrange(len(self.sq_revdeps)):
+            for task in xrange(len(self.sq_deps)):
                 realtask = self.rqdata.runq_setscene[task]
                 fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realtask]]
                 taskname = self.rqdata.runq_task[realtask]
@@ -1574,7 +1574,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             for v in valid:
                 valid_new.append(sq_task[v])
 
-            for task in xrange(len(self.sq_revdeps)):
+            for task in xrange(len(self.sq_deps)):
                 if task not in valid_new and task not in noexec:
                     realtask = self.rqdata.runq_setscene[task]
                     logger.debug(2, 'No package found, so skipping setscene task %s',
@@ -1586,9 +1586,9 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.rq.state = runQueueSceneRun
 
     def scenequeue_updatecounters(self, task):
-        for dep in self.sq_deps[task]:
-            self.sq_revdeps2[dep].remove(task)
-            if len(self.sq_revdeps2[dep]) == 0:
+        for dep in self.sq_revdeps[task]:
+            self.sq_deps2[dep].remove(task)
+            if len(self.sq_deps2[dep]) == 0:
                 self.runq_buildable[dep] = 1
 
     def task_completeoutright(self, task):
