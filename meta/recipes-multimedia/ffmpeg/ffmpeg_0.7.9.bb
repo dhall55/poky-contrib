@@ -2,7 +2,7 @@ require ffmpeg.inc
 
 #LICENSE = "LGPLv2.1+"
 LICENSE = "LGPLv2.1+ & GPLv2+"
-PR = "${INC_PR}.1"
+PR = "${INC_PR}.2"
 
 SRC_URI = "http://ffmpeg.org/releases/ffmpeg-${PV}.tar.bz2"
 SRC_URI[md5sum] = "e4d0c32c0a7cc763922ee8c34e688b5a"
@@ -27,6 +27,7 @@ EXTRA_OECONF = " \
         --enable-pthreads \
         --enable-shared \
         --enable-swscale \
+        --enable-vaapi \
         --extra-cflags="${TARGET_CFLAGS} ${HOST_CC_ARCH}${TOOLCHAIN_OPTIONS}" \
         --extra-ldflags="${TARGET_LDFLAGS}" \
         --sysroot="${STAGING_DIR_TARGET}" \
