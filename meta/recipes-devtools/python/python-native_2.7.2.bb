@@ -1,6 +1,6 @@
 require python.inc
 DEPENDS = "openssl-native bzip2-full-native zlib-native readline-native sqlite3-native"
-PR = "${INC_PR}.4"
+PR = "${INC_PR}.5"
 
 SRC_URI += "file://04-default-is-optimized.patch \
            file://05-enable-ctypes-cross-build.patch \
@@ -27,6 +27,7 @@ EXTRA_OEMAKE = '\
   LIBC="" \
   STAGING_LIBDIR=${STAGING_LIBDIR_NATIVE} \
   STAGING_INCDIR=${STAGING_INCDIR_NATIVE} \
+  MACHDEP=linux2 \
 '
 
 do_configure_prepend() {

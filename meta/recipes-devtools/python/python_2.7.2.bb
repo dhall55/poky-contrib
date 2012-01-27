@@ -1,7 +1,7 @@
 require python.inc
 DEPENDS = "python-native db gdbm openssl readline sqlite3 zlib"
 DEPENDS_sharprom = "python-native db readline zlib gdbm openssl"
-PR = "${INC_PR}.6.nk1"
+PR = "${INC_PR}.6.nk2"
 
 DISTRO_SRC_URI ?= "file://sitecustomize.py"
 DISTRO_SRC_URI_linuxstdbase = ""
@@ -25,6 +25,9 @@ SRC_URI += "\
 "
 
 S = "${WORKDIR}/Python-${PV}"
+EXTRA_OEMAKE += ' \
+        MACHDEP=linux2 \
+       '
 
 inherit autotools
 
