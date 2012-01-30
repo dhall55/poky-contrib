@@ -14,6 +14,7 @@ SRC_URI += "file://04-default-is-optimized.patch \
            file://multilib.patch \
            file://add-md5module-support.patch \
            file://python_multilib_fix.patch \
+           file://multilib_fix_3.patch \
            "
 S = "${WORKDIR}/Python-${PV}"
 

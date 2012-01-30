@@ -22,6 +22,7 @@ SRC_URI += "\
   file://add-md5module-support.patch \
   file://host_include_contamination.patch \
   file://python_multilib_fix.patch \
+  file://multilib_fix_3.patch \
 "
 
 S = "${WORKDIR}/Python-${PV}"
