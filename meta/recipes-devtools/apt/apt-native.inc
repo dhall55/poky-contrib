@@ -1,7 +1,7 @@
 require apt.inc
 inherit native
 
-DEPENDS += "dpkg-native gettext-native"
+DEPENDS += "dpkg-native curl-native db-native zlib-native"
 PACKAGES = ""
 USE_NLS = "yes"
 
