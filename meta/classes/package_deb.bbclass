@@ -14,45 +14,45 @@ python package_deb_fn () {
     d.setVar('PKGFN', d.getVar('PKG'))
 }
 
-addtask package_deb_install
-python do_package_deb_install () {
-    pkg = d.getVar('PKG', True)
-    pkgfn = d.getVar('PKGFN', True)
-    rootfs = d.getVar('IMAGE_ROOTFS', True)
-    debdir = d.getVar('DEPLOY_DIR_DEB', True)
-    apt_config = bb.data.expand('${STAGING_ETCDIR_NATIVE}/apt/apt.conf', d)
-    stagingbindir = d.getVar('STAGING_BINDIR_NATIVE', True)
-    tmpdir = d.getVar('TMPDIR', True)
+# addtask package_deb_install
+# python do_package_deb_install () {
+#     pkg = d.getVar('PKG', True)
+#     pkgfn = d.getVar('PKGFN', True)
+#     rootfs = d.getVar('IMAGE_ROOTFS', True)
+#     debdir = d.getVar('DEPLOY_DIR_DEB', True)
+#     apt_config = bb.data.expand('${STAGING_ETCDIR_NATIVE}/apt/apt.conf', d)
+#     stagingbindir = d.getVar('STAGING_BINDIR_NATIVE', True)
+#     tmpdir = d.getVar('TMPDIR', True)
 
-    if None in (pkg,pkgfn,rootfs):
-        raise bb.build.FuncFailed("missing variables (one or more of PKG, PKGFN, IMAGE_ROOTFS)")
-    try:
-        if not os.exists(rootfs):
-            os.makedirs(rootfs)
-        os.chdir(rootfs)
-    except OSError:
-        import sys
-        raise bb.build.FuncFailed(str(sys.exc_value))
+#     if None in (pkg,pkgfn,rootfs):
+#         raise bb.build.FuncFailed("missing variables (one or more of PKG, PKGFN, IMAGE_ROOTFS)")
+#     try:
+#         if not os.exists(rootfs):
+#             os.makedirs(rootfs)
+#         os.chdir(rootfs)
+#     except OSError:
+#         import sys
+#         raise bb.build.FuncFailed(str(sys.exc_value))
 
-    # update packages file
-    (exitstatus, output) = commands.getstatusoutput('dpkg-scanpackages %s > %s/Packages' % (debdir, debdir))
-    if (exitstatus != 0 ):
-        raise bb.build.FuncFailed(output)
+#     # update packages file
+#     (exitstatus, output) = commands.getstatusoutput('dpkg-scanpackages %s > %s/Packages' % (debdir, debdir))
+#     if (exitstatus != 0 ):
+#         raise bb.build.FuncFailed(output)
 
-    f = open(os.path.join(tmpdir, "stamps", "DEB_PACKAGE_INDEX_CLEAN"), "w")
-    f.close()
+#     f = open(os.path.join(tmpdir, "stamps", "DEB_PACKAGE_INDEX_CLEAN"), "w")
+#     f.close()
 
-    # create an appropriate environment for apt
-    apt_config_env = os.getenv('APT_CONFIG')
-    apt_config_env['APT_CONFIG'] = apt_config
-    path = "%s:%s" % (stagingbindir, apt_config_env['PATH'])
-    apt_config_env['PATH'] = path
+#     # create an appropriate environment for apt
+#     apt_config_env = os.getenv('APT_CONFIG')
+#     apt_config_env['APT_CONFIG'] = apt_config
+#     path = "%s:%s" % (stagingbindir, apt_config_env['PATH'])
+#     apt_config_env['PATH'] = path
 
-    # install package
-    from bb.process import Popen
-    Popen(['apt-get', 'update'], env=apt_config_env)
-    Popen(['apt-get', 'install', '-y', pkgfn], env=apt_config_env)
-}
+#     # install package
+#     from bb.process import Popen
+#     Popen(['apt-get', 'update'], env=apt_config_env)
+#     Popen(['apt-get', 'install', '-y', pkgfn], env=apt_config_env)
+# }
 
 #
 # Update the Packages index files in ${DEPLOY_DIR_DEB}
@@ -76,7 +76,7 @@ package_update_index_deb () {
 			continue;
 		fi
 		cd ${DEPLOY_DIR_DEB}/$arch
-		dpkg-scanpackages . | bzip2 > Packages.bz2
+		dpkg-scanpackages . | gzip > Packages.gz
 		echo "Label: $arch" > Release
 	done
 }
@@ -200,30 +200,17 @@ python do_package_deb () {
     import textwrap
 
     workdir = d.getVar('WORKDIR', True)
-    if not workdir:
-        bb.error("WORKDIR not defined, unable to package")
-        return
-
     outdir = d.getVar('PKGWRITEDIRDEB', True)
-    if not outdir:
-        bb.error("PKGWRITEDIRDEB not defined, unable to package")
-        return
+    tmpdir = d.getVar('TMPDIR', True)
+    pkgdest = d.getVar('PKGDEST', True)
 
     packages = d.getVar('PACKAGES', True)
-    if not packages:
+    if not packages or packages == '':
         bb.debug(1, "PACKAGES not defined, nothing to package")
         return
 
-    tmpdir = d.getVar('TMPDIR', True)
-
     if os.access(os.path.join(tmpdir, "stamps", "DEB_PACKAGE_INDEX_CLEAN"),os.R_OK):
         os.unlink(os.path.join(tmpdir, "stamps", "DEB_PACKAGE_INDEX_CLEAN"))
-
-    if packages == []:
-        bb.debug(1, "No packages; nothing to do")
-        return
-
-    pkgdest = d.getVar('PKGDEST', True)
 
     for pkg in packages.split():
         localdata = bb.data.createCopy(d)
@@ -242,8 +229,8 @@ python do_package_deb () {
 
         bb.data.update_data(localdata)
         basedir = os.path.join(os.path.dirname(root))
-
-        pkgoutdir = os.path.join(outdir, localdata.getVar('PACKAGE_ARCH', True))
+	arch = localdata.getVar('PACKAGE_ARCH', True)
+        pkgoutdir = os.path.join(outdir, arch)
         bb.mkdirhier(pkgoutdir)
 
         os.chdir(root)
@@ -337,6 +324,7 @@ python do_package_deb () {
         rprovides = bb.utils.explode_dep_versions(localdata.getVar("RPROVIDES", True) or "")
         rreplaces = bb.utils.explode_dep_versions(localdata.getVar("RREPLACES", True) or "")
         rconflicts = bb.utils.explode_dep_versions(localdata.getVar("RCONFLICTS", True) or "")
+
         if rdepends:
             ctrlfile.write("Depends: %s\n" % unicode(bb.utils.join_deps(rdepends)))
         if rsuggests:
