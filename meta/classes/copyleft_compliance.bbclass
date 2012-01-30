@@ -16,6 +16,22 @@ COPYLEFT_LICENSE_EXCLUDE ?= 'CLOSED Proprietary'
 COPYLEFT_LICENSE_EXCLUDE[type] = 'list'
 COPYLEFT_LICENSE_INCLUDE[doc] = 'Space separated list of globs which exclude licenses'
 
+COPYLEFT_RECIPE_TYPE ?= '${@copyleft_recipe_type(d)}'
+COPYLEFT_RECIPE_TYPE[doc] = 'The "type" of the current recipe (e.g. target, native, cross)'
+
+COPYLEFT_RECIPE_TYPES ?= 'target'
+COPYLEFT_RECIPE_TYPES[type] = 'list'
+COPYLEFT_RECIPE_TYPES[doc] = 'Space separated list of recipe types to include'
+
+COPYLEFT_AVAILABLE_RECIPE_TYPES = 'target native nativesdk cross crosssdk cross-canadian'
+COPYLEFT_AVAILABLE_RECIPE_TYPES[type] = 'list'
+COPYLEFT_AVAILABLE_RECIPE_TYPES[doc] = 'Space separated list of available recipe types'
+
+def copyleft_recipe_type(d):
+    for recipe_type in oe.data.typed_value('COPYLEFT_AVAILABLE_RECIPE_TYPES', d):
+        if oe.utils.inherits(d, recipe_type):
+            return recipe_type
+    return 'target'
 
 def copyleft_should_include(d):
     """Determine if this recipe's sources should be deployed for compliance"""
@@ -23,43 +39,35 @@ def copyleft_should_include(d):
     import oe.license
     from fnmatch import fnmatchcase as fnmatch
 
-    if oe.utils.inherits(d, 'native', 'nativesdk', 'cross', 'crossdk'):
-        # not a target recipe
-        return
+    recipe_type = d.getVar('COPYLEFT_RECIPE_TYPE', True)
+    if recipe_type not in oe.data.typed_value('COPYLEFT_RECIPE_TYPES', d):
+        return False, 'recipe type "%s" is excluded' % recipe_type
 
     include = oe.data.typed_value('COPYLEFT_LICENSE_INCLUDE', d)
     exclude = oe.data.typed_value('COPYLEFT_LICENSE_EXCLUDE', d)
 
-    def include_license(license):
-        if any(fnmatch(license, pattern) for pattern in exclude):
-            return False
-        if any(fnmatch(license, pattern) for pattern in include):
-            return True
-        return False
-
-    def choose_licenses(a, b):
-        """Select the left option in an OR if all its licenses are to be included"""
-        if all(include_license(lic) for lic in a):
-            return a
-        else:
-            return b
-
     try:
-        licenses = oe.license.flattened_licenses(d.getVar('LICENSE', True), choose_licenses)
-    except oe.license.InvalidLicense as exc:
+        is_included, excluded = oe.license.is_included(d.getVar('LICENSE', True), include, exclude)
+    except oe.license.LicenseError as exc:
         bb.fatal('%s: %s' % (d.getVar('PF', True), exc))
-    except SyntaxError:
-        bb.warn("%s: Failed to parse it's LICENSE field." % (d.getVar('PF', True)))
-
-    return all(include_license(lic) for lic in licenses)
+    else:
+        if is_included:
+            return True, None
+        else:
+            return False, 'recipe has excluded licenses: %s' % ', '.join(excluded)
 
 python do_prepare_copyleft_sources () {
     """Populate a tree of the recipe sources and emit patch series files"""
     import os.path
     import shutil
 
-    if not copyleft_should_include(d):
+    p = d.getVar('P', True)
+    included, reason = copyleft_should_include(d)
+    if not included:
+        bb.debug(1, 'copyleft: %s is excluded: %s' % (p, reason))
         return
+    else:
+        bb.debug(1, 'copyleft: %s is included' % p)
 
     sources_dir = d.getVar('COPYLEFT_SOURCES_DIR', 1)
     src_uri = d.getVar('SRC_URI', 1).split()

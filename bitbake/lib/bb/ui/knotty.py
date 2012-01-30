@@ -64,6 +64,12 @@ def new_progress(msg, maxval):
     else:
         return NonInteractiveProgress(msg, maxval)
 
+def pluralise(singular, plural, qty):
+    if(qty == 1):
+        return singular % qty
+    else:
+        return plural % qty
+
 def main(server, eventHandler):
 
     # Get values of variables which control our output
@@ -105,6 +111,9 @@ def main(server, eventHandler):
     cacheprogress = None
     shutdown = 0
     return_value = 0
+    errors = 0
+    warnings = 0
+    taskfailures = []
     while True:
         try:
             event = eventHandler.waitEvent(0.25)
@@ -123,13 +132,15 @@ def main(server, eventHandler):
 
             if isinstance(event, logging.LogRecord):
                 if event.levelno >= format.ERROR:
+                    errors = errors + 1
                     return_value = 1
+                elif event.levelno == format.WARNING:
+                    warnings = warnings + 1
                 # For "normal" logging conditions, don't show note logs from tasks
                 # but do show them if the user has changed the default log level to 
                 # include verbose/debug messages
-                #if logger.getEffectiveLevel() > format.VERBOSE:
                 if event.taskpid != 0 and event.levelno <= format.NOTE:
-                        continue
+                    continue
                 logger.handle(event)
                 continue
 
@@ -138,7 +149,7 @@ def main(server, eventHandler):
                 logfile = event.logfile
                 if logfile and os.path.exists(logfile):
                     print("ERROR: Logfile of failure stored in: %s" % logfile)
-                    if 1 or includelogs:
+                    if includelogs and not event.errprinted:
                         print("Log data follows:")
                         f = open(logfile, "r")
                         lines = []
@@ -208,6 +219,7 @@ def main(server, eventHandler):
                 continue
             if isinstance(event, bb.event.NoProvider):
                 return_value = 1
+                errors = errors + 1
                 if event._runtime:
                     r = "R"
                 else:
@@ -235,6 +247,7 @@ def main(server, eventHandler):
                 continue
 
             if isinstance(event, bb.runqueue.runQueueTaskFailed):
+                taskfailures.append(event.taskstring)
                 logger.error("Task %s (%s) failed with exit code '%s'",
                              event.taskid, event.taskstring, event.exitcode)
                 continue
@@ -267,4 +280,20 @@ def main(server, eventHandler):
                 server.runCommand(["stateShutdown"])
             shutdown = shutdown + 1
             pass
+
+    summary = ""
+    if taskfailures:
+        summary += pluralise("\nSummary: %s task failed:",
+                             "\nSummary: %s tasks failed:", len(taskfailures))
+        for failure in taskfailures:
+            summary += "\n  %s" % failure
+    if warnings:
+        summary += pluralise("\nSummary: There was %s WARNING message shown.",
+                             "\nSummary: There were %s WARNING messages shown.", warnings)
+    if return_value:
+        summary += pluralise("\nSummary: There was %s ERROR message shown, returning a non-zero exit code.",
+                             "\nSummary: There were %s ERROR messages shown, returning a non-zero exit code.", errors)
+    if summary:
+        print(summary)
+
     return return_value

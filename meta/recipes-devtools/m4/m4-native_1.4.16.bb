@@ -1,4 +1,5 @@
-require m4_${PV}.bb
+require m4-${PV}.inc
+
 inherit native
 
 INHIBIT_AUTOTOOLS_DEPS = "1"

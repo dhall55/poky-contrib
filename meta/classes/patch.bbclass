@@ -105,6 +105,8 @@ def should_apply(parm, d):
 
 	return True, None
 
+should_apply[vardepsexclude] = "DATE SRCDATE"
+
 python patch_do_patch() {
 	import oe.patch
 
@@ -153,9 +155,12 @@ python patch_do_patch() {
 			patchset.Import({"file":local, "strippath": parm['striplevel']}, True)
 		except Exception as exc:
 			bb.fatal(str(exc))
-		resolver.Resolve()
+		try:
+			resolver.Resolve()
+		except bb.BBHandledException as e:
+			bb.fatal(str(e))
 }
-patch_do_patch[vardepsexclude] = "DATE SRCDATE PATCHRESOLVE"
+patch_do_patch[vardepsexclude] = "PATCHRESOLVE"
 
 addtask patch after do_unpack
 do_patch[dirs] = "${WORKDIR}"

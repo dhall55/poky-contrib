@@ -158,7 +158,7 @@ python buildhistory_emit_pkghistory() {
 			last_pr = lastversion.pr
 			r = bb.utils.vercmp((pe, pv, pr), (last_pe, last_pv, last_pr))
 			if r < 0:
-				bb.fatal("Package version for package %s went backwards which would break package feeds from (%s:%s-%s to %s:%s-%s)" % (pkg, last_pe, last_pv, last_pr, pe, pv, pr))
+				bb.error("Package version for package %s went backwards which would break package feeds from (%s:%s-%s to %s:%s-%s)" % (pkg, last_pe, last_pv, last_pr, pe, pv, pr))
 
 		pkginfo = PackageInfo(pkg)
 		pkginfo.pe = pe
@@ -182,19 +182,8 @@ python buildhistory_emit_pkghistory() {
 
 		write_pkghistory(pkginfo, d)
 
-		if lastversion:
-			check_pkghistory(pkginfo, lastversion)
-
 		write_latestlink(pkg, pe, pv, pr, d)
 }
-
-
-def check_pkghistory(pkginfo, lastversion):
-
-	bb.debug(2, "Checking package history")
-	# RDEPENDS removed?
-	# PKG changed?
-	# Each file list of each package for file removals?
 
 
 def write_recipehistory(rcpinfo, d):
@@ -323,6 +312,14 @@ buildhistory_get_imageinfo() {
 	# This awk script is somewhat messy, but handles where the size is not printed for device files under pseudo
 	( cd ${IMAGE_ROOTFS} && find . -ls | awk '{ if ( $7 ~ /[0-9]/ ) printf "%s %10-s %10-s %10s %s %s %s\n", $3, $5, $6, $7, $11, $12, $13 ; else printf "%s %10-s %10-s %10s %s %s %s\n", $3, $5, $6, 0, $10, $11, $12 }' > ${BUILDHISTORY_DIR_IMAGE}/files-in-image.txt )
 
+	# Record some machine-readable meta-information about the image
+	echo -n > ${BUILDHISTORY_DIR_IMAGE}/image-info.txt
+	cat >> ${BUILDHISTORY_DIR_IMAGE}/image-info.txt <<END
+${@buildhistory_get_imagevars(d)}
+END
+	imagesize=`du -ks ${IMAGE_ROOTFS} | awk '{ print $1 }'`
+	echo "IMAGESIZE = $imagesize" >> ${BUILDHISTORY_DIR_IMAGE}/image-info.txt
+
 	# Add some configuration information
 	echo "${MACHINE}: ${IMAGE_BASENAME} configured for ${DISTRO} ${DISTRO_VERSION}" > ${BUILDHISTORY_DIR_IMAGE}/build-id
 
@@ -341,6 +338,16 @@ def buildhistory_get_layers(d):
 	return layertext
 
 
+def buildhistory_get_imagevars(d):
+	imagevars = "DISTRO DISTRO_VERSION USER_CLASSES IMAGE_CLASSES IMAGE_FEATURES IMAGE_LINGUAS IMAGE_INSTALL BAD_RECOMMENDATIONS ROOTFS_POSTPROCESS_COMMAND IMAGE_POSTPROCESS_COMMAND"
+
+	ret = ""
+	for var in imagevars.split():
+		value = d.getVar(var, True) or ""
+		ret += "%s = %s\n" % (var, value)
+	return ret.rstrip('\n')
+
+
 buildhistory_commit() {
 	if [ ! -d ${BUILDHISTORY_DIR} ] ; then
 		# Code above that creates this dir never executed, so there can't be anything to commit
@@ -356,7 +363,8 @@ buildhistory_commit() {
 		repostatus=`git status --porcelain`
 		if [ "$repostatus" != "" ] ; then
 			git add ${BUILDHISTORY_DIR}/*
-			git commit ${BUILDHISTORY_DIR}/ -m "Build ${BUILDNAME} for machine ${MACHINE} configured for ${DISTRO} ${DISTRO_VERSION}" --author "${BUILDHISTORY_COMMIT_AUTHOR}" > /dev/null
+			HOSTNAME=`cat /etc/hostname 2>/dev/null || echo unknown`
+			git commit ${BUILDHISTORY_DIR}/ -m "Build ${BUILDNAME} of ${DISTRO} ${DISTRO_VERSION} for machine ${MACHINE} on $HOSTNAME" --author "${BUILDHISTORY_COMMIT_AUTHOR}" > /dev/null
 			if [ "${BUILDHISTORY_PUSH_REPO}" != "" ] ; then
 				git push -q ${BUILDHISTORY_PUSH_REPO}
 			fi

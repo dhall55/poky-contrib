@@ -1,6 +1,6 @@
 require gcc-common.inc
 
-PR = "r20"
+PR = "r22"
 
 # Third digit in PV should be incremented after a minor release
 # happens from this branch on gcc e.g. currently its 4.6.0
@@ -73,6 +73,7 @@ SRC_URI = "svn://gcc.gnu.org/svn/gcc/branches;module=${BRANCH};proto=http \
 	   file://pr47551.patch \
 	   file://gcc-arm-set-cost.patch \
 	   file://GPLUSPLUS_INCLUDE_DIR_with_sysroot.patch \
+	   file://fortran-cross-compile-hack.patch \
 	  "
 
 SRC_URI_append_sh3  = " file://sh3-installfix-fixheaders.patch "

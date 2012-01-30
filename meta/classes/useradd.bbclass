@@ -6,9 +6,13 @@ USERADDDEPENDS = " base-passwd shadow-native shadow-sysroot shadow"
 USERADDDEPENDS_virtclass-native = ""
 USERADDDEPENDS_virtclass-nativesdk = ""
 
-# This preinstall function will be run in two contexts: once for the
-# native sysroot (as invoked by the useradd_sysroot() wrapper), and
-# also as the preinst script in the target package.
+# This preinstall function can be run in four different contexts:
+#
+# a) Before do_install
+# b) At do_populate_sysroot_setscene when installing from sstate packages
+# c) As the preinst script in the target package at do_rootfs time
+# d) As the preinst script in the target package on device as a package upgrade
+#
 useradd_preinst () {
 OPT=""
 SYSROOT=""
@@ -80,8 +84,10 @@ fi
 }
 
 useradd_sysroot () {
-	export PSEUDO="${STAGING_DIR_NATIVE}${bindir}/pseudo"
-	export PSEUDO_LOCALSTATEDIR="${STAGING_DIR_TARGET}${localstatedir}/pseudo"
+	# Pseudo may (do_install) or may not (do_populate_sysroot_setscene) be running 
+	# at this point so we're explicit about the environment so pseudo can load if 
+	# not already present.
+	export PSEUDO="${FAKEROOTENV} PSEUDO_LOCALSTATEDIR=${STAGING_DIR_TARGET}${localstatedir}/pseudo ${STAGING_DIR_NATIVE}${bindir}/pseudo"
 
 	# Explicitly set $D since it isn't set to anything
 	# before do_install
@@ -90,7 +96,7 @@ useradd_sysroot () {
 }
 
 useradd_sysroot_sstate () {
-	if [ "${BB_CURRENTTASK}" = "populate_sysroot_setscene" ]
+	if [ "${BB_CURRENTTASK}" = "package_setscene" ]
 	then
 		useradd_sysroot
 	fi
@@ -100,10 +106,15 @@ do_install[prefuncs] += "${SYSROOTFUNC}"
 SYSROOTFUNC = "useradd_sysroot"
 SYSROOTFUNC_virtclass-native = ""
 SYSROOTFUNC_virtclass-nativesdk = ""
-SSTATEPOSTINSTFUNCS += "${SYSROOTPOSTFUNC}"
+SSTATEPREINSTFUNCS += "${SYSROOTPOSTFUNC}"
 SYSROOTPOSTFUNC = "useradd_sysroot_sstate"
 SYSROOTPOSTFUNC_virtclass-native = ""
 SYSROOTPOSTFUNC_virtclass-nativesdk = ""
+
+USERADDSETSCENEDEPS = "base-passwd:do_populate_sysroot_setscene shadow-native:do_populate_sysroot_setscene shadow-sysroot:do_populate_sysroot_setscene"
+USERADDSETSCENEDEPS_virtclass-native = ""
+USERADDSETSCENEDEPS_virtclass-nativesdk = ""
+do_package_setscene[depends] = "${USERADDSETSCENEDEPS}"
 
 # Recipe parse-time sanity checks
 def update_useradd_after_parse(d):

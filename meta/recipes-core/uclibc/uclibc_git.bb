@@ -1,4 +1,4 @@
-SRCREV="f87898ca4a7d4b7171779c06ff1f4848efeee431"
+SRCREV="eb72efd81e0d5be6c836c5a084cc65b9734f544d"
 
 require uclibc.inc
 
@@ -14,7 +14,6 @@ FILESPATH = "${@base_set_filespath([ '${FILE_DIRNAME}/uclibc-git' ], d)}"
 SRC_URI = "git://uclibc.org/uClibc.git;branch=master;protocol=git \
 	file://uClibc.machine \
 	file://uClibc.distro \
-	file://uclibc-arm-ftruncate64.patch \
 	file://uclibc_enable_log2_test.patch \
 	file://ldso_use_arm_dl_linux_resolve_in_thumb_mode.patch \
 	file://powerpc_copysignl.patch \
@@ -22,9 +21,8 @@ SRC_URI = "git://uclibc.org/uClibc.git;branch=master;protocol=git \
 	file://argp-headers.patch \
 	file://remove_attribute_optimize_Os.patch \
 	file://compile-arm-fork-with-O2.patch \
-	file://orign_path.patch \
-	file://rtld_no.patch \
 	file://uclibc-execvpe.patch \
-	file://uclibc_scheduler_update.patch \
+	file://orign_path.patch \
 	"
+
 S = "${WORKDIR}/git"

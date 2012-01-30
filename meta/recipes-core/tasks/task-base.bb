@@ -2,7 +2,7 @@ DESCRIPTION = "Merge machine and distro options to create a basic machine task/p
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=3f40d7994397109285ec7b81fdeb3b58 \
                     file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
-PR = "r72"
+PR = "r73"
 
 inherit task
 
@@ -162,9 +162,6 @@ RDEPENDS_task-base-acpi = "\
     acpid \
     libacpi "
 
-# Distro can override apm provider
-VIRTUAL-RUNTIME_apm ?= "apm"
-
 RDEPENDS_task-base-apm = "\
     ${VIRTUAL-RUNTIME_apm} \
     apmd"
@@ -183,7 +180,8 @@ RRECOMMENDS_task-base-vfat = "\
 
 RDEPENDS_task-base-alsa = "\
     alsa-utils-alsactl \
-    alsa-utils-alsamixer"
+    alsa-utils-alsamixer \
+    ${VIRTUAL-RUNTIME_alsa-state}"
 
 RRECOMMENDS_task-base-alsa = "\
     kernel-module-snd-mixer-oss \

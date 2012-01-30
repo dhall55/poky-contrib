@@ -98,9 +98,12 @@ class Command:
             else:
                 self.finishAsyncCommand("Exited with %s" % arg)
             return False
-        except Exception:
+        except Exception as exc:
             import traceback
-            self.finishAsyncCommand(traceback.format_exc())
+            if isinstance(exc, bb.BBHandledException):
+                self.finishAsyncCommand("")
+            else:
+                self.finishAsyncCommand(traceback.format_exc())
             return False
 
     def finishAsyncCommand(self, msg=None, code=None):
@@ -156,6 +159,12 @@ class CommandsSync:
         varname = params[0]
         value = params[1]
         command.cooker.configuration.data.setVar(varname, value)
+
+    def initCooker(self, command, params):
+        """
+        Init the cooker to initial state with nothing parsed
+        """
+        command.cooker.initialize()
 
     def resetCooker(self, command, params):
         """
@@ -232,6 +241,17 @@ class CommandsAsync:
         command.finishAsyncCommand()
     generateTargetsTree.needcache = True
 
+    def findCoreBaseFiles(self, command, params):
+        """
+        Find certain files in COREBASE directory. i.e. Layers
+        """
+        subdir = params[0]
+        filename = params[1]
+
+        command.cooker.findCoreBaseFiles(subdir, filename)
+        command.finishAsyncCommand()
+    findCoreBaseFiles.needcache = False
+
     def findConfigFiles(self, command, params):
         """
         Find config files which provide appropriate values
@@ -241,7 +261,7 @@ class CommandsAsync:
 
         command.cooker.findConfigFiles(varname)
         command.finishAsyncCommand()
-    findConfigFiles.needcache = True
+    findConfigFiles.needcache = False
 
     def findFilesMatchingInDir(self, command, params):
         """
@@ -253,7 +273,7 @@ class CommandsAsync:
 
         command.cooker.findFilesMatchingInDir(pattern, directory)
         command.finishAsyncCommand()
-    findFilesMatchingInDir.needcache = True
+    findFilesMatchingInDir.needcache = False
 
     def findConfigFilePath(self, command, params):
         """
@@ -320,3 +340,13 @@ class CommandsAsync:
         else:
             command.finishAsyncCommand()
     compareRevisions.needcache = True
+
+    def parseConfigurationFiles(self, command, params):
+        """
+        Parse the configuration files
+        """
+        prefiles = params[0]
+        postfiles = params[1]
+        command.cooker.parseConfigurationFiles(prefiles, postfiles)
+        command.finishAsyncCommand()
+    parseConfigurationFiles.needcache = False

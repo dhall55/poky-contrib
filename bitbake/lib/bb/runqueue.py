@@ -959,6 +959,13 @@ class RunQueue:
         if self.state is runQueueCleanUp:
            self.rqexe.finish()
 
+        if self.state is runQueueComplete or self.state is runQueueFailed:
+            if self.rqexe.stats.failed:
+                logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed.", self.rqexe.stats.completed + self.rqexe.stats.failed, self.rqexe.stats.skipped, self.rqexe.stats.failed)
+            else:
+                # Let's avoid the word "failed" if nothing actually did
+                logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and all succeeded.", self.rqexe.stats.completed, self.rqexe.stats.skipped)
+
         if self.state is runQueueFailed:
             if not self.rqdata.taskData.tryaltconfigs:
                 raise bb.runqueue.TaskFailure(self.rqexe.failed_fnids)
@@ -968,7 +975,6 @@ class RunQueue:
 
         if self.state is runQueueComplete:
             # All done
-            logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed.", self.rqexe.stats.completed, self.rqexe.stats.skipped, self.rqexe.stats.failed)
             return False
 
         if self.state is runQueueChildProcess:
@@ -1429,18 +1435,20 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             sq_revdeps.append(copy.copy(self.rqdata.runq_revdeps[task]))
             sq_revdeps_new.append(set())
             if (len(self.rqdata.runq_revdeps[task]) == 0) and task not in self.rqdata.runq_setscene:
-                endpoints[task] = None
+                endpoints[task] = set()
 
         for task in self.rqdata.runq_setscene:
             for dep in self.rqdata.runq_depends[task]:
-                    endpoints[dep] = task
+                    if dep not in endpoints:
+                        endpoints[dep] = set()
+                    endpoints[dep].add(task)
 
         def process_endpoints(endpoints):
             newendpoints = {}
             for point, task in endpoints.items():
                 tasks = set()
                 if task:
-                    tasks.add(task)
+                    tasks |= task
                 if sq_revdeps_new[point]:
                     tasks |= sq_revdeps_new[point]
                 sq_revdeps_new[point] = set()
@@ -1465,8 +1473,30 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             elif len(sq_revdeps_new[task]) != 0:
                 bb.msg.fatal("RunQueue", "Something went badly wrong during scenequeue generation, aborting. Please report this problem.")
 
+        # Resolve setscene inter-task dependencies
+        # e.g. do_sometask_setscene[depends] = "targetname:do_someothertask_setscene"
+        # Note that anything explicitly depended upon will have its reverse dependencies removed to avoid circular dependencies
+        for task in self.rqdata.runq_setscene:
+                realid = self.rqdata.taskData.gettask_id(self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]], self.rqdata.runq_task[task] + "_setscene", False)
+                idepends = self.rqdata.taskData.tasks_idepends[realid]
+                for (depid, idependtask) in idepends:
+                    if depid not in self.rqdata.taskData.build_targets:
+                        continue
+
+                    depdata = self.rqdata.taskData.build_targets[depid][0]
+                    if depdata is None:
+                         continue
+                    dep = self.rqdata.taskData.fn_index[depdata]
+                    taskid = self.rqdata.get_task_id(self.rqdata.taskData.getfn_id(dep), idependtask.replace("_setscene", ""))
+                    if taskid is None:
+                        bb.msg.fatal("RunQueue", "Task %s depends upon nonexistant task %s:%s" % (self.rqdata.taskData.tasks_name[realid], dep, idependtask))
+
+                    sq_revdeps_squash[self.rqdata.runq_setscene.index(task)].add(self.rqdata.runq_setscene.index(taskid))
+                    # Have to zero this to avoid circular dependencies
+                    sq_revdeps_squash[self.rqdata.runq_setscene.index(taskid)] = set()
+
         #for task in xrange(len(sq_revdeps_squash)):
-        #    print "Task %s: %s.%s is %s " % (task, self.taskData.fn_index[self.runq_fnid[self.runq_setscene[task]]], self.runq_task[self.runq_setscene[task]] + "_setscene", sq_revdeps_squash[task])
+        #    print "Task %s: %s.%s is %s " % (task, self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[self.rqdata.runq_setscene[task]]], self.rqdata.runq_task[self.rqdata.runq_setscene[task]] + "_setscene", sq_revdeps_squash[task])
 
         self.sq_deps = []
         self.sq_revdeps = sq_revdeps_squash

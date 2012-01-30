@@ -1,6 +1,7 @@
 DEPENDS = "gstreamer"
 RDEPENDS_${PN} = "libomxil"
 LICENSE = "LGPLv2.1"
+LICENSE_FLAGS = "commercial"
 LIC_FILES_CHKSUM = "file://COPYING;md5=fbc093901857fcd118f065f900982c24 \
                     file://util/sem.h;beginline=1;endline=20;md5=accce5550d5583b839b441a0623f09fc"
 
@@ -12,10 +13,11 @@ inherit autotools
 
 EXTRA_OECONF += "--disable-valgrind"
 
-PR = "r2"
+PR = "r3"
 
 FILES_${PN} += "${libdir}/gstreamer-0.10/libgstomx.so"
-FILES_${PN}-dev += "${libdir}/gstreamer-0.10/libgstomx.*a"
+FILES_${PN}-dev += "${libdir}/gstreamer-0.10/libgstomx.la"
+FILES_${PN}-staticdev += "${libdir}/gstreamer-0.10/libgstomx.a"
 FILES_${PN}-dbg += "${libdir}/gstreamer-0.10/.debug/"
 
 SRC_URI[md5sum] = "4d0370bfe99dea20918c84347abadb4e"

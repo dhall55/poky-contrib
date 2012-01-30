@@ -7,14 +7,16 @@ PACKAGES = "\
   ${PN} \
   ${PN}-dev \
   ${PN}-dbg \
+  libgcov-dev \
   "
 
 FILES_${PN} = "${base_libdir}/libgcc*.so.*"
 FILES_${PN}-dev = " \
   ${base_libdir}/libgcc*.so \
   ${libdir}/${TARGET_SYS}/${BINV}/crt* \
-  ${libdir}/${TARGET_SYS}/${BINV}/libgcov.a \
   ${libdir}/${TARGET_SYS}/${BINV}/libgcc*"
+FILES_libgcov-dev = " \
+  ${libdir}/${TARGET_SYS}/${BINV}/libgcov.a \
 
 FILES_${PN}-dbg += "${base_libdir}/.debug/"
 
@@ -45,4 +47,7 @@ do_package_write_deb[depends] += "virtual/${MLPREFIX}libc:do_package"
 do_package_write_rpm[depends] += "virtual/${MLPREFIX}libc:do_package"
 
 BBCLASSEXTEND = "nativesdk"
+
+INSANE_SKIP_libgcc-dev = "staticdev"
+INSANE_SKIP_libgcov-dev = "staticdev"
 

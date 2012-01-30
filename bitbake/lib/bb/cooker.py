@@ -32,10 +32,12 @@ import sre_constants
 import threading
 from cStringIO import StringIO
 from contextlib import closing
+from concurrent import futures
 from functools import wraps
 from collections import defaultdict
-import bb, bb.exceptions
-from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
+import bb, bb.exceptions, bb.command
+from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
+import prserv.serv
 
 logger      = logging.getLogger("BitBake")
 collectlog  = logging.getLogger("BitBake.Collection")
@@ -43,9 +45,9 @@ buildlog    = logging.getLogger("BitBake.Build")
 parselog    = logging.getLogger("BitBake.Parsing")
 providerlog = logging.getLogger("BitBake.Provider")
 
-class MultipleMatches(Exception):
+class NoSpecificMatch(bb.BBHandledException):
     """
-    Exception raised when multiple file matches are found
+    Exception raised when no or multiple file matches are found
     """
 
 class NothingToBuild(Exception):
@@ -166,6 +168,15 @@ class BBCooker:
         self.state = state.initial
 
         self.parser = None
+
+    def initConfigurationData(self):
+        self.configuration.data = bb.data.init()
+
+        if not self.server_registration_cb:
+            bb.data.setVar("BB_WORKERCONTEXT", "1", self.configuration.data)
+
+        filtered_keys = bb.utils.approved_variables()
+        bb.data.inheritFromOS(self.configuration.data, self.savedenv, filtered_keys)
 
     def loadConfigurationData(self):
         self.configuration.data = bb.data.init()
@@ -632,6 +643,18 @@ class BBCooker:
             if regex in unmatched:
                 collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
 
+    def findCoreBaseFiles(self, subdir, configfile):
+        corebase = self.configuration.data.getVar('COREBASE', True) or ""
+        paths = []
+        for root, dirs, files in os.walk(corebase + '/' + subdir):
+            for d in dirs:
+                configfilepath = os.path.join(root, d, configfile)
+                if os.path.exists(configfilepath):
+                    paths.append(os.path.join(root, d))
+
+        if paths:
+            bb.event.fire(bb.event.CoreBaseFilesFound(paths), self.configuration.data)
+
     def findConfigFilePath(self, configfile):
         """
         Find the location on disk of configfile and if it exists and was parsed by BitBake
@@ -833,8 +856,8 @@ class BBCooker:
         if data.getVar("BB_WORKERCONTEXT", False) is None:
             bb.fetch.fetcher_init(data)
         bb.codeparser.parser_cache_init(data)
-        bb.parse.init_parser(data)
         bb.event.fire(bb.event.ConfigParsed(), data)
+        bb.parse.init_parser(data)
         self.configuration.data = data
 
     def handleCollections( self, collections ):
@@ -957,10 +980,15 @@ class BBCooker:
         """
         matches = self.matchFiles(buildfile)
         if len(matches) != 1:
-            parselog.error("Unable to match %s (%s matches found):" % (buildfile, len(matches)))
-            for f in matches:
-                parselog.error("    %s" % f)
-            raise MultipleMatches
+            if matches:
+                msg = "Unable to match '%s' to a specific recipe file - %s matches found:" % (buildfile, len(matches))
+                if matches:
+                    for f in matches:
+                        msg += "\n    %s" % f
+                parselog.error(msg)
+            else:
+                parselog.error("Unable to find any recipe file matching '%s'" % buildfile)
+            raise NoSpecificMatch
         return matches[0]
 
     def buildFile(self, buildfile, task):
@@ -1038,8 +1066,6 @@ class BBCooker:
             try:
                 retval = rq.execute_runqueue()
             except runqueue.TaskFailure as exc:
-                for fnid in exc.args:
-                    buildlog.error("'%s' failed" % taskdata.fn_index[fnid])
                 failures += len(exc.args)
                 retval = False
             except SystemExit as exc:
@@ -1079,8 +1105,6 @@ class BBCooker:
             try:
                 retval = rq.execute_runqueue()
             except runqueue.TaskFailure as exc:
-                for fnid in exc.args:
-                    buildlog.error("'%s' failed" % taskdata.fn_index[fnid])
                 failures += len(exc.args)
                 retval = False
             except SystemExit as exc:
@@ -1088,7 +1112,7 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(buildname, targets, failures), self.configuration.event_data)
+                bb.event.fire(bb.event.BuildCompleted(buildname, targets, failures), self.configuration.data)
                 self.command.finishAsyncCommand()
                 return False
             if retval is True:
@@ -1098,7 +1122,7 @@ class BBCooker:
         self.buildSetVars()
 
         buildname = self.configuration.data.getVar("BUILDNAME")
-        bb.event.fire(bb.event.BuildStarted(buildname, targets), self.configuration.event_data)
+        bb.event.fire(bb.event.BuildStarted(buildname, targets), self.configuration.data)
 
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
@@ -1290,9 +1314,11 @@ class BBCooker:
         # Empty the environment. The environment will be populated as
         # necessary from the data store.
         #bb.utils.empty_environment()
+        prserv.serv.auto_start(self.configuration.data)
         return
 
     def post_serve(self):
+        prserv.serv.auto_shutdown(self.configuration.data)
         bb.event.fire(CookerExit(), self.configuration.event_data)
 
     def shutdown(self):
@@ -1303,6 +1329,10 @@ class BBCooker:
 
     def reparseFiles(self):
         return
+
+    def initialize(self):
+        self.state = state.initial
+        self.initConfigurationData()
 
     def reset(self):
         self.state = state.initial
@@ -1433,20 +1463,16 @@ class CookerParser(object):
         self.start()
 
     def start(self):
-        def init(cfg):
-            parse_file.cfg = cfg
-            multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, args=(self.cooker.configuration.data, ), exitpriority=1)
-
         self.results = self.load_cached()
 
         if self.toparse:
             bb.event.fire(bb.event.ParseStarted(self.toparse), self.cfgdata)
 
-            self.pool = multiprocessing.Pool(self.num_processes, init, [self.cfgdata])
-            parsed = self.pool.imap(parse_file, self.willparse)
-            self.pool.close()
-
-            self.results = itertools.chain(self.results, parsed)
+            parse_file.cfg = self.cfgdata
+            multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, args=(self.cfgdata,), exitpriority=1)
+            self.executor = futures.ProcessPoolExecutor(max_workers=self.num_processes)
+            self.futures = dict((self.executor.submit(parse_file, task), task) for task in self.willparse)
+            self.results = itertools.chain(self.results, self.parse_gen())
 
     def shutdown(self, clean=True):
         if not self.toparse:
@@ -1459,8 +1485,9 @@ class CookerParser(object):
                                             self.total)
             bb.event.fire(event, self.cfgdata)
         else:
-            self.pool.terminate()
-        self.pool.join()
+            for future in self.futures:
+                future.cancel()
+        self.executor.shutdown()
 
         sync = threading.Thread(target=self.bb_cache.sync)
         sync.start()
@@ -1471,6 +1498,15 @@ class CookerParser(object):
         for filename, appends in self.fromcache:
             cached, infos = self.bb_cache.load(filename, appends, self.cfgdata)
             yield not cached, infos
+
+    def parse_gen(self):
+        for future in futures.as_completed(self.futures):
+            task = self.futures[future]
+            exc = future.exception()
+            if exc:
+                raise exc
+            else:
+                yield future.result()
 
     def parse_next(self):
         try:

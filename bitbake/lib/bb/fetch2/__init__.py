@@ -55,7 +55,10 @@ class MalformedUrl(BBFetchException):
 class FetchError(BBFetchException):
     """General fetcher exception when something happens incorrectly"""
     def __init__(self, message, url = None):
-         msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
+         if url:
+            msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
+         else:
+            msg = "Fetcher failure: %s" % message
          self.url = url
          BBFetchException.__init__(self, msg)
          self.args = (message, url)
@@ -302,10 +305,10 @@ def verify_checksum(u, ud, d):
     # it does not match.
     msg = ""
     if md5mismatch and ud.md5_expected:
-        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected (from URL: '%s')" % (ud.localpath, 'md5', md5data, ud.md5_expected, u)
+        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'md5', md5data, ud.md5_expected)
 
     if sha256mismatch and ud.sha256_expected:
-        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected (from URL: '%s')" % (ud.localpath, 'sha256', sha256data, ud.sha256_expected, u)
+        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'sha256', sha256data, ud.sha256_expected)
 
     if len(msg):
         raise FetchError('Checksum mismatch!%s' % msg, u)
@@ -419,8 +422,11 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
         output += line
 
     status = stdout_handle.close() or 0
-    signal = status >> 8
-    exitstatus = status & 0xff
+    signal = os.WTERMSIG(status)
+    if os.WIFEXITED(status):
+        exitstatus = os.WEXITSTATUS(status)
+    else:
+        exitstatus = 0
 
     if (signal or status != 0):
         for f in cleanup:
@@ -431,8 +437,8 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
 
         if signal:
             raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % (cmd, signal, output))
-        elif status != 0:
-            raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (cmd, status, output))
+        elif exitstatus:
+            raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (cmd, exitstatus, output))
 
     return output
 
@@ -473,7 +479,7 @@ def try_mirrors(d, origud, mirrors, check = False):
                     return found
                 continue
 
-            if ud.method.need_update(newuri, ud, ld):
+            if not os.path.exists(ud.donestamp) or ud.method.need_update(newuri, ud, ld):
                 ud.method.download(newuri, ud, ld)
                 if hasattr(ud.method,"build_mirror_data"):
                     ud.method.build_mirror_data(newuri, ud, ld)
@@ -949,7 +955,7 @@ class Fetch(object):
             try:
                 self.d.setVar("BB_NO_NETWORK", network)
  
-                if not m.need_update(u, ud, self.d):
+                if os.path.exists(ud.donestamp) and not m.need_update(u, ud, self.d):
                     localpath = ud.localpath
                 elif m.try_premirror(u, ud, self.d):
                     logger.debug(1, "Trying PREMIRRORS")
@@ -959,7 +965,8 @@ class Fetch(object):
                 if premirroronly:
                     self.d.setVar("BB_NO_NETWORK", "1")
 
-                if not localpath and m.need_update(u, ud, self.d):
+                firsterr = None
+                if not localpath and ((not os.path.exists(ud.donestamp)) or m.need_update(u, ud, self.d)):
                     try:
                         logger.debug(1, "Trying Upstream")
                         m.download(u, ud, self.d)
@@ -974,7 +981,9 @@ class Fetch(object):
                         raise
 
                     except BBFetchException as e:
-                        logger.warn(str(e))
+                        logger.warn('Failed to fetch URL %s' % u)
+                        logger.debug(1, str(e))
+                        firsterr = e
                         # Remove any incomplete fetch
                         if os.path.isfile(ud.localpath):
                             bb.utils.remove(ud.localpath)
@@ -983,7 +992,9 @@ class Fetch(object):
                         localpath = try_mirrors (self.d, ud, mirrors)
 
                 if not localpath or ((not os.path.exists(localpath)) and localpath.find("*") == -1):
-                    raise FetchError("Unable to fetch URL %s from any source." % u, u)
+                    if firsterr:
+                        logger.error(str(firsterr))
+                    raise FetchError("Unable to fetch URL from any source.", u)
 
                 update_stamp(u, ud, self.d)
 

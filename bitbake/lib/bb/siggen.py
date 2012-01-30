@@ -62,9 +62,13 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.runtaskdeps = {}
         self.gendeps = {}
         self.lookupcache = {}
+        self.pkgnameextract = re.compile("(?P<fn>.*)\..*")
         self.basewhitelist = set((data.getVar("BB_HASHBASE_WHITELIST", True) or "").split())
-        self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST", True) or None
+        self.taskwhitelist = None
+        self.init_rundepcheck(data)
 
+    def init_rundepcheck(self, data):
+        self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST", True) or None
         if self.taskwhitelist:
             self.twl = re.compile(self.taskwhitelist)
         else:
@@ -131,17 +135,24 @@ class SignatureGeneratorBasic(SignatureGenerator):
         for task in taskdeps:
             d.setVar("BB_BASEHASH_task-%s" % task, self.basehash[fn + "." + task])
 
+    def rundep_check(self, fn, recipename, task, dep, depname):
+        # Return True if we should keep the dependency, False to drop it
+        # We only manipulate the dependencies for packages not in the whitelist
+        if self.twl and not self.twl.search(recipename):
+            # then process the actual dependencies
+            if self.twl.search(depname):
+                return False
+        return True
+
     def get_taskhash(self, fn, task, deps, dataCache):
         k = fn + "." + task
         data = dataCache.basetaskhash[k]
         self.runtaskdeps[k] = []
+        recipename = dataCache.pkg_fn[fn]
         for dep in sorted(deps, key=clean_basepath):
-            # We only manipulate the dependencies for packages not in the whitelist
-            if self.twl and not self.twl.search(dataCache.pkg_fn[fn]):
-                # then process the actual dependencies
-                dep_fn = re.search("(?P<fn>.*)\..*", dep).group('fn')
-                if self.twl.search(dataCache.pkg_fn[dep_fn]):
-                    continue
+            depname = dataCache.pkg_fn[self.pkgnameextract.search(dep).group('fn')]
+            if not self.rundep_check(fn, recipename, task, dep, depname):
+                continue
             if dep not in self.taskhash:
                 bb.fatal("%s is not in taskhash, caller isn't calling in dependency order?", dep)
             data = data + self.taskhash[dep]
@@ -281,21 +292,27 @@ def compare_sigfiles(a, b):
             print "Variable %s value changed from %s to %s" % (dep, a_data['varvals'][dep], b_data['varvals'][dep])
 
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
-        a = clean_basepaths(a_data['runtaskhashes'])
-        b = clean_basepaths(b_data['runtaskhashes'])
-        changed, added, removed = dict_diff(a, b)
-        if added:
-            for dep in added:
-                print "Dependency on task %s was added" % (dep)
-        if removed:
-            for dep in removed:
-                print "Dependency on task %s was removed" % (dep)
-        if changed:
-            for dep in changed:
-                print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
-    elif 'runtaskdeps' in a_data and 'runtaskdeps' in b_data and sorted(a_data['runtaskdeps']) != sorted(b_data['runtaskdeps']):
-        print "Tasks this task depends on changed from %s to %s" % (sorted(a_data['runtaskdeps']), sorted(b_data['runtaskdeps']))
-        print "changed items: %s" % a_data['runtaskdeps'].symmetric_difference(b_data['runtaskdeps'])
+        if len(a_data['runtaskdeps']) != len(b_data['runtaskdeps']):
+            a = clean_basepaths(a_data['runtaskhashes'])
+            b = clean_basepaths(b_data['runtaskhashes'])
+            changed, added, removed = dict_diff(a, b)
+            if added:
+                for dep in added:
+                    print "Dependency on task %s was added" % (dep)
+            if removed:
+                for dep in removed:
+                    print "Dependency on task %s was removed" % (dep)
+            if changed:
+                for dep in changed:
+                    print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
+        else:
+            for i in range(len(a_data['runtaskdeps'])):
+                aent = a_data['runtaskdeps'][i]
+                bent = b_data['runtaskdeps'][i]
+                aname = clean_basepath(aent)
+                bname = clean_basepath(bent)
+                if a_data['runtaskhashes'][aent] != b_data['runtaskhashes'][bent]:
+                    print "Task dependency hash changed from %s to %s (for %s and %s)" % (a_data['runtaskhashes'][aent], b_data['runtaskhashes'][bent], aname, bname)
 
 def dump_sigfile(a):
     p1 = pickle.Unpickler(file(a, "rb"))

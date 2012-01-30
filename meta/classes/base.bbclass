@@ -9,7 +9,7 @@ inherit utility-tasks
 inherit metadata_scm
 inherit logging
 
-OE_IMPORTS += "os sys time oe.path oe.utils oe.data oe.packagegroup"
+OE_IMPORTS += "os sys time oe.path oe.utils oe.data oe.packagegroup oe.sstatesig"
 OE_IMPORTS[type] = "list"
 
 def oe_import(d):
@@ -349,12 +349,12 @@ python () {
     if license == "INVALID":
         bb.fatal('This recipe does not have the LICENSE field set (%s)' % pn)
 
-    commercial_license = " %s " % d.getVar('COMMERCIAL_LICENSE', 1)
-    import re
-    pnr = "[ \t]%s[ \t]" % pn.replace('+', "\+")
-    if commercial_license and re.search(pnr, commercial_license):
-        bb.debug(1, "Skipping %s because it's commercially licensed" % pn)
-        raise bb.parse.SkipPackage("because it may require a commercial license to ship in a product (listed in COMMERCIAL_LICENSE)")
+    unmatched_license_flag = check_license_flags(d)
+    if unmatched_license_flag:
+        bb.debug(1, "Skipping %s because it has a restricted license not"
+             " whitelisted in LICENSE_FLAGS_WHITELIST" % pn)
+        raise bb.parse.SkipPackage("because it has a restricted license not"
+             " whitelisted in LICENSE_FLAGS_WHITELIST")
 
     # If we're building a target package we need to use fakeroot (pseudo)
     # in order to capture permissions, owners, groups and special files
@@ -379,7 +379,7 @@ python () {
             import re
             this_host = d.getVar('HOST_SYS', 1)
             if not re.match(need_host, this_host):
-                raise bb.parse.SkipPackage("incompatible with host %s" % this_host)
+                raise bb.parse.SkipPackage("incompatible with host %s (not in COMPATIBLE_HOST)" % this_host)
 
         need_machine = d.getVar('COMPATIBLE_MACHINE', 1)
         if need_machine:
@@ -388,7 +388,7 @@ python () {
             if this_machine and not re.match(need_machine, this_machine):
                 this_soc_family = d.getVar('SOC_FAMILY', 1)
                 if (this_soc_family and not re.match(need_machine, this_soc_family)) or not this_soc_family:
-                    raise bb.parse.SkipPackage("incompatible with machine %s" % this_machine)
+                    raise bb.parse.SkipPackage("incompatible with machine %s (not in COMPATIBLE_MACHINE)" % this_machine)
 
 
         dont_want_license = d.getVar('INCOMPATIBLE_LICENSE', 1)
@@ -398,9 +398,8 @@ python () {
             dont_want_whitelist = (d.getVar('WHITELIST_%s' % dont_want_license, 1) or "").split()
             if pn not in hosttools_whitelist and pn not in lgplv2_whitelist and pn not in dont_want_whitelist:
 
-                import re
                 this_license = d.getVar('LICENSE', 1)
-                if this_license and re.search(dont_want_license, this_license):
+                if incompatible_license(d,dont_want_license):
                     bb.note("SKIPPING %s because it's %s" % (pn, this_license))
                     raise bb.parse.SkipPackage("incompatible with license %s" % this_license)
 
