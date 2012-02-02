@@ -2,12 +2,12 @@ DESCRIPTION = "NSS module for Multicast DNS name resolution"
 HOMEPAGE = "http://0pointer.de/lennart/projects/nss-mdns/"
 SECTION = "libs"
 
-LICENSE = "LGPLv2.1+"
+LICENSE = "LGPL-2.1+"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=2d5025d4aa3495befef8f17206a5b0a1"
 
 DEPENDS = "avahi"
 RDEPENDS_${PN} = "avahi-daemon"
-PR = "r4"
+PR = "r5"
 
 SRC_URI = "http://0pointer.de/lennart/projects/nss-mdns/nss-mdns-${PV}.tar.gz"
 

@@ -6,7 +6,7 @@ require u-boot.inc
 # UBOOT_ENTRYPOINT = "0x80008000"
 # UBOOT_LOADADDRESS = "0x80008000"
 
-LICENSE = "GPLv2+"
+LICENSE = "GPL-2.0+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=1707d6db1d42237583f50183a5651ecb \
                     file://README;beginline=1;endline=22;md5=3a00ef51d3fc96e9d6c1bc4708ccd3b5"
 
@@ -17,7 +17,7 @@ FILESDIR = "${@os.path.dirname(d.getVar('FILE',1))}/u-boot-git/${MACHINE}"
 SRCREV = "19b54a701811220221fc4d5089a2bb18892018ca"
 
 PV = "v2011.03+git${SRCPV}"
-PR = "r5"
+PR = "r6"
 
 SRC_URI = "git://git.denx.de/u-boot.git;branch=master;protocol=git"
 

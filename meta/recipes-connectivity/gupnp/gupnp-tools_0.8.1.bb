@@ -1,12 +1,12 @@
 DESCRIPTION = "Tools for GUPnP"
-LICENSE = "GPLv2+"
+LICENSE = "GPL-2.0+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe \
                     file://src/network-light/main.c;beginline=1;endline=21;md5=033bf37c030780c5a72165846b3003f6"
 DEPENDS = "gupnp gupnp-av gtk+ libglade gnome-icon-theme"
 
 SRC_URI = "http://gupnp.org/sites/all/files/sources/${BPN}-${PV}.tar.gz"
 
-PR = "r0"
+PR = "r1"
 
 inherit autotools pkgconfig
 

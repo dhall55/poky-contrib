@@ -8,11 +8,11 @@ standard, which allows for flexible loading of multiple boot images."
 HOMEPAGE = "http://www.gnu.org/software/grub/"
 SECTION = "bootloaders"
 
-LICENSE = "GPLv3"
+LICENSE = "GPL-3.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d32239bcb673463ab874e80d47fae504"
 
 RDEPENDS_${PN} = "diffutils freetype"
-PR = "r3"
+PR = "r4"
 
 SRC_URI = "ftp://ftp.gnu.org/gnu/grub/grub-${PV}.tar.gz \
           file://grub-install.in.patch \

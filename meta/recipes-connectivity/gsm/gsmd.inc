@@ -1,7 +1,7 @@
 SUMMARY = "GSM libraries and daemons"
 DESCRIPTION = "GSM libraries and daemons implementing the 07.10 specification"
 HOMEPAGE = "http://www.openmoko.org"
-LICENSE = "GPLv2+ & LGPLv2.1+"
+LICENSE = "GPL-2.0+ & LGPL-2.1+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe \
                     file://COPYING.library;md5=2d5025d4aa3495befef8f17206a5b0a1 \
                     file://src/util/event.c;beginline=1;endline=21;md5=7fc982f6308a591d1e3581e59c6768ce \
@@ -10,7 +10,7 @@ SECTION = "libs/gsm"
 PROVIDES += "gsmd"
 RPROVIDES_${PN} = "libgsmd0 libgsmd gsmd gsmd-devel"
 PV = "0.1+svnr${SRCPV}"
-PR = "r2"
+PR = "r3"
 
 SRC_URI = "svn://svn.openmoko.org/trunk/src/target;module=gsm;proto=http \
            file://fix_machine_init.patch \

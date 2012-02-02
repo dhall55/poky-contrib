@@ -1,9 +1,9 @@
 DESCRIPTION = "PCMCIA-cs configuration files for Hermes (Orinoco) wireless LAN cards"
 SECTION = "kernel/modules"
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=393a5ca445f6965873eca0259a17f833"
 RDEPENDS_${PN} = "update-modules"
-PR = "r7"
+PR = "r8"
 
 SRC_URI = "file://orinoco_cs.conf \
            file://COPYING.patch"

@@ -1,6 +1,8 @@
 MAJOR_VERSION = "2.20"
-PR = "r2"
+PR = "r3"
 require util-linux.inc
+# lscpu packaged or not, we still have GPL-2.0+
+LICENSE = "GPL-2.0+ | (GPL-2.0+ & GPL-3.0+)"
 
 # note that `lscpu' is under GPLv3+
 LICENSE_util-linux-lscpu = "GPLv3+"

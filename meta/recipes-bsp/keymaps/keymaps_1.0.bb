@@ -7,10 +7,10 @@ VIRTUAL-RUNTIME_initscripts ?= "initscripts"
 
 RDEPENDS_${PN} = "${VIRTUAL-RUNTIME_initscripts} kbd"
 
-LICENSE = "GPLv2"
+LICENSE = "GPL-2.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
-PR = "r20"
+PR = "r21"
 
 INHIBIT_DEFAULT_DEPS = "1"
 

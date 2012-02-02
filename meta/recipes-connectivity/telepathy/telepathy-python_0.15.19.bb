@@ -1,6 +1,6 @@
 DESCRIPTION = "Telepathy framework - Python package"
 HOMEPAGE = "http://telepathy.freedesktop.org/wiki/"
-LICENSE = "LGPLv2.1+"
+LICENSE = "LGPL-2.1+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=2d5025d4aa3495befef8f17206a5b0a1 \
                     file://src/utils.py;beginline=1;endline=17;md5=9a07d1a9791a7429a14e7b25c6c86822"
 
@@ -10,7 +10,7 @@ SRC_URI = "http://telepathy.freedesktop.org/releases/${BPN}/${BPN}-${PV}.tar.gz 
            file://parallel_make.patch \
            file://remove_duplicate_install.patch"
 
-PR = "r4"
+PR = "r5"
 
 inherit autotools
 

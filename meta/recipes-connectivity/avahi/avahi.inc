@@ -12,9 +12,9 @@ SECTION = "network"
 
 # major part is under LGPLv2.1+, but several .dtd, .xsl, initscripts and
 # python scripts are under GPLv2+
-LICENSE = "GPLv2+ & LGPLv2.1+"
+LICENSE = "GPL-2.0+ & LGPL-2.1+"
 
-INC_PR = "r11"
+INC_PR = "r12"
 
 DEPENDS = "expat libcap libdaemon dbus glib-2.0"
 

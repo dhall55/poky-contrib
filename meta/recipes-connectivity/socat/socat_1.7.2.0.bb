@@ -6,9 +6,9 @@ SECTION = "console/network"
 
 DEPENDS = "openssl"
 
-LICENSE = "GPL-2.0+-with-OpenSSL-exception"
+LICENSE = "OpenSSL & GPL-2.0+"
 
-PR = "r0"
+PR = "r1"
 SRC_URI = "http://www.dest-unreach.org/socat/download/socat-${PV}.tar.bz2;name=src \
            file://compile.patch"
 
