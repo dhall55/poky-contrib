@@ -1,6 +1,6 @@
 FILESEXTRAPATHS := "${THISDIR}/${PN}"
 
-COMPATIBLE_MACHINE = ${MACHINE}
+#COMPATIBLE_MACHINE = ${MACHINE}
 
 # It is often nice to have a local clone of the kernel repos, to
 # allow patches to be staged, branches created, etc. Modify
