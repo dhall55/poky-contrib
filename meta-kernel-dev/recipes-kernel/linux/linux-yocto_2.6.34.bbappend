@@ -1,6 +1,6 @@
 FILESEXTRAPATHS := "${THISDIR}/${PN}"
 
-COMPATIBLE_MACHINE = ${MACHINE}
+#COMPATIBLE_MACHINE = ${MACHINE}
 
 # KMACHINE is the branch to be built, or alternatively
 # KBRANCH can be directly set.
