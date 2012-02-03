@@ -1,8 +1,8 @@
 inherit kernel
 require recipes-kernel/linux/linux-yocto.inc
 
-KMACHINE = "yocto/standard/auto-bsp"
-YOCTO_KERNEL_EXTERNAL_BRANCH ?= "yocto/standard/auto-bsp"
+KMACHINE = "standard/auto-bsp"
+YOCTO_KERNEL_EXTERNAL_BRANCH ?= "standard/auto-bsp"
 
 KBRANCH = ${KMACHINE}
 KMETA = meta
@@ -13,8 +13,8 @@ SRCREV=${AUTOREV}
 SRCREV=${AUTOREV}
 # SRCREV_pn-linux-korg = 
 
-LINUX_VERSION ?= "3.1"
-LINUX_VERSION_EXTENSION ?= "-yoctized-${LINUX_KERNEL_TYPE}"
+LINUX_VERSION ?= "3.2"
+LINUX_VERSION_EXTENSION = "-yoctized-${LINUX_KERNEL_TYPE}"
 PR = "r0"
 PV = "${LINUX_VERSION}+git${SRCPV}"
 
