@@ -4,13 +4,12 @@
 
 DEFAULTTUNE ?= "x86"
 TARGET_FPU ?= ""
-X86ARCH32 ?= "i586"
-X86ARCH64 ?= "x86_64"
 
 # ELF32 ABI
 TUNEVALID[x86-m32] = "IA32 ELF32 standard ABI"
 TUNECONFLICTS[x86-m32] = "x86-64-m64 x86-64-mx32"
-TUNE_ARCH .= "${@bb.utils.contains("TUNE_FEATURES", "x86-m32", "${X86ARCH32}", "" ,d)}"
+TUNE_FEATURE_ARCH-x86-m32 = "i586"
+TUNE_ARCH .= "${@bb.utils.contains("TUNE_FEATURES", "x86-m32", "${TUNE_FEATURE_ARCH-x86-m32}", "" ,d)}"
 TUNE_FEATURE_CCARGS-x86-m32 ?= "-m32"
 TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "x86-m32", "${TUNE_FEATURE_CCARGS-x86-m32}", "", d)}"
 MACHINEOVERRIDES .= "${@bb.utils.contains("TUNE_FEATURES", "x86-m32", ":x86", "" ,d)}"
@@ -18,7 +17,8 @@ MACHINEOVERRIDES .= "${@bb.utils.contains("TUNE_FEATURES", "x86-m32", ":x86", ""
 # x32 ABI
 TUNEVALID[x86-64-mx32] = "IA32e (x86_64) ELF32 standard ABI"
 TUNECONFLICTS[x86-64-mx32] = "x86-64-m64 x86-m32"
-TUNE_ARCH .= "${@bb.utils.contains("TUNE_FEATURES", "x86-64-mx32", "${X86ARCH64}", "" ,d)}"
+TUNE_FEATURE_ARCH-x86-64-mx32 = "x86_64"
+TUNE_ARCH .= "${@bb.utils.contains("TUNE_FEATURES", "x86-64-mx32", "${TUNE_FEATURE_ARCH-x86-64-mx32}", "" ,d)}"
 ABIEXTENSION .= "${@bb.utils.contains("TUNE_FEATURES", "x86-64-mx32", "x32", "" ,d)}"
 TUNE_FEATURE_CCARGS-x86-64-mx32 ?= "-mx32"
 TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "x86-64-mx32", "${TUNE_FEATURE_CCARGS-x86-64-mx32}", "", d)}"
@@ -28,7 +28,8 @@ TUNE_ASARGS += "${@bb.utils.contains("TUNE_FEATURES", "x86-64-mx32", "-x32", "",
 # ELF64 ABI
 TUNEVALID[x86-64-m64] = "IA32e (x86_64) ELF64 standard ABI"
 TUNECONFLICT[x86-64-m64] = "x86-m32 x86-64-mx32"
-TUNE_ARCH .= "${@bb.utils.contains("TUNE_FEATURES", "x86-64-m64", "${X86ARCH64}", "" ,d)}"
+TUNE_FEATURE_ARCH-x86-64-m64 = "x86_64"
+TUNE_ARCH .= "${@bb.utils.contains("TUNE_FEATURES", "x86-64-m64", "${TUNE_FEATURE_ARCH-x86-64-m64}", "" ,d)}"
 TUNE_FEATURE_CCARGS-x86-64-m64 ?= "-m64"
 TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "x86-64-m64", "${TUNE_FEATURE_CCARGS-x86-64-m64}", "", d)}"
 
