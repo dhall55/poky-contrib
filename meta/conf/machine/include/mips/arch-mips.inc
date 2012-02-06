@@ -15,16 +15,19 @@ TUNEVALID[mips-o32] = "MIPS o32 ABI"
 TUNECONFLICT[mips-o32] = "mips-n32 mips-n64"
 TUNE_FEATURE_CCARGS-mips-o32 ?= "-mabi=32"
 TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "mips-o32", "${TUNE_FEATURE_CCARGS-mips-o32}", "", d)}"
+TUNE_FEATURE_ARCH-mips-o32 = "mips${MIPSPKGSFX_BYTE}${MIPSPKGSFX_ENDIAN}"
 
 TUNEVALID[mips-n32] = "MIPS64 n32 ABI"
 TUNECONFLICT[mips-n32] = "mips-o32 mips-n64"
 TUNE_FEATURE_CCARGS-mips-n32 ?= "-mabi=n32"
 TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "mips-n32", "${TUNE_FEATURE_CCARGS-mips-n32}", "", d)}"
+TUNE_FEATURE_ARCH-mips-n32 = "mips${MIPSPKGSFX_BYTE}${MIPSPKGSFX_ENDIAN}"
 
 TUNEVALID[mips-n64] = "MIPS64 n64 ABI"
 TUNECONFLICT[mips-n64] = "mips-o32 mips-n32"
 TUNE_FEATURE_CCARGS-mips-n64 ?= "-mabi=64"
 TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "mips-n64", "${TUNE_FEATURE_CCARGS-mips-n64}", "", d)}"
+TUNE_FEATURE_ARCH-mips-n64 = "mips${MIPSPKGSFX_BYTE}${MIPSPKGSFX_ENDIAN}"
 
 # Floating point
 TUNEVALID[mips-fpu-hard] = "Use hardware FPU"
