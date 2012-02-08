@@ -13,6 +13,7 @@ INHIBIT_DEFAULT_DEPS = "1"
 # IMAGE_FEATURES may contain any available package group
 IMAGE_FEATURES ?= ""
 IMAGE_FEATURES[type] = "list"
+IMAGE_FEATURES[validitems] += "debug-tweaks read-only-rootfs"
 
 # packages to install from features
 FEATURE_INSTALL = "${@' '.join(oe.packagegroup.required_packages(oe.data.typed_value('IMAGE_FEATURES', d), d))}"
@@ -40,6 +41,18 @@ def normal_pkgs_to_install(d):
     recipes = filter(None, [oe.packagedata.recipename(pkg, d) for pkg in all_packages])
 
     return all_packages + recipes
+
+def check_image_features(d):
+    valid_features = (d.getVarFlag('IMAGE_FEATURES', 'validitems', True) or "").split()
+    for var in d:
+       if var.startswith("PACKAGE_GROUP_"):
+           valid_features.append(var[14:])
+    valid_features.sort()
+
+    features = set(oe.data.typed_value('IMAGE_FEATURES', d))
+    for feature in features:
+        if feature not in valid_features:
+            bb.error("'%s' in IMAGE_FEATURES is not a valid image feature. Valid features: %s" % (feature, ' '.join(valid_features)))
 
 PACKAGE_GROUP_dbg-pkgs = "${@' '.join('%s-dbg' % pkg for pkg in normal_pkgs_to_install(d))}"
 PACKAGE_GROUP_dbg-pkgs[optional] = "1"
@@ -87,6 +100,8 @@ python () {
     if d.getVar('BB_WORKERCONTEXT', True) is not None:
         runtime_mapping_rename("PACKAGE_INSTALL", d)
         runtime_mapping_rename("PACKAGE_INSTALL_ATTEMPTONLY", d)
+
+    check_image_features(d)
 }
 
 #
