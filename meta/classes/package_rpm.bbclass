@@ -39,12 +39,13 @@ package_update_index_rpm_common () {
 	rpmconf_base="$1"
 	shift
 
+        createdirs=""
 	for archvar in "$@"; do
 		eval archs=\${${archvar}}
 		packagedirs=""
 		for arch in $archs; do
 			packagedirs="${DEPLOY_DIR_RPM}/$arch $packagedirs"
-			rm -rf ${DEPLOY_DIR_RPM}/$arch/solvedb
+			rm -rf ${DEPLOY_DIR_RPM}/$arch/solvedb.done
 		done
 
 		cat /dev/null > ${rpmconf_base}-${archvar}.conf
@@ -52,22 +53,11 @@ package_update_index_rpm_common () {
 			if [ -e $pkgdir/ ]; then
 				echo "Generating solve db for $pkgdir..."
 				echo $pkgdir/solvedb >> ${rpmconf_base}-${archvar}.conf
-				if [ -d $pkgdir/solvedb ]; then
-					# We've already processed this and it's a duplicate
-					continue
-				fi
-				mkdir -p $pkgdir/solvedb
-				echo "# Dynamically generated solve manifest" >> $pkgdir/solvedb/manifest
-				find $pkgdir -maxdepth 1 -type f >> $pkgdir/solvedb/manifest
-				${RPM} -i --replacepkgs --replacefiles --oldpackage \
-					-D "_dbpath $pkgdir/solvedb" --justdb \
-					--noaid --nodeps --noorder --noscripts --notriggers --noparentdirs --nolinktos --stats \
-					--ignoresize --nosignature --nodigest \
-					-D "__dbi_txn create nofsync" \
-					$pkgdir/solvedb/manifest
+                                createdirs="$createdirs $pkgdir"
 			fi
 		done
 	done
+	rpm-createsolvedb.py "${RPM}" $createdirs
 }
 
 #
@@ -150,8 +140,8 @@ resolve_package_rpm () {
 # rpm common command and options
 rpm_common_comand () {
 
-    local target_rootfs="${INSTALL_ROOTFS_RPM}"
-    local extra_args="$@"
+    target_rootfs="${INSTALL_ROOTFS_RPM}"
+    extra_args="$@"
 
     ${RPM} --root ${target_rootfs} \
         --predefine "_rpmds_sysinfo_path ${target_rootfs}/etc/rpm/sysinfo" \
@@ -203,6 +193,7 @@ rpm_update_pkg () {
             -Uvh ${target_rootfs}/install/incremental.manifest
     else
         # Attempt to install
+        echo foo
         rpm_common_comand --replacepkgs \
             -Uhv ${target_rootfs}/install/total_solution.manifest
     fi
