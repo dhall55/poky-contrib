@@ -1360,6 +1360,15 @@ class RunQueueExecuteTasks(RunQueueExecute):
             # nothing to do
             self.rq.state = runQueueCleanUp
 
+        if len(bb.event.worker_complete):
+            for pid in bb.event.worker_complete:
+                if pid not in self.build_pids:
+                    continue
+                task = self.build_pids[pid]
+                self.task_completeoutright(task)
+                bb.note("Completing %s early" % self.rqdata.get_user_idstring(task))
+            bb.event.worker_complete = []
+
         task = self.sched.next()
         if task is not None:
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
@@ -1707,6 +1716,8 @@ class TaskFailure(Exception):
     def __init__(self, x):
         self.args = x
 
+class TaskEarlyCompletition(bb.event.Event):
+    pass
 
 class runQueueExitWait(bb.event.Event):
     """

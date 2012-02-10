@@ -37,6 +37,7 @@ import bb.utils
 # the runqueue forks off.
 worker_pid = 0
 worker_pipe = None
+worker_complete = []
 
 logger = logging.getLogger('BitBake.Event')
 
@@ -153,6 +154,8 @@ def fire_from_worker(event, d):
         print("Error, not an event %s" % event)
         return
     event = pickle.loads(event[7:-8])
+    if isinstance(event, bb.runqueue.TaskEarlyCompletition):
+        worker_complete.append(event.pid)
     fire_ui_handlers(event, d)
 
 noop = lambda _: None

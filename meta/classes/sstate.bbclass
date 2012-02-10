@@ -437,6 +437,7 @@ python sstate_task_postfunc () {
     sstate_install(shared_state, d)
     for intercept in shared_state['interceptfuncs']:
         bb.build.exec_func(intercept, d)
+    bb.event.fire(bb.runqueue.TaskEarlyCompletition(), d)
     sstate_package(shared_state, d)
 }
   
