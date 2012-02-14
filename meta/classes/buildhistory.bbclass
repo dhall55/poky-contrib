@@ -269,6 +269,8 @@ buildhistory_get_image_installed() {
 	# Anything requiring the use of the packaging system should be done in here
 	# in case the packaging files are going to be removed for this image
 
+	bbdebug 2 "buildhistory: getting image package information"
+
 	mkdir -p ${BUILDHISTORY_DIR_IMAGE}
 
 	# Get list of installed packages
@@ -314,9 +316,13 @@ buildhistory_get_image_installed() {
 		list_package_depends
 		list_package_recommends
 	fi
+
+	bbdebug 2 "buildhistory: done getting image package information"
 }
 
 buildhistory_get_imageinfo() {
+	bbdebug 2 "buildhistory: getting image contents"
+
 	# List the files in the image, but exclude date/time etc.
 	# This awk script is somewhat messy, but handles where the size is not printed for device files under pseudo
 	( cd ${IMAGE_ROOTFS} && find . -ls | awk '{ if ( $7 ~ /[0-9]/ ) printf "%s %10-s %10-s %10s %s %s %s\n", $3, $5, $6, $7, $11, $12, $13 ; else printf "%s %10-s %10-s %10s %s %s %s\n", $3, $5, $6, 0, $10, $11, $12 }' | sort -k5 > ${BUILDHISTORY_DIR_IMAGE}/files-in-image.txt )
@@ -335,6 +341,8 @@ END
 	cat >> ${BUILDHISTORY_DIR_IMAGE}/build-id <<END
 ${@buildhistory_get_layers(d)}
 END
+
+	bbdebug 2 "buildhistory: done getting image contents"
 }
 
 # By prepending we get in before the removal of packaging files
@@ -374,6 +382,7 @@ buildhistory_commit() {
 		exit
 	fi
 
+	bbnote "buildhistory: checking if commit needed"
 	( cd ${BUILDHISTORY_DIR}/
 		# Initialise the repo if necessary
 		if [ ! -d .git ] ; then
@@ -382,13 +391,16 @@ buildhistory_commit() {
 		# Ensure there are new/changed files to commit
 		repostatus=`git status --porcelain`
 		if [ "$repostatus" != "" ] ; then
+			bbnote "buildhistory: committing history"
 			git add ${BUILDHISTORY_DIR}/*
 			HOSTNAME=`hostname 2>/dev/null || echo unknown`
 			git commit ${BUILDHISTORY_DIR}/ -m "Build ${BUILDNAME} of ${DISTRO} ${DISTRO_VERSION} for machine ${MACHINE} on $HOSTNAME" --author "${BUILDHISTORY_COMMIT_AUTHOR}" > /dev/null
 			if [ "${BUILDHISTORY_PUSH_REPO}" != "" ] ; then
+				bbnote "buildhistory: pushing history to remote repository"
 				git push -q ${BUILDHISTORY_PUSH_REPO}
 			fi
 		fi) || true
+	bbnote "buildhistory: done"
 }
 
 python buildhistory_eventhandler() {
