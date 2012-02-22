@@ -118,6 +118,8 @@ def main(server, eventHandler):
         try:
             event = eventHandler.waitEvent(0.25)
             if event is None:
+                if shutdown > 1:
+                    break
                 continue
             helper.eventHandler(event)
             if isinstance(event, bb.runqueue.runQueueExitWait):
@@ -199,18 +201,19 @@ def main(server, eventHandler):
                 print("Loaded %d entries from dependency cache." % event.num_entries)
                 continue
 
-            if isinstance(event, bb.command.CommandCompleted):
-                break
             if isinstance(event, bb.command.CommandFailed):
                 return_value = event.exitcode
+                errors = errors + 1
                 logger.error("Command execution failed: %s", event.error)
-                break
+                shutdown = 2
+                continue
             if isinstance(event, bb.command.CommandExit):
                 if not return_value:
                     return_value = event.exitcode
                 continue
-            if isinstance(event, bb.cooker.CookerExit):
-                break
+            if isinstance(event, (bb.command.CommandCompleted, bb.cooker.CookerExit)):
+                shutdown = 2
+                continue
             if isinstance(event, bb.event.MultipleProviders):
                 logger.info("multiple providers are available for %s%s (%s)", event._is_runtime and "runtime " or "",
                             event._item,
@@ -269,9 +272,6 @@ def main(server, eventHandler):
             if ioerror.args[0] == 4:
                 pass
         except KeyboardInterrupt:
-            if shutdown == 2:
-                print("\nThird Keyboard Interrupt, exit.\n")
-                break
             if shutdown == 1:
                 print("\nSecond Keyboard Interrupt, stopping...\n")
                 server.runCommand(["stateStop"])
@@ -295,5 +295,10 @@ def main(server, eventHandler):
                              "\nSummary: There were %s ERROR messages shown, returning a non-zero exit code.", errors)
     if summary:
         print(summary)
+
+    if shutdown:
+        print("Execution was interrupted, returning a non-zero exit code.")
+        if return_value == 0:
+            return_value = 1
 
     return return_value
