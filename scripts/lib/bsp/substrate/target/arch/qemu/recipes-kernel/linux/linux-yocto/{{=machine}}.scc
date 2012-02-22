@@ -1,0 +1,3 @@
+kconf hardware {{=machine}}.cfg
+
+include features/logbuf/size-normal.scc

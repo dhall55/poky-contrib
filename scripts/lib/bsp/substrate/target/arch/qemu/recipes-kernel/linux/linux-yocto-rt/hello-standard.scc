@@ -1,0 +1,7 @@
+define KMACHINE foo
+define KTYPE standard
+define KARCH i386
+
+scc_leaf ktypes/standard foo
+
+include foo.scc

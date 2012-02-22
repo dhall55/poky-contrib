@@ -1,0 +1,300 @@
+#!/usr/bin/env python
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#
+# Copyright 2012 Intel Corporation
+# Authored-by:  Tom Zanussi <tom.zanussi@intel.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+__version__ = "0.1.0"
+
+import os
+import sys
+import optparse
+import logging
+
+scripts_path = os.path.abspath(os.path.dirname(os.path.abspath(sys.argv[0])))
+lib_path = scripts_path + '/lib'
+sys.path = sys.path + [lib_path]
+
+from bsp.help import *
+from bsp.kernel import *
+
+def yocto_kernel_feature_list_subcommand(args, usage_str):
+    """
+    Command-line handling for listing available BSP features.  The
+    real work is done by bsp.kernel.yocto_kernel_feature_list().
+    """
+    logging.debug("yocto_kernel_feature_list_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    parser.add_option("-u", "--used", help = "include features used by the BSP",
+               action = "store_true", dest = "used", default = False)
+
+    (options, args) = parser.parse_args(args)
+
+
+def yocto_kernel_feature_define_subcommand(args, usage_str):
+    """
+    Command-line handling for defining BSP features.  The real work is
+    done by bsp.kernel.yocto_kernel_feature_define().
+    """
+    logging.debug("yocto_kernel_feature_define_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    parser.add_option("-d", "--dirname", help = "directory name for the feature",
+               action = "store", dest = "dirname")
+    parser.add_option("-p", "--policy", help = "hardware policy for the feature",
+               action = "store", dest = "policy")
+
+    (options, args) = parser.parse_args(args)
+
+
+def yocto_kernel_feature_add_subcommand(args, usage_str):
+    """
+    Command-line handling for adding BSP features.  The real work is
+    done by bsp.kernel.yocto_kernel_feature_add().
+    """
+    logging.debug("yocto_kernel_feature_add_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    (options, args) = parser.parse_args(args)
+
+
+def yocto_kernel_feature_rm_subcommand(args, usage_str):
+    """
+    Command-line handling for adding BSP features.  The real work is
+    done by bsp.kernel.yocto_kernel_feature_rm().
+    """
+    logging.debug("yocto_kernel_feature_rm_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    (options, args) = parser.parse_args(args)
+
+
+def yocto_kernel_config_list_subcommand(args, usage_str):
+    """
+    Command-line handling for listing BSP config options.  The
+    real work is done by bsp.kernel.yocto_kernel_config_list().
+    """
+    logging.debug("yocto_kernel_config_list_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    (options, args) = parser.parse_args(args)
+
+    if len(args) != 1:
+        logging.error("Wrong number of arguments, exiting\n")
+        parser.print_help()
+        exit(1)
+
+    yocto_kernel_config_list(scripts_path, args[0])
+
+
+
+def yocto_kernel_config_add_subcommand(args, usage_str):
+    """
+    Command-line handling for adding BSP config items.  The real work
+    is done by bsp.kernel.yocto_kernel_config_add().
+    """
+    logging.debug("yocto_kernel_config_add_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    (options, args) = parser.parse_args(args)
+
+    if len(args) < 2:
+        logging.error("Wrong number of arguments, exiting\n")
+        parser.print_help()
+        exit(1)
+
+    machine = args.pop(0)
+    yocto_kernel_config_add(scripts_path, machine, args)
+
+
+def yocto_kernel_config_rm_subcommand(args, usage_str):
+    """
+    Command-line handling for removing BSP config items.  The real
+    work is done by bsp.kernel.yocto_kernel_config_rm().
+    """
+    logging.debug("yocto_kernel_config_rm_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    (options, args) = parser.parse_args(args)
+
+    if len(args) != 1:
+        logging.error("Wrong number of arguments, exiting\n")
+        parser.print_help()
+        exit(1)
+
+    yocto_kernel_config_rm(scripts_path, args[0])
+
+
+def yocto_kernel_patch_list_subcommand(args, usage_str):
+    """
+    Command-line handling for listing BSP (SRC_URI patches.  The real
+    work is done by bsp.kernel.yocto_kernel_patch_list().
+    """
+    logging.debug("yocto_kernel_patch_list_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    (options, args) = parser.parse_args(args)
+
+    if len(args) != 1:
+        logging.error("Wrong number of arguments, exiting\n")
+        parser.print_help()
+        exit(1)
+
+    yocto_kernel_patch_list(scripts_path, args[0])
+
+
+def yocto_kernel_patch_add_subcommand(args, usage_str):
+    """
+    Command-line handling for adding BSP patches.  The real work is
+    done by bsp.kernel.yocto_kernel_patch_add().
+    """
+    logging.debug("yocto_kernel_patch_add_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    (options, args) = parser.parse_args(args)
+
+    if len(args) < 2:
+        logging.error("Wrong number of arguments, exiting\n")
+        parser.print_help()
+        exit(1)
+
+    machine = args.pop(0)
+    yocto_kernel_patch_add(scripts_path, machine, args)
+
+
+def yocto_kernel_patch_rm_subcommand(args, usage_str):
+    """
+    Command-line handling for removing BSP patches.  The real work is
+    done by bsp.kernel.yocto_kernel_patch_rm().
+    """
+    logging.debug("yocto_kernel_patch_rm_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    (options, args) = parser.parse_args(args)
+
+    if len(args) != 1:
+        logging.error("Wrong number of arguments, exiting\n")
+        parser.print_help()
+        exit(1)
+
+    yocto_kernel_patch_rm(scripts_path, args[0])
+
+
+def yocto_kernel_publish_subcommand(args, usage_str):
+    """
+    Command-line handling for publishing to a local repo.  The real
+    work is done by bsp.kernel.yocto_kernel_publish().
+    """
+    logging.debug("yocto_kernel_publish_subcommand")
+
+    parser = optparse.OptionParser(usage = usage_str)
+
+    (options, args) = parser.parse_args(args)
+
+
+subcommands = {
+    "feature-list": [yocto_kernel_feature_list_subcommand,
+                     yocto_kernel_feature_list_usage,
+                     yocto_kernel_feature_list_help],
+    "feature-define": [yocto_kernel_feature_define_subcommand,
+                       yocto_kernel_feature_define_usage,
+                       yocto_kernel_feature_define_help],
+    "feature-add": [yocto_kernel_feature_add_subcommand,
+                    yocto_kernel_feature_add_usage,
+                    yocto_kernel_feature_add_help],
+    "feature-rm": [yocto_kernel_feature_rm_subcommand,
+                   yocto_kernel_feature_rm_usage,
+                   yocto_kernel_feature_rm_help],
+    "config-list": [yocto_kernel_config_list_subcommand,
+                    yocto_kernel_config_list_usage,
+                    yocto_kernel_config_list_help],
+    "config-add": [yocto_kernel_config_add_subcommand,
+                   yocto_kernel_config_add_usage,
+                   yocto_kernel_config_add_help],
+    "config-rm": [yocto_kernel_config_rm_subcommand,
+                  yocto_kernel_config_rm_usage,
+                  yocto_kernel_config_rm_help],
+    "patch-list": [yocto_kernel_patch_list_subcommand,
+                   yocto_kernel_patch_list_usage,
+                   yocto_kernel_patch_list_help],
+    "patch-add": [yocto_kernel_patch_add_subcommand,
+                  yocto_kernel_patch_add_usage,
+                  yocto_kernel_patch_add_help],
+    "patch-rm": [yocto_kernel_patch_rm_subcommand,
+                 yocto_kernel_patch_rm_usage,
+                 yocto_kernel_patch_rm_help],
+    "publish": [yocto_kernel_publish_subcommand,
+                yocto_kernel_publish_usage,
+                yocto_kernel_publish_help],
+}
+
+
+def start_logging(loglevel):
+    logging.basicConfig(filname = 'yocto-kernel.log', filemode = 'w', level=loglevel)
+
+
+def main():
+    parser = optparse.OptionParser(version = "yocto-kernel version %s" % __version__,
+                                   usage = yocto_kernel_usage)
+
+    parser.disable_interspersed_args()
+    parser.add_option("-D", "--debug", dest = "debug", action = "store_true",
+                      default = False, help = "output debug information")
+
+    (options, args) = parser.parse_args()
+
+    loglevel = logging.INFO
+    if options.debug:
+        loglevel = logging.DEBUG
+    start_logging(loglevel)
+
+    if len(args):
+        if args[0] == "help":
+            sc = 1
+        else:
+            sc = 0
+        if args[sc] == "feature" or args[sc] == "config" or args[sc] == "patch":
+            if len(args) < 2 + sc:
+                parser.print_help()
+                exit(1)
+            args[sc] += "-" + args[sc + 1]
+            args.pop(sc + 1)
+
+    invoke_subcommand(args, parser, yocto_kernel_help_usage, subcommands)
+
+
+bsp_properties = None
+
+if __name__ == "__main__":
+    try:
+        ret = main()
+    except Exception:
+        ret = 1
+        import traceback
+        traceback.print_exc(5)
+    sys.exit(ret)
