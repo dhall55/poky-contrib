@@ -5,6 +5,8 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -18,13 +20,14 @@ import org.yocto.sdk.remotetools.Activator;
 import org.yocto.sdk.remotetools.Messages;
 import org.yocto.sdk.remotetools.SWTFactory;
 
-public class BsptoolSettingDialog extends BaseSettingDialog {
+public class BsptoolSettingDialog extends SimpleSettingDialog {
 	
 	static protected String TITLE="BspTool";
 	
 	protected boolean showPid=false;
 	protected Float time;
 	protected Button showPidButton;
+	protected Button outLocButton;
 	protected Text timeText;
 	
 	protected BsptoolSettingDialog(Shell parentShell, String title, String conn) {
@@ -72,17 +75,65 @@ public class BsptoolSettingDialog extends BaseSettingDialog {
 		projComp.setLayoutData(gd);
 		
 		Label label = new Label(projComp, SWT.NONE);
-		label.setText ("karch");
+		label.setText (Messages.BspTool_name);
 		gd = new GridData();
-		gd.horizontalSpan = 1;
+		gd.horizontalSpan = 2;
 		label.setLayoutData(gd);
+		
+		Text text = new Text(projComp, SWT.NONE);
+		text.setText(""); 
+		gd = new GridData(GridData.FILL_HORIZONTAL);
+		gd.horizontalSpan = 2;
+		text.setLayoutData(gd);
+		
+		Label label1 = new Label(projComp, SWT.NONE);
+		label1.setText (Messages.BspTool_karch);
+		gd = new GridData();
+		gd.horizontalSpan = 2;
+		label1.setLayoutData(gd);
 		
 		Combo combo = new Combo (projComp, SWT.NONE);
 		combo.setItems (new String [] {"x86_64", "powerpc", "i386", "arm", "mips"});
 		gd = new GridData(GridData.FILL_HORIZONTAL);
 		gd.horizontalSpan = 2;
 		combo.setLayoutData(gd);
+		
+		Label label11 = new Label(projComp, SWT.NONE);
+		label11.setText (Messages.BspTool_out_dir);
+		gd = new GridData();
+		gd.horizontalSpan = 1;
+		label11.setLayoutData(gd);
+		
+		Text text1 = new Text(projComp, SWT.NONE);
+		text1.setText(""); 
+		gd = new GridData(GridData.FILL_HORIZONTAL);
+		gd.horizontalSpan = 2;
+		text1.setLayoutData(gd);
+		
+		outLocButton = SWTFactory.createPushButton(projComp,
+				Messages.BspTool_out_dir_btn, null);
+		outLocButton.addSelectionListener(new SelectionAdapter() {
+
+			public void widgetSelected(SelectionEvent evt) {
+				handleOutLocButton();
+				//updateLaunchConfigurationDialog();
+				updateOutLocText();
+			}
+		});
+		gd = new GridData();
+		gd.horizontalSpan = 1;
+		outLocButton.setLayoutData(gd);
 			
+		
+	}
+
+	protected void updateOutLocText() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	protected void handleOutLocButton() {
+		// TODO Auto-generated method stub
 		
 	}
 

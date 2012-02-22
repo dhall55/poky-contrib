@@ -36,8 +36,10 @@ public class Messages extends NLS {
 	public static String Usttrace_Application_Text;
 	public static String Powertop_Time_Text;
 	public static String Powertop_ShowPid_Text;
-	public static String BspTool_Time_Text;	
-	public static String BspTool_Text;
+	public static String BspTool_karch;	
+	public static String BspTool_name;
+	public static String BspTool_out_dir;
+	public static String BspTool_out_dir_btn;
 	public static String TerminalViewer_text;
 	public static String Systemtap_KO_Text;
 	public static String Import_to_Project;
