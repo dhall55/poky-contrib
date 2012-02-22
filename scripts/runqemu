@@ -98,7 +98,7 @@ i=1
 while [ $i -le $# ]; do
     arg=${!i}
     case $arg in
-        "qemux86" | "qemux86-64" | "qemuarm" | "qemumips" | "qemuppc")
+        "qemux86" | "qemux86-64" | "qemuarm" | "qemumips" | "qemuppc" | "lab1" | "lab2" | "lab3")
             if [ -z "$MACHINE" ]; then
                 MACHINE=$arg
             else
@@ -270,6 +270,13 @@ AKITA_DEFAULT_FSTYPE=jffs2
 
 SPITZ_DEFAULT_KERNEL=zImage-spitz.bin
 SPITZ_DEFAULT_FSTYPE=ext3
+
+LAB1_DEFAULT_KERNEL=bzImage-lab1.bin
+LAB1_DEFAULT_FSTYPE=ext3
+LAB2_DEFAULT_KERNEL=bzImage-lab2.bin
+LAB2_DEFAULT_FSTYPE=ext3
+LAB3_DEFAULT_KERNEL=bzImage-lab3.bin
+LAB3_DEFAULT_FSTYPE=ext3
 
 setup_tmpdir() {
     if [ -z "$TMPDIR" ]; then
