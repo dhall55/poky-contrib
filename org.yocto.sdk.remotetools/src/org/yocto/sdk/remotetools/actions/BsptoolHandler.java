@@ -1,46 +1,39 @@
+
 package org.yocto.sdk.remotetools.actions;
 
+import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.IHandler;
 import org.eclipse.core.commands.IHandlerListener;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.handlers.HandlerUtil;
+import org.eclipse.ui.progress.IProgressService;
 
-public class BsptoolHandler implements IHandler {
+public class BsptoolHandler extends AbstractHandler {
 
-	@Override
-	public void addHandlerListener(IHandlerListener handlerListener) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void dispose() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		// TODO Auto-generated method stub
+		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
+
+		BsptoolSettingDialog setting=new BsptoolSettingDialog(
+				window.getShell()
+				);
+		
+		if(setting.open()==BaseSettingDialog.OK) {
+			IProgressService progressService = PlatformUI.getWorkbench().getProgressService();
+			BsptoolModel op=new BsptoolModel(setting.getHost(),setting.getTime(),setting.getShowPid(),window.getShell().getDisplay());
+			try {
+				progressService.busyCursorWhile(op);
+			}catch (Exception e) {
+				e.printStackTrace();
+				MessageDialog.openError(window.getShell(),
+						"BspTool",
+						e.getMessage());
+			} 
+		}
 		return null;
-	}
-
-	@Override
-	public boolean isEnabled() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean isHandled() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void removeHandlerListener(IHandlerListener handlerListener) {
-		// TODO Auto-generated method stub
-
 	}
 
 }

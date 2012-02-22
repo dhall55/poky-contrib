@@ -9,7 +9,7 @@
             id="org.yocto.sdk.remotetools">
       </category>
       <view
-            name="PowerTop"
+            name="%view.name"
             icon="icons/sample.gif"
             category="org.yocto.sdk.remotetools"
             class="org.yocto.sdk.remotetools.views.BaseFileView"
@@ -17,10 +17,17 @@
       </view>
       <view
             category="org.yocto.sdk.remotetools"
+            class="org.yocto.sdk.remotetools.views.BspToolView"
+            icon="icons/sample.gif"
+            id="org.yocto.sdk.remotetools.views.BspToolView"
+            name="%view.name.0">
+      </view>      
+      <view
+            category="org.yocto.sdk.remotetools"
             class="org.yocto.sdk.remotetools.views.TerminalViewer"
             icon="icons/sample.gif"
             id="org.yocto.sdk.remotetools.views.TerminalView"
-            name="TerminalView">
+            name="%view.name.1">
       </view>
    </extension>
    <extension
@@ -83,14 +90,14 @@
             locationURI="menu:org.eclipse.ui.main.menu?after=additions">
          <menu
                id="runYoctoTools"
-               label="YoctoProjectTools">    
+               label="%menu.label">    
          </menu>
       </menuContribution>
       <menuContribution
             locationURI="menu:runYoctoTools">
          <command
                commandId="org.yocto.sdk.remotetools.command.bsptool"
-               label="bsptool"
+               label="%command.label"
                style="push">
          </command>
          <separator

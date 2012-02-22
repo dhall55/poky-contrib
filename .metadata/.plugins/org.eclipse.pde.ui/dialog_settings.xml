@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
+	<item value="false" key="OrganizeManifests.ExportedPackages.addMissing"/>
+	<item value="false" key="OrganizeManifests.calculateUses"/>
+	<item value="false" key="OrganizeManifests.RequireImport.modifyDep"/>
+	<item value="false" key="OrganizeManifests.Translation.nls"/>
+	<item value="false" key="OrganizeManifests.Translation.unusedKeys"/>
+	<item value="*.internal*" key="OrganizeManifests.ExportedPackages.packageFilter"/>
+	<item value="false" key="OrganizeManifests.General.cleanup"/>
+	<item value="false" key="OrganizeManifests.ExportedPackages.makeInternal"/>
+	<item value="false" key="OrganizeManifests.AddDependencies"/>
+	<item value="false" key="OrganizeManifests.ExportedPackages.removeUnresolved"/>
+	<item value="false" key="OrganizeManifests.RequireImport.findRemoveUnused"/>
+	<item value="false" key="OrganizeManifests.RequireImport.resolve:markOptional"/>
+	<item value="false" key="OrganizeManifests.General.cleanup.removeUselessFiles"/>
 	<section name="quick_assist_proposal_size">
+	</section>
+	<section name="org.eclipse.ltk.ui.refactoring.settings">
+	</section>
+	<section name="RefactoringWizard.Organize Manifests">
+		<item value="532" key="height"/>
+		<item value="647" key="width"/>
+	</section>
+	<section name="PluginImportWizard">
+		<item value="3" key="importType"/>
+		<item value="true" key="addFragments"/>
+		<item value="/home/jlcawood/workspace_2/yocto-eclipse" key="droplocation0"/>
+		<item value="3" key="importFrom"/>
+		<item value="true" key="scanAll"/>
+		<item value="true" key="showLatestPluginsOnly"/>
 	</section>
 	<section name="pde_compiler_errorwarnings_block">
 		<item value="false" key="3"/>
@@ -8,14 +35,6 @@
 		<item value="false" key="1"/>
 		<item value="true" key="0"/>
 		<item value="false" key="4"/>
-	</section>
-	<section name="PluginImportWizard">
-		<item value="3" key="importType"/>
-		<item value="true" key="addFragments"/>
-		<item value="3" key="importFrom"/>
-		<item value="/home/jlcawood/workspace_2/yocto-eclipse" key="droplocation0"/>
-		<item value="true" key="scanAll"/>
-		<item value="true" key="showLatestPluginsOnly"/>
 	</section>
 	<section name="JavaAttributeWizard">
 	</section>

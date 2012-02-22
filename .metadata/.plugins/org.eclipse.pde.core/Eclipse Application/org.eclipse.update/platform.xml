@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<config date="1328304335666" transient="false" version="3.0">
+<config date="1329859067110" transient="false" version="3.0">
 <site enabled="true" policy="USER-EXCLUDE" updateable="true" url="platform:/base/">
 <feature id="org.eclipse.linuxtools.rpm.ui.editor.feature" plugin-identifier="org.eclipse.linuxtools.rpm.ui.editor" url="features/org.eclipse.linuxtools.rpm.ui.editor.feature_0.4.3.201201190007/" version="0.4.3.201201190007">
 </feature>
@@ -81,6 +81,8 @@
 </feature>
 <feature id="org.eclipse.cdt.gdb" url="features/org.eclipse.cdt.gdb_7.0.0.201109151620/" version="7.0.0.201109151620">
 </feature>
+<feature id="org.eclipse.sdk.examples.source" url="features/org.eclipse.sdk.examples.source_3.4.0.v20110503/" version="3.4.0.v20110503">
+</feature>
 <feature id="org.eclipse.linuxtools.changelog" url="features/org.eclipse.linuxtools.changelog_2.7.0.201201190007/" version="2.7.0.201201190007">
 </feature>
 <feature id="org.eclipse.rse.dstore" plugin-identifier="org.eclipse.rse.services.dstore" url="features/org.eclipse.rse.dstore_3.3.1.R33x_v201109141647-7L78FRAD2YR70wUHbQUplQ8LFC/" version="3.3.1.R33x_v201109141647-7L78FRAD2YR70wUHbQUplQ8LFC">
@@ -129,11 +131,13 @@
 </feature>
 <feature id="org.eclipse.equinox.p2.rcp.feature.source" url="features/org.eclipse.equinox.p2.rcp.feature.source_1.0.1.R37x_v20110906-782EpBqNKGUkZQpuT8hAlWlFbUeo/" version="1.0.1.R37x_v20110906-782EpBqNKGUkZQpuT8hAlWlFbUeo">
 </feature>
+<feature id="org.eclipse.cdt.platform" url="features/org.eclipse.cdt.platform_8.0.0.201109151620/" version="8.0.0.201109151620">
+</feature>
+<feature id="org.eclipse.sdk.examples" url="features/org.eclipse.sdk.examples_3.4.0.v20110503-817mFcfFEdccNz0Jhh8BTgNN/" version="3.4.0.v20110503-817mFcfFEdccNz0Jhh8BTgNN">
+</feature>
 <feature id="org.eclipse.rse.core" url="features/org.eclipse.rse.core_3.3.1.R33x_v201109141647-7a7JFZ3F8Fz0vz03_qRujbr0z0Nu/" version="3.3.1.R33x_v201109141647-7a7JFZ3F8Fz0vz03_qRujbr0z0Nu">
 </feature>
 <feature id="org.eclipse.jdt.source" url="features/org.eclipse.jdt.source_3.7.1.r371_v20110810-0800-7z8gFcoFMLfTabvKsR5Qm9rBGEBK/" version="3.7.1.r371_v20110810-0800-7z8gFcoFMLfTabvKsR5Qm9rBGEBK">
-</feature>
-<feature id="org.eclipse.cdt.platform" url="features/org.eclipse.cdt.platform_8.0.0.201109151620/" version="8.0.0.201109151620">
 </feature>
 <feature id="org.eclipse.tm.terminal.serial" url="features/org.eclipse.tm.terminal.serial_2.1.0.v201103142315-30-7w312212153266/" version="2.1.0.v201103142315-30-7w312212153266">
 </feature>

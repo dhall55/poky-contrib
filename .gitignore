@@ -1,0 +1,30 @@
+# Linux generic #
+.*
+!.gitignore
+*~
+
+# other project specific #
+ExternalPlug-inLibraries/ 
+.metadata
+
+# emacs #
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+.elc
+auto-save-list
+tramp
+
+# vim #
+.*.sw[a-z]
+*.un~
+Session.vim
+
+# Java #
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+

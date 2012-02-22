@@ -15,6 +15,7 @@ public interface IBaseConstants {
 	
 	public static final String QUALIFIER="org.yocto.sdk.remotetools";//$NON-NLS-1$
 	
+	public static final String CONNECTION_NAME_BSPTOOL = QUALIFIER + "connection.bsptool"; //$NON-NLS-1$
 	public static final String CONNECTION_NAME_OPROFILE = QUALIFIER + "connection.oprofile"; //$NON-NLS-1$
 	public static final String CONNECTION_NAME_UST = QUALIFIER + "connection.ust"; //$NON-NLS-1$
 	public static final String CONNECTION_NAME_POWERTOP = QUALIFIER + "connection.powertop"; //$NON-NLS-1$
