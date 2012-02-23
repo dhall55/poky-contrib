@@ -1,16 +1,12 @@
 package org.yocto.sdk.remotetools.actions;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FilenameFilter;
-import java.util.Arrays;
 
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.*;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -19,7 +15,6 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -27,26 +22,19 @@ import org.yocto.sdk.remotetools.Activator;
 import org.yocto.sdk.remotetools.Messages;
 import org.yocto.sdk.remotetools.SWTFactory;
 
-public class BsptoolSettingDialog extends SimpleSettingDialog {
+public class BsptoolSettingDialog extends Dialog {
 	
-	static protected String TITLE="BspTool";
-	
+	public BsptoolSettingDialog(Shell parent) {
+		super(parent);
+		// TODO Auto-generated constructor stub
+	}
+
+	static protected String title="BspTool";;
 	protected boolean showPid=false;
 	protected Float time;
 	protected Button showPidButton;
 	protected Button outLocButton;
 	protected Text timeText;
-	
-	protected BsptoolSettingDialog(Shell parentShell, String title, String conn) {
-		super(parentShell,title,conn);
-	}
-	
-	public BsptoolSettingDialog(Shell parentShell) {
-		this(parentShell,
-				TITLE,
-				Activator.getDefault().getDialogSettings().get(IBaseConstants.CONNECTION_NAME_BSPTOOL)
-				);
-	}
 	
 	public boolean getShowPid() {
 		return showPid;
@@ -56,7 +44,11 @@ public class BsptoolSettingDialog extends SimpleSettingDialog {
 		return time;
 	}
 	
-	@Override
+	protected void configureShell(Shell newShell) {
+		super.configureShell(newShell);
+		newShell.setText(title);
+	}
+	
 	protected Control createDialogArea(Composite parent) {
 		Composite comp=(Composite)super.createDialogArea(parent);
 		GridLayout topLayout = new GridLayout();
@@ -66,7 +58,6 @@ public class BsptoolSettingDialog extends SimpleSettingDialog {
 		SWTFactory.createVerticalSpacer(comp, 1);
 		createInternal(comp);
 		
-		updateOkButton();
 		return comp;
 	}
 	
@@ -115,8 +106,7 @@ public class BsptoolSettingDialog extends SimpleSettingDialog {
 		    }
 		}
 
-		// It is also possible to filter the list of returned files.
-		// This example does not return any files that start with `.'.
+		// Do not return any files that start with 'common'.
 		FilenameFilter filter = new FilenameFilter() {
 		    public boolean accept(File dir, String name) {
 		        return !name.startsWith("common");
@@ -166,37 +156,5 @@ public class BsptoolSettingDialog extends SimpleSettingDialog {
 
 	protected void handleOutLocButton() {
 		// TODO something
-	}
-	
-	@Override
-	protected boolean updateOkButton() {
-		boolean ret=super.updateOkButton();
-		if(ret==true) {
-			try {
-				Float.valueOf(timeText.getText());
-			}catch (Exception e) {
-				Button button=getButton(IDialogConstants.OK_ID);
-				if(button!=null)
-					button.setEnabled(false);
-				ret=false;
-			}
-		}
-		return ret;
-	}
-	
-	@Override
-	protected void okPressed() {
-		IDialogSettings settings = Activator.getDefault().getDialogSettings();
-	    // store the value of the generate sections checkbox
-		if(getCurrentConnection()==null) {
-			settings.put(IBaseConstants.CONNECTION_NAME_BSPTOOL,
-					(String)null);
-		}else {
-			settings.put(IBaseConstants.CONNECTION_NAME_BSPTOOL, 
-					getCurrentConnection().getAliasName());
-		}
-		showPid=showPidButton.getSelection();
-		time=new Float(timeText.getText());
-		super.okPressed();
 	}
 }

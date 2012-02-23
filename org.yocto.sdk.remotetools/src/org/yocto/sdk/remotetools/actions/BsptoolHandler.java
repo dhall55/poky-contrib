@@ -23,7 +23,7 @@ public class BsptoolHandler extends AbstractHandler {
 		
 		if(setting.open()==BaseSettingDialog.OK) {
 			IProgressService progressService = PlatformUI.getWorkbench().getProgressService();
-			BsptoolModel op=new BsptoolModel(setting.getHost(),setting.getTime(),setting.getShowPid(),window.getShell().getDisplay());
+			BsptoolModel op=new BsptoolModel(null, setting.getTime(),setting.getShowPid(),window.getShell().getDisplay());
 			try {
 				progressService.busyCursorWhile(op);
 			}catch (Exception e) {
