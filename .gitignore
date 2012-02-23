@@ -5,7 +5,7 @@
 
 # other project specific #
 ExternalPlug-inLibraries/ 
-.metadata
+/.metadata/*
 
 # emacs #
 \#*\#
