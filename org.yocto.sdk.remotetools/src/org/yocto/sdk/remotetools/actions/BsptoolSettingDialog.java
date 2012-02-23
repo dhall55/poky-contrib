@@ -1,5 +1,10 @@
 package org.yocto.sdk.remotetools.actions;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
+import java.util.Arrays;
+
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
@@ -94,8 +99,33 @@ public class BsptoolSettingDialog extends SimpleSettingDialog {
 		gd.horizontalSpan = 2;
 		label1.setLayoutData(gd);
 		
+		// gather available kernel arcitectures from file path
+		//       scripts/lib/bsp/substrate/target/arch
+		// exclude "common"
+		
+		File dir = new File("./poky-contrib/scripts/lib/bsp/substrate/target/arch");
+
+		String[] children = dir.list();
+		if (children == null) {
+		    // Either dir does not exist or is not a directory
+		} else {
+		    for (int i=0; i<children.length; i++) {
+		        // Get filename of file or directory
+		        String filename = children[i];
+		    }
+		}
+
+		// It is also possible to filter the list of returned files.
+		// This example does not return any files that start with `.'.
+		FilenameFilter filter = new FilenameFilter() {
+		    public boolean accept(File dir, String name) {
+		        return !name.startsWith("common");
+		    }
+		};
+		children = dir.list(filter);
+	
 		Combo combo = new Combo (projComp, SWT.NONE);
-		combo.setItems (new String [] {"x86_64", "powerpc", "i386", "arm", "mips"});
+		combo.setItems (children);
 		gd = new GridData(GridData.FILL_HORIZONTAL);
 		gd.horizontalSpan = 2;
 		combo.setLayoutData(gd);
@@ -137,7 +167,7 @@ public class BsptoolSettingDialog extends SimpleSettingDialog {
 	protected void handleOutLocButton() {
 		// TODO something
 	}
-
+	
 	@Override
 	protected boolean updateOkButton() {
 		boolean ret=super.updateOkButton();
