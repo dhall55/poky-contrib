@@ -108,16 +108,6 @@ public class BsptoolModel extends BaseModel {
 			monitor.done();
 		}
 	}
-
-	private void getDataFile(IProgressMonitor monitor) throws Exception {
-				
-		RSEHelper.getRemoteFile(
-				rseConnection, 
-				localfile,
-				remotefile, 
-				monitor);
-	}
-	
 	
 	@Override
 	public void process(IProgressMonitor monitor)
@@ -128,9 +118,6 @@ public class BsptoolModel extends BaseModel {
 			//running bsptool
 			monitor.subTask("Generating bsptool data file remotely");
 			generateData(new SubProgressMonitor(monitor,30));
-			//download datafile
-			monitor.subTask("Downloading bsptool data file");
-			getDataFile(new SubProgressMonitor(monitor,30));
 			//show it in the bsptool view
 			display.syncExec(new Runnable() {
 				public void run() {

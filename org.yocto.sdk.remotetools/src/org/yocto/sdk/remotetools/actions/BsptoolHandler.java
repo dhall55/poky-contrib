@@ -1,6 +1,9 @@
 
 package org.yocto.sdk.remotetools.actions;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -22,16 +25,23 @@ public class BsptoolHandler extends AbstractHandler {
 				);
 		
 		if(setting.open()==BaseSettingDialog.OK) {
-			IProgressService progressService = PlatformUI.getWorkbench().getProgressService();
-			BsptoolModel op=new BsptoolModel(null, setting.getTime(),setting.getShowPid(),window.getShell().getDisplay());
-			try {
-				progressService.busyCursorWhile(op);
-			}catch (Exception e) {
-				e.printStackTrace();
-				MessageDialog.openError(window.getShell(),
-						"BspTool",
-						e.getMessage());
-			} 
+	        try
+	        {
+	            Runtime r = Runtime.getRuntime();
+	            Process p = r.exec("python ./poky-contrib/scripts/yocto-bsp");
+	            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+	            p.waitFor();
+	            String line = "";
+	            while (br.ready())
+	                System.out.println(br.readLine());
+
+	        }
+	        catch (Exception e)
+	        {
+			String cause = e.getMessage();
+			if (cause.equals("python: not found"))
+				System.out.println("No python interpreter found.");
+	        }
 		}
 		return null;
 	}
