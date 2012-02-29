@@ -105,7 +105,8 @@ public class BsptoolSettingDialog extends Dialog {
 		} else {
 		    for (int i=0; i<children.length; i++) {
 		        // Get filename of file or directory
-		        String filename = children[i];
+		        @SuppressWarnings("unused")
+				String filename = children[i];
 		    }
 		}
 
@@ -177,8 +178,14 @@ public class BsptoolSettingDialog extends Dialog {
 		gd.horizontalSpan = 4;
 		label11111.setLayoutData(gd);		
 
+		Composite branchComp = new Composite(projComp, SWT.NULL);
+		gd = new GridData(SWT.FILL, SWT.FILL, true, false);
+		gd.horizontalSpan= 2;
+		branchComp.setLayoutData(gd);
+		branchComp.setLayout(new GridLayout(1, false));
+	    
 		for (int i=0; i<3; i++) {
-			Button btnBranch = new Button (projComp, SWT.RADIO);
+			Button btnBranch = new Button (branchComp, SWT.RADIO);
 			if (i == 0) {
 				btnBranch.setSelection (true);
 				btnBranch.setText("yocto/standard/base");
@@ -199,8 +206,14 @@ public class BsptoolSettingDialog extends Dialog {
 		gd.horizontalSpan = 4;
 		lblSMP.setLayoutData(gd);
 
+		Composite smpComp = new Composite(projComp, SWT.NULL);
+		gd = new GridData(SWT.FILL, SWT.FILL, true, false);
+		gd.horizontalSpan= 2;
+		smpComp.setLayoutData(gd);
+		smpComp.setLayout(new GridLayout(1, false));
+		
 		for (int i=0; i<2; i++) {
-			Button btnsmp = new Button (projComp, SWT.RADIO);
+			Button btnsmp = new Button (smpComp, SWT.RADIO);
 			if (i == 0) {
 				btnsmp.setSelection (true);
 				btnsmp.setText("No");
@@ -218,8 +231,14 @@ public class BsptoolSettingDialog extends Dialog {
 		gd.horizontalSpan = 4;
 		lblX.setLayoutData(gd);
 
+		Composite xComp = new Composite(projComp, SWT.NULL);
+		gd = new GridData(SWT.FILL, SWT.FILL, true, false);
+		gd.horizontalSpan= 2;
+		xComp.setLayoutData(gd);
+		xComp.setLayout(new GridLayout(1, false));
+		
 		for (int i=0; i<2; i++) {
-			Button btnX = new Button (projComp, SWT.RADIO);
+			Button btnX = new Button (xComp, SWT.RADIO);
 			if (i == 0) {
 				btnX.setSelection (true);
 				btnX.setText("No");
@@ -237,8 +256,14 @@ public class BsptoolSettingDialog extends Dialog {
 		gd.horizontalSpan = 4;
 		lblKeyBrd.setLayoutData(gd);
 
+		Composite keyBrdComp = new Composite(projComp, SWT.NULL);
+		gd = new GridData(SWT.FILL, SWT.FILL, true, false);
+		gd.horizontalSpan= 2;
+		keyBrdComp.setLayoutData(gd);
+		keyBrdComp.setLayout(new GridLayout(1, false));
+		
 		for (int i=0; i<2; i++) {
-			Button btnKeyBrd = new Button (projComp, SWT.RADIO);
+			Button btnKeyBrd = new Button (keyBrdComp, SWT.RADIO);
 			if (i == 0) {
 				btnKeyBrd.setSelection (true);
 				btnKeyBrd.setText("No");
@@ -256,8 +281,14 @@ public class BsptoolSettingDialog extends Dialog {
 		gd.horizontalSpan = 4;
 		lblTuch.setLayoutData(gd);
 
+		Composite tuchComp = new Composite(projComp, SWT.NULL);
+		gd = new GridData(SWT.FILL, SWT.FILL, true, false);
+		gd.horizontalSpan= 2;
+		tuchComp.setLayoutData(gd);
+		tuchComp.setLayout(new GridLayout(1, false));
+		
 		for (int i=0; i<2; i++) {
-			Button btnTuch = new Button (projComp, SWT.RADIO);
+			Button btnTuch = new Button (tuchComp, SWT.RADIO);
 			if (i == 0) {
 				btnTuch.setSelection (true);
 				btnTuch.setText("No");

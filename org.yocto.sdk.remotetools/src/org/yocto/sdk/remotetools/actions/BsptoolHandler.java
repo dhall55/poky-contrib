@@ -27,6 +27,9 @@ public class BsptoolHandler extends AbstractHandler {
 		if(setting.open()==BaseSettingDialog.OK) {
 	        try
 	        {
+	        	String command;
+	        	
+	        	
 	            Runtime r = Runtime.getRuntime();
 	            Process p = r.exec("python ./poky-contrib/scripts/yocto-bsp");
 	            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
