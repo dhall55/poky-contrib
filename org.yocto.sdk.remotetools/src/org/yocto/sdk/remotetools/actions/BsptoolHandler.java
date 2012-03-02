@@ -7,13 +7,8 @@ import java.io.InputStreamReader;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.commands.IHandler;
-import org.eclipse.core.commands.IHandlerListener;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
-import org.eclipse.ui.progress.IProgressService;
 
 public class BsptoolHandler extends AbstractHandler {
 
@@ -28,10 +23,13 @@ public class BsptoolHandler extends AbstractHandler {
 	        try
 	        {
 	        	String command;
-	        	
+	        	command = ("python ./poky-contrib/scripts/yocto-bsp ");
+	        	if("one" != "") {
+	        		
+	        	}
 	        	
 	            Runtime r = Runtime.getRuntime();
-	            Process p = r.exec("python ./poky-contrib/scripts/yocto-bsp");
+	            Process p = r.exec(command);
 	            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
 	            p.waitFor();
 	            String line = "";

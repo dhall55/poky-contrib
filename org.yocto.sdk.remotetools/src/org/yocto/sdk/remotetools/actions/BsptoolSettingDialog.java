@@ -17,8 +17,10 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.yocto.sdk.remotetools.Activator;
@@ -26,25 +28,13 @@ import org.yocto.sdk.remotetools.Messages;
 import org.yocto.sdk.remotetools.SWTFactory;
 
 public class BsptoolSettingDialog extends Dialog {
+
+	static protected String title="BspTool";;
+	protected Button outLocButton;
 	
 	public BsptoolSettingDialog(Shell parent) {
 		super(parent);
 		// TODO Auto-generated constructor stub
-	}
-
-	static protected String title="BspTool";;
-	protected boolean showPid=false;
-	protected Float time;
-	protected Button showPidButton;
-	protected Button outLocButton;
-	protected Text timeText;
-	
-	public boolean getShowPid() {
-		return showPid;
-	}
-	
-	public Float getTime() {
-		return time;
 	}
 	
 	protected void configureShell(Shell newShell) {
@@ -101,7 +91,7 @@ public class BsptoolSettingDialog extends Dialog {
 
 		String[] children = dir.list();
 		if (children == null) {
-		    // Either dir does not exist or is not a directory
+		    // TODO:Either dir does not exist or is not a directory
 		} else {
 		    for (int i=0; i<children.length; i++) {
 		        // Get filename of file or directory
@@ -123,6 +113,13 @@ public class BsptoolSettingDialog extends Dialog {
 		gd = new GridData(GridData.FILL_HORIZONTAL);
 		gd.horizontalSpan = 2;
 		combo.setLayoutData(gd);
+		
+		// Create a new label which is used as a separator
+		label = new Label(projComp, SWT.SEPARATOR | SWT.HORIZONTAL);
+		// Create new layout data
+		gd = new GridData(GridData.FILL, GridData.BEGINNING, true, false, 2, 1);
+		gd.horizontalSpan=4;
+		label.setLayoutData(gd);		
 
 		Label label1111 = new Label(projComp, SWT.NONE);
 		label1111.setText ("features/debugfs");
