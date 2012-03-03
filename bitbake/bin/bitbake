@@ -43,6 +43,12 @@ from bb import server
 __version__ = "1.15.1"
 logger = logging.getLogger("BitBake")
 
+from ctypes import *
+cdll.LoadLibrary("libc.so.6") 
+
+libc = CDLL("libc.so.6") 
+print libc.time(None)
+print libc.mallopt(-3, 4*1024)
 
 class BBConfiguration(object):
     """
