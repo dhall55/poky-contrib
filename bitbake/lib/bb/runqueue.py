@@ -1193,6 +1193,24 @@ class RunQueueExecute:
                 os._exit(1)
             try:
                 if not self.cooker.configuration.dry_run:
+                    #import time
+                    #import meliae
+                    #from meliae import scanner
+                    #time.sleep(10)
+
+                    #bb.codeparser.pythonparsecache = {}
+                    #bb.codeparser.shellparsecache = {}
+                    #bb.providers.regexp_cache = {}
+                    #bb.parse.parse_py.BBHandler.cached_statements = {}
+                    #time.sleep(10)
+
+                    #import gc
+                    #gc.collect()
+                    #time.sleep(10)
+
+                    #bb.error(str(gc.garbage))
+
+                    #scanner.dump_all_objects("/tmp/dump2") 
                     ret = bb.build.exec_task(fn, taskname, the_data)
                 os._exit(ret)
             except:
