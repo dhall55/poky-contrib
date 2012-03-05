@@ -83,15 +83,20 @@ public class BsptoolSettingDialog extends Dialog {
 		gd.horizontalSpan = 2;
 		label1.setLayoutData(gd);
 		
-		// gather available kernel arcitectures from file path
+		// gather available kernel architectures from file path
 		//       scripts/lib/bsp/substrate/target/arch
 		// exclude "common"
 		
-		File dir = new File("/home/jason/poky-contrib/scripts/lib/bsp/substrate/target/arch");
+		File dir = new File("/home/jlcawood/poky-contrib/scripts/lib/bsp/substrate/target/arch/");
 
 		String[] children = dir.list();
 		if (children == null) {
-		    // TODO:Either dir does not exist or is not a directory
+		    /* 
+		     * TODO:Either dir does not exist or is not a directory
+		     *   need to handle improper 
+		     */
+			
+			
 			 System.out.println("./poky-contrib/scripts/lib/bsp/substrate/target/arch -- nothing found");
 		} else {
 		    for (int i=0; i<children.length; i++) {
