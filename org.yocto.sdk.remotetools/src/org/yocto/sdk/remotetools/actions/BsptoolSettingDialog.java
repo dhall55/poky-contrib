@@ -87,11 +87,12 @@ public class BsptoolSettingDialog extends Dialog {
 		//       scripts/lib/bsp/substrate/target/arch
 		// exclude "common"
 		
-		File dir = new File("./poky-contrib/scripts/lib/bsp/substrate/target/arch");
+		File dir = new File("/home/jason/poky-contrib/scripts/lib/bsp/substrate/target/arch");
 
 		String[] children = dir.list();
 		if (children == null) {
 		    // TODO:Either dir does not exist or is not a directory
+			 System.out.println("./poky-contrib/scripts/lib/bsp/substrate/target/arch -- nothing found");
 		} else {
 		    for (int i=0; i<children.length; i++) {
 		        // Get filename of file or directory
