@@ -67,8 +67,6 @@ if not BUILD_PUBLISH_DIR:
     BUILD_PUBLISH_DIR = "/tmp"
 SSTATE_PUBLISH_DIR = os.environ.get("SSTATE_PUBLISH_DIR")
 SOURCE_PUBLISH_DIR = os.environ.get("SOURCE_PUBLISH_DIR")
-defaultenv['RELEASE'] = ""
-defaultenv['BUILDSTRING'] = ""
 defaultenv['ENABLE_SWABBER'] = ""
 defaultenv['WORKDIR'] = ""
 defaultenv['FuzzArch'] = ""
@@ -229,7 +227,7 @@ def createBBLayersConf(factory, btarget=None, bsplayer=False, provider=None):
                                 defaultenv['ABTARGET'] + "/build/build/conf/bblayers.conf",  'SLAVEBASEDIR', 'SLAVEBASEDIR')],
                        timeout=60))
 
-    if bsplayer==True and defaultenv['ABTARGET'] != "p1022ds":
+    if bsplayer==True and provider=="yocto":
         factory.addStep(ShellCommand(description="Creating bblayers.conf",
                         command=["sh", "-c", 
                         WithProperties("echo '%s/" + defaultenv['ABTARGET'] + "/build/yocto/meta-intel/ \ ' >> %s/" + defaultenv['ABTARGET'] + 
@@ -246,7 +244,7 @@ def createBBLayersConf(factory, btarget=None, bsplayer=False, provider=None):
                         WithProperties("echo '%s/" + defaultenv['ABTARGET'] + "/build/yocto/meta-intel/meta-tlk \ ' >> %s/" + defaultenv['ABTARGET'] + 
                                        "/build/build/conf/bblayers.conf", 'SLAVEBASEDIR' , 'SLAVEBASEDIR')],
                         timeout=60))
-    elif bsplayer==True and defaultenv['ABTARGET'] == "p1022ds":
+    elif bsplayer==True and provider=="fsl" and defaultenv['ABTARGET'] == "p1022ds":
         factory.addStep(ShellCommand(description="Creating bblayers.conf",
                         command=["sh", "-c", 
                         WithProperties("echo '%s/" + defaultenv['ABTARGET'] + "/build/yocto/meta-fsl-ppc  \  ' >> %s/" + defaultenv['ABTARGET'] + 
