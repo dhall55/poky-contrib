@@ -9,6 +9,8 @@ PR = "r1"
 
 DEPENDS += "libxcb xproto xextproto xtrans libxau kbproto inputproto xf86bigfontproto xproto-native"
 
+RPROVIDES_${PN}-locale = "libx11-locale"
+
 SRC_URI += "file://../libx11-${PV}/x11_disable_makekeys.patch \
             file://../libx11-${PV}/include_fix.patch \
             file://../libx11-${PV}/nodolt.patch \
