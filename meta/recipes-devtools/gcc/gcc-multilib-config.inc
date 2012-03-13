@@ -23,25 +23,6 @@ addtask gcc_multilib_setup after do_patch before do_configure
 #    gcc/config/rs6000/linux.h
 # Nitin Kamble 2012/02/13
 
-def get_tune_parameters (tune, d) :
-        localdata = bb.data.createCopy(d)
-        override = ':tune-' + tune
-        localdata.setVar('OVERRIDES', localdata.getVar('OVERRIDES', False) + override)
-        bb.data.update_data(localdata)
-
-	retdict = {}
-	retdict['tune'] = tune
-	retdict['ccargs'] = localdata.getVar('TUNE_CCARGS', True)
-        retdict['features'] = localdata.getVar('TUNE_FEATURES', True)
-        retdict['baselib'] = localdata.getVar('BASE_LIB', True)
-        retdict['arch'] = localdata.getVar('TUNE_ARCH', True)
-        retdict['abiextension'] = localdata.getVar('ABIEXTENSION', True)
-        retdict['target_fpu'] = localdata.getVar('TARGET_FPU', True)
-        retdict['pkgarch'] = localdata.getVar('TUNE_PKGARCH', True)
-        retdict['package_extra_archs'] = localdata.getVar('PACKAGE_EXTRA_ARCHS', True)
-
-	return retdict
-
 python do_gcc_multilib_setup() {
     import re
 
@@ -50,29 +31,26 @@ python do_gcc_multilib_setup() {
         return
 
     srcdir = d.getVar('S', True)
-
     multilibs = d.getVar('MULTILIB_VARIANTS', True)
+    target_arch = d.getVar('TARGET_ARCH', True)
 
     gcc_target_config_files = {     
-                    'x86_64'      : ['gcc/config/i386/t-linux64', 'gcc/config/i386/t-linux'],
-                    'i586'        : ['gcc/config/mips/t-linux'],
-                    'mips'        : ['gcc/config/mips/t-linux64', 'gcc/config/mips/t-linux'],
-                    'ppc'         : ['gcc/config/rs6000/t-linux64'] }
+        'x86_64'      : ['gcc/config/i386/t-linux64', 'gcc/config/i386/t-linux'],
+        'i586'        : ['gcc/config/mips/t-linux'],
+        'mips'        : ['gcc/config/mips/t-linux64', 'gcc/config/mips/t-linux'],
+        'ppc'         : ['gcc/config/rs6000/t-linux64'] }
 
     gcc_header_config_files = {     
-                    'x86_64'      : ['gcc/config/i386/linux64.h'],
-                    'i586'        : ['gcc/config/mips/linux.h'],
-                    'mips'        : ['gcc/config/mips/linux64.h', 'gcc/config/mips/linux.h'],
-                    'ppc'         : ['gcc/config/rs6000/linux64.h', 'gcc/config/rs6000/linux.h'] }
-
-    target_arch = d.getVar('TARGET_ARCH', True)
+        'x86_64'      : ['gcc/config/i386/linux64.h'],
+        'i586'        : ['gcc/config/mips/linux.h'],
+        'mips'        : ['gcc/config/mips/linux64.h', 'gcc/config/mips/linux.h'],
+        'ppc'         : ['gcc/config/rs6000/linux64.h', 'gcc/config/rs6000/linux.h'] }
 
     if target_arch not in gcc_target_config_files:
         bb.warn('gcc multilib setup is not supported for TARGET_ARCH=' + target_arch)
         return
 
     gcc_multilib_target_config_files = gcc_target_config_files[target_arch]
-
     gcc_multilib_header_config_files = gcc_header_config_files[target_arch]
 
     ml_list = ['DEFAULTTUNE']
@@ -111,11 +89,12 @@ python do_gcc_multilib_setup() {
         # take out '-' in parameters
         multilib_options.append(re.sub(r' +\-+', ' ', re.sub(r'^ *\-+', '', tune_parameters['ccargs'])))
         if tune_baselib == 'lib':
-            multilib_dirnames.append('32')
+            multilib_dirnames.append('32')  # /lib => 32bit lib
         else:
             multilib_dirnames.append(tune_baselib.replace('lib', ''))
         multilib_osdirnames.append('../' + tune_baselib)
     
+    # go over t-linux64 kind target files
     for ml_conf_file in gcc_multilib_target_config_files:
         with open(srcdir + '/' + ml_conf_file, 'r') as f:
             filelines = f.read()
@@ -142,6 +121,7 @@ python do_gcc_multilib_setup() {
                 f.write(filelines)
                 f.close()
 
+    # go over linux64.h kind header files
     for ml_conf_file in gcc_multilib_header_config_files:
         with open(srcdir + '/' + ml_conf_file, 'r') as f:
             filelines = f.read()

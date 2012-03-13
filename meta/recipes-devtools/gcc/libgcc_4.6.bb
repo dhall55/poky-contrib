@@ -55,8 +55,6 @@ INSANE_SKIP_libgcc-dev = "staticdev"
 INSANE_SKIP_libgcov-dev = "staticdev"
 
 addtask multilib_install after do_install before do_package
-
-
 # this makes multilib gcc files findable for target gcc
 # like this directory is made findable 
 #    /usr/lib/i586-pokymllib32-linux/4.6.3/
@@ -64,43 +62,34 @@ addtask multilib_install after do_install before do_package
 #    /usr/lib64/x86_64-poky-linux/4.6.3/32
 
 python do_multilib_install() {
-        import re
-        # do this only for multilib extended recipe
-        if d.getVar('PN', 1) != 'libgcc':
-                return
+    import re
+    # do this only for multilib extended recipe
+    if d.getVar('PN', True) != 'libgcc':
+        return
 
-        tune_arch = d.getVar('TUNE_ARCH', 1) or ''
-        defaulttune = d.getVar('DEFAULTTUNE', 1) or ''
-        multilibs = d.getVar('MULTILIB_VARIANTS', 1) or ''
-        if multilibs == '':
-                return
+    multilibs = d.getVar('MULTILIB_VARIANTS', True) or ''
+    if multilibs == '':
+        return
 
-	tunes_32 = ['x86', 'core2', 'i586', 'mips', 'mipsel', 'mips-nf', 'mipsel-nf', 'powerpc', 'powerpc-nf']
-        tunes_64 = ['x86-64', 'core2-64', 'mips64', 'mips64el', 'mips64-nf', 'mips64el-nf', 'powerpc64']
-        tunes_x32 = ['x86-64-x32', 'core2-64-x32']
-        tunes_n32 = ['mips64-n32', 'mips64el-n32', 'mips64-nf-n32', 'mips64el-nf-n32']
+    binv = d.getVar('BINV', True) or ''
 
-        for ml in multilibs.split(' '):
-                ml_tune = d.getVar('DEFAULTTUNE_virtclass-multilib-' + ml, 1) or ''
-		ml_tune_features = d.getVar('TUNE_FEATURES_tune-' + ml_tune, 1) or ''
-                ml_baselib = d.getVar('BASE_LIB_tune-' + ml_tune, 1) or ''
-                for feature in ml_tune_features.split():
-                        ml_feature_arch = d.getVar('TUNE_FEATURE_ARCH-' + feature, 1) or ''
-		if ml_tune in tunes_32:
-                        bitness = '32'
-                elif ml_tune in tunes_64:
-                        bitness = '64'
-                elif ml_tune in tunes_x32:
-                        bitness = 'x32'
-                elif ml_tune in tunes_n32:
-                        bitness = 'n32'
+    for ml in multilibs.split(' '):
+        tune = d.getVar('DEFAULTTUNE_virtclass-multilib-' + ml, True) or ''
+        tune_parameters = get_tune_parameters(tune, d)
+        tune_baselib = tune_parameters['baselib']
+        tune_arch = tune_parameters['arch']
+        tune_bitness = tune_baselib.replace('lib', '')
+        if tune_bitness == '' :
+            tune_bitness = '32' # /lib => 32bit lib
 
-	binv = d.getVar('BINV', 1) or ''
+    src = d.getVar('target_prefix', True) + '/' + tune_baselib + '/' + \
+        tune_arch + '-' + d.getVar('TARGET_VENDOR', True) + 'ml' + ml + \
+        d.getVar('TARGET_OS', True) + '/' + binv + '/'
 
-	src = '/usr/' + ml_baselib + '/' + ml_feature_arch + '-pokyml' + ml + '-linux/' + binv + '/' 
-	dest = (d.getVar('D', 1) or '') + (d.getVar('libdir', 1) or '') + '/' + (d.getVar('TARGET_SYS', 1) or '') + '/' + binv + '/' + bitness
-	if os.path.lexists(dest):
-		os.unlink(dest)
-	os.symlink(src, dest)
+    dest = d.getVar('D', True) + d.getVar('libdir', True) + '/' + \
+        d.getVar('TARGET_SYS', True) + '/' + binv + '/' + tune_bitness
 
+    if os.path.lexists(dest):
+        os.unlink(dest)
+    os.symlink(src, dest)
 }
