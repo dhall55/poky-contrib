@@ -6,6 +6,7 @@ Subject: [PATCH] alsactl: don't let systemd unit restore the volume when asound.
 This avoids an error on bootup
 
 Signed-off-by: Koen Kooi <koen@dominion.thruhere.net>
+Signed-off-by: Shane Wang <shane.wang@intel.com>
 ---
 
 Filed as https://bugtrack.alsa-project.org/alsa-bug/view.php?id=5459
@@ -16,11 +17,10 @@ Upstream-Status: Pending
  alsactl/alsa-restore.service.in |    1 +
  2 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/alsactl/Makefile.am b/alsactl/Makefile.am
-index 5cfc415..c3768c4 100644
---- a/alsactl/Makefile.am
-+++ b/alsactl/Makefile.am
-@@ -34,7 +34,7 @@ install-data-hook:
+diff -r 6f4209c9b022 alsactl/Makefile.am
+--- a/alsactl/Makefile.am	Wed Mar 14 12:30:42 2012 +0800
++++ b/alsactl/Makefile.am	Wed Mar 14 12:33:27 2012 +0800
+@@ -34,7 +34,8 @@
  endif
  
  edit = \
@@ -29,11 +29,10 @@ index 5cfc415..c3768c4 100644
  
  alsa-store.service: alsa-store.service.in
  	$(edit)
-diff --git a/alsactl/alsa-restore.service.in b/alsactl/alsa-restore.service.in
-index e97d196..3b76710 100644
---- a/alsactl/alsa-restore.service.in
-+++ b/alsactl/alsa-restore.service.in
-@@ -4,6 +4,7 @@ DefaultDependencies=no
+diff -r 6f4209c9b022 alsactl/alsa-restore.service.in
+--- a/alsactl/alsa-restore.service.in	Wed Mar 14 12:30:42 2012 +0800
++++ b/alsactl/alsa-restore.service.in	Wed Mar 14 12:33:27 2012 +0800
+@@ -4,6 +4,7 @@
  After=sysinit.target
  Before=shutdown.target
  Conflicts=shutdown.target
@@ -41,6 +40,3 @@ index e97d196..3b76710 100644
  
  [Service]
  Type=oneshot
--- 
-1.6.6.1
-
