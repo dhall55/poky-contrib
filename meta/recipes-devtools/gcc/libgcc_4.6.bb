@@ -82,9 +82,9 @@ python do_multilib_install() {
         if tune_bitness == '' :
             tune_bitness = '32' # /lib => 32bit lib
 
-    src = d.getVar('target_prefix', True) + '/' + tune_baselib + '/' + \
-        tune_arch + '-' + d.getVar('TARGET_VENDOR', True) + 'ml' + ml + \
-        d.getVar('TARGET_OS', True) + '/' + binv + '/'
+    src = '../../../' + tune_baselib + '/' + \
+        tune_arch + d.getVar('TARGET_VENDOR', True) + 'ml' + ml + \
+        '-' + d.getVar('TARGET_OS', True) + '/' + binv + '/'
 
     dest = d.getVar('D', True) + d.getVar('libdir', True) + '/' + \
         d.getVar('TARGET_SYS', True) + '/' + binv + '/' + tune_bitness
