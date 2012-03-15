@@ -28,6 +28,7 @@ python multilib_virtclass_handler () {
     e.data.setVar("SHLIBSDIR_virtclass-multilib-" + variant ,e.data.getVar("SHLIBSDIR", False) + "/" + variant)
     if e.data.getVar("TARGET_VENDOR_virtclass-multilib-" + variant, False) is None:
 	    e.data.setVar("TARGET_VENDOR_virtclass-multilib-" + variant, e.data.getVar("TARGET_VENDOR", False) + "ml" + variant)
+	    e.data.setVar("BARE_TARGET_SYS", e.data.getVar("TARGET_ARCH", False) + e.data.getVar("TARGET_VENDOR", False) + '-' + e.data.getVar("TARGET_OS", False))
     e.data.setVar("OVERRIDES", e.data.getVar("OVERRIDES", False) + override)
 }
 
