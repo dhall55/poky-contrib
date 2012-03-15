@@ -17,15 +17,15 @@ PACKAGES = "\
 FILES_${PN} = "${base_libdir}/libgcc*.so.*"
 FILES_${PN}-dev = " \
   ${base_libdir}/libgcc*.so \
-  ${libdir}/${TARGET_SYS}/${BINV}/*crt* \
-  ${libdir}/${TARGET_SYS}/${BINV}/64 \
-  ${libdir}/${TARGET_SYS}/${BINV}/32 \
-  ${libdir}/${TARGET_SYS}/${BINV}/x32 \
-  ${libdir}/${TARGET_SYS}/${BINV}/n32 \
-  ${libdir}/${TARGET_SYS}/${BINV}/libgcc*"
+  ${libdir}/${BARE_TARGET_SYS}/${BINV}/*crt* \
+  ${libdir}/${BARE_TARGET_SYS}/${BINV}/64 \
+  ${libdir}/${BARE_TARGET_SYS}/${BINV}/32 \
+  ${libdir}/${BARE_TARGET_SYS}/${BINV}/x32 \
+  ${libdir}/${BARE_TARGET_SYS}/${BINV}/n32 \
+  ${libdir}/${BARE_TARGET_SYS}/${BINV}/libgcc*"
 FILES_libgcov${PKGSUFFIX}-dev = " \
-  ${libdir}/${TARGET_SYS}/${BINV}/libgcov.a \
-  "
+  ${libdir}/${BARE_TARGET_SYS}/${BINV}/libgcov.a"
+
 FILES_${PN}-dbg += "${base_libdir}/.debug/"
 
 do_configure () {
@@ -48,6 +48,13 @@ do_install () {
 	target=`echo ${TARGET_SYS} | sed -e s#-nativesdk##`
 	cd ${B}/${BPN}
 	oe_runmake 'DESTDIR=${D}' MULTIBUILDTOP=${B}/$target/${BPN}/ install
+
+	# avoid multilib build specific paths in packages
+	# e.g. /usr/lib/i586-pokymllib32-linux/ -> /usr/lib/i586-poky-linux/
+	if [ ${TARGET_SYS} != ${BARE_TARGET_SYS} ] && [ -d ${D}${libdir}/${TARGET_SYS} ]; then
+		rm -rf ${D}${libdir}/${BARE_TARGET_SYS}
+		mv ${D}${libdir}/${TARGET_SYS} ${D}${libdir}/${BARE_TARGET_SYS}
+	fi
 
 	# Move libgcc_s into /lib
 	mkdir -p ${D}${base_libdir}
@@ -76,7 +83,7 @@ INSANE_SKIP_libgcov${PKGSUFFIX}-dev = "staticdev"
 addtask multilib_install after do_install before do_package
 # this makes multilib gcc files findable for target gcc
 # like this directory is made findable 
-#    /usr/lib/i586-pokymllib32-linux/4.6.3/
+#    /usr/lib/i586-poky-linux/4.6.3/
 # by creating this symlink to it
 #    /usr/lib64/x86_64-poky-linux/4.6.3/32
 
@@ -102,8 +109,10 @@ python do_multilib_install() {
             tune_bitness = '32' # /lib => 32bit lib
 
     src = '../../../' + tune_baselib + '/' + \
-        tune_arch + d.getVar('TARGET_VENDOR', True) + 'ml' + ml + \
-        '-' + d.getVar('TARGET_OS', True) + '/' + binv + '/'
+        tune_arch + \
+        d.getVar('TARGET_VENDOR', True) + '-' + \
+        d.getVar('TARGET_OS', True) + '/' + \
+        binv + '/'
 
     dest = d.getVar('D', True) + d.getVar('libdir', True) + '/' + \
         d.getVar('TARGET_SYS', True) + '/' + binv + '/' + tune_bitness
