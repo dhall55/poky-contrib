@@ -36,4 +36,4 @@ do_install_append_linuxstdbase() {
     ln -sf ${bindir}/foomatic-rip ${D}${exec_prefix}/lib/cups/filter
 }
 
-FILES_${PN}_append_linuxstdbase += "${exec_prefix}/lib/cups/filter/foomatic-rip"
+FILES_${PN} += "${exec_prefix}/lib/cups/ ${exec_prefix}/lib/ppr/"
