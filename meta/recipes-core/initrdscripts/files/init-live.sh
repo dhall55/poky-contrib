@@ -7,6 +7,7 @@ ROOT_IMAGE="rootfs.img"
 MOUNT="/bin/mount"
 UMOUNT="/bin/umount"
 ISOLINUX=""
+UNIONFS="no"
 
 early_setup() {
     mkdir /proc
@@ -89,10 +90,24 @@ case $label in
 	mkdir $ROOT_MOUNT
 	mknod /dev/loop0 b 7 0 2>/dev/null
 
-	if ! $MOUNT -o rw,loop,noatime,nodiratime /media/$i/$ISOLINUX/$ROOT_IMAGE $ROOT_MOUNT ; then
-	    fatal "Couldnt mount rootfs image"
+	
+	if [ "$UNIONFS" = "yes" ]; then
+	    mkdir /rootfs-tmp
+
+	    if ! $MOUNT -o rw,loop,noatime,nodiratime /media/$i/$ISOLINUX/$ROOT_IMAGE /rootfs-tmp ; then
+		fatal "Couldnt mount rootfs image"
+	    else
+		mkdir /cow
+		mount -t tmpfs -o rw,noatime,mode=755 tmpfs /cow
+		mount -t unionfs -o dirs=/cow:/rootfs-tmp=ro unionfs $ROOT_MOUNT
+		boot_live_root
+	    fi
 	else
-	    boot_live_root
+	    if ! $MOUNT -o rw,loop,noatime,nodiratime /media/$i/$ISOLINUX/$ROOT_IMAGE $ROOT_MOUNT ; then
+		fatal "Couldnt mount rootfs image"
+	    else
+		boot_live_root
+	    fi
 	fi
 	;;
     install)
