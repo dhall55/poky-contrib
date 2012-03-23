@@ -21,6 +21,7 @@ SRC_URI += "\
   file://host_include_contamination.patch \
   file://sys_platform_is_now_always_linux2.patch \
   file://fix_for_using_different_libdir.patch \
+  file://check-if-target-is-64b-not-host.patch \
 "
 
 S = "${WORKDIR}/Python-${PV}"
