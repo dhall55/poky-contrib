@@ -9,3 +9,17 @@ IMAGE_FEATURES += "apps-console-core ${SATO_IMAGE_FEATURES}"
 LICENSE = "MIT"
 
 inherit core-image
+
+LIVE = "${@base_contains('IMAGE_FSTYPES', 'live', 'yes', 'no', d)}"
+
+do_check_unionfs() {
+        if [ "${NOISO}" = "1" ]; then
+                return
+        fi
+
+        if [ "${LIVE}" = "yes" ] && ! grep -q "CONFIG_UNION_FS=y" ${STAGING_KERNEL_DIR}/.config; then
+                bbwarn "Building LIVE CD without UNION FS enabled in kernel"
+        fi
+}
+
+addtask check_unionfs before do_build after do_bootimg
