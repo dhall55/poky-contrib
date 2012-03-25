@@ -76,32 +76,6 @@
             </para>
 
             <para>
-                The Yocto Project organizes BSP Layers within the Yocto Metadata Layers area 
-                of the Yocto Project Source Repositories at 
-                <ulink url='&YOCTO_GIT_URL;/cgit.cgi'></ulink>.
-                If you examine the source repositories, you will find many BSP Layers.
-                Here are a few:
-                <literallayout class='monospaced'>
-     meta-baryon
-     meta-fsl-ppc
-     meta-intel
-     meta-selinux
-     meta-ti
-                </literallayout>
-                It is worth noting that the <filename>meta-intel</filename> BSP Layer contains 
-                within itself several other BSP Layers, which makes it sort of a "super" BSP layer.
-                Following is a sampling of the BSP Layers that the <filename>meta-intel</filename> 
-                BSP Layer contains:
-                <literallayout class='monospaced'>
-     meta-cedartrail
-     meta-crownbay
-     meta-emenlow
-     meta-fishriver
-     meta-fri2
-                </literallayout>
-            </para>
-
-            <para>
                 The layer's base directory (<filename>meta-&lt;bsp_name&gt;</filename>) is the root 
                 of the BSP Layer.
                 This root is what you add to the <filename>BBLAYERS</filename>
@@ -117,6 +91,18 @@
         /usr/local/src/yocto/meta-&lt;bsp_name&gt; \
         "
                 </literallayout>
+            </para>
+
+            <para>
+                Note that some BSPs may require additional layers on
+                top of the BSP's root layer in order to be functional.
+                Those layers would also need to be added to the
+                BBLAYERS variable in order to build the BSP.  Any
+                requirements for additional layers must be specified
+                in the 'Dependencies' section of the BSP's README
+                file, and preferably also mentioned explicitly in any
+                build instructions that might be contained elsewhere
+                in the README file.
             </para>
 
             <para>
