@@ -220,8 +220,10 @@
             </para>
 
             <para>
-                Technically speaking a <filename>README</filename> file is optional but it is highly 
-                recommended that every BSP has one.
+                At minimum, the <filename>README</filename> file must
+                contain a list of dependencies, such as the names of
+                any other layers the BSP depends on, and the name of
+                the BSP maintainer and his or her contact information.
             </para>
             </section>
 
