@@ -231,8 +231,8 @@ def createBBLayersConf(factory, btarget=None, bsplayer=False, provider=None, bui
         fout = fout + defaultenv['SLAVEBASEDIR'] + "/" + defaultenv['ABTARGET'] + '/build/yocto/meta-intel/meta-' + str(btarget).replace("-noemgd", "") + ' \ \n'
         fout = fout + defaultenv['SLAVEBASEDIR'] + "/" + defaultenv['ABTARGET'] + '/build/yocto/meta-intel/meta-tlk \ \n'
     elif bsplayer==True and provider=="fsl" and defaultenv['ABTARGET'] == "p1022ds":
-        fout = fout + defaultenv['SLAVEBASEDIR'] + defaultenv['ABTARGET'] + '/build/yocto/meta-fsl-ppc \ \n'
-    fout = fout + defaultenv['SLAVEBASEDIR'] + defaultenv['ABTARGET'] + '/build/meta-qt3 " \n'
+        fout = fout + defaultenv['SLAVEBASEDIR']  + "/" + defaultenv['ABTARGET'] + '/build/yocto/meta-fsl-ppc \ \n'
+    fout = fout + defaultenv['SLAVEBASEDIR']  + "/" + defaultenv['ABTARGET'] + '/build/meta-qt3 " \n'
     factory.addStep(ShellCommand(description="Creating bblayers.conf",
                     command="echo '" +  fout + "'>>" + BBLAYER,
                     timeout=60))
