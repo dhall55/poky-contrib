@@ -5,19 +5,17 @@ BUGTRACKER = "https://alioth.debian.org/tracker/?group_id=30580"
 SECTION = "base utils"
 LICENSE = "BSD | Artistic-1.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=08c553a87d4e51bbed50b20e0adcaede \
-                    file://src/passwd.c;firstline=8;endline=30;md5=2899a045e90511d0e043b85a7db7e2fe"
+                    file://src/passwd.c;firstline=8;endline=30;md5=7324fdcad1a309a68185739ab0d9f296"
 
-PR = "r3"
+PR = "r0"
 
 SRC_URI = "http://pkg-shadow.alioth.debian.org/releases/${BPN}-${PV}.tar.bz2 \
-           file://shadow.automake-1.11.patch \
            file://shadow-4.1.3-dots-in-usernames.patch \
-           file://shadow-4.1.4.2-env-reset-keep-locale.patch \
-           file://add_root_cmd_options.patch \
-	   file://useradd.patch"
+           file://shadow-4.1.5-stdarg.patch \
+           file://useradd.patch"
 
-SRC_URI[md5sum] = "b8608d8294ac88974f27b20f991c0e79"
-SRC_URI[sha256sum] = "633f5bb4ea0c88c55f3642c97f9d25cbef74f82e0b4cf8d54e7ad6f9f9caa778" 
+SRC_URI[md5sum] = "d5f7a588fadb79faeb4b08b1eee82e9a"
+SRC_URI[sha256sum] = "e3c1ac70fa08d932777639c861155dc61024c2d4961e76f0d07fd239ba10cd87" 
 
 inherit autotools gettext native
 

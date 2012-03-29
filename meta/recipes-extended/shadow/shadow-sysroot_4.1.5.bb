@@ -8,7 +8,7 @@ LIC_FILES_CHKSUM = "file://login.defs_shadow-sysroot;md5=25e2f2de4dfc8f966ac5cdf
 
 DEPENDS = "base-passwd"
 
-PR = "r3"
+PR = "r0"
 
 # The sole purpose of this recipe is to provide the /etc/login.defs
 # file for the target sysroot - needed so the shadow-native utilities

@@ -5,20 +5,17 @@ BUGTRACKER = "https://alioth.debian.org/tracker/?group_id=30580"
 SECTION = "base utils"
 LICENSE = "BSD | Artistic-1.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=08c553a87d4e51bbed50b20e0adcaede \
-                    file://src/passwd.c;firstline=8;endline=30;md5=2899a045e90511d0e043b85a7db7e2fe"
+                    file://src/passwd.c;firstline=8;endline=30;md5=7324fdcad1a309a68185739ab0d9f296"
 
 DEPENDS = "${@base_contains('DISTRO_FEATURES', 'pam', 'libpam', '', d)}"
 RDEPENDS_${PN} = "shadow-securetty ${@base_contains('DISTRO_FEATURES', 'pam', '${PAM_PLUGINS}', '', d)}"
-PR = "r8"
+PR = "r0"
 
 SRC_URI = "http://pkg-shadow.alioth.debian.org/releases/${BPN}-${PV}.tar.bz2 \
            file://login_defs_pam.sed \
            ${@base_contains('DISTRO_FEATURES', 'pam', '${PAM_SRC_URI}', '', d)} \
-           file://shadow.automake-1.11.patch \
            file://shadow-4.1.3-dots-in-usernames.patch \
-           file://shadow-4.1.4.2-env-reset-keep-locale.patch \
-           file://shadow-4.1.4.2-groupmod-pam-check.patch \
-           file://shadow-4.1.4.2-su_no_sanitize_env.patch \
+           file://shadow-4.1.5-stdarg.patch \
            file://shadow-update-pam-conf.patch"
 
 SRC_URI[md5sum] = "b8608d8294ac88974f27b20f991c0e79"
