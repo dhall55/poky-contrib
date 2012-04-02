@@ -27,7 +27,7 @@ import urllib
 import urllib2
 import pango
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import HobWarpCellRendererText
+from bb.ui.crumbs.hobwidget import HobWarpCellRendererText, HobCellRendererPixbuf
 
 class RunningBuildModel (gtk.TreeStore):
     (COL_LOG, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_COLOR, COL_NUM_ACTIVE) = range(7)
@@ -42,14 +42,6 @@ class RunningBuildModel (gtk.TreeStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_INT)
 
-    def config_model_filter(self, model, it):
-        msg = model.get(it, self.COL_MESSAGE)[0]
-        if not msg or type(msg) != str:
-            return False
-        if msg.startswith("\nOE Build Configuration:\n"):
-            return True
-        return False
-
     def failure_model_filter(self, model, it):
         color = model.get(it, self.COL_COLOR)[0]
         if not color:
@@ -58,15 +50,17 @@ class RunningBuildModel (gtk.TreeStore):
             return True
         return False
 
-    def config_model(self):
-        model = self.filter_new()
-        model.set_visible_func(self.config_model_filter)
-        return model
-
     def failure_model(self):
         model = self.filter_new()
         model.set_visible_func(self.failure_model_filter)
         return model
+
+    def foreach_cell_func(self, model, path, iter, usr_data=None):
+        if model.get_value(iter, self.COL_ICON) == "gtk-execute":
+            model.set(iter, self.COL_ICON, "")
+
+    def close_task_refresh(self):
+        self.foreach(self.foreach_cell_func, None)
 
 class RunningBuild (gobject.GObject):
     __gsignals__ = {
@@ -284,6 +278,8 @@ class RunningBuild (gobject.GObject):
             # Emit a generic "build-complete" signal for things wishing to
             # handle when the build is finished
             self.emit("build-complete")
+            # reset the all cell's icon indicator
+            self.model.close_task_refresh()
             if pbar:
                 pbar.set_text(event.msg)
 
@@ -292,6 +288,8 @@ class RunningBuild (gobject.GObject):
                 # If the command fails with an exit code we're done, emit the
                 # generic signal for the UI to notify the user
                 self.emit("build-complete")
+                # reset the all cell's icon indicator
+                self.model.close_task_refresh()
 
         elif isinstance(event, bb.event.CacheLoadStarted) and pbar:
             pbar.set_title("Loading cache")
@@ -341,18 +339,26 @@ class RunningBuildTreeView (gtk.TreeView):
     __gsignals__ = {
         "button_press_event" : "override"
         }
-    def __init__ (self, readonly=False):
+    def __init__ (self, readonly=False, hob=False):
         gtk.TreeView.__init__ (self)
         self.readonly = readonly
 
         # The icon that indicates whether we're building or failed.
-        renderer = gtk.CellRendererPixbuf ()
+        # add 'hob' flag because there has not only hob to share this code
+        if hob:
+            renderer = HobCellRendererPixbuf ()
+        else:
+            renderer = gtk.CellRendererPixbuf()
         col = gtk.TreeViewColumn ("Status", renderer)
         col.add_attribute (renderer, "icon-name", 4)
         self.append_column (col)
 
         # The message of the build.
-        self.message_renderer = HobWarpCellRendererText (col_number=1)
+        # add 'hob' flag because there has not only hob to share this code
+        if hob:
+            self.message_renderer = HobWarpCellRendererText (col_number=1)
+        else:
+            self.message_renderer = gtk.CellRendererText ()
         self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=3)
         self.message_column.add_attribute(self.message_renderer, 'background', 5)
         self.message_renderer.set_property('editable', (not self.readonly))
@@ -410,25 +416,6 @@ class RunningBuildTreeView (gtk.TreeView):
 
         self._add_to_clipboard(message)
 
-
-class BuildConfigurationTreeView(gtk.TreeView):
-
-    def __init__ (self):
-        gtk.TreeView.__init__(self)
-        self.set_rules_hint(False)
-        self.set_headers_visible(False)
-        self.set_property("hover-expand", True)
-        self.get_selection().set_mode(gtk.SELECTION_SINGLE)
-
-        # The message of the build.
-        self.message_renderer = HobWarpCellRendererText (col_number=0)
-        self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=RunningBuildModel.COL_MESSAGE, background=RunningBuildModel.COL_COLOR)
-        font = self.get_style().font_desc
-        font.set_size(pango.SCALE * 13)
-        self.message_renderer.set_property('font-desc', font)
-        self.append_column (self.message_column)
-
-
 class BuildFailureTreeView(gtk.TreeView):
 
     def __init__ (self):
@@ -438,7 +425,7 @@ class BuildFailureTreeView(gtk.TreeView):
         self.get_selection().set_mode(gtk.SELECTION_SINGLE)
 
         # The icon that indicates whether we're building or failed.
-        renderer = gtk.CellRendererPixbuf ()
+        renderer = HobCellRendererPixbuf ()
         col = gtk.TreeViewColumn ("Status", renderer)
         col.add_attribute (renderer, "icon-name", RunningBuildModel.COL_ICON)
         self.append_column (col)

@@ -88,8 +88,16 @@ class ImageConfigurationPage (HobPage):
         self.pack_start(self.group_align, expand=True, fill=True)
 
         self.box_group_area.pack_start(self.gtable, expand=True, fill=True)
-        if pack_config_build_button == True:
+        if pack_config_build_button:
             self.box_group_area.pack_end(self.config_build_button, expand=False, fill=False)
+        else:
+            box = gtk.HBox(False, 6)
+            box.show()
+            subbox = gtk.HBox(False, 0)
+            subbox.set_size_request(205, 49)
+            subbox.show()
+            box.add(subbox)
+            self.box_group_area.pack_end(box, False, False)
 
     def show_machine(self):
         self.progress_bar.reset()
@@ -97,7 +105,7 @@ class ImageConfigurationPage (HobPage):
         self.set_config_machine_layout(show_progress_bar = False)
         self.show_all()
 
-    def update_progress_bar(self, title, fraction, status=True):
+    def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)
         self.progress_bar.set_title(title)
         self.progress_bar.set_rcstyle(status)
@@ -125,13 +133,13 @@ class ImageConfigurationPage (HobPage):
     def create_config_machine(self):
         self.machine_title = gtk.Label()
         self.machine_title.set_alignment(0.0, 0.5)
-        mark = "<span %s>Select a machine</span>" % self.span_tag('24px', 'bold')
+        mark = "<span %s>Select a machine</span>" % self.span_tag('x-large', 'bold')
         self.machine_title.set_markup(mark)
 
         self.machine_title_desc = gtk.Label()
-        self.machine_title_desc.set_alignment(0, 0.5)
+        self.machine_title_desc.set_alignment(0.0, 0.5)
         mark = ("<span %s>This is the profile of the target machine for which you"
-        " are building the image.\n</span>") % (self.span_tag(px='14px'))
+        " are building the image.\n</span>") % (self.span_tag('medium'))
         self.machine_title_desc.set_markup(mark)
 
         self.machine_combo = gtk.combo_box_new_text()
@@ -162,37 +170,37 @@ class ImageConfigurationPage (HobPage):
     def set_config_machine_layout(self, show_progress_bar = False):
         self.gtable.attach(self.machine_title, 0, 40, 0, 4)
         self.gtable.attach(self.machine_title_desc, 0, 40, 4, 6)
-        self.gtable.attach(self.machine_combo, 0, 12, 6, 9)
-        self.gtable.attach(self.layer_button, 12, 36, 6, 11)
-        self.gtable.attach(self.layer_info_icon, 36, 40, 6, 10)
+        self.gtable.attach(self.machine_combo, 0, 12, 7, 10)
+        self.gtable.attach(self.layer_button, 14, 36, 7, 12)
+        self.gtable.attach(self.layer_info_icon, 36, 40, 7, 11)
         if show_progress_bar:
-            self.gtable.attach(self.progress_box, 0, 40, 13, 17)
-        self.gtable.attach(self.machine_separator, 0, 40, 12, 13)
+            self.gtable.attach(self.progress_box, 0, 40, 15, 19)
+        self.gtable.attach(self.machine_separator, 0, 40, 13, 14)
 
     def create_config_baseimg(self):
         self.image_title = gtk.Label()
         self.image_title.set_alignment(0, 1.0)
-        mark = "<span %s>Select a base image</span>" % self.span_tag('24px', 'bold')
+        mark = "<span %s>Select a base image</span>" % self.span_tag('x-large', 'bold')
         self.image_title.set_markup(mark)
 
         self.image_title_desc = gtk.Label()
         self.image_title_desc.set_alignment(0, 0.5)
         mark = ("<span %s>Base images are a starting point for the type of image you want. "
                 "You can build them as \n"
-                "they are or customize them to your specific needs.\n</span>") % self.span_tag('14px')
+                "they are or customize them to your specific needs.\n</span>") % self.span_tag('medium')
         self.image_title_desc.set_markup(mark)
 
         self.image_combo = gtk.combo_box_new_text()
         self.image_combo_id = self.image_combo.connect("changed", self.image_combo_changed_cb)
 
         self.image_desc = gtk.Label()
-        self.image_desc.set_alignment(0, 0.5)
+        self.image_desc.set_alignment(0.0, 0.5)
         self.image_desc.set_line_wrap(True)
 
         # button to view recipes
         icon_file = hic.ICON_RCIPE_DISPLAY_FILE
         hover_file = hic.ICON_RCIPE_HOVER_FILE
-        self.view_recipes_button = HobImageButton("View Recipes",
+        self.view_recipes_button = HobImageButton("View recipes",
                                         "Add/remove recipes and tasks",
                                         icon_file, hover_file)
         self.view_recipes_button.connect("clicked", self.view_recipes_button_clicked_cb)
@@ -200,7 +208,7 @@ class ImageConfigurationPage (HobPage):
         # button to view packages
         icon_file = hic.ICON_PACKAGES_DISPLAY_FILE
         hover_file = hic.ICON_PACKAGES_HOVER_FILE
-        self.view_packages_button = HobImageButton("View Packages",
+        self.view_packages_button = HobImageButton("View packages",
                                         "Add/remove previously built packages",
                                         icon_file, hover_file)
         self.view_packages_button.connect("clicked", self.view_packages_button_clicked_cb)
@@ -208,22 +216,22 @@ class ImageConfigurationPage (HobPage):
         self.image_separator = gtk.HSeparator()
 
     def set_config_baseimg_layout(self):
-        self.gtable.attach(self.image_title, 0, 40, 13, 17)
-        self.gtable.attach(self.image_title_desc, 0, 40, 17, 22)
-        self.gtable.attach(self.image_combo, 0, 12, 22, 25)
-        self.gtable.attach(self.image_desc, 14, 38, 22, 27)
+        self.gtable.attach(self.image_title, 0, 40, 15, 17)
+        self.gtable.attach(self.image_title_desc, 0, 40, 18, 22)
+        self.gtable.attach(self.image_combo, 0, 12, 23, 26)
+        self.gtable.attach(self.image_desc, 13, 38, 23, 28)
         self.gtable.attach(self.image_separator, 0, 40, 35, 36)
 
     def set_rcppkg_layout(self):
-        self.gtable.attach(self.view_recipes_button, 0, 20, 27, 32)
-        self.gtable.attach(self.view_packages_button, 20, 40, 27, 32)
+        self.gtable.attach(self.view_recipes_button, 0, 20, 28, 33)
+        self.gtable.attach(self.view_packages_button, 20, 40, 28, 33)
 
     def create_config_build_button(self):
-        # Create the "Build packages" and "Just bake" buttons at the bottom
+        # Create the "Build packages" and "Build image" buttons at the bottom
         button_box = gtk.HBox(False, 6)
 
-        # create button "Just bake"
-        just_bake_button = HobButton("Just bake")
+        # create button "Build image"
+        just_bake_button = HobButton("Build image")
         just_bake_button.set_size_request(205, 49)
         just_bake_button.set_tooltip_text("Build image to get your target image")
         just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
@@ -233,7 +241,7 @@ class ImageConfigurationPage (HobPage):
         button_box.pack_end(label, expand=False, fill=False)
 
         # create button "Build Packages"
-        build_packages_button = HobAltButton("Build Packages")
+        build_packages_button = HobAltButton("Build packages")
         build_packages_button.connect("clicked", self.build_packages_button_clicked_cb)
         button_box.pack_end(build_packages_button, expand=False, fill=False)
 
@@ -287,7 +295,7 @@ class ImageConfigurationPage (HobPage):
         image_iter = self.builder.recipe_model.get_iter(image_path)
         selected_packages = self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_INSTALL).split()
 
-        mark = ("<span %s>%s</span>\n") % (self.span_tag('14px'), self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_DESC))
+        mark = ("<span %s>%s</span>\n") % (self.span_tag('small'), self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_DESC))
         self.image_desc.set_markup(mark)
 
         self.builder.recipe_model.reset()
@@ -352,11 +360,19 @@ class ImageConfigurationPage (HobPage):
         self.builder.build_packages()
 
     def template_button_clicked_cb(self, button):
-        self.builder.show_load_template_dialog()
+        response, path = self.builder.show_load_template_dialog()
+        if not response:
+            return
+        if path:
+            self.builder.load_template(path)
 
     def my_images_button_clicked_cb(self, button):
         self.builder.show_load_my_images_dialog()
 
     def settings_button_clicked_cb(self, button):
         # Create an advanced settings dialog
-        self.builder.show_adv_settings_dialog()
+        response, settings_changed = self.builder.show_adv_settings_dialog()
+        if not response:
+            return
+        if settings_changed:
+            self.builder.reparse_post_adv_settings()

@@ -52,11 +52,14 @@ class hic:
     ICON_INFO_DISPLAY_FILE        = os.path.join(HOB_ICON_BASE_DIR, ('info/info_display.png'))
     ICON_INFO_HOVER_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('info/info_hover.png'))
     ICON_INDI_CONFIRM_FILE        = os.path.join(HOB_ICON_BASE_DIR, ('indicators/confirmation.png'))
-    ICON_INDI_ERROR_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('indicators/error.png'))
+    ICON_INDI_ERROR_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('indicators/denied.png'))
     ICON_INDI_REMOVE_FILE         = os.path.join(HOB_ICON_BASE_DIR, ('indicators/remove.png'))
     ICON_INDI_REMOVE_HOVER_FILE   = os.path.join(HOB_ICON_BASE_DIR, ('indicators/remove-hover.png'))
     ICON_INDI_ADD_FILE            = os.path.join(HOB_ICON_BASE_DIR, ('indicators/add.png'))
     ICON_INDI_ADD_HOVER_FILE      = os.path.join(HOB_ICON_BASE_DIR, ('indicators/add-hover.png'))
+    ICON_INDI_REFRESH_FILE        = os.path.join(HOB_ICON_BASE_DIR, ('indicators/refresh.png'))
+    ICON_INDI_ALERT_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('indicators/alert.png'))
+    ICON_INDI_TICK_FILE           = os.path.join(HOB_ICON_BASE_DIR, ('indicators/tick.png'))
 
 class hcc:
 
@@ -251,7 +254,7 @@ class HobAltButton(gtk.Button):
             colour = HobColors.PALE_BLUE
         else:
             colour = HobColors.LIGHT_GRAY
-        button.set_label("<span color='%s'><b>%s</b></span>" % (colour, gobject.markup_escape_text(button.text)))
+        button.set_label("<span size='large' color='%s'><b>%s</b></span>" % (colour, gobject.markup_escape_text(button.text)))
         button.child.set_use_markup(True)
 
     @staticmethod
@@ -278,7 +281,7 @@ class HobImageButton(gtk.Button):
         self.icon_path = icon_path
         self.hover_icon_path = hover_icon_path
 
-        hbox = gtk.HBox(False, 3)
+        hbox = gtk.HBox(False, 10)
         hbox.show()
         self.add(hbox)
         self.icon = gtk.Image()
@@ -292,7 +295,7 @@ class HobImageButton(gtk.Button):
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
         colour = soften_color(label)
-        mark = "%s\n<span fgcolor='%s'><small>%s</small></span>" % (primary_text, colour, secondary_text)
+        mark = "<span size='x-large'>%s</span>\n<span size='medium' fgcolor='%s' weight='ultralight'>%s</span>" % (primary_text, colour, secondary_text)
         label.set_markup(mark)
         label.show()
         hbox.pack_start(label, True, True, 0)
@@ -555,7 +558,10 @@ class HobTabBar(gtk.DrawingArea):
                 off_y = (self.tab_height - fonth) / 2
                 x = child["x"] + off_x
                 y = child["y"] + off_y
-                self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), pangolayout)
+                if not child == self.current_child:
+                    self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), pangolayout, gtk.gdk.Color(HobColors.WHITE))
+                else:
+                    self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), pangolayout)
 
     def draw_toggled_tab(self, cr):
         if not self.current_child:
@@ -613,7 +619,10 @@ class HobTabBar(gtk.DrawingArea):
         y = tab_y + self.tab_height/2 - dest_h/2
 
         r = min(dest_w, dest_h)/2
-        color = cr.set_source_color(gtk.gdk.color_parse(HobColors.ORANGE))
+        if not child == self.current_child:
+            color = cr.set_source_color(gtk.gdk.color_parse(HobColors.DEEP_RED))
+        else:
+            color = cr.set_source_color(gtk.gdk.color_parse(HobColors.GRAY))
         # check round back area can contain the text or not
         back_round_can_contain_width = float(2 * r * 0.707)
         if float(textw) > back_round_can_contain_width:
@@ -632,7 +641,7 @@ class HobTabBar(gtk.DrawingArea):
         x = x + (dest_w/2)-(textw/2)
         y = y + (dest_h/2) - (texth/2)
         cr.move_to(x, y)
-        self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), layout)
+        self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), layout, gtk.gdk.Color(HobColors.WHITE))
 
     def show_indicator_icon(self, child, number):
         child["indicator_show"] = True
@@ -793,3 +802,205 @@ class HobWarpCellRendererText(gtk.CellRendererText):
         return adjwidth
 
 gobject.type_register(HobWarpCellRendererText)
+
+class HobIconChecker(hic):
+    def set_hob_icon_to_stock_icon(self, file_path, stock_id=""):
+        try:
+            pixbuf = gtk.gdk.pixbuf_new_from_file(file_path)
+        except Exception, e:
+            return None
+
+        if stock_id and (gtk.icon_factory_lookup_default(stock_id) == None):
+            icon_factory = gtk.IconFactory()
+            icon_factory.add_default()
+            icon_factory.add(stock_id, gtk.IconSet(pixbuf))
+            gtk.stock_add([(stock_id, '_label', 0, 0, '')])
+
+            return icon_factory.lookup(stock_id)
+
+        return None
+
+    """
+    For make hob icon consistently by request, and avoid icon view diff by system or gtk version, we use some 'hob icon' to replace the 'gtk icon'.
+    this function check the stock_id and make hob_id to replaced the gtk_id then return it or ""
+    """
+    def check_stock_icon(self, stock_name=""):
+        HOB_CHECK_STOCK_NAME = {
+            ('hic-dialog-info', 'gtk-dialog-info', 'dialog-info')           : self.ICON_INFO_DISPLAY_FILE,
+            ('hic-ok',          'gtk-ok',           'ok')                   : self.ICON_INDI_TICK_FILE,
+            ('hic-dialog-error', 'gtk-dialog-error', 'dialog-error')        : self.ICON_INDI_ERROR_FILE,
+            ('hic-dialog-warning', 'gtk-dialog-warning', 'dialog-warning')  : self.ICON_INDI_ALERT_FILE,
+            ('hic-task-refresh', 'gtk-execute', 'execute')                  : self.ICON_INDI_REFRESH_FILE,
+        }
+        valid_stock_id = stock_name
+        if stock_name:
+            for names, path in HOB_CHECK_STOCK_NAME.iteritems():
+                if stock_name in names:
+                    valid_stock_id = names[0]
+                    if not gtk.icon_factory_lookup_default(valid_stock_id):
+                        self.set_hob_icon_to_stock_icon(path, valid_stock_id)
+
+        return valid_stock_id
+
+class RefreshRuningController(gobject.GObject):
+    def __init__(self, widget=None, iter=None):
+        gobject.GObject.__init__(self)
+        self.timeout_id = None
+        self.current_angle_pos = 0.0
+        self.step_angle = 0.0
+        self.tree_headers_height = 0
+        self.running_cell_areas = []
+
+    def is_active(self):
+        if self.timeout_id:
+            return True
+        else:
+            return False
+
+    def reset(self):
+        self.force_stop(True)
+        self.current_angle_pos = 0.0
+        self.timeout_id = None
+        self.step_angle = 0.0
+
+    ''' time_iterval: (1~1000)ms, which will be as the basic interval count for timer
+        init_usrdata: the current data which related the progress-bar will be at
+        min_usrdata: the range of min of user data
+        max_usrdata: the range of max of user data
+        step: each step which you want to progress
+        Note: the init_usrdata should in the range of from min to max, and max should > min
+             step should < (max - min)
+    '''
+    def start_run(self, time_iterval, init_usrdata, min_usrdata, max_usrdata, step, tree):
+        if (not time_iterval) or (not max_usrdata):
+            return
+        usr_range = (max_usrdata - min_usrdata) * 1.0
+        self.current_angle_pos = (init_usrdata * 1.0) / usr_range
+        self.step_angle = (step * 1) / usr_range
+        self.timeout_id = gobject.timeout_add(int(time_iterval),
+        self.make_image_on_progressing_cb, tree)
+        self.tree_headers_height = self.get_treeview_headers_height(tree)
+
+    def force_stop(self, after_hide_or_not=False):
+        if self.timeout_id:
+            gobject.source_remove(self.timeout_id)
+            self.timeout_id = None
+        if self.running_cell_areas:
+            self.running_cell_areas = []
+
+    def on_draw_cb(self, pixbuf, cr, x, y, img_width, img_height, do_refresh=True):
+        if pixbuf:
+            r = max(img_width/2, img_height/2)
+            cr.translate(x + r, y + r)
+            if do_refresh:
+                cr.rotate(2 * math.pi * self.current_angle_pos)
+
+            cr.set_source_pixbuf(pixbuf, -img_width/2, -img_height/2)
+            cr.paint()
+
+    def get_treeview_headers_height(self, tree):
+        if tree and (tree.get_property("headers-visible") == True):
+            height = tree.get_allocation().height - tree.get_bin_window().get_size()[1]
+            return height
+
+        return 0
+
+    def make_image_on_progressing_cb(self, tree):
+        self.current_angle_pos += self.step_angle
+        if (self.current_angle_pos >= 1):
+            self.current_angle_pos = self.step_angle
+
+        for rect in self.running_cell_areas:
+            tree.queue_draw_area(rect.x, rect.y + self.tree_headers_height, rect.width, rect.height)
+
+        return True
+
+    def append_running_cell_area(self, cell_area):
+        if cell_area and (cell_area not in self.running_cell_areas):
+            self.running_cell_areas.append(cell_area)
+
+    def remove_running_cell_area(self, cell_area):
+        if cell_area in self.running_cell_areas:
+            self.running_cell_areas.remove(cell_area)
+        if not self.running_cell_areas:
+            self.reset()
+
+gobject.type_register(RefreshRuningController)
+
+class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
+    def __init__(self):
+        gtk.CellRendererPixbuf.__init__(self)
+        self.control = RefreshRuningController()
+        # add icon checker for make the gtk-icon transfer to hob-icon
+        self.checker = HobIconChecker()
+        self.set_property("stock-size", gtk.ICON_SIZE_DND)
+
+    def get_pixbuf_from_stock_icon(self, widget, stock_id="", size=gtk.ICON_SIZE_DIALOG):
+        if widget and stock_id and gtk.icon_factory_lookup_default(stock_id):
+            return widget.render_icon(stock_id, size)
+
+        return None
+
+    def set_icon_name_to_id(self, new_name):
+        if new_name and type(new_name) == str:
+            # check the name is need to transfer to hob icon or not
+            name = self.checker.check_stock_icon(new_name)
+            if name.startswith("hic") or name.startswith("gtk"):
+                stock_id = name
+            else:
+                stock_id = 'gtk-' + name
+
+        return stock_id
+
+    ''' render cell exactly, "icon-name" is priority
+        if use the 'hic-task-refresh' will make the pix animation
+        if 'pix' will change the pixbuf for it from the pixbuf or image.
+    '''
+    def do_render(self, window, tree, background_area,cell_area, expose_area, flags):
+        if (not self.control) or (not tree):
+            return
+
+        x, y, w, h = self.on_get_size(tree, cell_area)
+        x += cell_area.x
+        y += cell_area.y
+        w -= 2 * self.get_property("xpad")
+        h -= 2 * self.get_property("ypad")
+
+        stock_id = ""
+        if self.props.icon_name:
+            stock_id = self.set_icon_name_to_id(self.props.icon_name)
+        elif self.props.stock_id:
+            stock_id = self.props.stock_id
+        elif self.props.pixbuf:
+            pix = self.props.pixbuf
+        else:
+            return
+
+        if stock_id:
+            pix = self.get_pixbuf_from_stock_icon(tree, stock_id, self.props.stock_size)
+        if stock_id == 'hic-task-refresh':
+            self.control.append_running_cell_area(cell_area)
+            if self.control.is_active():
+                self.control.on_draw_cb(pix, window.cairo_create(), x, y, w, h, True)
+            else:
+                self.control.start_run(200, 0, 0, 1000, 200, tree)
+        else:
+            self.control.remove_running_cell_area(cell_area)
+            self.control.on_draw_cb(pix, window.cairo_create(), x, y, w, h, False)
+
+    def on_get_size(self, widget, cell_area):
+        if self.props.icon_name or self.props.pixbuf or self.props.stock_id:
+            w, h = gtk.icon_size_lookup(self.props.stock_size)
+            calc_width = self.get_property("xpad") * 2 + w
+            calc_height = self.get_property("ypad") * 2 + h
+            x_offset = 0
+            y_offset = 0
+            if cell_area and w > 0 and h > 0:
+                x_offset = self.get_property("xalign") * (cell_area.width - calc_width - self.get_property("xpad"))
+                y_offset = self.get_property("yalign") * (cell_area.height - calc_height - self.get_property("ypad"))
+
+            return x_offset, y_offset, w, h
+
+        return 0, 0, 0, 0
+
+gobject.type_register(HobCellRendererPixbuf)

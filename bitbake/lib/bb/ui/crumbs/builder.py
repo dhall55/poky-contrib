@@ -32,7 +32,7 @@ from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
 from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
 from bb.ui.crumbs.builddetailspage import BuildDetailsPage
 from bb.ui.crumbs.imagedetailspage import ImageDetailsPage
-from bb.ui.crumbs.hobwidget import hwc
+from bb.ui.crumbs.hobwidget import hwc, HobButton, HobAltButton
 from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
                              AdvancedSettingDialog, LayerSelectionDialog, \
                              DeployImageDialog
@@ -68,6 +68,35 @@ class Configuration:
         self.selected_recipes = []
         self.selected_packages = []
 
+        # proxy settings
+        self.all_proxy = params["all_proxy"]
+        self.http_proxy = params["http_proxy"]
+        self.ftp_proxy = params["ftp_proxy"]
+        self.https_proxy = params["https_proxy"]
+        self.git_proxy_host = params["git_proxy_host"]
+        self.git_proxy_port = params["git_proxy_port"]
+        self.cvs_proxy_host = params["cvs_proxy_host"]
+        self.cvs_proxy_port = params["cvs_proxy_port"]
+
+    def update(self, params):
+        self.curr_distro = params["distro"]
+        self.dldir = params["dldir"]
+        self.sstatedir = params["sstatedir"]
+        self.sstatemirror = params["sstatemirror"]
+        self.pmake = params["pmake"]
+        self.bbthread = params["bbthread"]
+        self.curr_package_format = " ".join(params["pclass"].split("package_")).strip()
+        self.image_rootfs_size = params["image_rootfs_size"]
+        self.image_extra_size = params["image_extra_size"]
+        self.image_overhead_factor = params['image_overhead_factor']
+        self.incompat_license = params["incompat_license"]
+        self.curr_sdk_machine = params["sdk_machine"]
+        self.conf_version = params["conf_version"]
+        self.lconf_version = params["lconf_version"]
+        self.image_fstypes = params["image_fstypes"]
+        # bblayers.conf
+        self.layers = params["layer"].split()
+
     def load(self, template):
         self.curr_mach = template.getVar("MACHINE")
         self.curr_package_format = " ".join(template.getVar("PACKAGE_CLASSES").split("package_")).strip()
@@ -86,13 +115,22 @@ class Configuration:
         self.lconf_version = template.getVar("LCONF_VERSION")
         self.extra_setting = eval(template.getVar("EXTRA_SETTING"))
         self.toolchain_build = eval(template.getVar("TOOLCHAIN_BUILD"))
-        self.image_fstypes = template.getVar("IMAGE_FSTYPES").split()
+        self.image_fstypes = template.getVar("IMAGE_FSTYPES")
         # bblayers.conf
         self.layers = template.getVar("BBLAYERS").split()
         # image/recipes/packages
         self.selected_image = template.getVar("__SELECTED_IMAGE__")
         self.selected_recipes = template.getVar("DEPENDS").split()
         self.selected_packages = template.getVar("IMAGE_INSTALL").split()
+        # proxy
+        self.all_proxy = template.getVar("all_proxy")
+        self.http_proxy = template.getVar("http_proxy")
+        self.ftp_proxy = template.getVar("ftp_proxy")
+        self.https_proxy = template.getVar("https_proxy")
+        self.git_proxy_host = template.getVar("GIT_PROXY_HOST")
+        self.git_proxy_port = template.getVar("GIT_PROXY_PORT")
+        self.cvs_proxy_host = template.getVar("CVS_PROXY_HOST")
+        self.cvs_proxy_port = template.getVar("CVS_PROXY_PORT")
 
     def save(self, template, filename):
         # bblayers.conf
@@ -114,12 +152,21 @@ class Configuration:
         template.setVar("LCONF_VERSION", self.lconf_version)
         template.setVar("EXTRA_SETTING", self.extra_setting)
         template.setVar("TOOLCHAIN_BUILD", self.toolchain_build)
-        template.setVar("IMAGE_FSTYPES", " ".join(self.image_fstypes).lstrip(" "))
+        template.setVar("IMAGE_FSTYPES", self.image_fstypes)
         # image/recipes/packages
         self.selected_image = filename
         template.setVar("__SELECTED_IMAGE__", self.selected_image)
         template.setVar("DEPENDS", self.selected_recipes)
         template.setVar("IMAGE_INSTALL", self.selected_packages)
+        # proxy
+        template.setVar("all_proxy", self.all_proxy)
+        template.setVar("http_proxy", self.http_proxy)
+        template.setVar("ftp_proxy", self.ftp_proxy)
+        template.setVar("https_proxy", self.https_proxy)
+        template.setVar("GIT_PROXY_HOST", self.git_proxy_host)
+        template.setVar("GIT_PROXY_PORT", self.git_proxy_port)
+        template.setVar("CVS_PROXY_HOST", self.cvs_proxy_host)
+        template.setVar("CVS_PROXY_PORT", self.cvs_proxy_port)
 
 class Parameters:
     '''Represents other variables like available machines, etc.'''
@@ -140,11 +187,18 @@ class Parameters:
         self.runnable_machine_patterns = params["runnable_machine_patterns"].split()
         self.deployable_image_types = params["deployable_image_types"].split()
         self.tmpdir = params["tmpdir"]
+        self.distro_version = params["distro_version"]
+        self.target_os = params["target_os"]
+        self.target_arch = params["target_arch"]
+        self.tune_pkgarch = params["tune_pkgarch"]
+        self.bb_version = params["bb_version"]
+        self.tune_arch = params["tune_arch"]
+        self.enable_proxy = False
 
 class Builder(gtk.Window):
 
     (MACHINE_SELECTION,
-     LAYER_CHANGED,
+     CONFIG_UPDATED,
      RCPPKGINFO_POPULATING,
      RCPPKGINFO_POPULATED,
      BASEIMG_SELECTED,
@@ -168,7 +222,7 @@ class Builder(gtk.Window):
 
     __step2page__ = {
         MACHINE_SELECTION     : IMAGE_CONFIGURATION,
-        LAYER_CHANGED         : IMAGE_CONFIGURATION,
+        CONFIG_UPDATED        : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATING : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATED  : IMAGE_CONFIGURATION,
         BASEIMG_SELECTED      : IMAGE_CONFIGURATION,
@@ -185,6 +239,9 @@ class Builder(gtk.Window):
 
     def __init__(self, hobHandler, recipe_model, package_model):
         super(Builder, self).__init__()
+
+        self.hob_image = "hob-image"
+        self.hob_toolchain = "hob-toolchain"
 
         # handler
         self.handler = hobHandler
@@ -210,7 +267,6 @@ class Builder(gtk.Window):
         self.package_model.connect("package-selection-changed", self.packagelist_changed_cb)
         self.handler.connect("config-updated",           self.handler_config_updated_cb)
         self.handler.connect("package-formats-updated",  self.handler_package_formats_updated_cb)
-        self.handler.connect("layers-updated",           self.handler_layers_updated_cb)
         self.handler.connect("parsing-started",          self.handler_parsing_started_cb)
         self.handler.connect("parsing",                  self.handler_parsing_cb)
         self.handler.connect("parsing-completed",        self.handler_parsing_completed_cb)
@@ -273,7 +329,7 @@ class Builder(gtk.Window):
             if not os.path.exists(layer+'/conf/layer.conf'):
                 return False
 
-        self.switch_page(self.LAYER_CHANGED)
+        self.switch_page(self.CONFIG_UPDATED)
 
         self.template.destroy()
         self.template = None
@@ -301,10 +357,11 @@ class Builder(gtk.Window):
         if next_step == self.MACHINE_SELECTION: # init step
             self.image_configuration_page.show_machine()
 
-        elif next_step == self.LAYER_CHANGED:
+        elif next_step == self.CONFIG_UPDATED:
             # after layers is changd by users
             self.image_configuration_page.show_machine()
-            self.handler.refresh_layers(self.configuration.layers)
+            self.set_user_config()
+            self.handler.parse_generate_configuration()
 
         elif next_step == self.RCPPKGINFO_POPULATING:
             # MACHINE CHANGED action or SETTINGS CHANGED
@@ -367,6 +424,15 @@ class Builder(gtk.Window):
         self.handler.set_image_fstypes(self.configuration.image_fstypes)
         self.handler.set_extra_config(self.configuration.extra_setting)
         self.handler.set_extra_inherit("packageinfo")
+        self.handler.set_extra_inherit("image_types")
+        # set proxies
+        if self.parameters.enable_proxy:
+            self.handler.set_http_proxy(self.configuration.http_proxy)
+            self.handler.set_https_proxy(self.configuration.https_proxy)
+            self.handler.set_ftp_proxy(self.configuration.ftp_proxy)
+            self.handler.set_all_proxy(self.configuration.all_proxy)
+            self.handler.set_git_proxy(self.configuration.git_proxy_host, self.configuration.git_proxy_port)
+            self.handler.set_cvs_proxy(self.configuration.cvs_proxy_host, self.configuration.cvs_proxy_port)
 
     def update_recipe_model(self, selected_image, selected_recipes):
         self.recipe_model.set_selected_image(selected_image)
@@ -393,8 +459,10 @@ class Builder(gtk.Window):
         self.set_user_config()
         all_packages = self.package_model.get_selected_packages()
         self.handler.reset_build()
-        self.handler.generate_image(all_packages, self.configuration.toolchain_build)
-
+        self.handler.generate_image(all_packages,
+                                    self.hob_image,
+                                    self.hob_toolchain,
+                                    self.configuration.toolchain_build)
 
     # Callback Functions
     def handler_config_updated_cb(self, handler, which, values):
@@ -409,9 +477,6 @@ class Builder(gtk.Window):
     def handler_package_formats_updated_cb(self, handler, formats):
         self.parameters.all_package_formats = formats
 
-    def handler_layers_updated_cb(self, handler, layers):
-        self.parameters.all_layers = layers
-
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.PARSE_CONFIG:
             # settings
@@ -420,10 +485,14 @@ class Builder(gtk.Window):
             self.parameters = Parameters(params)
             self.handler.generate_configuration()
         elif initcmd == self.handler.GENERATE_CONFIGURATION:
+            params = self.handler.get_parameters()
+            self.configuration.update(params)
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
                          self.handler.GENERATE_IMAGE]:
+            params = self.handler.get_parameters()
+            self.configuration.update(params)
             self.handler.request_package_info_async()
         elif initcmd == self.handler.POPULATE_PACKAGEINFO:
             if self.current_step == self.RCPPKGINFO_POPULATING:
@@ -441,10 +510,12 @@ class Builder(gtk.Window):
 
     def handler_command_failed_cb(self, handler, msg):
         if msg:
+            msg = msg.replace("your local.conf", "Settings")
             lbl = "<b>Error</b>\n"
             lbl = lbl + "%s\n\n" % msg
-            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
-            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
+            button = dialog.add_button("Close", gtk.RESPONSE_OK)
+            HobButton.style_button(button)
             response = dialog.run()
             dialog.destroy()
         self.handler.clear_busy()
@@ -545,6 +616,7 @@ class Builder(gtk.Window):
         self.build_details_page.update_progress_bar("Build Started: ", fraction)
         self.build_details_page.reset_build_status()
         self.build_details_page.reset_issues()
+        self.build_details_page.show_configurations(self.configuration, self.parameters)
 
     def build_succeeded(self):
         if self.current_step == self.FAST_IMAGE_GENERATING:
@@ -560,16 +632,24 @@ class Builder(gtk.Window):
         elif self.current_step == self.PACKAGE_GENERATING:
             fraction = 1.0
         self.build_details_page.update_progress_bar("Build Completed: ", fraction)
+        self.handler.build_succeeded_async()
         self.stopping = False
 
     def build_failed(self):
-        if self.current_step == self.FAST_IMAGE_GENERATING:
-            fraction = 0.9
-        elif self.current_step == self.IMAGE_GENERATING:
-            fraction = 1.0
-        elif self.current_step == self.PACKAGE_GENERATING:
-            fraction = 1.0
-        self.build_details_page.update_progress_bar("Build Failed: ", fraction, False)
+        if self.stopping:
+            status = "stop"
+            message = "Build stopped: "
+            fraction = self.build_details_page.progress_bar.get_fraction()
+        else:
+            if self.current_step == self.FAST_IMAGE_GENERATING:
+                fraction = 0.9
+            elif self.current_step == self.IMAGE_GENERATING:
+                fraction = 1.0
+            elif self.current_step == self.PACKAGE_GENERATING:
+                fraction = 1.0
+            status = "fail"
+            message = "Build failed: "
+        self.build_details_page.update_progress_bar(message, fraction, status)
         self.build_details_page.show_back_button()
         self.build_details_page.hide_stop_button()
         self.handler.build_failed_async()
@@ -611,8 +691,7 @@ class Builder(gtk.Window):
             elif message["eventname"] == "runQueueTaskStarted":
                 fraction = 0.2 + 0.8 * fraction
         self.build_details_page.update_progress_bar(title + ": ", fraction)
-        self.build_details_page.update_build_status(
-            "<span weight=\'bold\'>Running task %s of %s:</span> %s" % (message["current"], message["total"], message["task"]))
+        self.build_details_page.update_build_status(message["current"], message["total"], message["task"])
 
     def handler_build_failure_cb(self, running_build):
         self.build_details_page.show_issues()
@@ -620,8 +699,10 @@ class Builder(gtk.Window):
     def destroy_window_cb(self, widget, event):
         lbl = "<b>Do you really want to exit the Hob image creator?</b>"
         dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-        dialog.add_button("Keep using Hob", gtk.RESPONSE_NO)
-        dialog.add_button("Exit Hob", gtk.RESPONSE_YES)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Exit Hob", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         dialog.set_default_response(gtk.RESPONSE_YES)
         response = dialog.run()
         dialog.destroy()
@@ -637,7 +718,8 @@ class Builder(gtk.Window):
             lbl = "<b>No selections made</b>\nYou have not made any selections"
             lbl = lbl + " so there isn't anything to bake at this time."
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            button = dialog.add_button("Close", gtk.RESPONSE_OK)
+            HobButton.style_button(button)
             dialog.run()
             dialog.destroy()
             return
@@ -649,7 +731,8 @@ class Builder(gtk.Window):
             lbl = "<b>No selections made</b>\nYou have not made any selections"
             lbl = lbl + " so there isn't anything to bake at this time."
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            button = dialog.add_button("Close", gtk.RESPONSE_OK)
+            HobButton.style_button(button)
             dialog.run()
             dialog.destroy()
             return
@@ -664,7 +747,8 @@ class Builder(gtk.Window):
             lbl = "<b>No selections made</b>\nYou have not made any selections"
             lbl = lbl + " so there isn't anything to bake at this time."
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            button = dialog.add_button("Close", gtk.RESPONSE_OK)
+            HobButton.style_button(button)
             dialog.run()
             dialog.destroy()
             return
@@ -684,37 +768,45 @@ class Builder(gtk.Window):
                      parent = self,
                      flags = gtk.DIALOG_MODAL
                          | gtk.DIALOG_DESTROY_WITH_PARENT
-                         | gtk.DIALOG_NO_SEPARATOR,
-                     buttons = (gtk.STOCK_CLOSE, gtk.RESPONSE_YES))
+                         | gtk.DIALOG_NO_SEPARATOR)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("OK", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             self.configuration.layers = dialog.layers
             # DO refresh layers
             if dialog.layers_changed:
-                self.switch_page(self.LAYER_CHANGED)
+                self.switch_page(self.CONFIG_UPDATED)
         dialog.destroy()
 
     def show_load_template_dialog(self):
         dialog = gtk.FileChooserDialog("Load Template Files", self,
-                                       gtk.FILE_CHOOSER_ACTION_OPEN,
-                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                       gtk.STOCK_OPEN, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_OPEN)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         filter = gtk.FileFilter()
         filter.set_name("Hob Files")
         filter.add_pattern("*.hob")
         dialog.add_filter(filter)
 
         response = dialog.run()
+        path = None
         if response == gtk.RESPONSE_YES:
             path = dialog.get_filename()
-            self.load_template(path)
         dialog.destroy()
+        return response == gtk.RESPONSE_YES, path
 
     def show_save_template_dialog(self):
         dialog = gtk.FileChooserDialog("Save Template Files", self,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE,
-                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                       gtk.STOCK_SAVE, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_SAVE)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Save", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         dialog.set_current_name("hob")
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
@@ -725,15 +817,18 @@ class Builder(gtk.Window):
     def show_load_my_images_dialog(self):
         dialog = ImageSelectionDialog(self.parameters.image_addr, self.parameters.image_types,
                                       "Open My Images", self,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE,
-                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                       gtk.STOCK_OPEN, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_SAVE)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             if not dialog.image_names:
                 lbl = "<b>No selections made</b>\nYou have not made any selections"
                 crumbs_dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-                crumbs_dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+                button = crumbs_dialog.add_button("Close", gtk.RESPONSE_OK)
+                HobButton.style_button(button)
                 crumbs_dialog.run()
                 crumbs_dialog.destroy()
                 dialog.destroy()
@@ -753,28 +848,37 @@ class Builder(gtk.Window):
             all_distros = self.parameters.all_distros,
             all_sdk_machines = self.parameters.all_sdk_machines,
             max_threads = self.parameters.max_threads,
+            enable_proxy = self.parameters.enable_proxy,
             parent = self,
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT
-                    | gtk.DIALOG_NO_SEPARATOR,
-            buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                       "Save", gtk.RESPONSE_YES))
+                    | gtk.DIALOG_NO_SEPARATOR)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Save", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         response = dialog.run()
+        settings_changed = False
         if response == gtk.RESPONSE_YES:
+            self.parameters.enable_proxy = dialog.enable_proxy
             self.configuration = dialog.configuration
-            # DO reparse recipes
-            if dialog.settings_changed:
-                if self.configuration.curr_mach == "":
-                    self.switch_page(self.MACHINE_SELECTION)
-                else:
-                    self.switch_page(self.RCPPKGINFO_POPULATING)
+            settings_changed = dialog.settings_changed
         dialog.destroy()
+        return response == gtk.RESPONSE_YES, settings_changed
+
+    def reparse_post_adv_settings(self):
+        # DO reparse recipes
+        if self.configuration.curr_mach == "":
+            self.switch_page(self.MACHINE_SELECTION)
+        else:
+            self.switch_page(self.RCPPKGINFO_POPULATING)
 
     def deploy_image(self, image_name):
         if not image_name:
             lbl = "<b>Please select an image to deploy.</b>"
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            button = dialog.add_button("Close", gtk.RESPONSE_OK)
+            HobButton.style_button(button)
             dialog.run()
             dialog.destroy()
             return
@@ -785,9 +889,11 @@ class Builder(gtk.Window):
             parent = self,
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT
-                    | gtk.DIALOG_NO_SEPARATOR,
-            buttons = ("Close", gtk.RESPONSE_NO,
-                       "Make usb image", gtk.RESPONSE_YES))
+                    | gtk.DIALOG_NO_SEPARATOR)
+        button = dialog.add_button("Close", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Make usb image", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         response = dialog.run()
         dialog.destroy()
 
@@ -795,15 +901,18 @@ class Builder(gtk.Window):
         if not image_name:
             lbl = "<b>Please select an image to launch in QEMU.</b>"
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            button = dialog.add_button("Close", gtk.RESPONSE_OK)
+            HobButton.style_button(button)
             dialog.run()
             dialog.destroy()
             return
 
         dialog = gtk.FileChooserDialog("Load Kernel Files", self,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE,
-                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                       gtk.STOCK_OPEN, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_SAVE)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         filter = gtk.FileFilter()
         filter.set_name("Kernel Files")
         filter.add_pattern("*.bin")
@@ -834,8 +943,9 @@ class Builder(gtk.Window):
                 lbl = lbl + "kernel path:" + kernel_path + "\n"
                 lbl = lbl + "source environment path:" + source_env_path + "\n"
                 lbl = lbl + "tmp path: " + tmp_path + "."
-                dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-                dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+                dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
+                button = dialog.add_button("Close", gtk.RESPONSE_OK)
+                HobButton.style_button(button)
                 dialog.run()
                 dialog.destroy()
 
@@ -843,10 +953,12 @@ class Builder(gtk.Window):
         _, selected_recipes = self.recipe_model.get_selected_recipes()
         if selected_recipes and ask:
             lbl = "<b>Package list may be incomplete!</b>\nDo you want to build selected recipes"
-            lbl = lbl + " to get a full list (Yes) or just view the existing packages (No)?"
+            lbl = lbl + " to get a full list or just view the existing packages?"
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-            dialog.add_button(gtk.STOCK_NO, gtk.RESPONSE_NO)
-            dialog.add_button(gtk.STOCK_YES, gtk.RESPONSE_YES)
+            button = dialog.add_button("View packages", gtk.RESPONSE_NO)
+            HobAltButton.style_button(button)
+            button = dialog.add_button("Build packages", gtk.RESPONSE_YES)
+            HobButton.style_button(button)
             dialog.set_default_response(gtk.RESPONSE_YES)
             response = dialog.run()
             dialog.destroy()
@@ -861,7 +973,9 @@ class Builder(gtk.Window):
         self.switch_page(self.RECIPE_SELECTION)
 
     def initiate_new_build(self):
-        self.configuration.curr_mach = ""
+        self.handler.init_cooker()
+        self.handler.set_extra_inherit("image_types")
+        self.handler.parse_config()
         self.image_configuration_page.switch_machine_combo()
         self.switch_page(self.MACHINE_SELECTION)
 
@@ -879,8 +993,10 @@ class Builder(gtk.Window):
             lbl = lbl + " well leave your build directory in an  unusable state"
             lbl = lbl + " that requires manual steps to fix.\n"
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
-            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
-            dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+            button = dialog.add_button("Cancel", gtk.RESPONSE_CANCEL)
+            HobAltButton.style_button(button)
+            button = dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+            HobButton.style_button(button)
         else:
             lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this"
             lbl = lbl + " build?\n\n'Force Stop' will stop the build as quickly as"
@@ -891,9 +1007,12 @@ class Builder(gtk.Window):
             lbl = lbl + " lengthy compilation phase is in progress this may take"
             lbl = lbl + " some time."
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
-            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
-            dialog.add_button("Stop", gtk.RESPONSE_OK)
-            dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+            button = dialog.add_button("Cancel", gtk.RESPONSE_CANCEL)
+            HobAltButton.style_button(button)
+            button = dialog.add_button("Stop", gtk.RESPONSE_OK)
+            HobAltButton.style_button(button)
+            button = dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+            HobButton.style_button(button)
         response = dialog.run()
         dialog.destroy()
         if response != gtk.RESPONSE_CANCEL:

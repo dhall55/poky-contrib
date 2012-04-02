@@ -4,8 +4,17 @@
 #be put here
 
 # start hob here
-#cd /intel/poky/poky
-#. ./oe-init-build-env
-#../scripts/hob
+export PSEUDO_PREFIX=/usr
+export PSEUDO_LOCALSTATEDIR=/home/builder/pseudo
+export PSEUDO_LIBDIR=/usr/lib/pseudo/lib64
+
+cd /home/builder/poky
+. ./oe-init-build-env
+
+#uncomment the settings for BB_NUMBER_THREADS and PARALLEL_MAKE
+sed -i 's/^#BB_NUMBER_THREADS =/BB_NUMBER_THREADS =/g' conf/local.conf
+sed -i 's/^#PARALLEL_MAKE =/PARALLEL_MAKE =/g' conf/local.conf
+
+hob &
 
 matchbox-terminal&

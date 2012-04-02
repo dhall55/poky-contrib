@@ -30,9 +30,6 @@ class HobHandler(gobject.GObject):
     This object does BitBake event handling for the hob gui.
     """
     __gsignals__ = {
-         "layers-updated"          : (gobject.SIGNAL_RUN_LAST,
-                                      gobject.TYPE_NONE,
-                                     (gobject.TYPE_PYOBJECT,)),
          "package-formats-updated" : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      (gobject.TYPE_PYOBJECT,)),
@@ -131,13 +128,13 @@ class HobHandler(gobject.GObject):
         elif next_command == self.SUB_BUILD_IMAGE:
             self.clear_busy()
             self.building = True
-            targets = ["hob-image"]
+            targets = [self.hob_image]
             self.server.runCommand(["setVariable", "LINGUAS_INSTALL", ""])
             self.server.runCommand(["setVariable", "PACKAGE_INSTALL", " ".join(self.package_queue)])
             if self.toolchain_build:
                 pkgs = self.package_queue + [i+'-dev' for i in self.package_queue] + [i+'-dbg' for i in self.package_queue]
                 self.server.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(pkgs)])
-                targets.append("hob-toolchain")
+                targets.append(self.hob_toolchain)
             self.server.runCommand(["buildTargets", targets, "build"])
 
     def handle_event(self, event):
@@ -152,7 +149,7 @@ class HobHandler(gobject.GObject):
             self.package_model.populate(event._pkginfolist)
             self.run_next_command()
 
-        elif(isinstance(event, logging.LogRecord)):
+        elif isinstance(event, logging.LogRecord):
             if event.levelno >= logging.ERROR:
                 self.error_msg += event.msg + '\n'
 
@@ -160,10 +157,6 @@ class HobHandler(gobject.GObject):
             self.current_phase = "data generation"
             if event._model:
                 self.recipe_model.populate(event._model)
-        elif isinstance(event, bb.event.CoreBaseFilesFound):
-            self.current_phase = "configuration lookup"
-            paths = event._paths
-            self.emit('layers-updated', paths)
         elif isinstance(event, bb.event.ConfigFilesFound):
             self.current_phase = "configuration lookup"
             var = event._variable
@@ -250,11 +243,9 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.run_next_command(self.PARSE_CONFIG)
 
-    def refresh_layers(self, bblayers):
-        self.init_cooker()
-        self.set_bblayers(bblayers)
-        self.commands_async.append(self.SUB_PARSE_CONFIG)
-        self.generate_configuration()
+    def parse_generate_configuration(self):
+         self.commands_async.append(self.SUB_PARSE_CONFIG)
+         self.generate_configuration()
 
     def set_extra_inherit(self, bbclass):
         inherits = self.server.runCommand(["getVariable", "INHERIT"]) or ""
@@ -271,7 +262,7 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["setVariable", "SDKMACHINE", sdk_machine])
 
     def set_image_fstypes(self, image_fstypes):
-        self.server.runCommand(["setVariable", "IMAGE_FSTYPES", " ".join(image_fstypes).lstrip(" ")])
+        self.server.runCommand(["setVariable", "IMAGE_FSTYPES", image_fstypes])
 
     def set_distro(self, distro):
         if distro != "defaultsetup":
@@ -313,6 +304,26 @@ class HobHandler(gobject.GObject):
             value = extra_setting[key]
             self.server.runCommand(["setVariable", key, value])
 
+    def set_http_proxy(self, http_proxy):
+        self.server.runCommand(["setVariable", "http_proxy", http_proxy])
+
+    def set_https_proxy(self, https_proxy):
+        self.server.runCommand(["setVariable", "https_proxy", https_proxy])
+
+    def set_ftp_proxy(self, ftp_proxy):
+        self.server.runCommand(["setVariable", "ftp_proxy", ftp_proxy])
+
+    def set_all_proxy(self, all_proxy):
+        self.server.runCommand(["setVariable", "all_proxy", all_proxy])
+
+    def set_git_proxy(self, host, port):
+        self.server.runCommand(["setVariable", "GIT_PROXY_HOST", host])
+        self.server.runCommand(["setVariable", "GIT_PROXY_PORT", port])
+
+    def set_cvs_proxy(self, host, port):
+        self.server.runCommand(["setVariable", "CVS_PROXY_HOST", host])
+        self.server.runCommand(["setVariable", "CVS_PROXY_PORT", port])
+
     def request_package_info_async(self):
         self.commands_async.append(self.SUB_GENERATE_PKGINFO)
         self.run_next_command(self.POPULATE_PACKAGEINFO)
@@ -338,12 +349,17 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
-    def generate_image(self, tgts, toolchain_build=False):
+    def generate_image(self, tgts, hob_image, hob_toolchain, toolchain_build=False):
         self.package_queue = tgts
+        self.hob_image = hob_image
+        self.hob_toolchain = hob_toolchain
         self.toolchain_build = toolchain_build
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)
+
+    def build_succeeded_async(self):
+        self.building = False
 
     def build_failed_async(self):
         self.initcmd = None
@@ -370,7 +386,9 @@ class HobHandler(gobject.GObject):
         params = {}
         params["core_base"] = self.server.runCommand(["getVariable", "COREBASE"]) or ""
         hob_layer = params["core_base"] + "/meta-hob"
-        params["layer"] = (self.server.runCommand(["getVariable", "BBLAYERS"]) or "") + " " + hob_layer
+        params["layer"] = self.server.runCommand(["getVariable", "BBLAYERS"]) or ""
+        if hob_layer not in params["layer"].split():
+            params["layer"] += (" " + hob_layer)
         params["dldir"] = self.server.runCommand(["getVariable", "DL_DIR"]) or ""
         params["machine"] = self.server.runCommand(["getVariable", "MACHINE"]) or ""
         params["distro"] = self.server.runCommand(["getVariable", "DISTRO"]) or "defaultsetup"
@@ -440,4 +458,22 @@ class HobHandler(gobject.GObject):
         params["runnable_machine_patterns"] = self.server.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or ""
         params["deployable_image_types"] = self.server.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or ""
         params["tmpdir"] = self.server.runCommand(["getVariable", "TMPDIR"]) or ""
+        params["distro_version"] = self.server.runCommand(["getVariable", "DISTRO_VERSION"]) or ""
+        params["target_os"] = self.server.runCommand(["getVariable", "TARGET_OS"]) or ""
+        params["target_arch"] = self.server.runCommand(["getVariable", "TARGET_ARCH"]) or ""
+        params["tune_pkgarch"] = self.server.runCommand(["getVariable", "TUNE_PKGARCH"])  or ""
+        params["bb_version"] = self.server.runCommand(["getVariable", "BB_MIN_VERSION"]) or ""
+        params["tune_arch"] = self.server.runCommand(["getVariable", "TUNE_ARCH"]) or ""
+
+        params["git_proxy_host"] = self.server.runCommand(["getVariable", "GIT_PROXY_HOST"]) or ""
+        params["git_proxy_port"] = self.server.runCommand(["getVariable", "GIT_PROXY_PORT"]) or ""
+
+        params["http_proxy"] = self.server.runCommand(["getVariable", "http_proxy"]) or ""
+        params["ftp_proxy"] = self.server.runCommand(["getVariable", "ftp_proxy"]) or ""
+        params["https_proxy"] = self.server.runCommand(["getVariable", "https_proxy"]) or ""
+        params["all_proxy"] = self.server.runCommand(["getVariable", "all_proxy"]) or ""
+
+        params["cvs_proxy_host"] = self.server.runCommand(["getVariable", "CVS_PROXY_HOST"]) or ""
+        params["cvs_proxy_port"] = self.server.runCommand(["getVariable", "CVS_PROXY_PORT"]) or ""
+
         return params

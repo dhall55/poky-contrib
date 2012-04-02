@@ -636,7 +636,7 @@
         <title>Using x32 Right Now</title>
 
         <para>
-            Despite the fact the x32 psABI support is in developement state for this release of the 
+            Despite the fact the x32 psABI support is in development state for this release of the
             Yocto Project, you can follow these steps to use the x32 spABI:
             <itemizedlist>
                 <listitem><para>Add the <filename>experimental/meta-x32</filename> layer to your local
@@ -669,7 +669,7 @@
                     <literallayout class='monospaced'>
      $ bitake core-image-sato
                     </literallayout></para></listitem>
-                <listitem><para>As usual, run your image using QUEM:
+                <listitem><para>As usual, run your image using QEMU:
                     <literallayout class='monospaced'>
      $ runqemu qemux86-64 core-image-sato
                     </literallayout></para></listitem>

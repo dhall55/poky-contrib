@@ -28,7 +28,7 @@ import re
 import subprocess
 import shlex
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton
+from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
 from bb.ui.crumbs.progressbar import HobProgressBar
 
 """
@@ -75,10 +75,8 @@ class CrumbsMessageDialog(CrumbsDialog):
 
         self.icon = gtk.Image()
         # We have our own Info icon which should be used in preference of the stock icon
-        if icon == gtk.STOCK_INFO or icon == "gtk-dialog-info":
-            self.icon.set_from_file(hic.ICON_INFO_DISPLAY_FILE)
-        else:
-            self.icon.set_from_stock(icon, gtk.ICON_SIZE_DIALOG)
+        self.icon_chk = HobIconChecker()
+        self.icon.set_from_stock(self.icon_chk.check_stock_icon(icon), gtk.ICON_SIZE_DIALOG)
         self.icon.set_property("yalign", 0.00)
         self.icon.show()
         first_row.add(self.icon)
@@ -137,9 +135,11 @@ class AdvancedSettingDialog (CrumbsDialog):
 
     def entry_widget_select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
-                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                        gtk.STOCK_OPEN, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             path = dialog.get_filename()
@@ -147,20 +147,23 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         dialog.destroy()
 
-    def gen_entry_widget(self, content, parent, tooltip=""):
+    def gen_entry_widget(self, content, parent, tooltip="", need_button=True):
         hbox = gtk.HBox(False, 12)
         entry = gtk.Entry()
         entry.set_text(content)
 
-        table = gtk.Table(1, 10, True)
-        hbox.pack_start(table, expand=True, fill=True)
-        table.attach(entry, 0, 9, 0, 1)
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_BUTTON)
-        open_button = gtk.Button()
-        open_button.set_image(image)
-        open_button.connect("clicked", self.entry_widget_select_path_cb, parent, entry)
-        table.attach(open_button, 9, 10, 0, 1)
+        if need_button:
+            table = gtk.Table(1, 10, True)
+            hbox.pack_start(table, expand=True, fill=True)
+            table.attach(entry, 0, 9, 0, 1)
+            image = gtk.Image()
+            image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_BUTTON)
+            open_button = gtk.Button()
+            open_button.set_image(image)
+            open_button.connect("clicked", self.entry_widget_select_path_cb, parent, entry)
+            table.attach(open_button, 9, 10, 0, 1)
+        else:
+            hbox.pack_start(entry, expand=True, fill=True)
 
         info = HobInfoButton(tooltip, self)
         hbox.pack_start(info, expand=False, fill=False)
@@ -307,7 +310,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
     def __init__(self, title, configuration, all_image_types,
             all_package_formats, all_distros, all_sdk_machines,
-            max_threads, parent, flags, buttons):
+            max_threads, enable_proxy, parent, flags, buttons=None):
         super(AdvancedSettingDialog, self).__init__(title, parent, flags, buttons)
 
         # class members from other objects
@@ -318,6 +321,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.all_distros = all_distros
         self.all_sdk_machines = all_sdk_machines
         self.max_threads = max_threads
+        self.enable_proxy = enable_proxy
 
         # class members for internal use
         self.distro_combo = None
@@ -333,18 +337,29 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.setting_store = None
         self.image_types_checkbuttons = {}
 
-        self.variables = {}
-        self.variables["PACKAGE_FORMAT"] = self.configuration.curr_package_format
-        self.variables["INCOMPATIBLE_LICENSE"] = self.configuration.incompat_license
-        self.variables["IMAGE_FSTYPES"] = self.configuration.image_fstypes
-        for key in self.configuration.extra_setting.keys():
-            self.variables[key] = self.configuration.extra_setting[key]
-        self.md5 = hashlib.md5(str(sorted(self.variables.items()))).hexdigest()
+        self.md5 = self.config_md5()
         self.settings_changed = False
 
         # create visual elements on the dialog
         self.create_visual_elements()
         self.connect("response", self.response_cb)
+
+    def _get_sorted_value(self, var):
+        return " ".join(sorted(str(var).split())) + "\n"
+
+    def config_md5(self):
+        data = ""
+        data += ("PACKAGE_CLASSES: "      + self.configuration.curr_package_format + '\n')
+        data += ("DISTRO: "               + self._get_sorted_value(self.configuration.curr_distro))
+        data += ("IMAGE_ROOTFS_SIZE: "    + self._get_sorted_value(self.configuration.image_rootfs_size))
+        data += ("IMAGE_EXTRA_SIZE: "     + self._get_sorted_value(self.configuration.image_extra_size))
+        data += ("INCOMPATIBLE_LICENSE: " + self._get_sorted_value(self.configuration.incompat_license))
+        data += ("SDK_MACHINE: "          + self._get_sorted_value(self.configuration.curr_sdk_machine))
+        data += ("TOOLCHAIN_BUILD: "      + self._get_sorted_value(self.configuration.toolchain_build))
+        data += ("IMAGE_FSTYPES: "        + self._get_sorted_value(self.configuration.image_fstypes))
+        for key in self.configuration.extra_setting.keys():
+            data += (key + ": " + self._get_sorted_value(self.configuration.extra_setting[key]))
+        return hashlib.md5(data).hexdigest()
 
     def create_visual_elements(self):
         self.nb = gtk.Notebook()
@@ -352,6 +367,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.nb.append_page(self.create_image_types_page(), gtk.Label("Image types"))
         self.nb.append_page(self.create_output_page(), gtk.Label("Output"))
         self.nb.append_page(self.create_build_environment_page(), gtk.Label("Build environment"))
+        self.nb.append_page(self.create_proxy_page(), gtk.Label("Proxies"))
         self.nb.append_page(self.create_others_page(), gtk.Label("Others"))
         self.nb.set_current_page(0)
         self.vbox.pack_start(self.nb, expand=True, fill=True)
@@ -379,7 +395,7 @@ class AdvancedSettingDialog (CrumbsDialog):
             self.image_types_checkbuttons[image_type] = gtk.CheckButton(image_type)
             self.image_types_checkbuttons[image_type].set_tooltip_text("Build an %s image" % image_type)
             table.attach(self.image_types_checkbuttons[image_type], j, j + 4, i, i + 1)
-            if image_type in self.configuration.image_fstypes:
+            if image_type in self.configuration.image_fstypes.split():
                 self.image_types_checkbuttons[image_type].set_active(True)
             i += 1
             if i > rows:
@@ -394,7 +410,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Packaging Format:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Packaging format:</span>")
         tooltip = "Select package formats that will be used. "
         tooltip += "The first format will be used for final image"
         pkgfmt_widget, self.rootfs_combo, self.check_hbox = self.gen_pkgfmt_widget(self.configuration.curr_package_format, self.all_package_formats, tooltip)
@@ -403,7 +419,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Image Rootfs Size: (MB)</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Image rootfs size: (MB)</span>")
         tooltip = "Sets the size of your target image.\nThis is the basic size of your target image, unless your selected package size exceeds this value, or you set value to \"Image Extra Size\"."
         rootfs_size_widget, self.rootfs_size_spinner = self.gen_spinner_widget(int(self.configuration.image_rootfs_size*1.0/1024), 0, 1024, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -411,7 +427,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Image Extra Size: (MB)</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Image extra size: (MB)</span>")
         tooltip = "Sets the extra free space of your target image.\nDefaultly, system will reserve 30% of your image size as your free space. If your image contains zypper, it will bring in 50MB more space. The maximum free space is 1024MB."
         extra_size_widget, self.extra_size_spinner = self.gen_spinner_widget(int(self.configuration.image_extra_size*1.0/1024), 0, 1024, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -427,7 +443,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_hbox = gtk.HBox(False, 6)
         advanced_vbox.pack_start(sub_hbox, expand=False, fill=False)
-        self.toolchain_checkbox = gtk.CheckButton("Build Toolchain")
+        self.toolchain_checkbox = gtk.CheckButton("Build toolchain")
         self.toolchain_checkbox.set_tooltip_text("Check this box to build the related toolchain with your image")
         self.toolchain_checkbox.set_active(self.configuration.toolchain_build)
         sub_hbox.pack_start(self.toolchain_checkbox, expand=False, fill=False)
@@ -444,7 +460,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Select Distro:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Select distro:</span>")
         tooltip = "This is the Yocto distribution you would like to use"
         distro_widget, self.distro_combo = self.gen_combo_widget(self.configuration.curr_distro, self.all_distros, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -452,7 +468,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">BB_NUMBER_THREADS:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">BB number threads:</span>")
         tooltip = "Sets the number of threads that bitbake tasks can run simultaneously"
         bbthread_widget, self.bb_spinner = self.gen_spinner_widget(self.configuration.bbthread, 1, self.max_threads, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -460,7 +476,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">PARALLEL_MAKE:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Parallel make:</span>")
         tooltip = "Sets the make parallism, as known as 'make -j'"
         pmake_widget, self.pmake_spinner = self.gen_spinner_widget(self.configuration.pmake, 1, self.max_threads, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -468,7 +484,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Set Download Directory:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Set download directory:</span>")
         tooltip = "Select a folder that caches the upstream project source code"
         dldir_widget, self.dldir_text = self.gen_entry_widget(self.configuration.dldir, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -476,7 +492,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE Directory:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE directory:</span>")
         tooltip = "Select a folder that caches your prebuilt results"
         sstatedir_widget, self.sstatedir_text = self.gen_entry_widget(self.configuration.sstatedir, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -484,11 +500,73 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE Mirror:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE mirror:</span>")
         tooltip = "Select the prebuilt mirror that will fasten your build speed"
         sstatemirror_widget, self.sstatemirror_text = self.gen_entry_widget(self.configuration.sstatemirror, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(sstatemirror_widget, expand=False, fill=False)
+
+        return advanced_vbox
+
+    def create_proxy_page(self):
+        advanced_vbox = gtk.VBox(False, 6)
+        advanced_vbox.set_border_width(6)
+
+        sub_vbox = gtk.VBox(False, 6)
+        advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
+        self.proxy_checkbox = gtk.CheckButton("Enable proxy")
+        self.proxy_checkbox.set_tooltip_text("Check this box to setup the proxy you specified")
+        self.proxy_checkbox.set_active(self.enable_proxy)
+        self.proxy_checkbox.connect("toggled", self.proxy_checkbox_toggled_cb)
+        sub_vbox.pack_start(self.proxy_checkbox, expand=False, fill=False)
+
+        label = self.gen_label_widget("<span weight=\"bold\">Set all proxy:</span>")
+        tooltip = "Set the all proxy that will be used if the proxy for a URL isn't specified."
+        proxy_widget, self.all_proxy_text = self.gen_entry_widget(self.configuration.all_proxy, self, tooltip, False)
+        self.all_proxy_text.set_editable(self.enable_proxy)
+        self.all_proxy_text.set_sensitive(self.enable_proxy)
+        sub_vbox.pack_start(label, expand=False, fill=False)
+        sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
+
+        label = self.gen_label_widget("<span weight=\"bold\">Set http proxy:</span>")
+        tooltip = "Set the http proxy that will be used in do_fetch() source code"
+        proxy_widget, self.http_proxy_text = self.gen_entry_widget(self.configuration.http_proxy, self, tooltip, False)
+        self.http_proxy_text.set_editable(self.enable_proxy)
+        self.http_proxy_text.set_sensitive(self.enable_proxy)
+        sub_vbox.pack_start(label, expand=False, fill=False)
+        sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
+
+        label = self.gen_label_widget("<span weight=\"bold\">Set https proxy:</span>")
+        tooltip = "Set the https proxy that will be used in do_fetch() source code"
+        proxy_widget, self.https_proxy_text = self.gen_entry_widget(self.configuration.https_proxy, self, tooltip, False)
+        self.https_proxy_text.set_editable(self.enable_proxy)
+        self.https_proxy_text.set_sensitive(self.enable_proxy)
+        sub_vbox.pack_start(label, expand=False, fill=False)
+        sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
+
+        label = self.gen_label_widget("<span weight=\"bold\">Set ftp proxy:</span>")
+        tooltip = "Set the ftp proxy that will be used in do_fetch() source code"
+        proxy_widget, self.ftp_proxy_text = self.gen_entry_widget(self.configuration.ftp_proxy, self, tooltip, False)
+        self.ftp_proxy_text.set_editable(self.enable_proxy)
+        self.ftp_proxy_text.set_sensitive(self.enable_proxy)
+        sub_vbox.pack_start(label, expand=False, fill=False)
+        sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
+
+        label = self.gen_label_widget("<span weight=\"bold\">Set git proxy:</span>")
+        tooltip = "Set the git proxy that will be used in do_fetch() source code"
+        proxy_widget, self.git_proxy_text = self.gen_entry_widget(self.configuration.git_proxy_host + ':' + self.configuration.git_proxy_port, self, tooltip, False)
+        self.git_proxy_text.set_editable(self.enable_proxy)
+        self.git_proxy_text.set_sensitive(self.enable_proxy)
+        sub_vbox.pack_start(label, expand=False, fill=False)
+        sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
+
+        label = self.gen_label_widget("<span weight=\"bold\">Set cvs proxy:</span>")
+        tooltip = "Set the cvs proxy that will be used in do_fetch() source code"
+        proxy_widget, self.cvs_proxy_text = self.gen_entry_widget(self.configuration.cvs_proxy_host + ':' + self.configuration.cvs_proxy_port, self, tooltip, False)
+        self.cvs_proxy_text.set_editable(self.enable_proxy)
+        self.cvs_proxy_text.set_sensitive(self.enable_proxy)
+        sub_vbox.pack_start(label, expand=False, fill=False)
+        sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
         return advanced_vbox
 
@@ -506,16 +584,28 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         return advanced_vbox
 
-    def response_cb(self, dialog, response_id):
-        self.variables = {}
+    def proxy_checkbox_toggled_cb(self, button):
+        self.enable_proxy = self.proxy_checkbox.get_active()
+        self.all_proxy_text.set_editable(self.enable_proxy)
+        self.all_proxy_text.set_sensitive(self.enable_proxy)
+        self.http_proxy_text.set_editable(self.enable_proxy)
+        self.http_proxy_text.set_sensitive(self.enable_proxy)
+        self.https_proxy_text.set_editable(self.enable_proxy)
+        self.https_proxy_text.set_sensitive(self.enable_proxy)
+        self.ftp_proxy_text.set_editable(self.enable_proxy)
+        self.ftp_proxy_text.set_sensitive(self.enable_proxy)
+        self.git_proxy_text.set_editable(self.enable_proxy)
+        self.git_proxy_text.set_sensitive(self.enable_proxy)
+        self.cvs_proxy_text.set_editable(self.enable_proxy)
+        self.cvs_proxy_text.set_sensitive(self.enable_proxy)
 
+    def response_cb(self, dialog, response_id):
         package_format = []
         package_format.append(self.rootfs_combo.get_active_text())
         for child in self.check_hbox:
             if isinstance(child, gtk.CheckButton) and child.get_active():
                 package_format.append(child.get_label())
         self.configuration.curr_package_format = " ".join(package_format)
-        self.variables["PACKAGE_FORMAT"] = self.configuration.curr_package_format
 
         self.configuration.curr_distro = self.distro_combo.get_active_text()
         self.configuration.dldir = self.dldir_text.get_text()
@@ -526,11 +616,11 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.configuration.image_rootfs_size = self.rootfs_size_spinner.get_value_as_int() * 1024
         self.configuration.image_extra_size = self.extra_size_spinner.get_value_as_int() * 1024
 
-        self.configuration.image_fstypes = []
+        self.configuration.image_fstypes = ""
         for image_type in self.image_types:
             if self.image_types_checkbuttons[image_type].get_active():
-                self.configuration.image_fstypes.append(image_type)
-        self.variables["IMAGE_FSTYPES"] = self.configuration.image_fstypes
+                self.configuration.image_fstypes += (" " + image_type)
+        self.configuration.image_fstypes.strip()
 
         if self.gplv3_checkbox.get_active():
             if "GPLv3" not in self.configuration.incompat_license.split():
@@ -540,7 +630,6 @@ class AdvancedSettingDialog (CrumbsDialog):
                 self.configuration.incompat_license = self.configuration.incompat_license.split().remove("GPLv3")
                 self.configuration.incompat_license = " ".join(self.configuration.incompat_license or [])
         self.configuration.incompat_license = self.configuration.incompat_license.strip()
-        self.variables["INCOMPATIBLE_LICENSE"] = self.configuration.incompat_license
 
         self.configuration.toolchain_build = self.toolchain_checkbox.get_active()
 
@@ -550,10 +639,16 @@ class AdvancedSettingDialog (CrumbsDialog):
             key = self.setting_store.get_value(it, 0)
             value = self.setting_store.get_value(it, 1)
             self.configuration.extra_setting[key] = value
-            self.variables[key] = value
             it = self.setting_store.iter_next(it)
 
-        md5 = hashlib.md5(str(sorted(self.variables.items()))).hexdigest()
+        self.configuration.all_proxy = self.all_proxy_text.get_text()
+        self.configuration.http_proxy = self.http_proxy_text.get_text()
+        self.configuration.https_proxy = self.https_proxy_text.get_text()
+        self.configuration.ftp_proxy = self.ftp_proxy_text.get_text()
+        self.configuration.git_proxy_host, self.configuration.git_proxy_port = self.git_proxy_text.get_text().split(':')
+        self.configuration.cvs_proxy_host, self.configuration.cvs_proxy_port = self.cvs_proxy_text.get_text().split(':')
+
+        md5 = self.config_md5()
         self.settings_changed = (self.md5 != md5)
 
 #
@@ -563,7 +658,7 @@ class DeployImageDialog (CrumbsDialog):
 
     __dummy_usb__ = "--select a usb drive--"
 
-    def __init__(self, title, image_path, parent, flags, buttons):
+    def __init__(self, title, image_path, parent, flags, buttons=None):
         super(DeployImageDialog, self).__init__(title, parent, flags, buttons)
 
         self.image_path = image_path
@@ -646,7 +741,7 @@ class DeployImageDialog (CrumbsDialog):
                 cmdline += "\"sudo dd if=" + self.image_path + " of=" + combo_item + "; bash\""
                 subprocess.Popen(args=shlex.split(cmdline))
 
-    def update_progress_bar(self, title, fraction, status=True):
+    def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)
         self.progress_bar.set_title(title)
         self.progress_bar.set_rcstyle(status)
@@ -713,9 +808,11 @@ class LayerSelectionDialog (CrumbsDialog):
 
     def layer_widget_add_clicked_cb(self, action, layer_store, parent):
         dialog = gtk.FileChooserDialog("Add new layer", parent,
-                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                        gtk.STOCK_OPEN, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         label = gtk.Label("Select the layer you wish to add")
         label.show()
         dialog.set_extra_widget(label)
@@ -827,7 +924,7 @@ class LayerSelectionDialog (CrumbsDialog):
     def add_leave_cb(self, button, event):
         self.im.set_from_file(hic.ICON_INDI_ADD_FILE)
 
-    def __init__(self, title, layers, all_layers, parent, flags, buttons):
+    def __init__(self, title, layers, all_layers, parent, flags, buttons=None):
         super(LayerSelectionDialog, self).__init__(title, parent, flags, buttons)
 
         # class members from other objects
@@ -861,7 +958,10 @@ class LayerSelectionDialog (CrumbsDialog):
             layers.append(model.get_value(it, 0))
             it = model.iter_next(it)
 
-        self.layers_changed = (self.layers != layers)
+        orig_layers = sorted(self.layers)
+        layers.sort()
+
+        self.layers_changed = (orig_layers != layers)
         self.layers = layers
 
     """
@@ -921,7 +1021,7 @@ class ImageSelectionDialog (CrumbsDialog):
     }]
 
 
-    def __init__(self, image_folder, image_types, title, parent, flags, buttons):
+    def __init__(self, image_folder, image_types, title, parent, flags, buttons=None):
         super(ImageSelectionDialog, self).__init__(title, parent, flags, buttons)
         self.connect("response", self.response_cb)
 
@@ -975,9 +1075,11 @@ class ImageSelectionDialog (CrumbsDialog):
 
     def select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
-                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                        gtk.STOCK_OPEN, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             path = dialog.get_filename()
