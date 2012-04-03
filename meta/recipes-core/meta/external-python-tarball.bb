@@ -84,6 +84,10 @@ do_populate_sdk() {
 	echo 'Metadata Revision: ${METADATA_REVISION}' >> $versionfile
 	echo 'Timestamp: ${DATETIME}' >> $versionfile
 
+	GDK_PIXBUF_MODULE_FILE=${SDK_OUTPUT}/${SDKPATHNATIVE}${libdir_nativesdk}/gdk-pixbuf-2.0/2.10.0/loaders.cache GDK_PIXBUF_MODULEDIR=${SDK_OUTPUT}/${SDKPATHNATIVE}${libdir_nativesdk}/gdk-pixbuf-2.0/2.10.0/loaders gdk-pixbuf-query-loaders.real --update-cache
+
+	sed -i -e 's#${SDK_OUTPUT}/${SDKPATHNATIVE}${libdir_nativesdk}#${SDKPATHNATIVE}${libdir_nativesdk}#' ${SDK_OUTPUT}/${SDKPATHNATIVE}${libdir_nativesdk}/gdk-pixbuf-2.0/2.10.0/loaders.cache
+
 	# Package it up
 	mkdir -p ${SDK_DEPLOY}
 	cd ${SDK_OUTPUT}
