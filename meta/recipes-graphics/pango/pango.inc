@@ -15,16 +15,17 @@ DEPENDS = "glib-2.0 fontconfig freetype zlib virtual/libiconv gtk-doc-native cai
 PACKAGECONFIG ??= "${@base_contains('DISTRO_FEATURES', 'x11', 'x11', '', d)}"
 PACKAGECONFIG[x11] = "--with-x,--without-x,${X11DEPENDS}"
 
+PKGSUFFIX = ""
 
-PACKAGES_DYNAMIC = "pango-module-*"
+PACKAGES_DYNAMIC = "pango-module-*${PKGSUFFIX}"
 
-RRECOMMENDS_${PN} = "${@base_contains('DISTRO_FEATURES', 'x11', 'pango-module-basic-x', '', d)} pango-module-basic-fc" 
+RRECOMMENDS_${PN} = "${@base_contains('DISTRO_FEATURES', 'x11', 'pango-module-basic-x${PKGSUFFIX}', '', d)} pango-module-basic-fc${PKGSUFFIX}" 
 
 inherit gnomebase
 # Create a pango-modules package
-ALLOW_EMPTY_${BPN}-modules = "1"
-PACKAGES += "${BPN}-modules"
-RRECOMMENDS_${BPN}-modules =  "${@" ".join([p for p in d.getVar('PACKAGES', True).split() if p.find("pango-module") != -1])}"
+ALLOW_EMPTY_${BPN}-modules${PKGSUFFIX} = "1"
+PACKAGES += "${BPN}-modules${PKGSUFFIX}"
+RRECOMMENDS_${BPN}-modules${PKGSUFFIX} =  "${@" ".join([p for p in d.getVar('PACKAGES', True).split() if p.find("pango-module") != -1])}"
 
 
 EXTRA_AUTORECONF = ""
@@ -54,7 +55,7 @@ python populate_packages_prepend () {
 
 	modules_root = d.expand('${libdir}/pango/${LIBV}/modules')
 
-	do_split_packages(d, modules_root, '^pango-(.*)\.so$', 'pango-module-%s', 'Pango module %s', prologue + 'pango-querymodules > /etc/pango/pango.modules')
+	do_split_packages(d, modules_root, '^pango-(.*)\.so$', 'pango-module-%s${PKGSUFFIX}', 'Pango module %s', prologue + 'pango-querymodules > /etc/pango/pango.modules')
 }
 
 FILES_${PN} = "${sysconfdir}/pango/* ${bindir}/* ${libdir}/libpango*${SOLIBS}"

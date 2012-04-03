@@ -44,7 +44,7 @@ PACKAGES =+ 		"jpeg-tools "
 DESCRIPTION_jpeg-tools = "The jpeg-tools package includes the client programs for access libjpeg functionality.  These tools allow for the compression, decompression, transformation and display of JPEG files."
 FILES_jpeg-tools = 	"${bindir}/*"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
 
 pkg_postinst_${PN}_linuxstdbase () {
     if [ "$D" = "" ]; then

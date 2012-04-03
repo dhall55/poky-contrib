@@ -37,3 +37,5 @@ do_install() {
 		pycairo.pc.in > pycairo.pc
 	install -m 0644 pycairo.pc ${D}${libdir}/pkgconfig/
 }
+
+BBCLASSEXTEND = "nativesdk"

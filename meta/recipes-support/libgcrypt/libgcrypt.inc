@@ -32,4 +32,4 @@ ARM_INSTRUCTION_SET = "arm"
 FILES_${PN} = "${libdir}/lib*.so.*"
 FILES_${PN}-dev += "${bindir} ${libdir}/pkgconfig/*.pc"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"

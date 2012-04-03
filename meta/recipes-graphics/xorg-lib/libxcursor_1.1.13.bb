@@ -20,3 +20,5 @@ XORG_PN = "libXcursor"
 
 SRC_URI[md5sum] = "52efa81b7f26c8eda13510a2fba98eea"
 SRC_URI[sha256sum] = "f78827de4a1b7ce8cceca24a9ab9d1b1d2f6a61362f505166ffc19b07c0bad8f"
+
+BBCLASSEXTEND = "nativesdk"

@@ -3,6 +3,7 @@ SECTION = "devel/python"
 # needs gtk+ 2.17.x
 DEPENDS = "gtk+ libglade python-pycairo python-pygobject"
 RDEPENDS_${PN} = "python-shell python-pycairo python-pygobject"
+RDEPENDS_${PN}_virtclass-nativesdk = "python-nativesdk-shell python-pycairo-nativesdk python-pygobject-nativesdk"
 PROVIDES = "python-pygtk2"
 SRCNAME = "pygtk"
 LICENSE = "LGPLv2.1"
@@ -52,3 +53,4 @@ RDEPENDS_${PN}-demo = "python-pygtk python-stringold python-lang"
 # todo: revamp packaging, package demo seperatly
 FILES_${PN}-dev += " ${libdir}/pygtk/2.0 ${bindir}/pygtk-* ${datadir}/pygtk/2.0"
 
+BBCLASSEXTEND = "nativesdk"

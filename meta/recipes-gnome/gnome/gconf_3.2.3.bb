@@ -57,4 +57,4 @@ FILES_${PN} += "${libdir}/GConf/* \
 FILES_${PN}-dbg += "${libdir}/*/*/.debug"
 FILES_${PN}-dev += "${datadir}/sgml/gconf/gconf-1.0.dtd"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"

@@ -19,7 +19,7 @@ PE = "1"
 
 XORG_PN = "libICE"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
 
 SRC_URI[md5sum] = "471b5ca9f5562ac0d6eac7a0bf650738"
 SRC_URI[sha256sum] = "24a991284d02ff0c789bc8d11ad2e4dffe144cb70f24e28f9ce3e8b1ee08b71e"

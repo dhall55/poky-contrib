@@ -26,6 +26,6 @@ inherit autotools
 
 EXTRA_OECONF = " --disable-man-pages --disable-gtk-doc-html "
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
 
 PARALLEL_MAKE = ""

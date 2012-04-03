@@ -18,3 +18,4 @@ PE = "1"
 SRC_URI[md5sum] = "98482f65ba1e74a08bf5b056a4031ef0"
 SRC_URI[sha256sum] = "049359f0be0b2b984a8149c966dd04e8c58e6eade2a4a309cf1126635ccd0cfc"
 
+BBCLASSEXTEND = "nativesdk"

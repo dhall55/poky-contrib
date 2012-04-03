@@ -27,3 +27,5 @@ FILES_${PN} = "${libdir}/lib*.so.*"
 FILES_${PN}-data = "${datadir}/xml/libglade/glade-2.0.dtd"
 FILES_${PN}-dev += "${bindir}/libglade-convert"
 #RDEPENDS_${PN} = "${PN}-data"
+
+BBCLASSEXTEND = "nativesdk"

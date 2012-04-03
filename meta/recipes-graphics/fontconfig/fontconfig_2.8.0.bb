@@ -29,9 +29,11 @@ SRC_URI = "http://fontconfig.org/release/fontconfig-${PV}.tar.gz \
 SRC_URI[md5sum] = "77e15a92006ddc2adbb06f840d591c0e"
 SRC_URI[sha256sum] = "fa2a1c6eea654d9fce7a4b1220f10c99cdec848dccaf1625c01f076b31382335"
 
-PACKAGES =+ "fontconfig-utils-dbg fontconfig-utils "
+PKGSUFFIX = ""
+
+PACKAGES =+ "fontconfig-utils-dbg fontconfig-utils${PKGSUFFIX} "
 FILES_fontconfig-utils-dbg = "${bindir}/*.dbg"
-FILES_fontconfig-utils = "${bindir}/*"
+FILES_fontconfig-utils${PKGSUFFIX} = "${bindir}/*"
 
 # Work around past breakage in debian.bbclass
 RPROVIDES_fontconfig-utils = "libfontconfig-utils"
@@ -91,3 +93,5 @@ do_install_append() {
 	rmdir ${D}${localstatedir}/cache/fontconfig
 	rmdir ${D}${localstatedir}/cache/
 }
+
+BBCLASSEXTEND = "nativesdk"

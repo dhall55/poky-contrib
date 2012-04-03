@@ -17,7 +17,7 @@ SRC_URI = "http://download.gnome.org/sources/atk/2.2/${BPN}-${PV}.tar.bz2"
 SRC_URI[md5sum] = "4894e9b04f0a9f1c37a624a1e8d6d73f"
 SRC_URI[sha256sum] = "d201e3f5808aef0b1aec2277bfa61074f68863e405428adb57a73aab5c838450"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
 
 EXTRA_OECONF = "--disable-glibtest \
                 --disable-introspection"

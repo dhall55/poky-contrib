@@ -53,3 +53,5 @@ python populate_packages_prepend () {
         if (d.getVar('DEBIAN_NAMES', True)):
                 d.setVar('PKG_${PN}', '${MLPREFIX}libgtk-2.0')
 }
+
+BBCLASSEXTEND = "nativesdk"

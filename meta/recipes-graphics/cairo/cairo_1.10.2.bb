@@ -37,3 +37,5 @@ FILES_${PN}-staticdev += "${libdir}/cairo/*.a"
 FILES_cairo-gobject = "${libdir}/libcairo-gobject.so.*"
 FILES_cairo-script-interpreter = "${libdir}/libcairo-script-interpreter.so.*"
 FILES_cairo-perf-utils = "${bindir}/cairo-trace ${libdir}/cairo/libcairo-trace.so.*"
+
+BBCLASSEXTEND = "nativesdk"

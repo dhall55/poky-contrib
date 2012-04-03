@@ -3,6 +3,7 @@
 #
 
 PACKAGE_ARCH = "all"
+PACKAGE_ARCH_virtclass-nativesdk = "sdkall"
 
 # No need for virtual/libc or a cross compiler
 INHIBIT_DEFAULT_DEPS = "1"

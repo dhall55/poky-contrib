@@ -1,4 +1,4 @@
-DESCRIPTION = "Meta package for building a standalone python tarball"
+DESCRIPTION = "Meta package for building a standalone python tarball suitable for running bitbake"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=3f40d7994397109285ec7b81fdeb3b58 \
                     file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -32,7 +32,10 @@ TOOLCHAIN_HOST_TASK ?= "\
     python-nativesdk-netclient \
     python-nativesdk-netserver \
     python-nativesdk-distutils \
+    python-pygobject-nativesdk \
+    python-pygtk-nativesdk \
     chrpath-nativesdk \
+    git-nativesdk \
     "
 
 TOOLCHAIN_OUTPUTNAME ?= "python-nativesdk-standalone-${SDKMACHINE}"

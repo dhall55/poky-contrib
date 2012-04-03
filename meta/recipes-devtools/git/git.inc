@@ -58,8 +58,10 @@ FILES_${PN}-tk = " \
     ${datadir}/gitk \
 "
 
-PACKAGES =+ "gitweb"
-FILES_gitweb = "${datadir}/gitweb/"
+PKGSUFFIX = ""
+
+PACKAGES =+ "gitweb${PKGSUFFIX}"
+FILES_gitweb${PKGSUFFIX} = "${datadir}/gitweb/"
 
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
