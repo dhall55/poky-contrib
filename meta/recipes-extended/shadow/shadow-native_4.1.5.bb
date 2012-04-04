@@ -12,6 +12,7 @@ PR = "r0"
 SRC_URI = "http://pkg-shadow.alioth.debian.org/releases/${BPN}-${PV}.tar.bz2 \
            file://shadow-4.1.3-dots-in-usernames.patch \
            file://shadow-4.1.5-stdarg.patch \
+           file://disable-syslog.patch \
            file://useradd.patch"
 
 SRC_URI[md5sum] = "d5f7a588fadb79faeb4b08b1eee82e9a"

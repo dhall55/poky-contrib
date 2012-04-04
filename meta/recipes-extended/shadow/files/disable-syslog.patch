@@ -1,0 +1,32 @@
+Disable use of syslog to prevent sysroot user and group additions from
+writing entries to the host's syslog. This patch is only to be applied
+to shadow-native.
+
+Upstream-Status: Inappropriate [disable feature]
+
+Signed-off-by: Scott Garman <scott.a.garman@intel.com>
+
+diff -urN shadow-4.1.5.orig//src/groupadd.c shadow-4.1.5/src/groupadd.c
+--- shadow-4.1.5.orig//src/groupadd.c	2011-11-13 09:27:15.000000000 -0800
++++ shadow-4.1.5/src/groupadd.c	2012-04-04 10:00:16.378544658 -0700
+@@ -55,6 +55,8 @@
+ #ifdef	SHADOWGRP
+ #include "sgroupio.h"
+ #endif
++/* Disable use of syslog since we're running this command against a sysroot */
++#undef USE_SYSLOG
+ 
+ /*
+  * exit status values
+diff -urN shadow-4.1.5.orig//src/useradd.c shadow-4.1.5/src/useradd.c
+--- shadow-4.1.5.orig//src/useradd.c	2011-12-09 14:23:15.000000000 -0800
++++ shadow-4.1.5/src/useradd.c	2012-04-04 10:00:18.858544693 -0700
+@@ -82,6 +82,8 @@
+ #ifndef LASTLOG_FILE
+ #define LASTLOG_FILE "/var/log/lastlog"
+ #endif
++/* Disable use of syslog since we're running this command against a sysroot */
++#undef USE_SYSLOG
+ /*
+  * Global variables
+  */
