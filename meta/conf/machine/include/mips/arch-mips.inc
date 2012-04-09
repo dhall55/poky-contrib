@@ -28,6 +28,11 @@ TUNEVALID[fpu-hard] = "Use hardware FPU"
 TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "fpu-hard", "-mhard-float", "-msoft-float", d)}"
 TARGET_FPU = "${@bb.utils.contains("TUNE_FEATURES", "fpu-hard", "", "soft", d)}"
 
+# mips32 is the default o32 tuning
+TUNEVALID[mips32] = "Enable mips32 specific processor optimizations"
+TUNE_CONFLICTS[mips32] = "n64 n32"
+TUNE_CCARGS += "${@bb.utils.contains("TUNE_FEATURES", "mips32", "-march=mips32", "", d)}"
+
 # Package naming
 MIPSPKGSFX_ENDIAN = "${@bb.utils.contains("TUNE_FEATURES", "bigendian", "", "el", d)}"
 MIPSPKGSFX_BYTE = "${@bb.utils.contains("TUNE_FEATURES", "n64" , "64", "", d)}"
@@ -40,7 +45,7 @@ TUNE_PKGARCH = "${MIPSPKGSFX_VARIANT_tune-${DEFAULTTUNE}}${MIPSPKGSFX_FPU}${MIPS
 
 # Base tunes
 AVAILTUNES += "mips mips64-n32 mips64 mipsel mips64el-n32 mips64el mips-nf mips64-nf-n32 mips64-nf mipsel-nf mips64el-nf-n32 mips64el-nf"
-TUNE_FEATURES_tune-mips = "o32 bigendian fpu-hard"
+TUNE_FEATURES_tune-mips = "mips32 o32 bigendian fpu-hard"
 BASE_LIB_tune-mips = "lib"
 MIPSPKGSFX_VARIANT_tune-mips = "${TUNE_ARCH}"
 PACKAGE_EXTRA_ARCHS_tune-mips = "mips"
@@ -55,7 +60,7 @@ BASE_LIB_tune-mips64 = "lib64"
 MIPSPKGSFX_VARIANT_tune-mips64 = "${TUNE_ARCH}"
 PACKAGE_EXTRA_ARCHS_tune-mips64 = "mips64"
 
-TUNE_FEATURES_tune-mipsel = "o32 fpu-hard"
+TUNE_FEATURES_tune-mipsel = "mips32 o32 fpu-hard"
 BASE_LIB_tune-mipsel = "lib"
 MIPSPKGSFX_VARIANT_tune-mipsel = "${TUNE_ARCH}"
 PACKAGE_EXTRA_ARCHS_tune-mipsel = "mipsel"
@@ -70,7 +75,7 @@ BASE_LIB_tune-mips64el = "lib64"
 MIPSPKGSFX_VARIANT_tune-mips64el = "${TUNE_ARCH}"
 PACKAGE_EXTRA_ARCHS_tune-mips64el = "mips64el"
 
-TUNE_FEATURES_tune-mips-nf = "o32 bigendian"
+TUNE_FEATURES_tune-mips-nf = "mips32 o32 bigendian"
 BASE_LIB_tune-mips-nf = "lib"
 MIPSPKGSFX_VARIANT_tune-mips-nf = "${TUNE_ARCH}"
 PACKAGE_EXTRA_ARCHS_tune-mips-nf = "mips-nf"
@@ -85,7 +90,7 @@ BASE_LIB_tune-mips64-nf = "lib64"
 MIPSPKGSFX_VARIANT_tune-mips64-nf = "${TUNE_ARCH}"
 PACKAGE_EXTRA_ARCHS_tune-mips64-nf = "mips64-nf"
 
-TUNE_FEATURES_tune-mipsel-nf = "o32"
+TUNE_FEATURES_tune-mipsel-nf = "mips32 o32"
 BASE_LIB_tune-mipsel-nf = "lib"
 MIPSPKGSFX_VARIANT_tune-mipsel-nf = "${TUNE_ARCH}"
 PACKAGE_EXTRA_ARCHS_tune-mipsel-nf = "mipsel-nf"
