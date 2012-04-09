@@ -48,7 +48,7 @@ class Configuration:
         self.dldir = params["dldir"]
         self.sstatedir = params["sstatedir"]
         self.sstatemirror = params["sstatemirror"]
-        self.pmake = params["pmake"]
+        self.pmake = int(params["pmake"].split()[1])
         self.bbthread = params["bbthread"]
         self.curr_package_format = " ".join(params["pclass"].split("package_")).strip()
         self.image_rootfs_size = params["image_rootfs_size"]
@@ -60,13 +60,15 @@ class Configuration:
         self.lconf_version = params["lconf_version"]
         self.extra_setting = {}
         self.toolchain_build = False
-        self.image_fstypes = params["image_fstypes"].split()
+        self.image_fstypes = params["image_fstypes"]
         # bblayers.conf
         self.layers = params["layer"].split()
         # image/recipes/packages
         self.selected_image = None
         self.selected_recipes = []
         self.selected_packages = []
+
+        self.user_selected_packages = []
 
         # proxy settings
         self.all_proxy = params["all_proxy"]
@@ -83,7 +85,7 @@ class Configuration:
         self.dldir = params["dldir"]
         self.sstatedir = params["sstatedir"]
         self.sstatemirror = params["sstatemirror"]
-        self.pmake = params["pmake"]
+        self.pmake = int(params["pmake"].split()[1])
         self.bbthread = params["bbthread"]
         self.curr_package_format = " ".join(params["pclass"].split("package_")).strip()
         self.image_rootfs_size = params["image_rootfs_size"]
@@ -104,10 +106,22 @@ class Configuration:
         self.dldir = template.getVar("DL_DIR")
         self.sstatedir = template.getVar("SSTATE_DIR")
         self.sstatemirror = template.getVar("SSTATE_MIRROR")
-        self.pmake = int(template.getVar("PARALLEL_MAKE").split()[1])
-        self.bbthread = int(template.getVar("BB_NUMBER_THREADS"))
-        self.image_rootfs_size = int(template.getVar("IMAGE_ROOTFS_SIZE"))
-        self.image_extra_size = int(template.getVar("IMAGE_EXTRA_SPACE"))
+        try:
+            self.pmake = int(template.getVar("PARALLEL_MAKE").split()[1])
+        except:
+            pass
+        try:
+            self.bbthread = int(template.getVar("BB_NUMBER_THREADS"))
+        except:
+            pass
+        try:
+            self.image_rootfs_size = int(template.getVar("IMAGE_ROOTFS_SIZE"))
+        except:
+            pass
+        try:
+            self.image_extra_size = int(template.getVar("IMAGE_EXTRA_SPACE"))
+        except:
+            pass
         # image_overhead_factor is read-only.
         self.incompat_license = template.getVar("INCOMPATIBLE_LICENSE")
         self.curr_sdk_machine = template.getVar("SDKMACHINE")
@@ -157,7 +171,7 @@ class Configuration:
         self.selected_image = filename
         template.setVar("__SELECTED_IMAGE__", self.selected_image)
         template.setVar("DEPENDS", self.selected_recipes)
-        template.setVar("IMAGE_INSTALL", self.selected_packages)
+        template.setVar("IMAGE_INSTALL", self.user_selected_packages)
         # proxy
         template.setVar("all_proxy", self.all_proxy)
         template.setVar("http_proxy", self.http_proxy)
@@ -457,12 +471,15 @@ class Builder(gtk.Window):
     def generate_image(self):
         # Build image
         self.set_user_config()
-        all_packages = self.package_model.get_selected_packages()
+        packages = self.package_model.get_selected_packages()
+        toolchain_packages = []
+        if self.configuration.toolchain_build:
+            toolchain_packages = self.package_model.get_selected_packages_toolchain()
         self.handler.reset_build()
-        self.handler.generate_image(all_packages,
+        self.handler.generate_image(packages,
                                     self.hob_image,
                                     self.hob_toolchain,
-                                    self.configuration.toolchain_build)
+                                    toolchain_packages)
 
     # Callback Functions
     def handler_config_updated_cb(self, handler, which, values):
@@ -519,7 +536,7 @@ class Builder(gtk.Window):
             response = dialog.run()
             dialog.destroy()
         self.handler.clear_busy()
-        self.configuration.curr_mach = None
+        self.configuration.curr_mach = ""
         self.image_configuration_page.switch_machine_combo()
         self.switch_page(self.MACHINE_SELECTION)
 
@@ -614,8 +631,6 @@ class Builder(gtk.Window):
         elif self.current_step == self.PACKAGE_GENERATING:
             fraction = 0
         self.build_details_page.update_progress_bar("Build Started: ", fraction)
-        self.build_details_page.reset_build_status()
-        self.build_details_page.reset_issues()
         self.build_details_page.show_configurations(self.configuration, self.parameters)
 
     def build_succeeded(self):
@@ -868,8 +883,8 @@ class Builder(gtk.Window):
 
     def reparse_post_adv_settings(self):
         # DO reparse recipes
-        if self.configuration.curr_mach == "":
-            self.switch_page(self.MACHINE_SELECTION)
+        if not self.configuration.curr_mach:
+            self.switch_page(self.CONFIG_UPDATED)
         else:
             self.switch_page(self.RCPPKGINFO_POPULATING)
 

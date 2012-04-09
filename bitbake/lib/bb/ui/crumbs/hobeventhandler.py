@@ -131,9 +131,8 @@ class HobHandler(gobject.GObject):
             targets = [self.hob_image]
             self.server.runCommand(["setVariable", "LINGUAS_INSTALL", ""])
             self.server.runCommand(["setVariable", "PACKAGE_INSTALL", " ".join(self.package_queue)])
-            if self.toolchain_build:
-                pkgs = self.package_queue + [i+'-dev' for i in self.package_queue] + [i+'-dbg' for i in self.package_queue]
-                self.server.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(pkgs)])
+            if self.toolchain_packages:
+                self.server.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(self.toolchain_packages)])
                 targets.append(self.hob_toolchain)
             self.server.runCommand(["buildTargets", targets, "build"])
 
@@ -256,7 +255,8 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["setVariable", "BBLAYERS", " ".join(bblayers)])
 
     def set_machine(self, machine):
-        self.server.runCommand(["setVariable", "MACHINE", machine])
+        if machine:
+            self.server.runCommand(["setVariable", "MACHINE", machine])
 
     def set_sdk_machine(self, sdk_machine):
         self.server.runCommand(["setVariable", "SDKMACHINE", sdk_machine])
@@ -349,11 +349,11 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
-    def generate_image(self, tgts, hob_image, hob_toolchain, toolchain_build=False):
+    def generate_image(self, tgts, hob_image, hob_toolchain, toolchain_packages=[]):
         self.package_queue = tgts
         self.hob_image = hob_image
         self.hob_toolchain = hob_toolchain
-        self.toolchain_build = toolchain_build
+        self.toolchain_packages = toolchain_packages
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)
@@ -381,6 +381,13 @@ class HobHandler(gobject.GObject):
     def reset_build(self):
         self.build.reset()
 
+    def _remove_redundant(self, string):
+        ret = []
+        for i in string.split():
+            if i not in ret:
+                ret.append(i)
+        return " ".join(ret)
+
     def get_parameters(self):
         # retrieve the parameters from bitbake
         params = {}
@@ -401,15 +408,22 @@ class HobHandler(gobject.GObject):
             num_threads = 1
             max_threads = 65536
         else:
-            num_threads = int(num_threads)
-            max_threads = 16 * num_threads
+            try:
+                num_threads = int(num_threads)
+                max_threads = 16 * num_threads
+            except:
+                num_threads = 1
+                max_threads = 65536
         params["max_threads"] = max_threads
 
         bbthread = self.server.runCommand(["getVariable", "BB_NUMBER_THREADS"])
         if not bbthread:
             bbthread = num_threads
         else:
-            bbthread = int(bbthread)
+            try:
+                bbthread = int(bbthread)
+            except:
+                bbthread = num_threads
         params["bbthread"] = bbthread
 
         pmake = self.server.runCommand(["getVariable", "PARALLEL_MAKE"])
@@ -418,8 +432,11 @@ class HobHandler(gobject.GObject):
         elif isinstance(pmake, int):
             pass
         else:
-            pmake = int(pmake.lstrip("-j "))
-        params["pmake"] = pmake
+            try:
+                pmake = int(pmake.lstrip("-j "))
+            except:
+                pmake = num_threads
+        params["pmake"] = "-j %s" % pmake
 
         params["image_addr"] = self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"]) or ""
 
@@ -427,36 +444,45 @@ class HobHandler(gobject.GObject):
         if not image_extra_size:
             image_extra_size = 0
         else:
-            image_extra_size = int(image_extra_size)
+            try:
+                image_extra_size = int(image_extra_size)
+            except:
+                image_extra_size = 0
         params["image_extra_size"] = image_extra_size
 
         image_rootfs_size = self.server.runCommand(["getVariable", "IMAGE_ROOTFS_SIZE"])
         if not image_rootfs_size:
             image_rootfs_size = 0
         else:
-            image_rootfs_size = int(image_rootfs_size)
+            try:
+                image_rootfs_size = int(image_rootfs_size)
+            except:
+                image_rootfs_size = 0
         params["image_rootfs_size"] = image_rootfs_size
 
         image_overhead_factor = self.server.runCommand(["getVariable", "IMAGE_OVERHEAD_FACTOR"])
         if not image_overhead_factor:
             image_overhead_factor = 1
         else:
-            image_overhead_factor = float(image_overhead_factor)
+            try:
+                image_overhead_factor = float(image_overhead_factor)
+            except:
+                image_overhead_factor = 1
         params['image_overhead_factor'] = image_overhead_factor
 
-        params["incompat_license"] = self.server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"]) or ""
+        params["incompat_license"] = self._remove_redundant(self.server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"]) or "")
         params["sdk_machine"] = self.server.runCommand(["getVariable", "SDKMACHINE"]) or self.server.runCommand(["getVariable", "SDK_ARCH"]) or ""
 
-        params["image_fstypes"] = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]) or ""
+        params["image_fstypes"] = self._remove_redundant(self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]) or "")
 
-        params["image_types"] = self.server.runCommand(["getVariable", "IMAGE_TYPES"]) or ""
+        params["image_types"] = self._remove_redundant(self.server.runCommand(["getVariable", "IMAGE_TYPES"]) or "")
 
         params["conf_version"] = self.server.runCommand(["getVariable", "CONF_VERSION"]) or ""
         params["lconf_version"] = self.server.runCommand(["getVariable", "LCONF_VERSION"]) or ""
 
-        params["runnable_image_types"] = self.server.runCommand(["getVariable", "RUNNABLE_IMAGE_TYPES"]) or ""
-        params["runnable_machine_patterns"] = self.server.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or ""
-        params["deployable_image_types"] = self.server.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or ""
+        params["runnable_image_types"] = self._remove_redundant(self.server.runCommand(["getVariable", "RUNNABLE_IMAGE_TYPES"]) or "")
+        params["runnable_machine_patterns"] = self._remove_redundant(self.server.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or "")
+        params["deployable_image_types"] = self._remove_redundant(self.server.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or "")
         params["tmpdir"] = self.server.runCommand(["getVariable", "TMPDIR"]) or ""
         params["distro_version"] = self.server.runCommand(["getVariable", "DISTRO_VERSION"]) or ""
         params["target_os"] = self.server.runCommand(["getVariable", "TARGET_OS"]) or ""

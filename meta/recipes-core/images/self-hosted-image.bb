@@ -1,22 +1,16 @@
+DESCRIPTION = "Version 1.0-r6 of the self-hosted image."
 IMAGE_INSTALL = "task-core-boot task-core-apps-console task-core-ssh-openssh task-self-hosted"
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=3f40d7994397109285ec7b81fdeb3b58 \
                     file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
-PR = "r8"
-
-CORE_IMAGE_EXTRA_INSTALL = "\
-    task-self-hosted \
-    "
+PR = "r11"
 
 IMAGE_FEATURES += "x11-mini package-management"
 
-# Ensure there's enough space to do a core-image-minimal build, with rm_work enabled
-IMAGE_ROOTFS_EXTRA_SPACE = "1048576"
-#IMAGE_ROOTFS_EXTRA_SPACE = "2621440"
-#IMAGE_ROOTFS_EXTRA_SPACE = "20971520"
-#IMAGE_ROOTFS_EXTRA_SPACE = "5242880"
+# Ensure there's enough space to do a core-image-sato build, with rm_work enabled
+IMAGE_ROOTFS_EXTRA_SPACE = "41943040"
 
 # Do a quiet boot with limited console messages
 APPEND += "quiet"
@@ -27,6 +21,11 @@ inherit core-image
 
 SRCREV = "8691a588267472eb5a32b978a0eb9ddfd0c91733"
 SRC_URI = "git://git.yoctoproject.org/poky;protocol=git"
+
+IMAGE_CMD_ext3_append () {
+	# We don't need to reserve much space for root, 0.5% is more than enough
+	tune2fs -m 0.5 ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.rootfs.ext3
+}
 
 fakeroot do_populate_poky_src () {
 	# Because fetch2's git's unpack uses -s cloneflag, the unpacked git repo
@@ -54,6 +53,13 @@ fakeroot do_populate_poky_src () {
 	chown builder.builder ${IMAGE_ROOTFS}/home/builder/pseudo
 
 	chown -R builder.builder  ${IMAGE_ROOTFS}/home/builder/poky
+
+	# Allow builder to use sudo to setup tap/tun
+	echo "builder ALL=(ALL) NOPASSWD: ALL" >> ${IMAGE_ROOTFS}/etc/sudoers
+
+	# Use Clearlooks GTK+ theme
+	mkdir -p ${IMAGE_ROOTFS}/etc/gtk-2.0
+	echo 'gtk-theme-name = "Clearlooks"' > ${IMAGE_ROOTFS}/etc/gtk-2.0/gtkrc
 }
 
 IMAGE_PREPROCESS_COMMAND += "do_populate_poky_src; "

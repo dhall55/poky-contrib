@@ -22,6 +22,7 @@
 
 import gtk
 import gobject
+from bb.ui.crumbs.hobpages import HobPage
 
 #
 # PackageListModel
@@ -175,10 +176,8 @@ class PackageListModel(gtk.TreeStore):
             if pkgsize == "0" and not allow_empty:
                 continue
 
-            if len(pkgsize) > 3:
-                size = '%.1f' % (int(pkgsize)*1.0/1024) + ' MB'
-            else:
-                size = pkgsize + ' KB'
+            # pkgsize is in KB
+            size = HobPage._size_to_string(HobPage._string_to_size(pkgsize + ' KB'))
 
             it = self.append(pniter)
             self.pkg_path[pkg] = self.get_path(it)
@@ -342,6 +341,23 @@ class PackageListModel(gtk.TreeStore):
         self.selection_change_notification()
         return left
 
+    def get_user_selected_packages(self):
+        packagelist = []
+
+        it = self.get_iter_first()
+        while it:
+            child_it = self.iter_children(it)
+            while child_it:
+                if self.get_value(child_it, self.COL_INC):
+                    binb = self.get_value(child_it, self.COL_BINB)
+                    if not binb or binb == "User Selected":
+                        name = self.get_value(child_it, self.COL_NAME)
+                        packagelist.append(name)
+                child_it = self.iter_next(child_it)
+            it = self.iter_next(it)
+
+        return packagelist
+
     def get_selected_packages(self):
         packagelist = []
 
@@ -357,8 +373,24 @@ class PackageListModel(gtk.TreeStore):
 
         return packagelist
 
+    def get_selected_packages_toolchain(self):
+        packagelist = []
+
+        it = self.get_iter_first()
+        while it:
+            if self.get_value(it, self.COL_INC):
+                child_it = self.iter_children(it)
+                while child_it:
+                    name = self.get_value(child_it, self.COL_NAME)
+                    inc = self.get_value(child_it, self.COL_INC)
+                    if inc or name.endswith("-dev") or name.endswith("-dbg"):
+                        packagelist.append(name)
+                    child_it = self.iter_next(child_it)
+            it = self.iter_next(it)
+
+        return packagelist
     """
-    Return the selected package size, unit is KB.
+    Return the selected package size, unit is B.
     """
     def get_packages_size(self):
         packages_size = 0
@@ -371,16 +403,11 @@ class PackageListModel(gtk.TreeStore):
                     if not str_size:
                         continue
 
-                    unit = str_size.split()
-                    if unit[1] == 'MB':
-                        size = float(unit[0])*1024
-                    else:
-                        size = float(unit[0])
-                    packages_size += size
+                    packages_size += HobPage._string_to_size(str_size)
 
                 child_it = self.iter_next(child_it)
             it = self.iter_next(it)
-        return "%f" % packages_size
+        return packages_size
 
     """
     Empty self.contents by setting the include of each entry to None
@@ -530,10 +557,7 @@ class RecipeListModel(gtk.ListStore):
             depends = event_model["depends"].get(item, []) + event_model["rdepends-pn"].get(item, [])
 
             if ('task-' in name):
-                if ('lib32-' in name or 'lib64-' in name):
-                    atype = 'mltask'
-                else:
-                    atype = 'task'
+                atype = 'task'
             elif ('image.bbclass' in " ".join(inherits)):
                 if name != "hob-image":
                     atype = 'image'
@@ -543,10 +567,7 @@ class RecipeListModel(gtk.ListStore):
             elif (name == 'dummy-image' or name == 'dummy-toolchain'):
                 atype = 'dummy'
             else:
-                if ('lib32-' in name or 'lib64-' in name):
-                    atype = 'mlrecipe'
-                else:
-                    atype = 'recipe'
+                atype = 'recipe'
 
             self.set(self.append(), self.COL_NAME, item, self.COL_DESC, desc,
                      self.COL_LIC, lic, self.COL_GROUP, group,

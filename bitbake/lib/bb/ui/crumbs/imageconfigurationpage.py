@@ -143,6 +143,7 @@ class ImageConfigurationPage (HobPage):
         self.machine_title_desc.set_markup(mark)
 
         self.machine_combo = gtk.combo_box_new_text()
+        self.machine_combo.set_wrap_width(1)
         self.machine_combo.connect("changed", self.machine_combo_changed_cb)
 
         icon_file = hic.ICON_LAYERS_DISPLAY_FILE
@@ -191,6 +192,7 @@ class ImageConfigurationPage (HobPage):
         self.image_title_desc.set_markup(mark)
 
         self.image_combo = gtk.combo_box_new_text()
+        self.image_combo.set_wrap_width(1)
         self.image_combo_id = self.image_combo.connect("changed", self.image_combo_changed_cb)
 
         self.image_desc = gtk.Label()
@@ -338,10 +340,16 @@ class ImageConfigurationPage (HobPage):
                 active = cnt
             cnt = cnt + 1
         self.image_combo.append_text(self.builder.recipe_model.__dummy_image__)
-        self._image_combo_connect_signal()
+        if selected_image == self.builder.recipe_model.__dummy_image__:
+            active = cnt
 
         self.image_combo.set_active(-1)
         self.image_combo.set_active(active)
+
+        if active != -1:
+            self.show_baseimg_selected()
+
+        self._image_combo_connect_signal()
 
     def layer_button_clicked_cb(self, button):
         # Create a layer selection dialog
