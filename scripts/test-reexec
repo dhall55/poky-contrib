@@ -82,7 +82,7 @@ function testit {
 
 	case $task in
 		clean|build|cleansstate|cleanall|package|cleansstate2|package_write|package_write_ipk|package_write_rpm|package_write_deb|fetch|populate_lic) return;;
-		fetchall|devshell|buildall|listtasks|checkuri|checkuriall) return;;
+		fetchall|devshell|buildall|listtasks|checkuri|checkuriall|menuconfig) return;;
 	esac
 
 	echo "Attempting target $target, task $task"
@@ -113,11 +113,17 @@ for target in $targets; do
 	# Remove log messages from bitbake output
 	case $target in
 		Summary*|WARNING*|Loading*|Loaded*|Package*|=====*) continue;;
+	case $target in
+		core-image*) continue;;
+		self-hosted*) continue;;
+		libiconv*) continue;;
+		mk*) ;;
+#		k*) ;;
+#		l*|m*|n*|o*|p*q*|r*|s*|t*|u*|v*|w*|x*|y*|z*) ;;
+		*) continue;;
 	esac
 	tasks=`bitbake $target -c listtasks | grep ^do_ | sed s/do_//`
 	for task in $tasks; do
 		testit $target $task
 	done
 done
-
-

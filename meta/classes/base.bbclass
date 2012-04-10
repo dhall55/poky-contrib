@@ -605,6 +605,11 @@ python do_cleansstate() {
         sstate_clean_cachefiles(d)
 }
 
+addtask cleansstate2
+python do_cleansstate2() {
+        sstate_clean_cachefiles(d)
+}
+
 addtask cleanall after do_cleansstate
 python do_cleanall() {
     src_uri = (d.getVar('SRC_URI', True) or "").split()
