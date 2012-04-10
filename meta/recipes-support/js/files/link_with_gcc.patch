@@ -1,11 +1,9 @@
-Upstream-Status: Pending
-
-Index: src/config/Linux_All.mk
+Index: js-1.8.5/js/src/ref-config/Linux_All.mk
 ===================================================================
---- src.orig/config/Linux_All.mk	2005-05-10 19:53:44.000000000 +0000
-+++ src/config/Linux_All.mk	2007-06-18 17:20:05.000000000 +0000
-@@ -47,7 +47,7 @@
- OS_CFLAGS = -DXP_UNIX -DSVR4 -DSYSV -D_BSD_SOURCE -DPOSIX_SOURCE -DHAVE_LOCALTIME_R
+--- src.orig/ref-config/Linux_All.mk	2012-04-09 23:43:45.099107032 +0300
++++ src/ref-config/Linux_All.mk	2012-04-09 23:43:56.947106799 +0300
+@@ -48,7 +48,7 @@
+ OS_CFLAGS = -DXP_UNIX -DSVR4 -DSYSV -D_BSD_SOURCE -DPOSIX_SOURCE -DHAVE_LOCALTIME_R -DLINUX
  
  RANLIB = echo
 -MKSHLIB = $(LD) -shared $(XMKSHLIBOPTS)
