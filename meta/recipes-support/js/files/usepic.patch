@@ -1,15 +1,8 @@
-Upstream-Status: Inappropriate [embedded specific]
-
-Mips needs -fPIC to compile properly. These tests are broken anyway as they test 
-the build system architecture, not the target. This is a hack.
-
-RP 10/6/2010
-
-Index: src/config/Linux_All.mk
+Index: src/ref-config/Linux_All.mk
 ===================================================================
---- src.orig/config/Linux_All.mk	2010-06-10 22:09:43.000000000 +0100
-+++ src/config/Linux_All.mk	2010-06-10 22:09:55.000000000 +0100
-@@ -90,14 +90,10 @@
+--- src.orig/ref-config/Linux_All.mk	2012-04-09 23:47:06.775103048 +0300
++++ src/ref-config/Linux_All.mk	2012-04-09 23:47:40.267102388 +0300
+@@ -92,14 +92,10 @@
  # Use the editline library to provide line-editing support.
  JS_EDITLINE = 1
  
