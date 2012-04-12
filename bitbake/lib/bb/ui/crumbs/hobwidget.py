@@ -105,6 +105,11 @@ class HobViewTable (gtk.VBox):
                             gobject.TYPE_NONE,
                            (gobject.TYPE_PYOBJECT,
                             gobject.TYPE_PYOBJECT,)),
+         "cell-fadeinout-stopped" : (gobject.SIGNAL_RUN_LAST,
+                            gobject.TYPE_NONE,
+                           (gobject.TYPE_PYOBJECT,
+                            gobject.TYPE_PYOBJECT,
+                            gobject.TYPE_PYOBJECT,)),
     }
 
     def __init__(self, columns):
@@ -127,6 +132,8 @@ class HobViewTable (gtk.VBox):
                 col.set_min_width(column['col_min'])
             if 'col_max' in column.keys():
                 col.set_max_width(column['col_max'])
+            if 'expand' in column.keys():
+                col.set_expand(True)
             self.table_tree.append_column(col)
 
             if (not 'col_style' in column.keys()) or column['col_style'] == 'text':
@@ -134,9 +141,10 @@ class HobViewTable (gtk.VBox):
                 col.pack_start(cell, True)
                 col.set_attributes(cell, text=column['col_id'])
             elif column['col_style'] == 'check toggle':
-                cell = gtk.CellRendererToggle()
+                cell = HobCellRendererToggle()
                 cell.set_property('activatable', True)
                 cell.connect("toggled", self.toggled_cb, i, self.table_tree)
+                cell.connect_render_state_changed(self.stop_cell_fadeinout_cb, self.table_tree)
                 self.toggle_id = i
                 col.pack_end(cell, True)
                 col.set_attributes(cell, active=column['col_id'])
@@ -150,12 +158,25 @@ class HobViewTable (gtk.VBox):
                 col.pack_end(cell, True)
                 col.set_attributes(cell, active=column['col_id'])
                 self.toggle_columns.append(column['col_name'])
+            elif column['col_style'] == 'binb':
+                cell = gtk.CellRendererText()
+                col.pack_start(cell, True)
+                col.set_cell_data_func(cell, self.display_binb_cb, column['col_id'])
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         scroll.set_shadow_type(gtk.SHADOW_IN)
         scroll.add(self.table_tree)
         self.pack_start(scroll, True, True, 0)
+
+    def display_binb_cb(self, col, cell, model, it, col_id):
+        binb =  model.get_value(it, col_id)
+        # Just display the first item
+        if binb:
+            bin = binb.split(', ')
+            cell.set_property('text', bin[0])
+
+        return True
 
     def set_model(self, tree_model):
         self.table_tree.set_model(tree_model)
@@ -179,6 +200,9 @@ class HobViewTable (gtk.VBox):
     def row_activated_cb(self, tree, path, view_column):
         if not view_column.get_title() in self.toggle_columns:
             self.emit("row-activated", tree.get_model(), path)
+
+    def stop_cell_fadeinout_cb(self, ctrl, cell, tree):
+        self.emit("cell-fadeinout-stopped", ctrl, cell, tree)
 
 """
 A method to calculate a softened value for the colour of widget when in the
@@ -241,7 +265,7 @@ class HobAltButton(gtk.Button):
     """
     @staticmethod
     def desensitise_on_state_change_cb(button, state):
-        if button.get_state() == gtk.STATE_INSENSITIVE:
+        if not button.get_property("sensitive"):
             HobAltButton.set_text(button, False)
         else:
             HobAltButton.set_text(button, True)
@@ -401,6 +425,7 @@ class HobTabBar(gtk.DrawingArea):
         self.connect("expose-event", self.on_draw)
         self.connect("button-press-event", self.button_pressed_cb)
         self.connect("button-release-event", self.button_released_cb)
+        self.connect("query-tooltip", self.query_tooltip_cb)
         self.show_all()
 
     def button_released_cb(self, widget, event):
@@ -464,7 +489,7 @@ class HobTabBar(gtk.DrawingArea):
             child["g"] = color.green
             child["b"] = color.blue
 
-    def append_tab_child(self, title, page):
+    def append_tab_child(self, title, page, tooltip=""):
         num = len(self.children) + 1
         self.tab_width = self.tab_width * len(self.children) / num
 
@@ -489,8 +514,11 @@ class HobTabBar(gtk.DrawingArea):
             "title"        : title,
             "indicator_show"   : False,
             "indicator_number" : 0,
+            "tooltip_markup"   : tooltip,
         }
         self.children.append(new_one)
+        if tooltip and (not self.props.has_tooltip):
+            self.props.has_tooltip = True
         # set the default current child
         if not self.current_child:
             self.current_child = new_one
@@ -659,6 +687,18 @@ class HobTabBar(gtk.DrawingArea):
 
         return gtk.gdk.Rectangle(x, y, w, h)
 
+    def query_tooltip_cb(self, widget, x, y, keyboardtip, tooltip):
+        if keyboardtip or (not tooltip):
+            return False
+        # check which tab be clicked
+        for child in self.children:
+           if      (child["x"] < x) and (x < child["x"] + self.tab_width) \
+               and (child["y"] < y) and (y < child["y"] + self.tab_height):
+               tooltip.set_markup(child["tooltip_markup"])
+               return True
+
+        return False
+
 class HobNotebook(gtk.VBox):
 
     def __init__(self):
@@ -743,13 +783,15 @@ class HobNotebook(gtk.VBox):
         if not notebook:
             return
         title = notebook.get_tab_label_text(notebook_child)
+        label = notebook.get_tab_label(notebook_child)
+        tooltip_markup = label.get_tooltip_markup()
         if not title:
             return
         for child in self.tabbar.children:
             if child["title"] == title:
                 child["toggled_page"] = page
                 return
-        self.tabbar.append_tab_child(title, page)
+        self.tabbar.append_tab_child(title, page, tooltip_markup)
 
     def page_removed_cb(self, notebook, notebook_child, page, title=""):
         for child in self.tabbar.children:
@@ -843,14 +885,23 @@ class HobIconChecker(hic):
 
         return valid_stock_id
 
-class RefreshRuningController(gobject.GObject):
-    def __init__(self, widget=None, iter=None):
+class HobCellRendererController(gobject.GObject):
+    (MODE_CYCLE_RUNNING, MODE_ONE_SHORT) = range(2)
+    __gsignals__ = {
+        "run-timer-stopped" : (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                                ()),
+    }
+    def __init__(self, runningmode=MODE_CYCLE_RUNNING, is_draw_row=False):
         gobject.GObject.__init__(self)
         self.timeout_id = None
         self.current_angle_pos = 0.0
         self.step_angle = 0.0
         self.tree_headers_height = 0
         self.running_cell_areas = []
+        self.running_mode = runningmode
+        self.is_queue_draw_row_area = is_draw_row
+        self.force_stop_enable = False
 
     def is_active(self):
         if self.timeout_id:
@@ -858,10 +909,10 @@ class RefreshRuningController(gobject.GObject):
         else:
             return False
 
-    def reset(self):
-        self.force_stop(True)
+    def reset_run(self):
+        self.force_stop()
+        self.running_cell_areas = []
         self.current_angle_pos = 0.0
-        self.timeout_id = None
         self.step_angle = 0.0
 
     ''' time_iterval: (1~1000)ms, which will be as the basic interval count for timer
@@ -881,15 +932,16 @@ class RefreshRuningController(gobject.GObject):
         self.timeout_id = gobject.timeout_add(int(time_iterval),
         self.make_image_on_progressing_cb, tree)
         self.tree_headers_height = self.get_treeview_headers_height(tree)
+        self.force_stop_enable = False
 
-    def force_stop(self, after_hide_or_not=False):
+    def force_stop(self):
+        self.emit("run-timer-stopped")
+        self.force_stop_enable = True
         if self.timeout_id:
-            gobject.source_remove(self.timeout_id)
-            self.timeout_id = None
-        if self.running_cell_areas:
-            self.running_cell_areas = []
+            if gobject.source_remove(self.timeout_id):
+                self.timeout_id = None
 
-    def on_draw_cb(self, pixbuf, cr, x, y, img_width, img_height, do_refresh=True):
+    def on_draw_pixbuf_cb(self, pixbuf, cr, x, y, img_width, img_height, do_refresh=True):
         if pixbuf:
             r = max(img_width/2, img_height/2)
             cr.translate(x + r, y + r)
@@ -898,6 +950,16 @@ class RefreshRuningController(gobject.GObject):
 
             cr.set_source_pixbuf(pixbuf, -img_width/2, -img_height/2)
             cr.paint()
+
+    def on_draw_fadeinout_cb(self, cr, color, x, y, width, height, do_fadeout=True):
+        if do_fadeout:
+            alpha = self.current_angle_pos * 0.8
+        else:
+            alpha = (1.0 - self.current_angle_pos) * 0.8
+
+        cr.set_source_rgba(color.red, color.green, color.blue, alpha)
+        cr.rectangle(x, y, width, height)
+        cr.fill()
 
     def get_treeview_headers_height(self, tree):
         if tree and (tree.get_property("headers-visible") == True):
@@ -908,13 +970,24 @@ class RefreshRuningController(gobject.GObject):
 
     def make_image_on_progressing_cb(self, tree):
         self.current_angle_pos += self.step_angle
-        if (self.current_angle_pos >= 1):
-            self.current_angle_pos = self.step_angle
+        if self.running_mode == self.MODE_CYCLE_RUNNING:
+            if (self.current_angle_pos >= 1):
+                self.current_angle_pos = self.step_angle
+        else:
+            if self.current_angle_pos > 1:
+                self.force_stop()
+                return False
 
-        for rect in self.running_cell_areas:
-            tree.queue_draw_area(rect.x, rect.y + self.tree_headers_height, rect.width, rect.height)
+        if self.is_queue_draw_row_area:
+            for path in self.running_cell_areas:
+                rect = tree.get_cell_area(path, tree.get_column(0))
+                row_x, _, row_width, _ = tree.get_visible_rect()
+                tree.queue_draw_area(row_x, rect.y + self.tree_headers_height, row_width, rect.height)
+        else:
+            for rect in self.running_cell_areas:
+                tree.queue_draw_area(rect.x, rect.y + self.tree_headers_height, rect.width, rect.height)
 
-        return True
+        return (not self.force_stop_enable)
 
     def append_running_cell_area(self, cell_area):
         if cell_area and (cell_area not in self.running_cell_areas):
@@ -924,14 +997,14 @@ class RefreshRuningController(gobject.GObject):
         if cell_area in self.running_cell_areas:
             self.running_cell_areas.remove(cell_area)
         if not self.running_cell_areas:
-            self.reset()
+            self.reset_run()
 
-gobject.type_register(RefreshRuningController)
+gobject.type_register(HobCellRendererController)
 
 class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
     def __init__(self):
         gtk.CellRendererPixbuf.__init__(self)
-        self.control = RefreshRuningController()
+        self.control = HobCellRendererController()
         # add icon checker for make the gtk-icon transfer to hob-icon
         self.checker = HobIconChecker()
         self.set_property("stock-size", gtk.ICON_SIZE_DND)
@@ -982,12 +1055,12 @@ class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
         if stock_id == 'hic-task-refresh':
             self.control.append_running_cell_area(cell_area)
             if self.control.is_active():
-                self.control.on_draw_cb(pix, window.cairo_create(), x, y, w, h, True)
+                self.control.on_draw_pixbuf_cb(pix, window.cairo_create(), x, y, w, h, True)
             else:
                 self.control.start_run(200, 0, 0, 1000, 200, tree)
         else:
             self.control.remove_running_cell_area(cell_area)
-            self.control.on_draw_cb(pix, window.cairo_create(), x, y, w, h, False)
+            self.control.on_draw_pixbuf_cb(pix, window.cairo_create(), x, y, w, h, False)
 
     def on_get_size(self, widget, cell_area):
         if self.props.icon_name or self.props.pixbuf or self.props.stock_id:
@@ -1005,3 +1078,50 @@ class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
         return 0, 0, 0, 0
 
 gobject.type_register(HobCellRendererPixbuf)
+
+class HobCellRendererToggle(gtk.CellRendererToggle):
+    def __init__(self):
+        gtk.CellRendererToggle.__init__(self)
+        self.ctrl = HobCellRendererController(is_draw_row=True)
+        self.ctrl.running_mode = self.ctrl.MODE_ONE_SHORT
+        self.cell_attr = {"fadeout": False}
+
+    def do_render(self, window, widget, background_area, cell_area, expose_area, flags):
+        if (not self.ctrl) or (not widget):
+            return
+        if self.ctrl.is_active():
+            path = widget.get_path_at_pos(cell_area.x + cell_area.width/2, cell_area.y + cell_area.height/2)
+            # sometimes the parameters of cell_area will be a negative number,such as pull up down the scroll bar
+            # it's over the tree container range, so the path will be bad
+            if not path: return
+            path = path[0]
+            if path in self.ctrl.running_cell_areas:
+                cr = window.cairo_create()
+                color = gtk.gdk.Color(HobColors.WHITE)
+
+                row_x, _, row_width, _ = widget.get_visible_rect()
+                border_y = self.get_property("ypad")
+                self.ctrl.on_draw_fadeinout_cb(cr, color, row_x, cell_area.y - border_y, row_width, \
+                                               cell_area.height + border_y * 2, self.cell_attr["fadeout"])
+
+        return gtk.CellRendererToggle.do_render(self, window, widget, background_area, cell_area, expose_area, flags)
+
+    '''delay: normally delay time is 1000ms
+       cell_list: whilch cells need to be render
+    '''
+    def fadeout(self, tree, delay, cell_list=None):
+        if (delay < 200) or (not tree):
+            return
+        self.cell_attr["fadeout"] = True
+        self.ctrl.running_cell_areas = cell_list
+        self.ctrl.start_run(200, 0, 0, delay, (delay * 200 / 1000), tree)
+
+    def connect_render_state_changed(self, func, usrdata=None):
+        if not func:
+            return
+        if usrdata:
+            self.ctrl.connect("run-timer-stopped", func, self, usrdata)
+        else:
+            self.ctrl.connect("run-timer-stopped", func, self)
+
+gobject.type_register(HobCellRendererToggle)

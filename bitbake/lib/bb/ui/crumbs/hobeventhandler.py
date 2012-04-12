@@ -202,6 +202,7 @@ class HobHandler(gobject.GObject):
 
         elif isinstance(event, bb.command.CommandFailed):
             self.commands_async = []
+            self.clear_busy()
             self.emit("command-failed", self.error_msg)
             self.error_msg = ""
         elif isinstance(event, (bb.event.ParseStarted,
@@ -243,8 +244,8 @@ class HobHandler(gobject.GObject):
         self.run_next_command(self.PARSE_CONFIG)
 
     def parse_generate_configuration(self):
-         self.commands_async.append(self.SUB_PARSE_CONFIG)
-         self.generate_configuration()
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
+        self.generate_configuration()
 
     def set_extra_inherit(self, bbclass):
         inherits = self.server.runCommand(["getVariable", "INHERIT"]) or ""
@@ -324,7 +325,7 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["setVariable", "CVS_PROXY_HOST", host])
         self.server.runCommand(["setVariable", "CVS_PROXY_PORT", port])
 
-    def request_package_info_async(self):
+    def request_package_info(self):
         self.commands_async.append(self.SUB_GENERATE_PKGINFO)
         self.run_next_command(self.POPULATE_PACKAGEINFO)
 

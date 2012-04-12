@@ -37,6 +37,10 @@ class ImageConfigurationPage (HobPage):
         super(ImageConfigurationPage, self).__init__(builder, "Image configuration")
 
         self.image_combo_id = None
+        # we use machine_combo_changed_by_manual to identify the machine is changed by code
+        # or by manual. If by manual, all user's recipe selection and package selection are
+        # cleared.
+        self.machine_combo_changed_by_manual = True
         self.create_visual_elements()
 
     def create_visual_elements(self):
@@ -49,19 +53,19 @@ class ImageConfigurationPage (HobPage):
             "Templates",
             hic.ICON_TEMPLATES_DISPLAY_FILE,
             hic.ICON_TEMPLATES_HOVER_FILE,
-            "Load a hob building template saved before",
+            "Load a previously saved template",
             self.template_button_clicked_cb)
         my_images_button = self.append_toolbar_button(self.toolbar,
-            "My images",
+            "Images",
             hic.ICON_IMAGES_DISPLAY_FILE,
             hic.ICON_IMAGES_HOVER_FILE,
-            "Open images built out previously for running or deployment",
+            "Open previously built images",
             self.my_images_button_clicked_cb)
         settings_button = self.append_toolbar_button(self.toolbar,
             "Settings",
             hic.ICON_SETTINGS_DISPLAY_FILE,
             hic.ICON_SETTINGS_HOVER_FILE,
-            "Other advanced settings for build",
+            "View additional build settings",
             self.settings_button_clicked_cb)
 
         self.config_top_button = self.add_onto_top_bar(self.toolbar)
@@ -138,7 +142,7 @@ class ImageConfigurationPage (HobPage):
 
         self.machine_title_desc = gtk.Label()
         self.machine_title_desc.set_alignment(0.0, 0.5)
-        mark = ("<span %s>This is the profile of the target machine for which you"
+        mark = ("<span %s>Your selection is the profile of the target machine for which you"
         " are building the image.\n</span>") % (self.span_tag('medium'))
         self.machine_title_desc.set_markup(mark)
 
@@ -155,8 +159,8 @@ class ImageConfigurationPage (HobPage):
         markup = "Layers are a powerful mechanism to extend the Yocto Project "
         markup += "with your own functionality.\n"
         markup += "For more on layers, check the <a href=\""
-        markup += "http://www.yoctoproject.org/docs/current/poky-ref-manual/"
-        markup += "poky-ref-manual.html#usingpoky-changes-layers\">reference manual</a>."
+        markup += "http://www.yoctoproject.org/docs/current/dev-manual/"
+        markup += "dev-manual.html#understanding-and-using-layers\">reference manual</a>."
         self.layer_info_icon = HobInfoButton(markup, self.get_parent())
 
         self.progress_box = gtk.HBox(False, 6)
@@ -235,7 +239,7 @@ class ImageConfigurationPage (HobPage):
         # create button "Build image"
         just_bake_button = HobButton("Build image")
         just_bake_button.set_size_request(205, 49)
-        just_bake_button.set_tooltip_text("Build image to get your target image")
+        just_bake_button.set_tooltip_text("Build target image")
         just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
         button_box.pack_end(just_bake_button, expand=False, fill=False)
 
@@ -245,12 +249,13 @@ class ImageConfigurationPage (HobPage):
         # create button "Build Packages"
         build_packages_button = HobAltButton("Build packages")
         build_packages_button.connect("clicked", self.build_packages_button_clicked_cb)
+        build_packages_button.set_tooltip_text("Build recipes into packages")
         button_box.pack_end(build_packages_button, expand=False, fill=False)
 
         return button_box
 
     def stop_button_clicked_cb(self, button):
-        self.builder.stop_parse()
+        self.builder.cancel_parse_sync()
 
     def machine_combo_changed_cb(self, machine_combo):
         combo_item = machine_combo.get_active_text()
@@ -258,8 +263,15 @@ class ImageConfigurationPage (HobPage):
             return
 
         self.builder.configuration.curr_mach = combo_item
+        if self.machine_combo_changed_by_manual:
+            self.builder.configuration.selected_image = None
+            self.builder.configuration.selected_recipes = []
+            self.builder.configuration.selected_packages = []
+        # reset machine_combo_changed_by_manual
+        self.machine_combo_changed_by_manual = True
+
         # Do reparse recipes
-        self.builder.switch_page(self.builder.RCPPKGINFO_POPULATING)
+        self.builder.populate_recipe_package_info_async()
 
     def update_machine_combo(self):
         all_machines = self.builder.parameters.all_machines
@@ -271,6 +283,7 @@ class ImageConfigurationPage (HobPage):
         self.machine_combo.set_active(-1)
 
     def switch_machine_combo(self):
+        self.machine_combo_changed_by_manual = False
         model = self.machine_combo.get_model()
         active = 0
         while active < len(model):
@@ -279,6 +292,16 @@ class ImageConfigurationPage (HobPage):
                 return
             active += 1
         self.machine_combo.set_active(-1)
+
+    def update_image_desc(self, selected_image):
+        desc = ""
+        if selected_image and selected_image in self.builder.recipe_model.pn_path.keys():
+            image_path = self.builder.recipe_model.pn_path[selected_image]
+            image_iter = self.builder.recipe_model.get_iter(image_path)
+            desc = self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_DESC)
+
+        mark = ("<span %s>%s</span>\n") % (self.span_tag('small'), desc)
+        self.image_desc.set_markup(mark)
 
     def image_combo_changed_idle_cb(self, selected_image, selected_recipes, selected_packages):
         self.builder.update_recipe_model(selected_image, selected_recipes)
@@ -291,14 +314,14 @@ class ImageConfigurationPage (HobPage):
         if not selected_image:
             return
 
+        self.builder.customized = False
+
         selected_recipes = []
 
         image_path = self.builder.recipe_model.pn_path[selected_image]
         image_iter = self.builder.recipe_model.get_iter(image_path)
         selected_packages = self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_INSTALL).split()
-
-        mark = ("<span %s>%s</span>\n") % (self.span_tag('small'), self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_DESC))
-        self.image_desc.set_markup(mark)
+        self.update_image_desc(selected_image)
 
         self.builder.recipe_model.reset()
         self.builder.package_model.reset()

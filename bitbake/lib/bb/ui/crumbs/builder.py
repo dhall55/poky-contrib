@@ -37,6 +37,7 @@ from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
                              AdvancedSettingDialog, LayerSelectionDialog, \
                              DeployImageDialog
 from bb.ui.crumbs.persistenttooltip import PersistentTooltip
+import bb.ui.crumbs.utils
 
 class Configuration:
     '''Represents the data structure of configuration.'''
@@ -96,6 +97,12 @@ class Configuration:
         self.conf_version = params["conf_version"]
         self.lconf_version = params["lconf_version"]
         self.image_fstypes = params["image_fstypes"]
+        self.tune_arch = params["tune_arch"]
+        self.bb_version = params["bb_version"]
+        self.target_arch = params["target_arch"]
+        self.target_os = params["target_os"]
+        self.distro_version = params["distro_version"]
+        self.tune_pkgarch = params["tune_pkgarch"]
         # bblayers.conf
         self.layers = params["layer"].split()
 
@@ -201,18 +208,11 @@ class Parameters:
         self.runnable_machine_patterns = params["runnable_machine_patterns"].split()
         self.deployable_image_types = params["deployable_image_types"].split()
         self.tmpdir = params["tmpdir"]
-        self.distro_version = params["distro_version"]
-        self.target_os = params["target_os"]
-        self.target_arch = params["target_arch"]
-        self.tune_pkgarch = params["tune_pkgarch"]
-        self.bb_version = params["bb_version"]
-        self.tune_arch = params["tune_arch"]
         self.enable_proxy = False
 
 class Builder(gtk.Window):
 
     (MACHINE_SELECTION,
-     CONFIG_UPDATED,
      RCPPKGINFO_POPULATING,
      RCPPKGINFO_POPULATED,
      BASEIMG_SELECTED,
@@ -225,7 +225,7 @@ class Builder(gtk.Window):
      IMAGE_GENERATED,
      MY_IMAGE_OPENED,
      BACK,
-     END_NOOP) = range(15)
+     END_NOOP) = range(14)
 
     (IMAGE_CONFIGURATION,
      RECIPE_DETAILS,
@@ -236,7 +236,6 @@ class Builder(gtk.Window):
 
     __step2page__ = {
         MACHINE_SELECTION     : IMAGE_CONFIGURATION,
-        CONFIG_UPDATED        : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATING : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATED  : IMAGE_CONFIGURATION,
         BASEIMG_SELECTED      : IMAGE_CONFIGURATION,
@@ -272,6 +271,9 @@ class Builder(gtk.Window):
         self.recipe_model = recipe_model
         self.package_model = package_model
 
+        # Indicate whether user has customized the image
+        self.customized = False
+
         # create visual elements
         self.create_visual_elements()
 
@@ -294,11 +296,7 @@ class Builder(gtk.Window):
         self.handler.connect("command-succeeded",        self.handler_command_succeeded_cb)
         self.handler.connect("command-failed",           self.handler_command_failed_cb)
 
-        self.handler.init_cooker()
-        self.handler.set_extra_inherit("image_types")
-        self.handler.parse_config()
-
-        self.switch_page(self.MACHINE_SELECTION)
+        self.initiate_new_build_async()
 
     def create_visual_elements(self):
         self.set_title("Hob")
@@ -334,6 +332,68 @@ class Builder(gtk.Window):
         self.show_all()
         self.nb.set_current_page(0)
 
+    def initiate_new_build_async(self):
+        self.switch_page(self.MACHINE_SELECTION)
+        self.handler.init_cooker()
+        self.handler.set_extra_inherit("image_types")
+        self.handler.parse_config()
+
+    def update_config_async(self):
+        self.switch_page(self.MACHINE_SELECTION)
+        self.set_user_config()
+        self.handler.parse_generate_configuration()
+
+    def populate_recipe_package_info_async(self):
+        self.switch_page(self.RCPPKGINFO_POPULATING)
+        # Parse recipes
+        self.set_user_config()
+        self.handler.generate_recipes()
+
+    def generate_packages_async(self):
+        self.switch_page(self.PACKAGE_GENERATING)
+        # Build packages
+        _, all_recipes = self.recipe_model.get_selected_recipes()
+        self.set_user_config()
+        self.handler.reset_build()
+        self.handler.generate_packages(all_recipes)
+
+    def fast_generate_image_async(self):
+        self.switch_page(self.FAST_IMAGE_GENERATING)
+        # Build packages
+        _, all_recipes = self.recipe_model.get_selected_recipes()
+        self.set_user_config()
+        self.handler.reset_build()
+        self.handler.generate_packages(all_recipes)
+
+    def generate_image_async(self):
+        self.switch_page(self.IMAGE_GENERATING)
+        # Build image
+        self.set_user_config()
+        packages = self.package_model.get_selected_packages()
+        toolchain_packages = []
+        if self.configuration.toolchain_build:
+            toolchain_packages = self.package_model.get_selected_packages_toolchain()
+        self.handler.reset_build()
+        self.handler.generate_image(packages,
+                                    self.hob_image,
+                                    self.hob_toolchain,
+                                    toolchain_packages)
+
+    def get_parameters_sync(self):
+        return self.handler.get_parameters()
+
+    def request_package_info_async(self):
+        self.handler.request_package_info()
+
+    def cancel_build_sync(self, force=False):
+        self.handler.cancel_build(force)
+
+    def generate_configuration_async(self):
+        self.handler.generate_configuration()
+
+    def cancel_parse_sync(self):
+        self.handler.cancel_parse()
+
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
@@ -343,7 +403,7 @@ class Builder(gtk.Window):
             if not os.path.exists(layer+'/conf/layer.conf'):
                 return False
 
-        self.switch_page(self.CONFIG_UPDATED)
+        self.update_config_async()
 
         self.template.destroy()
         self.template = None
@@ -371,17 +431,10 @@ class Builder(gtk.Window):
         if next_step == self.MACHINE_SELECTION: # init step
             self.image_configuration_page.show_machine()
 
-        elif next_step == self.CONFIG_UPDATED:
-            # after layers is changd by users
-            self.image_configuration_page.show_machine()
-            self.set_user_config()
-            self.handler.parse_generate_configuration()
-
         elif next_step == self.RCPPKGINFO_POPULATING:
             # MACHINE CHANGED action or SETTINGS CHANGED
             # show the progress bar
             self.image_configuration_page.show_info_populating()
-            self.generate_recipes()
 
         elif next_step == self.RCPPKGINFO_POPULATED:
             self.image_configuration_page.show_info_populated()
@@ -398,7 +451,6 @@ class Builder(gtk.Window):
         elif next_step == self.PACKAGE_GENERATING or next_step == self.FAST_IMAGE_GENERATING:
             # both PACKAGE_GENEATING and FAST_IMAGE_GENERATING share the same page
             self.build_details_page.show_page(next_step)
-            self.generate_packages()
 
         elif next_step == self.PACKAGE_GENERATED:
             pass
@@ -407,7 +459,6 @@ class Builder(gtk.Window):
             # after packages are generated, selected_packages need to
             # be updated in package_model per selected_image in recipe_model
             self.build_details_page.show_page(next_step)
-            self.generate_image()
 
         elif next_step == self.IMAGE_GENERATED:
             self.image_details_page.show_page(next_step)
@@ -456,31 +507,6 @@ class Builder(gtk.Window):
         left = self.package_model.set_selected_packages(selected_packages)
         self.configuration.selected_packages += left
 
-    def generate_packages(self):
-        # Build packages
-        _, all_recipes = self.recipe_model.get_selected_recipes()
-        self.set_user_config()
-        self.handler.reset_build()
-        self.handler.generate_packages(all_recipes)
-
-    def generate_recipes(self):
-        # Parse recipes
-        self.set_user_config()
-        self.handler.generate_recipes()
-
-    def generate_image(self):
-        # Build image
-        self.set_user_config()
-        packages = self.package_model.get_selected_packages()
-        toolchain_packages = []
-        if self.configuration.toolchain_build:
-            toolchain_packages = self.package_model.get_selected_packages_toolchain()
-        self.handler.reset_build()
-        self.handler.generate_image(packages,
-                                    self.hob_image,
-                                    self.hob_toolchain,
-                                    toolchain_packages)
-
     # Callback Functions
     def handler_config_updated_cb(self, handler, which, values):
         if which == "distro":
@@ -497,20 +523,20 @@ class Builder(gtk.Window):
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.PARSE_CONFIG:
             # settings
-            params = self.handler.get_parameters()
+            params = self.get_parameters_sync()
             self.configuration = Configuration(params)
             self.parameters = Parameters(params)
-            self.handler.generate_configuration()
+            self.generate_configuration_async()
         elif initcmd == self.handler.GENERATE_CONFIGURATION:
-            params = self.handler.get_parameters()
+            params = self.get_parameters_sync()
             self.configuration.update(params)
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
                          self.handler.GENERATE_IMAGE]:
-            params = self.handler.get_parameters()
+            params = self.get_parameters_sync()
             self.configuration.update(params)
-            self.handler.request_package_info_async()
+            self.request_package_info_async()
         elif initcmd == self.handler.POPULATE_PACKAGEINFO:
             if self.current_step == self.RCPPKGINFO_POPULATING:
                 self.switch_page(self.RCPPKGINFO_POPULATED)
@@ -519,7 +545,7 @@ class Builder(gtk.Window):
 
             self.rcppkglist_populated()
             if self.current_step == self.FAST_IMAGE_GENERATING:
-                self.switch_page(self.IMAGE_GENERATING)
+                self.generate_image_async()
             elif self.current_step == self.PACKAGE_GENERATING:
                 self.switch_page(self.PACKAGE_GENERATED)
             elif self.current_step == self.IMAGE_GENERATING:
@@ -535,7 +561,6 @@ class Builder(gtk.Window):
             HobButton.style_button(button)
             response = dialog.run()
             dialog.destroy()
-        self.handler.clear_busy()
         self.configuration.curr_mach = ""
         self.image_configuration_page.switch_machine_combo()
         self.switch_page(self.MACHINE_SELECTION)
@@ -577,6 +602,7 @@ class Builder(gtk.Window):
                                             " ".join(selected_packages))
 
         self.image_configuration_page.update_image_combo(self.recipe_model, selected_image)
+        self.image_configuration_page.update_image_desc(selected_image)
         self.update_recipe_model(selected_image, selected_recipes)
         self.update_package_model(selected_packages)
 
@@ -631,7 +657,7 @@ class Builder(gtk.Window):
         elif self.current_step == self.PACKAGE_GENERATING:
             fraction = 0
         self.build_details_page.update_progress_bar("Build Started: ", fraction)
-        self.build_details_page.show_configurations(self.configuration, self.parameters)
+        self.build_details_page.show_configurations(self.configuration)
 
     def build_succeeded(self):
         if self.current_step == self.FAST_IMAGE_GENERATING:
@@ -738,7 +764,7 @@ class Builder(gtk.Window):
             dialog.run()
             dialog.destroy()
             return
-        self.switch_page(self.PACKAGE_GENERATING)
+        self.generate_packages_async()
 
     def build_image(self):
         selected_packages = self.package_model.get_selected_packages()
@@ -751,7 +777,7 @@ class Builder(gtk.Window):
             dialog.run()
             dialog.destroy()
             return
-        self.switch_page(self.IMAGE_GENERATING)
+        self.generate_image_async()
 
     def just_bake(self):
         selected_image = self.recipe_model.get_selected_image()
@@ -768,7 +794,7 @@ class Builder(gtk.Window):
             dialog.destroy()
             return
 
-        self.switch_page(self.FAST_IMAGE_GENERATING)
+        self.fast_generate_image_async()
 
     def show_binb_dialog(self, binb):
         markup = "<b>Brought in by:</b>\n%s" % binb
@@ -793,7 +819,7 @@ class Builder(gtk.Window):
             self.configuration.layers = dialog.layers
             # DO refresh layers
             if dialog.layers_changed:
-                self.switch_page(self.CONFIG_UPDATED)
+                self.update_config_async()
         dialog.destroy()
 
     def show_load_template_dialog(self):
@@ -884,9 +910,9 @@ class Builder(gtk.Window):
     def reparse_post_adv_settings(self):
         # DO reparse recipes
         if not self.configuration.curr_mach:
-            self.switch_page(self.CONFIG_UPDATED)
+            self.update_config_async()
         else:
-            self.switch_page(self.RCPPKGINFO_POPULATING)
+            self.populate_recipe_package_info_async()
 
     def deploy_image(self, image_name):
         if not image_name:
@@ -944,12 +970,13 @@ class Builder(gtk.Window):
         if response == gtk.RESPONSE_YES:
             source_env_path = os.path.join(self.parameters.core_base, "oe-init-build-env")
             tmp_path = self.parameters.tmpdir
+            cmdline = bb.ui.crumbs.utils.which_terminal()
             if os.path.exists(image_path) and os.path.exists(kernel_path) \
-               and os.path.exists(source_env_path) and os.path.exists(tmp_path):
-                cmdline = "/usr/bin/xterm -e "
-                cmdline += "\" export OE_TMPDIR=" + tmp_path + "; "
+               and os.path.exists(source_env_path) and os.path.exists(tmp_path) \
+               and cmdline:
+                cmdline += "\' bash -c \"export OE_TMPDIR=" + tmp_path + "; "
                 cmdline += "source " + source_env_path + " " + os.getcwd() + "; "
-                cmdline += "runqemu " + kernel_path + " " + image_path + "; bash\""
+                cmdline += "runqemu " + kernel_path + " " + image_path + "\"\'"
                 subprocess.Popen(shlex.split(cmdline))
             else:
                 lbl = "<b>Path error</b>\nOne of your paths is wrong,"
@@ -958,6 +985,7 @@ class Builder(gtk.Window):
                 lbl = lbl + "kernel path:" + kernel_path + "\n"
                 lbl = lbl + "source environment path:" + source_env_path + "\n"
                 lbl = lbl + "tmp path: " + tmp_path + "."
+                lbl = lbl + "You may be missing either xterm or vte for terminal services."
                 dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
                 button = dialog.add_button("Close", gtk.RESPONSE_OK)
                 HobButton.style_button(button)
@@ -978,7 +1006,7 @@ class Builder(gtk.Window):
             response = dialog.run()
             dialog.destroy()
             if response == gtk.RESPONSE_YES:
-                self.switch_page(self.PACKAGE_GENERATING)
+                self.generate_packages_async()
             else:
                 self.switch_page(self.PACKAGE_SELECTION)
         else:
@@ -987,18 +1015,8 @@ class Builder(gtk.Window):
     def show_recipes(self):
         self.switch_page(self.RECIPE_SELECTION)
 
-    def initiate_new_build(self):
-        self.handler.init_cooker()
-        self.handler.set_extra_inherit("image_types")
-        self.handler.parse_config()
-        self.image_configuration_page.switch_machine_combo()
-        self.switch_page(self.MACHINE_SELECTION)
-
     def show_configuration(self):
         self.switch_page(self.BASEIMG_SELECTED)
-
-    def stop_parse(self):
-        self.handler.cancel_parse()
 
     def stop_build(self):
         if self.stopping:
@@ -1033,6 +1051,6 @@ class Builder(gtk.Window):
         if response != gtk.RESPONSE_CANCEL:
             self.stopping = True
         if response == gtk.RESPONSE_OK:
-            self.handler.cancel_build()
+            self.cancel_build_sync()
         elif response == gtk.RESPONSE_YES:
-            self.handler.cancel_build(True)
+            self.cancel_build_sync(True)
