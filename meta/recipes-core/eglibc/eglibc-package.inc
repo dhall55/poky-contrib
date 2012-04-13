@@ -76,6 +76,11 @@ do_install_append () {
 	rm -f ${D}${sysconfdir}/localtime
 
 	oe_multilib_header bits/syscall.h
+	
+	if [ -f ${D}${bindir}/mtrace ]
+	then
+		sed -e "s# /bin/perl# ${bindir}/perl#" -i ${D}${bindir}/mtrace 
+	fi
 }
 
 do_install_locale () {
