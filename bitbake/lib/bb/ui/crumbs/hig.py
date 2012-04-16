@@ -392,7 +392,10 @@ class AdvancedSettingDialog (CrumbsDialog):
         j = 1
         for image_type in self.image_types:
             self.image_types_checkbuttons[image_type] = gtk.CheckButton(image_type)
-            self.image_types_checkbuttons[image_type].set_tooltip_text("Build an %s image" % image_type)
+            article = ""
+            if image_type.startswith(("a", "e", "i", "o", "u")):
+                article = "n"
+            self.image_types_checkbuttons[image_type].set_tooltip_text("Build a%s %s image" % (article, image_type))
             table.attach(self.image_types_checkbuttons[image_type], j, j + 4, i, i + 1)
             if image_type in self.configuration.image_fstypes.split():
                 self.image_types_checkbuttons[image_type].set_active(True)
@@ -1104,7 +1107,7 @@ class ImageSelectionDialog (CrumbsDialog):
                 for image_type in self.image_types:
                     for real_image_type in hcc.SUPPORTED_IMAGE_TYPES[image_type]:
                         if f.endswith('.' + real_image_type):
-                            imageset.add(f.rsplit('.' + real_image_type)[0])
+                            imageset.add(f.rsplit('.' + real_image_type)[0].rsplit('.rootfs')[0])
                             self.image_list.append(f)
         
         for image in imageset:

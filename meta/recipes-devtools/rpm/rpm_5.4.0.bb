@@ -44,8 +44,8 @@ LIC_FILES_CHKSUM = "file://COPYING.LIB;md5=2d5025d4aa3495befef8f17206a5b0a1"
 
 DEPENDS = "bzip2 zlib db openssl elfutils expat libpcre attr acl popt ${extrarpmdeps}"
 extrarpmdeps = "python perl file"
-extrarpmdeps_virtclass-native = "file-native"
-PR = "r35"
+extrarpmdeps_virtclass-native = "python-native file-native"
+PR = "r36"
 
 # rpm2cpio is a shell script, which is part of the rpm src.rpm.  It is needed
 # in order to extract the distribution SRPM into a format we can extract...
@@ -69,6 +69,7 @@ SRC_URI = "http://www.rpm5.org/files/rpm/rpm-5.4/rpm-5.4.0-0.20101229.src.rpm;ex
 	   file://fix_for_automake_1.11.2.patch \
 	   file://pythondeps.sh \
 	   file://rpmdeps-oecore.patch \
+	   file://rpm-resolvedep.patch \
 	  "
 
 #	   file://rpm-autoconf.patch \
@@ -98,8 +99,6 @@ WITH_PYTHON = "	--with-python=${PYTHON_BASEVERSION} \
 		--with-python-lib-dir=${libdir}/python${PYTHON_BASEVERSION} \
 		--without-pythonembed \
 	      "
-
-WITH_PYTHON_virtclass-native = " --without-python"
 
 # Perl modules are not built, but they could be enabled fairly easily
 # the perl module creation and installation would need to be patched.

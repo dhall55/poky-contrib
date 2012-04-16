@@ -59,7 +59,7 @@ class HobHandler(gobject.GObject):
                                      (gobject.TYPE_PYOBJECT,)),
     }
 
-    (PARSE_CONFIG, GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(6)
+    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(5)
     (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE) = range(10)
 
     def __init__(self, server, recipe_model, package_model):
@@ -91,6 +91,15 @@ class HobHandler(gobject.GObject):
             self.emit("data-generated")
             self.generating = False
 
+    def runCommand(self, commandline):
+        try:
+            return self.server.runCommand(commandline)
+        except Exception as e:
+            self.commands_async = []
+            self.clear_busy()
+            self.emit("command-failed", "Hob Exception - %s" % (str(e)))
+            return None
+
     def run_next_command(self, initcmd=None):
         if initcmd != None:
             self.initcmd = initcmd
@@ -105,36 +114,37 @@ class HobHandler(gobject.GObject):
             return
 
         if next_command == self.SUB_PATH_LAYERS:
-            self.server.runCommand(["findConfigFilePath", "bblayers.conf"])
+            self.runCommand(["findConfigFilePath", "bblayers.conf"])
         elif next_command == self.SUB_FILES_DISTRO:
-            self.server.runCommand(["findConfigFiles", "DISTRO"])
+            self.runCommand(["findConfigFiles", "DISTRO"])
         elif next_command == self.SUB_FILES_MACH:
-            self.server.runCommand(["findConfigFiles", "MACHINE"])
+            self.runCommand(["findConfigFiles", "MACHINE"])
         elif next_command == self.SUB_FILES_SDKMACH:
-            self.server.runCommand(["findConfigFiles", "MACHINE-SDK"])
+            self.runCommand(["findConfigFiles", "MACHINE-SDK"])
         elif next_command == self.SUB_MATCH_CLASS:
-            self.server.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
+            self.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
         elif next_command == self.SUB_PARSE_CONFIG:
-            self.server.runCommand(["parseConfigurationFiles", "", ""])
+            self.runCommand(["parseConfigurationFiles", "", ""])
         elif next_command == self.SUB_GNERATE_TGTS:
-            self.server.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
+            self.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
         elif next_command == self.SUB_GENERATE_PKGINFO:
-            self.server.runCommand(["triggerEvent", "bb.event.RequestPackageInfo()"])
+            self.runCommand(["triggerEvent", "bb.event.RequestPackageInfo()"])
         elif next_command == self.SUB_BUILD_RECIPES:
             self.clear_busy()
             self.building = True
-            self.server.runCommand(["buildTargets", self.recipe_queue, "build"])
+            self.runCommand(["buildTargets", self.recipe_queue, self.default_task])
             self.recipe_queue = []
         elif next_command == self.SUB_BUILD_IMAGE:
             self.clear_busy()
             self.building = True
-            targets = [self.hob_image]
-            self.server.runCommand(["setVariable", "LINGUAS_INSTALL", ""])
-            self.server.runCommand(["setVariable", "PACKAGE_INSTALL", " ".join(self.package_queue)])
+            targets = [self.image]
+            if self.package_queue:
+                self.runCommand(["setVariable", "LINGUAS_INSTALL", ""])
+                self.runCommand(["setVariable", "PACKAGE_INSTALL", " ".join(self.package_queue)])
             if self.toolchain_packages:
-                self.server.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(self.toolchain_packages)])
-                targets.append(self.hob_toolchain)
-            self.server.runCommand(["buildTargets", targets, "build"])
+                self.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(self.toolchain_packages)])
+                targets.append(self.toolchain)
+            self.runCommand(["buildTargets", targets, self.default_task])
 
     def handle_event(self, event):
         if not event:
@@ -179,27 +189,6 @@ class HobHandler(gobject.GObject):
         elif isinstance(event, bb.command.CommandCompleted):
             self.current_phase = None
             self.run_next_command()
-        # TODO: Currently there are NoProvider issues when generate
-        # universe tree dependency for non-x86 architecture.
-        # Comment the follow code to enable the build of non-x86
-        # architectures in Hob.
-        #elif isinstance(event, bb.event.NoProvider):
-        #    if event._runtime:
-        #        r = "R"
-        #    else:
-        #        r = ""
-        #    if event._dependees:
-        #        self.error_msg += " Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)" % (r, event._item, ", ".join(event._dependees), r)
-        #    else:
-        #        self.error_msg += " Nothing %sPROVIDES '%s'" % (r, event._item)
-        #    if event._reasons:
-        #        for reason in event._reasons:
-        #            self.error_msg += " %s" % reason
-
-        #    self.commands_async = []
-        #    self.emit("command-failed", self.error_msg)
-        #    self.error_msg = ""
-
         elif isinstance(event, bb.command.CommandFailed):
             self.commands_async = []
             self.clear_busy()
@@ -237,99 +226,94 @@ class HobHandler(gobject.GObject):
         return
 
     def init_cooker(self):
-        self.server.runCommand(["initCooker"])
-
-    def parse_config(self):
-        self.commands_async.append(self.SUB_PARSE_CONFIG)
-        self.run_next_command(self.PARSE_CONFIG)
-
-    def parse_generate_configuration(self):
-        self.commands_async.append(self.SUB_PARSE_CONFIG)
-        self.generate_configuration()
+        self.runCommand(["initCooker"])
 
     def set_extra_inherit(self, bbclass):
-        inherits = self.server.runCommand(["getVariable", "INHERIT"]) or ""
+        inherits = self.runCommand(["getVariable", "INHERIT"]) or ""
         inherits = inherits + " " + bbclass
-        self.server.runCommand(["setVariable", "INHERIT", inherits])
+        self.runCommand(["setVariable", "INHERIT", inherits])
 
     def set_bblayers(self, bblayers):
-        self.server.runCommand(["setVariable", "BBLAYERS", " ".join(bblayers)])
+        self.runCommand(["setVariable", "BBLAYERS_HOB", " ".join(bblayers)])
 
     def set_machine(self, machine):
         if machine:
-            self.server.runCommand(["setVariable", "MACHINE", machine])
+            self.runCommand(["setVariable", "MACHINE_HOB", machine])
 
     def set_sdk_machine(self, sdk_machine):
-        self.server.runCommand(["setVariable", "SDKMACHINE", sdk_machine])
+        self.runCommand(["setVariable", "SDKMACHINE_HOB", sdk_machine])
 
     def set_image_fstypes(self, image_fstypes):
-        self.server.runCommand(["setVariable", "IMAGE_FSTYPES", image_fstypes])
+        self.runCommand(["setVariable", "IMAGE_FSTYPES", image_fstypes])
 
     def set_distro(self, distro):
-        if distro != "defaultsetup":
-            self.server.runCommand(["setVariable", "DISTRO", distro])
+        self.runCommand(["setVariable", "DISTRO_HOB", distro])
 
     def set_package_format(self, format):
         package_classes = ""
         for pkgfmt in format.split():
             package_classes += ("package_%s" % pkgfmt + " ")
-        self.server.runCommand(["setVariable", "PACKAGE_CLASSES", package_classes])
+        self.runCommand(["setVariable", "PACKAGE_CLASSES_HOB", package_classes])
 
     def set_bbthreads(self, threads):
-        self.server.runCommand(["setVariable", "BB_NUMBER_THREADS", threads])
+        self.runCommand(["setVariable", "BB_NUMBER_THREADS_HOB", threads])
 
     def set_pmake(self, threads):
         pmake = "-j %s" % threads
-        self.server.runCommand(["setVariable", "PARALLEL_MAKE", pmake])
+        self.runCommand(["setVariable", "PARALLEL_MAKE_HOB", pmake])
 
     def set_dl_dir(self, directory):
-        self.server.runCommand(["setVariable", "DL_DIR", directory])
+        self.runCommand(["setVariable", "DL_DIR_HOB", directory])
 
     def set_sstate_dir(self, directory):
-        self.server.runCommand(["setVariable", "SSTATE_DIR", directory])
+        self.runCommand(["setVariable", "SSTATE_DIR_HOB", directory])
 
     def set_sstate_mirror(self, url):
-        self.server.runCommand(["setVariable", "SSTATE_MIRROR", url])
+        self.runCommand(["setVariable", "SSTATE_MIRROR_HOB", url])
 
     def set_extra_size(self, image_extra_size):
-        self.server.runCommand(["setVariable", "IMAGE_ROOTFS_EXTRA_SPACE", str(image_extra_size)])
+        self.runCommand(["setVariable", "IMAGE_ROOTFS_EXTRA_SPACE", str(image_extra_size)])
 
     def set_rootfs_size(self, image_rootfs_size):
-        self.server.runCommand(["setVariable", "IMAGE_ROOTFS_SIZE", str(image_rootfs_size)])
+        self.runCommand(["setVariable", "IMAGE_ROOTFS_SIZE", str(image_rootfs_size)])
 
     def set_incompatible_license(self, incompat_license):
-        self.server.runCommand(["setVariable", "INCOMPATIBLE_LICENSE", incompat_license])
+        self.runCommand(["setVariable", "INCOMPATIBLE_LICENSE_HOB", incompat_license])
 
     def set_extra_config(self, extra_setting):
         for key in extra_setting.keys():
             value = extra_setting[key]
-            self.server.runCommand(["setVariable", key, value])
+            self.runCommand(["setVariable", key, value])
+
+    def set_config_filter(self, config_filter):
+        self.runCommand(["setConfFilter", config_filter])
 
     def set_http_proxy(self, http_proxy):
-        self.server.runCommand(["setVariable", "http_proxy", http_proxy])
+        self.runCommand(["setVariable", "http_proxy", http_proxy])
 
     def set_https_proxy(self, https_proxy):
-        self.server.runCommand(["setVariable", "https_proxy", https_proxy])
+        self.runCommand(["setVariable", "https_proxy", https_proxy])
 
     def set_ftp_proxy(self, ftp_proxy):
-        self.server.runCommand(["setVariable", "ftp_proxy", ftp_proxy])
+        self.runCommand(["setVariable", "ftp_proxy", ftp_proxy])
 
     def set_all_proxy(self, all_proxy):
-        self.server.runCommand(["setVariable", "all_proxy", all_proxy])
+        self.runCommand(["setVariable", "all_proxy", all_proxy])
 
     def set_git_proxy(self, host, port):
-        self.server.runCommand(["setVariable", "GIT_PROXY_HOST", host])
-        self.server.runCommand(["setVariable", "GIT_PROXY_PORT", port])
+        self.runCommand(["setVariable", "GIT_PROXY_HOST", host])
+        self.runCommand(["setVariable", "GIT_PROXY_PORT", port])
 
     def set_cvs_proxy(self, host, port):
-        self.server.runCommand(["setVariable", "CVS_PROXY_HOST", host])
-        self.server.runCommand(["setVariable", "CVS_PROXY_PORT", port])
+        self.runCommand(["setVariable", "CVS_PROXY_HOST", host])
+        self.runCommand(["setVariable", "CVS_PROXY_PORT", port])
 
     def request_package_info(self):
         self.commands_async.append(self.SUB_GENERATE_PKGINFO)
         self.run_next_command(self.POPULATE_PACKAGEINFO)
 
     def generate_configuration(self):
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_PATH_LAYERS)
         self.commands_async.append(self.SUB_FILES_DISTRO)
         self.commands_async.append(self.SUB_FILES_MACH)
@@ -342,19 +326,21 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_GNERATE_TGTS)
         self.run_next_command(self.GENERATE_RECIPES)
                  
-    def generate_packages(self, tgts):
+    def generate_packages(self, tgts, default_task="build"):
         targets = []
         targets.extend(tgts)
         self.recipe_queue = targets
+        self.default_task = default_task
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
-    def generate_image(self, tgts, hob_image, hob_toolchain, toolchain_packages=[]):
-        self.package_queue = tgts
-        self.hob_image = hob_image
-        self.hob_toolchain = hob_toolchain
+    def generate_image(self, image, toolchain, image_packages=[], toolchain_packages=[], default_task="build"):
+        self.image = image
+        self.toolchain = toolchain
+        self.package_queue = image_packages
         self.toolchain_packages = toolchain_packages
+        self.default_task = default_task
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)
@@ -368,16 +354,16 @@ class HobHandler(gobject.GObject):
         self.building = False
 
     def cancel_parse(self):
-        self.server.runCommand(["stateStop"])
+        self.runCommand(["stateStop"])
 
     def cancel_build(self, force=False):
         if force:
             # Force the cooker to stop as quickly as possible
-            self.server.runCommand(["stateStop"])
+            self.runCommand(["stateStop"])
         else:
             # Wait for tasks to complete before shutting down, this helps
             # leave the workdir in a usable state
-            self.server.runCommand(["stateShutdown"])
+            self.runCommand(["stateShutdown"])
 
     def reset_build(self):
         self.build.reset()
@@ -392,19 +378,19 @@ class HobHandler(gobject.GObject):
     def get_parameters(self):
         # retrieve the parameters from bitbake
         params = {}
-        params["core_base"] = self.server.runCommand(["getVariable", "COREBASE"]) or ""
+        params["core_base"] = self.runCommand(["getVariable", "COREBASE"]) or ""
         hob_layer = params["core_base"] + "/meta-hob"
-        params["layer"] = self.server.runCommand(["getVariable", "BBLAYERS"]) or ""
+        params["layer"] = self.runCommand(["getVariable", "BBLAYERS"]) or ""
         if hob_layer not in params["layer"].split():
             params["layer"] += (" " + hob_layer)
-        params["dldir"] = self.server.runCommand(["getVariable", "DL_DIR"]) or ""
-        params["machine"] = self.server.runCommand(["getVariable", "MACHINE"]) or ""
-        params["distro"] = self.server.runCommand(["getVariable", "DISTRO"]) or "defaultsetup"
-        params["pclass"] = self.server.runCommand(["getVariable", "PACKAGE_CLASSES"]) or ""
-        params["sstatedir"] = self.server.runCommand(["getVariable", "SSTATE_DIR"]) or ""
-        params["sstatemirror"] = self.server.runCommand(["getVariable", "SSTATE_MIRROR"]) or ""
+        params["dldir"] = self.runCommand(["getVariable", "DL_DIR"]) or ""
+        params["machine"] = self.runCommand(["getVariable", "MACHINE"]) or ""
+        params["distro"] = self.runCommand(["getVariable", "DISTRO"]) or "defaultsetup"
+        params["pclass"] = self.runCommand(["getVariable", "PACKAGE_CLASSES"]) or ""
+        params["sstatedir"] = self.runCommand(["getVariable", "SSTATE_DIR"]) or ""
+        params["sstatemirror"] = self.runCommand(["getVariable", "SSTATE_MIRROR"]) or ""
 
-        num_threads = self.server.runCommand(["getCpuCount"])
+        num_threads = self.runCommand(["getCpuCount"])
         if not num_threads:
             num_threads = 1
             max_threads = 65536
@@ -417,7 +403,7 @@ class HobHandler(gobject.GObject):
                 max_threads = 65536
         params["max_threads"] = max_threads
 
-        bbthread = self.server.runCommand(["getVariable", "BB_NUMBER_THREADS"])
+        bbthread = self.runCommand(["getVariable", "BB_NUMBER_THREADS"])
         if not bbthread:
             bbthread = num_threads
         else:
@@ -427,7 +413,7 @@ class HobHandler(gobject.GObject):
                 bbthread = num_threads
         params["bbthread"] = bbthread
 
-        pmake = self.server.runCommand(["getVariable", "PARALLEL_MAKE"])
+        pmake = self.runCommand(["getVariable", "PARALLEL_MAKE"])
         if not pmake:
             pmake = num_threads
         elif isinstance(pmake, int):
@@ -439,9 +425,9 @@ class HobHandler(gobject.GObject):
                 pmake = num_threads
         params["pmake"] = "-j %s" % pmake
 
-        params["image_addr"] = self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"]) or ""
+        params["image_addr"] = self.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"]) or ""
 
-        image_extra_size = self.server.runCommand(["getVariable", "IMAGE_ROOTFS_EXTRA_SPACE"])
+        image_extra_size = self.runCommand(["getVariable", "IMAGE_ROOTFS_EXTRA_SPACE"])
         if not image_extra_size:
             image_extra_size = 0
         else:
@@ -451,7 +437,7 @@ class HobHandler(gobject.GObject):
                 image_extra_size = 0
         params["image_extra_size"] = image_extra_size
 
-        image_rootfs_size = self.server.runCommand(["getVariable", "IMAGE_ROOTFS_SIZE"])
+        image_rootfs_size = self.runCommand(["getVariable", "IMAGE_ROOTFS_SIZE"])
         if not image_rootfs_size:
             image_rootfs_size = 0
         else:
@@ -461,7 +447,7 @@ class HobHandler(gobject.GObject):
                 image_rootfs_size = 0
         params["image_rootfs_size"] = image_rootfs_size
 
-        image_overhead_factor = self.server.runCommand(["getVariable", "IMAGE_OVERHEAD_FACTOR"])
+        image_overhead_factor = self.runCommand(["getVariable", "IMAGE_OVERHEAD_FACTOR"])
         if not image_overhead_factor:
             image_overhead_factor = 1
         else:
@@ -471,36 +457,37 @@ class HobHandler(gobject.GObject):
                 image_overhead_factor = 1
         params['image_overhead_factor'] = image_overhead_factor
 
-        params["incompat_license"] = self._remove_redundant(self.server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"]) or "")
-        params["sdk_machine"] = self.server.runCommand(["getVariable", "SDKMACHINE"]) or self.server.runCommand(["getVariable", "SDK_ARCH"]) or ""
+        params["incompat_license"] = self._remove_redundant(self.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"]) or "")
+        params["sdk_machine"] = self.runCommand(["getVariable", "SDKMACHINE"]) or self.runCommand(["getVariable", "SDK_ARCH"]) or ""
 
-        params["image_fstypes"] = self._remove_redundant(self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]) or "")
+        params["image_fstypes"] = self._remove_redundant(self.runCommand(["getVariable", "IMAGE_FSTYPES"]) or "")
 
-        params["image_types"] = self._remove_redundant(self.server.runCommand(["getVariable", "IMAGE_TYPES"]) or "")
+        params["image_types"] = self._remove_redundant(self.runCommand(["getVariable", "IMAGE_TYPES"]) or "")
 
-        params["conf_version"] = self.server.runCommand(["getVariable", "CONF_VERSION"]) or ""
-        params["lconf_version"] = self.server.runCommand(["getVariable", "LCONF_VERSION"]) or ""
+        params["conf_version"] = self.runCommand(["getVariable", "CONF_VERSION"]) or ""
+        params["lconf_version"] = self.runCommand(["getVariable", "LCONF_VERSION"]) or ""
 
-        params["runnable_image_types"] = self._remove_redundant(self.server.runCommand(["getVariable", "RUNNABLE_IMAGE_TYPES"]) or "")
-        params["runnable_machine_patterns"] = self._remove_redundant(self.server.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or "")
-        params["deployable_image_types"] = self._remove_redundant(self.server.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or "")
-        params["tmpdir"] = self.server.runCommand(["getVariable", "TMPDIR"]) or ""
-        params["distro_version"] = self.server.runCommand(["getVariable", "DISTRO_VERSION"]) or ""
-        params["target_os"] = self.server.runCommand(["getVariable", "TARGET_OS"]) or ""
-        params["target_arch"] = self.server.runCommand(["getVariable", "TARGET_ARCH"]) or ""
-        params["tune_pkgarch"] = self.server.runCommand(["getVariable", "TUNE_PKGARCH"])  or ""
-        params["bb_version"] = self.server.runCommand(["getVariable", "BB_MIN_VERSION"]) or ""
-        params["tune_arch"] = self.server.runCommand(["getVariable", "TUNE_ARCH"]) or ""
+        params["runnable_image_types"] = self._remove_redundant(self.runCommand(["getVariable", "RUNNABLE_IMAGE_TYPES"]) or "")
+        params["runnable_machine_patterns"] = self._remove_redundant(self.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or "")
+        params["deployable_image_types"] = self._remove_redundant(self.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or "")
+        params["tmpdir"] = self.runCommand(["getVariable", "TMPDIR"]) or ""
+        params["distro_version"] = self.runCommand(["getVariable", "DISTRO_VERSION"]) or ""
+        params["target_os"] = self.runCommand(["getVariable", "TARGET_OS"]) or ""
+        params["target_arch"] = self.runCommand(["getVariable", "TARGET_ARCH"]) or ""
+        params["tune_pkgarch"] = self.runCommand(["getVariable", "TUNE_PKGARCH"])  or ""
+        params["bb_version"] = self.runCommand(["getVariable", "BB_MIN_VERSION"]) or ""
 
-        params["git_proxy_host"] = self.server.runCommand(["getVariable", "GIT_PROXY_HOST"]) or ""
-        params["git_proxy_port"] = self.server.runCommand(["getVariable", "GIT_PROXY_PORT"]) or ""
+        params["default_task"] = self.runCommand(["getVariable", "BB_DEFAULT_TASK"]) or "build"
 
-        params["http_proxy"] = self.server.runCommand(["getVariable", "http_proxy"]) or ""
-        params["ftp_proxy"] = self.server.runCommand(["getVariable", "ftp_proxy"]) or ""
-        params["https_proxy"] = self.server.runCommand(["getVariable", "https_proxy"]) or ""
-        params["all_proxy"] = self.server.runCommand(["getVariable", "all_proxy"]) or ""
+        params["git_proxy_host"] = self.runCommand(["getVariable", "GIT_PROXY_HOST"]) or ""
+        params["git_proxy_port"] = self.runCommand(["getVariable", "GIT_PROXY_PORT"]) or ""
 
-        params["cvs_proxy_host"] = self.server.runCommand(["getVariable", "CVS_PROXY_HOST"]) or ""
-        params["cvs_proxy_port"] = self.server.runCommand(["getVariable", "CVS_PROXY_PORT"]) or ""
+        params["http_proxy"] = self.runCommand(["getVariable", "http_proxy"]) or ""
+        params["ftp_proxy"] = self.runCommand(["getVariable", "ftp_proxy"]) or ""
+        params["https_proxy"] = self.runCommand(["getVariable", "https_proxy"]) or ""
+        params["all_proxy"] = self.runCommand(["getVariable", "all_proxy"]) or ""
+
+        params["cvs_proxy_host"] = self.runCommand(["getVariable", "CVS_PROXY_HOST"]) or ""
+        params["cvs_proxy_port"] = self.runCommand(["getVariable", "CVS_PROXY_PORT"]) or ""
 
         return params

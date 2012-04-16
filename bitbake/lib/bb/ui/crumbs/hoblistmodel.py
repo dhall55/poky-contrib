@@ -42,6 +42,8 @@ class PackageListModel(gtk.TreeStore):
                                 ()),
     }
 
+    __toolchain_required_packages__ = ["task-core-standalone-sdk-target", "task-core-standalone-sdk-target-dbg"]
+
     def __init__(self):
 
         self.contents = None
@@ -389,7 +391,7 @@ class PackageListModel(gtk.TreeStore):
                     child_it = self.iter_next(child_it)
             it = self.iter_next(it)
 
-        return packagelist
+        return list(set(packagelist + self.__toolchain_required_packages__));
     """
     Return the selected package size, unit is B.
     """
@@ -614,22 +616,6 @@ class RecipeListModel(gtk.ListStore):
 
     def path_included(self, item_path):
         return self[item_path][self.COL_INC]
-
-    """
-    Append a certain image into the combobox
-    """
-    def image_list_append(self, name, deps, install):
-        # check whether a certain image is there
-        if not name or self.find_path_for_item(name):
-            return
-        it = self.append()
-        self.set(it, self.COL_NAME, name, self.COL_DESC, "",
-                 self.COL_LIC, "", self.COL_GROUP, "",
-                 self.COL_DEPS, deps, self.COL_BINB, "",
-                 self.COL_TYPE, "image", self.COL_INC, False,
-                 self.COL_IMG, False, self.COL_INSTALL, install,
-                 self.COL_PN, name)
-        self.pn_path[name] = self.get_path(it)
 
     """
     Add this item, and any of its dependencies, to the image contents
