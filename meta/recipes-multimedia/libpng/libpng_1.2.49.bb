@@ -22,4 +22,4 @@ FILES_${PN} = "${libdir}/lib*${SOLIBS}"
 FILES_${PN}-dev += " ${bindir} ${sbindir}"
 RPROVIDES_${PN}-dev += "${PN}12-dev"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
