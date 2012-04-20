@@ -33,3 +33,5 @@ do_install_append () {
 	rm -rf ${D}${libdir}/preloadable_libiconv.so
 	rm -rf ${D}${libdir}/charset.alias
 }
+
+BBCLASSEXTEND = "native"
