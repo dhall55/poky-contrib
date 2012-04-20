@@ -26,12 +26,14 @@ SRC_URI = "${KERNELORG_MIRROR}/linux/utils/util-linux/v${MAJOR_VERSION}/util-lin
            file://make_include \
            "
 
-PACKAGES =+ "util-linux-agetty util-linux-fdisk util-linux-cfdisk util-linux-sfdisk \
-             util-linux-swaponoff util-linux-losetup util-linux-umount \
-             util-linux-mount util-linux-readprofile util-linux-libblkid \
-             util-linux-libblkid-dev util-linux-libuuid util-linux-libuuid-dev \
-             util-linux-uuidgen util-linux-lscpu util-linux-fsck util-linux-blkid \
-             util-linux-chkdupexe util-linux-mkfs util-linux-mcookie"
+PKGSUFFIX = ""
+
+PACKAGES =+ "util-linux-agetty${PKGSUFFIX} util-linux-fdisk${PKGSUFFIX} util-linux-cfdisk${PKGSUFFIX} util-linux-sfdisk${PKGSUFFIX} \
+             util-linux-swaponoff${PKGSUFFIX} util-linux-losetup${PKGSUFFIX} util-linux-umount${PKGSUFFIX} \
+             util-linux-mount${PKGSUFFIX} util-linux-readprofile${PKGSUFFIX} util-linux-libblkid${PKGSUFFIX} \
+             util-linux-libblkid-dev${PKGSUFFIX} util-linux-libuuid${PKGSUFFIX} util-linux-libuuid-dev${PKGSUFFIX} \
+             util-linux-uuidgen${PKGSUFFIX} util-linux-lscpu${PKGSUFFIX} util-linux-fsck util-linux-blkid${PKGSUFFIX} \
+             util-linux-chkdupexe${PKGSUFFIX} util-linux-mkfs${PKGSUFFIX} util-linux-mcookie${PKGSUFFIX}"
 
 EXTRA_OECONF = "--libdir=${base_libdir} --disable-use-tty-group \
                 --disable-makeinstall-chown --enable-elvtune --enable-init \
@@ -42,32 +44,32 @@ EXTRA_OECONF = "--libdir=${base_libdir} --disable-use-tty-group \
 
 FILES_${PN}-doc += "${datadir}/getopt/getopt-*.*"
 
-FILES_util-linux-agetty = "${base_sbindir}/agetty"
-FILES_util-linux-fdisk = "${base_sbindir}/fdisk.${PN}"
-FILES_util-linux-cfdisk = "${base_sbindir}/cfdisk"
-FILES_util-linux-sfdisk = "${sbindir}/sfdisk"
-FILES_util-linux-swaponoff = "${base_sbindir}/swapon.${PN} ${sbindir}/swapoff.${PN}"
-FILES_util-linux-losetup = "${base_sbindir}/losetup.${PN}"
-FILES_util-linux-mount = "${base_bindir}/mount.${PN}"
-FILES_util-linux-mcookie = "${bindir}/mcookie"
-FILES_util-linux-umount = "${base_bindir}/umount.${PN}"
-FILES_util-linux-readprofile = "${base_sbindir}/readprofile.${PN}"
-FILES_util-linux-uuidgen = "${bindir}/uuidgen"
+FILES_util-linux-agetty${PKGSUFFIX} = "${base_sbindir}/agetty"
+FILES_util-linux-fdisk${PKGSUFFIX} = "${base_sbindir}/fdisk.${PN}"
+FILES_util-linux-cfdisk${PKGSUFFIX} = "${base_sbindir}/cfdisk"
+FILES_util-linux-sfdisk${PKGSUFFIX} = "${sbindir}/sfdisk"
+FILES_util-linux-swaponoff${PKGSUFFIX} = "${base_sbindir}/swapon.${PN} ${sbindir}/swapoff.${PN}"
+FILES_util-linux-losetup${PKGSUFFIX} = "${base_sbindir}/losetup.${PN}"
+FILES_util-linux-mount${PKGSUFFIX} = "${base_bindir}/mount.${PN}"
+FILES_util-linux-mcookie${PKGSUFFIX} = "${bindir}/mcookie"
+FILES_util-linux-umount${PKGSUFFIX} = "${base_bindir}/umount.${PN}"
+FILES_util-linux-readprofile${PKGSUFFIX} = "${base_sbindir}/readprofile.${PN}"
+FILES_util-linux-uuidgen${PKGSUFFIX} = "${bindir}/uuidgen"
 
-FILES_util-linux-libblkid = "${base_libdir}/libblkid.so.*"
-FILES_util-linux-libblkid-dev = "${base_libdir}/libblkid.so ${base_libdir}/libblkid.a ${base_libdir}/libblkid.la ${includedir}/blkid ${libdir}/pkgconfig/blkid.pc"
-FILES_util-linux-libuuid = "${base_libdir}/libuuid.so.*"
-FILES_util-linux-libuuid-dev = "${base_libdir}/libuuid.so ${base_libdir}/libuuid.a ${base_libdir}/libuuid.la ${includedir}/uuid ${libdir}/pkgconfig/uuid.pc"
-FILES_util-linux-lscpu = "${bindir}/lscpu"
+FILES_util-linux-libblkid${PKGSUFFIX} = "${base_libdir}/libblkid.so.*"
+FILES_util-linux-libblkid-dev${PKGSUFFIX} = "${base_libdir}/libblkid.so ${base_libdir}/libblkid.a ${base_libdir}/libblkid.la ${includedir}/blkid ${libdir}/pkgconfig/blkid.pc"
+FILES_util-linux-libuuid${PKGSUFFIX} = "${base_libdir}/libuuid.so.*"
+FILES_util-linux-libuuid-dev${PKGSUFFIX} = "${base_libdir}/libuuid.so ${base_libdir}/libuuid.a ${base_libdir}/libuuid.la ${includedir}/uuid ${libdir}/pkgconfig/uuid.pc"
+FILES_util-linux-lscpu${PKGSUFFIX} = "${bindir}/lscpu"
 
-FILES_util-linux-fsck = "${base_sbindir}/fsck*"
-FILES_util-linux-chkdupexe = "${bindir}/chkdupexe"
-FILES_util-linux-mkfs = "${sbindir}/mkfs"
+FILES_util-linux-fsck${PKGSUFFIX} = "${base_sbindir}/fsck*"
+FILES_util-linux-chkdupexe${PKGSUFFIX} = "${bindir}/chkdupexe"
+FILES_util-linux-mkfs${PKGSUFFIX} = "${sbindir}/mkfs"
 
 # Util-linux' blkid replaces the e2fsprogs one
-FILES_util-linux-blkid = "${base_sbindir}/blkid*"
-RCONFLICTS_util-linux-blkid = "e2fsprogs-blkid"
-RREPLACES_util-linux-blkid = "e2fsprogs-blkid"
+FILES_util-linux-blkid${PKGSUFFIX} = "${base_sbindir}/blkid*"
+RCONFLICTS_util-linux-blkid${PKGSUFFIX} = "e2fsprogs-blkid"
+RREPLACES_util-linux-blkid${PKGSUFFIX} = "e2fsprogs-blkid"
 
 RDEPENDS_${PN} = "util-linux-umount util-linux-swaponoff util-linux-losetup"
 RDEPENDS_${PN}-chkdupexe = "perl"
@@ -230,72 +232,72 @@ pkg_prerm_${PN} () {
 	update-alternatives --remove flock flock.${PN}
 }
 
-pkg_postinst_util-linux-fdisk () {
+pkg_postinst_util-linux-fdisk${PKGSUFFIX} () {
 	update-alternatives --install ${base_sbindir}/fdisk fdisk fdisk.${PN} 100
 }
 
-pkg_prerm_util-linux-fdisk () {
+pkg_prerm_util-linux-fdisk${PKGSUFFIX} () {
 	update-alternatives --remove fdisk fdisk.${PN}
 }
 
-pkg_postinst_util-linux-agetty () {
+pkg_postinst_util-linux-agetty${PKGSUFFIX} () {
 	update-alternatives --install ${base_sbindir}/getty getty agetty 100
 }
 
-pkg_prerm_util-linux-agetty () {
+pkg_prerm_util-linux-agetty${PKGSUFFIX} () {
 	update-alternatives --remove getty agetty
 }
 
-pkg_postinst_util-linux-mount () {
+pkg_postinst_util-linux-mount${PKGSUFFIX} () {
 	update-alternatives --install ${base_bindir}/mount mount mount.${PN} 100
 }
 
-pkg_prerm_util-linux-mount () {
+pkg_prerm_util-linux-mount${PKGSUFFIX} () {
 	update-alternatives --remove mount mount.${PN}
 }
 
-pkg_postinst_util-linux-umount () {
+pkg_postinst_util-linux-umount${PKGSUFFIX} () {
 	update-alternatives --install ${base_bindir}/umount umount umount.${PN} 100
 }
 
-pkg_prerm_util-linux-umount () {
+pkg_prerm_util-linux-umount${PKGSUFFIX} () {
 	update-alternatives --remove umount umount.${PN}
 }
 
-pkg_postinst_util-linux-losetup () {
+pkg_postinst_util-linux-losetup${PKGSUFFIX} () {
 	update-alternatives --install ${base_sbindir}/losetup losetup losetup.${PN} 100
 }
 
-pkg_prerm_util-linux-losetup () {
+pkg_prerm_util-linux-losetup${PKGSUFFIX} () {
 	update-alternatives --remove losetup losetup.${PN}
 }
 
-pkg_postinst_util-linux-swaponoff () {
+pkg_postinst_util-linux-swaponoff${PKGSUFFIX} () {
 	update-alternatives --install ${base_sbindir}/swapoff swapoff swapoff.${PN} 100
 	update-alternatives --install ${base_sbindir}/swapon swapon swapon.${PN} 100
 }
 
-pkg_prerm_util-linux-swaponoff () {
+pkg_prerm_util-linux-swaponoff${PKGSUFFIX} () {
 	update-alternatives --remove swapoff swapoff.${PN}
 	update-alternatives --remove swapon swapon.${PN}
 }
 
-pkg_postinst_util-linux-fsck () {	
+pkg_postinst_util-linux-fsck${PKGSUFFIX} () {	
 	update-alternatives --install ${base_sbindir}/fsck.minix fsck.minix fsck.minix.${PN} 100
 	update-alternatives --install ${base_sbindir}/fsck fsck fsck.${PN} 100
 }
 
-pkg_prerm_util-linux-fsck () {
+pkg_prerm_util-linux-fsck${PKGSUFFIX} () {
 	update-alternatives --remove fsck.minix fsck.minix.${PN}
 	update-alternatives --remove fsck fsck.${PN}
 }
 
-pkg_postinst_util-linux-blkid () {
+pkg_postinst_util-linux-blkid${PKGSUFFIX} () {
 	update-alternatives --install ${base_sbindir}/blkid blkid blkid.${PN} 100
 }
 
-pkg_prerm_util-linux-blkid () {
+pkg_prerm_util-linux-blkid${PKGSUFFIX} () {
 	update-alternatives --remove blkid blkid.${PN}
 }
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
