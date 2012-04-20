@@ -52,5 +52,4 @@ do_compile_prepend() {
 FILES_${PN} = "${libdir}/lib*${SOLIBS}"
 FILES_${PN}-dev += "${bindir}"
 
-BBCLASSEXTEND = "native"
-
+BBCLASSEXTEND = "native nativesdk"
