@@ -29,4 +29,4 @@ do_install_append() {
 	rm -rf "${D}${datadir}/common-lisp/"
 }
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
