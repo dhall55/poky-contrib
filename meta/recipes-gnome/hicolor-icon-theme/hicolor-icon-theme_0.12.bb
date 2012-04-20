@@ -23,3 +23,5 @@ FILES_${PN} += "${datadir}/icons"
 do_install_append () {
 	install -m 0644 ${WORKDIR}/index.theme ${D}/${datadir}/icons/hicolor
 }
+
+BBCLASSEXTEND = "nativesdk"
