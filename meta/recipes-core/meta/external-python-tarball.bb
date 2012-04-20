@@ -34,6 +34,7 @@ TOOLCHAIN_HOST_TASK ?= "\
     python-nativesdk-distutils \
     python-pygobject-nativesdk \
     python-pygtk-nativesdk \
+    gtk-theme-clearlooks \
     chrpath-nativesdk \
     git-nativesdk \
     "
