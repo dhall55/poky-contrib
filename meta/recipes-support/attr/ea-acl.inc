@@ -32,7 +32,7 @@ FILES_lib${BPN}-staticdev = "${libdir}/*.a ${base_libdir}/*.a"
 FILES_lib${BPN}-doc = "${mandir}/man2 \
                       ${mandir}/man3"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
 # Only append ldflags for target recipe and if USE_NLS is enabled
 LDFLAGS_append_libc-uclibc = "${@['', ' -lintl '][(d.getVar('PN', True) == d.getVar('BPN', True)) and (d.getVar('USE_NLS', True) == 'yes')]}"
 EXTRA_OECONF_append_libc-uclibc = "${@['', ' --disable-gettext '][(d.getVar('PN', True) == d.getVar('BPN', True)) and (d.getVar('USE_NLS', True) == 'no')]}"
