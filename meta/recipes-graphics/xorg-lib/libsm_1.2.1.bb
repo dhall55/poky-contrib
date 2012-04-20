@@ -18,7 +18,7 @@ PE = "1"
 
 XORG_PN = "libSM"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
 
 SRC_URI[md5sum] = "766de9d1e1ecf8bf74cebe2111d8e2bd"
 SRC_URI[sha256sum] = "93c11d569c64f40723b93b44af1efb474a0cfe92573b0c8c330343cabb897f1d"
