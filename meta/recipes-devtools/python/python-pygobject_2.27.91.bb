@@ -28,10 +28,12 @@ export STAGING_LIBDIR
 
 PACKAGES += "${PN}-lib"
 
-RDEPENDS_${PN} += "python-textutils"
+PKGSUFFIX = ""
+
+RDEPENDS_${PN} += "python${PKGSUFFIX}-textutils"
 
 FILES_${PN} = "${libdir}/python*"
 FILES_${PN}-lib = "${libdir}/lib*.so.*"
 FILES_${PN}-dev += "${bindir} ${datadir}"
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
