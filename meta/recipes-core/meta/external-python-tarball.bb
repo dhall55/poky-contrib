@@ -3,7 +3,7 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=3f40d7994397109285ec7b81fdeb3b58 \
                     file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
-DEPENDS = "opkg-native opkg-utils-native virtual/fakeroot-native sed-native"
+DEPENDS = "opkg-native opkg-utils-native virtual/fakeroot-native sed-native pango-native"
 
 inherit meta
 
@@ -88,6 +88,13 @@ do_populate_sdk() {
 	GDK_PIXBUF_MODULE_FILE=${SDK_OUTPUT}/${SDKPATHNATIVE}${libdir_nativesdk}/gdk-pixbuf-2.0/2.10.0/loaders.cache GDK_PIXBUF_MODULEDIR=${SDK_OUTPUT}/${SDKPATHNATIVE}${libdir_nativesdk}/gdk-pixbuf-2.0/2.10.0/loaders gdk-pixbuf-query-loaders.real --update-cache
 
 	sed -i -e 's#${SDK_OUTPUT}/${SDKPATHNATIVE}${libdir_nativesdk}#${SDKPATHNATIVE}${libdir_nativesdk}#' ${SDK_OUTPUT}/${SDKPATHNATIVE}${libdir_nativesdk}/gdk-pixbuf-2.0/2.10.0/loaders.cache
+
+	pangorc=${SDK_OUTPUT}/pangorc
+	touch $pangorc
+	echo 'ModulesPath=${SDK_OUTPUT}/${SDKPATHNATIVE}${libdir_nativesdk}/pango/1.6.0/modules' > pangorc
+	PANGO_RC_FILE=$pangorc pango-querymodules > ${SDK_OUTPUT}/${SDKPATHNATIVE}/etc/pango/pango.modules
+	rm $pangorc
+	sed -i -e 's#${STAGING_DIR_NATIVE}#${SDKPATHNATIVE}#' ${SDK_OUTPUT}/${SDKPATHNATIVE}/etc/pango/pango.modules
 
 	# Package it up
 	mkdir -p ${SDK_DEPLOY}
