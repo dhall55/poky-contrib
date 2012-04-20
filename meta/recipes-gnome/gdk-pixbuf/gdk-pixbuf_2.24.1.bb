@@ -79,4 +79,4 @@ do_install_append_virtclass-native() {
 	create_wrapper ${D}/${bindir}/gdk-pixbuf-query-loaders \
 		GDK_PIXBUF_MODULE_FILE=${STAGING_LIBDIR_NATIVE}/gdk-pixbuf-2.0/${LIBV}/loaders.cache
 }
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
