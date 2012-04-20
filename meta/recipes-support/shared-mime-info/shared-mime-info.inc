@@ -33,4 +33,4 @@ do_install_virtclass-native () {
 	autotools_do_install
 }
 
-BBCLASSEXTEND = "native"
+BBCLASSEXTEND = "native nativesdk"
