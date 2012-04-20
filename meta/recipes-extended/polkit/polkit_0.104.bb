@@ -38,3 +38,4 @@ FILES_${PN} += "${libdir}/${PN}-1/extensions/*.so \
 FILES_${PN}-dbg += "${libdir}/${PN}-1/extensions/.debug/*.so"
 FILES_${PN}-dev += "${libdir}/${PN}-1/extensions/*.la "
 
+BBCLASSEXTEND = "nativesdk"
