@@ -1,0 +1,225 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Web hob - Image Creator Demo</title>
+<link type="text/css" rel="stylesheet" href="static/css/base.css">
+<link type="text/css" rel="stylesheet" href="static/css/main.css">
+<script type="text/javascript" src="static/js/jquery.min.js"></script>
+<script type="text/javascript" src="static/js/jquery.skygqbox.1.3.js"></script>
+<script type="text/javascript">
+	var intervalTimer = null;
+	var intervalSecond = 1000;
+
+	$(document).ready(function(){
+		runEventTimer('getpkgevents', '');
+
+		$('#toggle_pkglog').toggle(function(){
+			$('#pkglog').hide();
+		},
+		function(){
+			$('#pkglog').show();
+		});
+	});
+
+	function runEventTimer(funcName, param){
+		if (param==''){
+			intervalTimer = setInterval(funcName+"()", intervalSecond);
+		}else{
+			intervalTimer = setInterval(function(){funcName(action);}, intervalSecond);
+		}
+	}
+
+	function getpkgevents(){
+		jQuery.get('getBuildPackageEvents',
+		function(data,s){
+//			alert(data);
+			json = jQuery.parseJSON(data);
+			rcp_pct_width = $('#rcp_pct').width();
+			if (json.pct) {
+				$('#rcp_pct span').css('width',json.pct+'%');
+				$('#rcp_pct p').html('Building  percentage: '+json.pct+'%');
+				if (json.pct == 100) {
+					$('#rcp_pct span').css('width',(rcp_pct_width-6)+'px');
+					$('#rcp_pct p').html('Preparing for Tree Data, Waiting~~~~');
+				}
+			}
+
+			if(json.CommandFailed){
+				$('#rcp_pct span').css('width',(rcp_pct_width-6)+'px');
+				$('#rcp_pct p').html('<font color=red>Failed</font>');
+				clearInterval(intervalTimer);
+			}
+
+			if(json.treedata){
+				$('#pkg_list').html(json.treedata);
+				if(json.selected_pkg_str){
+					$('#selected_pkg_str').html(json.selected_pkg_str);
+				}
+				$('.user_rcp_list').text($('.selectedrecipes').text());
+				$('#buildpackage').show();
+				$('#show_pkg_list').show();
+
+				$('#rcp_pct').hide();
+				$('#pkglog').hide();
+				if (json.action == 'DONE') {
+					clearInterval(intervalTimer);
+				}
+			}
+			//log info
+			if(json.building_log){
+				$('#pkg_log p').css({"background-color": "#fff"});
+
+				for(var i=0; i<json.building_log.length; i++){
+					var innerjson = json.building_log[i];
+					var id = (innerjson.package.indexOf('.')!=-1)?innerjson.package.substring(0, innerjson.package.indexOf('.')):innerjson.package;
+
+					if ($('#'+id).length > 0){
+						$('#pkg_log p').css({"background-color": "#fff"});
+						$('#'+id).append("<p style='background-color:#90ee90'>&nbsp;&nbsp;&nbsp;&nbsp;=>"+innerjson.task+"</p>");
+							$('#pkglog').scrollTop($('#'+id).offset().top);
+					}else{
+						$('#pkg_log').append("<div class='pkglog' id='"+id+"'>Package: "+innerjson.package+"</div>");
+						$('#'+id).css({'margin':'5px'}).append("<p style='background-color:#90ee90'>&nbsp;&nbsp;&nbsp;&nbsp;=>"+innerjson.task+"</p>");
+							$('#pkglog').scrollTop($('#'+id).offset().top);
+					}
+
+				}
+			}
+
+			if(json.logRecord_conf){
+				$('#logRecord_conf').append('<pre>'+json.logRecord_conf+'</pre>');
+			}
+
+			if(json.error){
+				for (var i = 0; i < json.error.length; i++) {
+					var innerjson = json.error[i];
+					$('#pkg_error').css({"background-color": "#ff8500"}).append("<p style='magin:5px; border:1px #ddd solid;'>"+innerjson.error+"</p>");
+				}
+				clearInterval(intervalTimer);
+			}
+		},
+		'text'
+		);
+	}
+
+var selected_items = 0;
+var slct_item = null;
+function select_plk(id){
+	if(!$(id).is(":checked")){
+		return false;
+	}
+	else{
+		slct_item = $(id).val();
+//		alert(slct_item);
+		$.ajax({
+				url:'ajax_pkg_include',
+				type:'GET',
+				data:({'rcp_item':slct_item}),
+				beforeSend:function(){
+					$('#loading').show();
+				},
+				success:function(data,s){
+					json = jQuery.parseJSON(data);
+					json = json.rcp_list;
+
+					for(var i=0; i<json.length; i++){
+						var innerjson = json[i].item;
+						if($('.selectedrecipes').text().indexOf(innerjson+',') < 0){
+							$('.selectedrecipes').prepend(innerjson+', ');
+							$('.user_rcp_list').prepend(innerjson+', ');
+						}
+						$('input[name="include_item"]').not("input:checked").each(function(){
+							if(innerjson == $(id).val()){
+								$(id).attr("checked",'true');//
+							}
+
+						});
+					}
+					selected_items = $('.selectedrecipes').text().split(", ").length;
+					//alert($('.selectedrecipes').text().split(", "));
+					$('.selected_items').text(selected_items);
+					$('#loading').hide();
+				},
+				dataType:'html'
+		});
+
+	}
+
+}
+</script>
+</head>
+<body>
+<div class="wrap">
+    <!--progress bar-->
+    <div class='main_conf' id='rcp_pct' style='display:none_'>
+    	<div class="progress-bar">
+            <span></span>
+            <p></p>
+		</div>
+    </div>
+
+	<div class='main_conf'>
+		<div id='Packages' style='display: none_'>
+			<h2 style='float:right;'><span id='toggle_pkglog' style=' border:1px #ddd solid; padding: 2px 10px; display: inline-block; cursor:pointer;'>Building log(toggle):</span></h2>
+			<div id='pkglog' style='overflow-y:auto; height:500px;border:1px #ddd solid; clear:both; padding:5px;'>
+				<div id='logRecord_conf'></div>
+				<div id='pkg_error'></div>
+				<div id='pkg_log'></div>
+			</div>
+
+		</div>
+	</div>	
+
+	<div class='tab_wrap' id='show_pkg_list' style='display:none;'>
+		<ul>
+			<li>
+				<ol>
+					<li class='l'>
+                 <table class='rcp_table_out'>
+                 	<thead>
+                        <tr>
+                        	<th width='10%' scope="col">ID</td>
+                            <th width='45%' scope="col">Package</th>
+                            <th width='25%' scope="col">Size</th>
+							<th width='20%' scope="col">Included</th>
+                        </tr>
+					</thead>
+					<tbody>
+					<tr><td colspan="4" class='wrap_td'>
+					<div id='pkg_list' style="height:600px; overflow-y:auto">
+
+					</div>
+					</td></tr>
+					</tbody>
+				</table>
+				</li>
+				<li class='r' id='selected_pkg_str'>
+
+				</li>
+				</ol>
+			</li>
+		</ul>
+	</div>
+
+<script>
+	$(document).ready(function(){
+		$('#buildpackage').click(function(){
+			$('#buildpackage').submit();
+		});
+	});
+</script>
+
+	<form method='post' id='buildpackage' action='/send_command_buildimage' style='display:none;'>
+		<div class='main_conf' id='build_p_i'>
+		<div style='float:right'>
+			<textarea rows="" cols="" name='user_pkg_list' class='user_rcp_list' style='display:none;'></textarea>
+
+			<input class='build_button' id='build_pkg' type="button" value="Build image" title='xxxxxx.' />
+ 	</div>
+ 	</form>
+</div>
+<div id='loading'>Loading</div>
+
+</body>
+</html>

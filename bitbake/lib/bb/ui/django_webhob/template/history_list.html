@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Web hob - Image Creator Demo</title>
+<link type="text/css" rel="stylesheet" href="static/css/base.css">
+<link type="text/css" rel="stylesheet" href="static/css/main.css">
+<style>
+	h3{background-color:#EEE; font-weight:bold; margin-top:20px; line-height:30px; font-size:24px;}
+	table{ width:100%; margin-top:10px;}
+	td{ border:1px #ddd solid; padding:5px;}
+	th{border:1px #ddd solid; padding:5px; background-color:#EEE; font-weight:bold;}
+	th p{ font-size:14px; font-weight:normal;}
+</style>
+</head>
+<body>
+<div class="wrap">
+	<div class='main_conf' style='margin:20px 10px;'>
+	<table>
+		<tr>
+			<th>Name</th>
+			<th>Generated Time</th>
+			<th>Size</th>
+			<th>type<p>(kernel|rootfs|toolchain sdk, etc.)</p></th>
+			<th>Machine<p>corresponding machine</p></th>
+			<th>Details<p>(relatinal configurations)</p></th>
+			<th>Available or not<p>(Files still exist or not)</p></th>
+			<th>Download</th>
+		</tr>
+		<tr>
+			{% for name, cdate, ctime, size in history_list %}
+			<tr>
+				<td>{{name}}</td>
+				<td>{{cdate}} {{ctime}}</td>
+				<td>{{size}}</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			{% endfor %}
+		</tr>
+	</table>
+ 	</div>
+</div>
+</body>
+</html>

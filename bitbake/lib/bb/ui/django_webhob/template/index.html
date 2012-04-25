@@ -1,0 +1,419 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Web hob - Image Creator Demo</title>
+<link type="text/css" rel="stylesheet" href="static/css/base.css">
+<link type="text/css" rel="stylesheet" href="static/css/main.css">
+<script type="text/javascript" src="static/js/jquery.min.js"></script>
+<script type="text/javascript" src="static/js/jquery.skygqbox.1.3.js"></script>
+<script type="text/javascript">
+	$(function(){
+		/*------------ hover ------------------------*/
+		$(".setting_nav ul li").hover(
+			function(){
+				if ($(this).attr('class')=='template'){
+					$(this).addClass('template_hover');
+				}else if($(this).attr('class')=='settings'){
+					$(this).addClass('settings_hover');
+				}else if($(this).attr('class')=='history'){
+					$(this).addClass('history_hover');
+				}
+
+			},
+			function(){
+				$(this).removeClass('template_hover');
+				$(this).removeClass('settings_hover');
+				$(this).removeClass('history_hover');
+			}
+		);
+
+		$(".main_conf ul li.right dl dd.title").hover(
+			function(){
+				if ($(this).parents('dl').attr('class')=='layer'){
+					$(this).parents('dl').addClass('onlayer');
+				}else if($(this).parents('dl').attr('class')=='recipe'){
+					$(this).parents('dl').addClass('onrecipe');
+				}
+				$(this).addClass('on');
+			},
+			function(){
+				$(this).removeClass('on');
+				$(this).parents('dl').removeClass('onlayer');
+				$(this).parents('dl').removeClass('onrecipe');
+			}
+		);
+		$("#show_recipe_list dl dd.title").click(function(){
+			location.href='/recipe_list_page?baseimg='+$("#select_base_image").val();
+		});
+		/*-----------------click pop setting window-------------------*/
+		$("#settings").click(function(){
+			$('#advanced_setting').skygqbox({
+				title		: "Advanced setting",
+				shut		: "Close",
+				index		: 2000,
+				opacity		: 0.3,
+				width		: "auto",
+				height		: "auto",
+				autoClose	: 0,
+				position	: "middle"
+
+			});
+		});
+
+		$("#layers dl dd.title").click(function(){
+			$('#popup_layers').skygqbox({
+
+				title		: "Layer Selection",
+				shut		: "Close",
+				index		: 2000,
+				opacity		: 0.3,
+				width		: "auto",
+				height		: "auto",
+				autoClose	: 0,
+				position	: "my"
+
+			});
+		});
+
+		/*click build package and image button, or select base image to trigger some js.*/
+		$("#build_pkg").click(function(){
+				location.href='/send_command_buildpackage?baseimg='+$("#select_base_image").val();
+			});
+		$("#build_image").click(function(){
+				location.href='/send_command_buildimage?baseimg='+$("#select_base_image").val();
+			});
+
+		$('#select_base_image').change(function(){
+			var selected = $(this).children('option:selected');
+			if (selected.val()!= '' && selected.val() != 'diy'){
+				$('#build_p_i').show();
+			}else{
+				$('#build_p_i').hide();
+			}
+		});
+	});
+</script>
+<script type="text/javascript">
+	var count = 0;
+	var pct = 0;
+	var intervalTimer = null;
+	var intervalSecond = 1000;
+//	var vsubmit_data = null;
+
+	function submit_data(){
+		var slayers = '';
+		var formats = '';
+
+		$('input[name="formats"]:checked').each(function(){
+			formats+= $(this).val()+' ';
+		});
+		$("input[name='layers']:checked").each(function(){
+		     slayers+= $(this).val()+' ';
+		 });
+		var sstatedir = $("input[name='sstatedir']").val();
+		var sstatemirror = $("input[name='sstatemirror']").val();
+		var bbthread = $("input[name='bbthread']").val();
+		var image_extra_size = $("input[name='image_extra_size']").val();
+		var incompat_license = $("input[name='incompat_license']").val();
+		var dldir = $("input[name='dldir']").val();
+		var pmake = $("input[name='pmake']").val();
+		var machines_sdk = $("#machines-sdk").val();
+		var machines = $("#machines").val();
+		var distros = $("#distros").val();
+		var image_addr = $("input[name='image_addr']").val();
+		if($("input[name='layers']:checked").length<=1){
+			alert('layers selection error');
+			return false;
+		}
+		if(!formats){
+			alert('formats cannot be empty');
+			return false;
+		}
+		if(!sstatedir){
+			alert('sstatedir cannot be empty');
+			return false;
+		}
+		if(!bbthread){
+			alert('bbthread cannot be empty');
+			return false;
+		}
+		if(!dldir){
+			alert('dldir cannot be empty');
+			return false;
+		}
+		if(!distros){
+			alert('distros cannot be empty');
+			return false;
+		}
+		if(!machines){
+			alert('machines cannot be empty');
+			return false;
+		}
+		if(!machines_sdk){
+			alert('machines_sdk cannot be empty');
+			return false;
+		}
+		if(!pmake){
+			alert('pmake cannot be empty');
+			return false;
+		}
+		return {
+			"layers":slayers,
+			"formats":formats,
+			"sstatedir":sstatedir,
+			"sstatemirror":sstatemirror,
+			"bbthread":bbthread,
+			"image_extra_size":image_extra_size,
+			"incompat_license":incompat_license,
+			"dldir":dldir,
+			"pmake":pmake,
+			"machines_sdk":machines_sdk,
+			"machines":machines,
+			"distros":distros,
+			"image_addr":image_addr,
+		}
+	 }
+
+	$(document).ready(function(){
+		send_command_asynconfs();
+		$('#machines').change(function(){
+			data = submit_data();
+			if (data) {
+				$('#base_image_wrap').hide();
+				$('#build_p_i').hide();
+				jQuery.post('send_command_parserecipe', 
+					data, 
+					function(data, s){
+//						alert(data);
+						json = jQuery.parseJSON(data)
+						if (json.action == 'parserecipe' && json.status == 'OK') {
+							$('#rcp_pct').show();
+							$('#rcp_pct p').html('Start to parse recipe.......');
+							runEventTimer('getrecipeevents', '');
+						}
+				}, 'text');
+			}
+			else{
+				var selected = $(this).children('option:selected');
+				if (selected.val()!= ''){
+					selected.attr("selected", false);
+				}
+			}
+
+		});
+
+	});
+
+	function send_command_asynconfs(){
+		$.get('send_command_asynconfs',
+		function(data,s){
+//			alert(data);
+			json = $.parseJSON(data)
+			if (json.action=='asyncconfs' && json.status=='OK'){
+					runEventTimer('getconfsevents','');
+				}
+		},
+		'text'
+	);
+	}
+
+	function runEventTimer(funcName, param){
+		if (param==''){
+			intervalTimer = setInterval(funcName+"()", intervalSecond);
+		}else{
+			intervalTimer = setInterval(function(){funcName(action);}, intervalSecond);
+		}
+	}
+
+	function getconfsevents(){
+		jQuery.get('getAsynconfsEvents',
+		function(data,s){
+//			alert(data);
+			json = jQuery.parseJSON(data);
+			for(var v in json){
+				if(v == 'machines'){
+					$('#'+v).append(json[v]);
+				}else{
+					$('#'+v).html(json[v]);
+				}
+			}
+			if(json.action == 'OK'){
+				clearInterval(intervalTimer);
+			}
+		},
+		'text'
+		);
+	}
+
+	function getrecipeevents(){
+		jQuery.get('getParseRecipeEvents',
+		function(data,s){
+			json = jQuery.parseJSON(data);
+			rcp_pct_width = $('#rcp_pct').width();
+
+			if (json.status == 'parsing') {
+				$('#rcp_pct span').css('width',json.value+'%');
+				$('#rcp_pct p').html(json.status+'  percentage: '+json.value+'%');
+				if (json.value == 100) {
+					$('#rcp_pct span').css('width',(rcp_pct_width-6)+'px');
+					$('#rcp_pct p').html('Preparing for Tree Data, Waiting~~~~');
+				}
+			}
+
+			if(json.baseimage){
+				$('#rcp_pct').hide();
+				$('#rcp_pct span').css('width','0%');
+				$('#rcp_pct p').html('');
+				$('#base_image_wrap').fadeIn(1500);
+				$('#select_base_image').append(json.baseimage);
+				if (json.action == 'DONE') {
+					clearInterval(intervalTimer);
+				}
+			}
+
+		},
+		'text'
+		);
+	}
+
+</script>
+</head>
+<body>
+<div class="wrap">
+	<div class="setting_nav">
+    	<h2>Image configuration</h2>
+        <ul>
+        	<li class='history'>
+				<a style='color:#000; text-decoration:none;' href='/history_list'>History</a>
+			</li>
+        	<li class='template'>
+				Template
+			</li>
+        	<li class='settings' id='settings'>
+				Settings
+			</li>
+        </ul>
+    </div>
+
+    <!-- advanced_setting popup layer-->
+	<form method='post' action='/' id='theform'>
+	<ul id="popup_layers" class="popup_layers" style='display:none'>
+		<li>
+			<label for="pkf_format">Select Layers: </label>
+			{% for item in ssyncconfs.layer %}
+				<p><input type="checkbox" name="layers" value="{{item}}" checked />{{item}}</p>
+			{% endfor %}
+		</li>
+	</ul>
+    <ul id="advanced_setting" class="advanced_setting" style='display:none'>
+		<li>
+			<label for="pkf_format">Packageing Format: </label>
+			<p id='formats'></p>
+		</li>
+
+		<li>
+			<label for="xxx">Select Distro: </label>
+            <select id='distros' name='distros'>
+            </select>
+		</li>
+
+		<li>
+		<label for="xxx">BB_NUMBER_THREADS: </label>
+        <input class='text' name="bbthread" type="text" value="{{ssyncconfs.bbthread}}" />
+		</li>
+		<li>
+		<label for="xxx">PARALLEL_MAKE: </label>
+        <input class='text' name="pmake" type="text" value="{{ssyncconfs.pmake}}" />
+		</li>
+		<li>
+			<label for="xx">Image Free Size:(MB) </label>
+            <input class='text' name="image_extra_size" type="text"value="{{ssyncconfs.image_extra_size}}" />
+		</li>
+		<li>
+			<label for="xx">Set Download Directory: </label>
+            <input class='text' name="dldir" type="text" value="{{ssyncconfs.dldir}}" />
+		</li>
+		<li>
+			<label for="xx">Select SSTATE Directory: </label>
+			<input class='text' name="sstatedir" type="text" value="{{ssyncconfs.sstatedir}}" />
+
+		</li>
+		<li>
+			<label for="xx">Select SState Mirror: </label>
+            <input class='text' name="sstatemirror" type="text" value="{{ssyncconfs.sstatemirror}}" />
+		</li>
+        <li>
+			<input type="checkbox" name="xxxx" value="xxxxx" />Exclude GPLv3 packages
+			<input class='text' name="incompat_license" type="text" value="{{ssyncconfs.incompat_license}}" />
+		</li>
+		<li>
+			<input type="checkbox" name="xxxx" value="xxxxx" />Build Toolchain
+			<select id='machines-sdk' name='machines-sdk'>
+			<input type="hidden" name="image_addr" value="{{ssyncconfs.image_addr}}" />
+		</select>
+		</li>
+		<li>
+			<label for="xx">Add your own variables: </label>
+			<textarea></textarea>
+		</li>
+    </ul>
+
+	<!-- select machines html block-->
+    <div class='main_conf' style='border-bottom: 1px #ddd solid; '>
+    	<h3>Select a machine</h3>
+		<p>This is the profile of the target machine for which you are building the image.</p>
+		<ul>
+			<li class='left'>
+				<select id='machines' name='machines'>
+					<option value='' selected='selected'>------------  machines  ------------</option>
+				</select>
+			</li>
+			<li class='right' id='layers'>
+				<dl class='layer'>
+					<dd class='title'>Layers</dd>
+					<dd class='desc'>Add suport for machines, software etc.</dd>
+				</dl>
+			</li>
+		</ul>
+    </div>
+	</form>
+
+    <!--progress bar-->
+    <div class='main_conf' id='rcp_pct' style='display:none;'>
+    	<div class="progress-bar">
+            <span></span>
+            <p></p>
+		</div>
+    </div>
+
+	<!--base image-->
+	<div class='main_conf' id='base_image_wrap' style='display:none; border-bottom: 1px #ddd solid;'>
+		<h3>Select a base image</h3>
+		<p>Base images are a starting point for the type of image you want. You can build them as they are or customize them to your specific needs.</p>
+		<ul>
+			<li class='left'>
+				<select id='select_base_image' name='baseimage'>
+					<option value='' selected='selected'>------------  base images  ------------</option>
+					<option value='diy' style='background-color:#f2d196;'>customize your own image</option>
+				</select>
+			</li>
+			<li class='right' id='show_recipe_list'>
+				<dl class='recipe'>
+					<dd class='title'>View Recipes</dd>
+					<dd class='desc'>Add/remove recipes and collections.</dd>
+				</dl>
+			</li>
+		</ul>
+    </div>
+
+	<div class='main_conf' id='build_p_i' style='display:none;'>
+		<div style='float:right'>
+			<input class='build_button' name="xx" id='build_pkg' type="button" value="Build Packages" title='xxxxxx.' />
+			or
+			<input class='build_button' name="xx" id='build_image' type="button" value="Build Image" title='xxxxx'  />
+		</div>
+ 	</div>
+</div>
+</body>
+</html>
