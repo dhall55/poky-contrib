@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Rest API</title>
+<style type="text/css">
+.wrap{width:90%; margin:15px auto; border:1px #ddd solid; padding:10px; overflow:hidden; }
+h2{ font-weight:bold; border-bottom:1px #ddd solid; width:100%;  line-height:25px; font-size:16px;}
+h1{text-align:center;font-weight:bold; font-size:18px;}
+h3{text-align:center;font-weight:bold; font-size:16px;}
+.cont{ margin:10px 0px;}
+.cont li span.t{ display:inline-block; width:20%; height:25px;  font-weight:bold;}
+.cont li p{ line-height:25px; margin:5px;}
+.cont li p input.text{ width:40%; height:22px; border:border:1px #ddd solid; line-height:22px; padding-left:10px;}
+.cont li p input.btn{ width:100px; height:28px; border:border:1px #ddd solid; line-height:22px; margin-left:20px; font-weight:bold; font-size:14px;}
+.cont li p strong{ font-weight:bold; display:inline-block; width:60px; height:25px;}
+.cont li p.rst{ margin:15px 5% 15px 21%;  padding:5px; border:1px #ddd solid; overflow:hidden; display:none; }
+
+#getRcpResult{ margin:15px 2% 15px 2%;  padding:5px; border:2px #7f7f7f solid; background-color:#000; overflow-y:auto; height:250px; color:#00ff00;font-size:16px;  }
+#getRcpResult p{ padding:2px; border:1px #ffa500 solid; line-height:16px;}
+#runsecond{width:45px;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+    <h1>API</h1>
+</div>
+<div class="wrap">
+<h2>GET Varaibes:</h2>
+<ul class='cont'>
+	<li>
+		<pre>
+					get these values:
+	-----------------------------------------------------------------------
+	BBLAYERS,DL_DIR,MACHINE,DISTRO,PACKAGE_CLASSES,SSTATE_DIR,SSTATE_MIRROR
+	BB_NUMBER_THREADS,getCpuCount,PARALLEL_MAKE,DEPLOY_DIR_IMAGE
+	IMAGE_ROOTFS_EXTRA_SPACE,INCOMPATIBLE_LICENSE,SDKMACHINE,SDK_ARCH
+	-----------------------------------------------------------------------
+		</pre>
+		<p> <span class="t">Input:</span>
+			<input class='text' name="" type="text" value="http://localhost:8080/get/--------" />
+			<input class="syncBtn" name="" type="button" value="Submit"  />
+		</p>
+		<p class="rst"><strong>Value:</strong><span class="value">N/A</span></p>
+	</li>
+
+</ul>
+</div>
+
+<div class="wrap">
+<ul class='cont'>
+	<li>
+		<form method="get" action='http://localhost:8080/action/asyncconfs'>
+			 <p><span class="t">[Find ASyncConfigs]</span>
+				 <input class='text' name="" type="text" value='http://localhost:8080/action/asyncconfs' />
+				 <input class="btn" name="" type="submit" value="Submit"  />
+			</p>
+		</form>
+	</li>
+	<li>
+		<form method="post" action='http://localhost:8080/action/parserecipe'>
+			<p><span class="t">[Parse recipes:]</span>
+				<input class='text' name="" type="text" value='http://localhost:8080/action/parserecipe' />
+				<input class="btn" name="" type="submit" value="Submit"  />
+			</p>
+		</form>
+	</li>
+	<li>
+		<form method="post" action='http://localhost:8080/action/buildpkg'>
+			<p><span class="t">[build pkgs]</span>
+			<input class='text' name="" type="text" value='http://localhost:8080/action/buildpkg' />
+			<input class="btn" name="" type="submit" value="Submit"  />
+			</p>
+		</form>
+	</li>
+	<li>
+		<form method="post" action='http://localhost:8080/action/buildimage'>
+			<p><span class="t">[build image]</span>
+			<input class='text' name="" type="text" value='http://localhost:8080/action/buildimage' />
+			<input class="btn" name="" type="submit" value="Submit"  />
+		</form>
+	</li>
+		<li>
+		<form method="get" action='http://localhost:8080/action/getevents'>
+			 <p><span class="t">[Find ASyncConfigs]</span>
+				 <input class='text' name="" type="text" value='http://localhost:8080/action/getevents' />
+				 <input class="btn" name="" type="submit" value="Submit"  />
+			</p>
+		</form>
+
+    </li>
+</ul>
+</div>
+
+<div class="wrap">
+<h2>other APIS:</h2>
+<ul class='cont'>
+    <li>
+      <p><span class="t">1.initCooker:</span>
+        <input class='text' name="" type="text" value='http://localhost:8080/action/initcooker' />
+		<input class="btn" name="" type="button" value="Submit"  /></p>
+        <p class="rst"><strong>Value:</strong><span class="value">N/A</span></p>
+    </li>
+    <li>
+      <p><span class="t">2.resetCooker:</span>
+         <input class='text' name="" type="text" value='http://localhost:8080/action/resetcooker' />
+		<input class="btn" name="" type="button" value="Submit"  /></p>
+        <p class="rst"><strong>Value:</strong><span class="value">N/A</span></p>
+    </li>
+    <li>
+      <p><span class="t">3.stateStop:</span>
+         <input class='text' name="" type="text" value='http://localhost:8080/action/cancelbuild?force=1' />
+		<input class="btn" name="" type="button" value="Submit"  /></p>
+        <p class="rst"><strong>Value:</strong><span class="value">N/A</span></p>
+    </li>
+    <li>
+      <p><span class="t">4.stateShutdown:</span>
+        <input class='text' name="" type="text" value='http://localhost:8080/action/cancelbuild?force=0' />
+		<input class="btn" name="" type="button" value="Submit"  /></p>
+        <p class="rst"><strong>Value:</strong><span class="value">N/A</span></p>
+    </li>
+</ul>
+</div>
+</body>
+</html>
