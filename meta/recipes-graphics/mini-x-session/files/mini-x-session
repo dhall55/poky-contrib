@@ -19,15 +19,15 @@ fi
 MINI_X_SESSION_DIR=/etc/mini_x/session.d
 
 # Execute session file on behalf of file owner
-for SESSIONFILE in $MINI_X_SESSION_DIR/*; do
-    set +e
-    USERNAME=`stat -c %U $SESSIONFILE`
-    sudo -b -i -u $USERNAME $SESSIONFILE& 
-    set -e
-done
+#for SESSIONFILE in $MINI_X_SESSION_DIR/*; do
+#    set +e
+#    USERNAME=`stat -c %U $SESSIONFILE`
+#    sudo -b -i -u $USERNAME $SESSIONFILE& 
+#    set -e
+#done
 
 # This resolution is big enough for hob2's max window size.
-xrandr -s 1024x768
+#xrandr -s 1024x768
 
 # Default files to run if $HOME/.mini_x/session or /etc/mini_x/session
 # dont exist. 
