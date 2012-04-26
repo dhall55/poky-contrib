@@ -11,13 +11,15 @@ LIC_FILES_CHKSUM = "file://../license.terms;md5=a47a9be26d03f925fc1fbd2784f27e11
     file://../win/license.terms;md5=a47a9be26d03f925fc1fbd2784f27e11 \
     "
 
-PR = "r1"
+PR = "r2"
 
 BASE_SRC_URI = "${SOURCEFORGE_MIRROR}/tcl/tcl${PV}-src.tar.gz \
                 file://tcl-add-soname.patch"
 
 SRC_URI = "${BASE_SRC_URI} \
-	   file://fix_non_native_build_issue.patch "
+	   file://fix_non_native_build_issue.patch \
+	   file://fix-linking-target-library-with-native-tclsh-issue.patch \
+"
 
 SRC_URI[md5sum] = "8512d8db3233041dd68a81476906012a"
 SRC_URI[sha256sum] = "3ab671b417e3eeb41b9cef626d742d8f7f57425101e83e5fcad1d552cd99237d"

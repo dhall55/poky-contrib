@@ -1,0 +1,113 @@
+From 14de2178b185f46ed712c43139b32dbfeaa128b8 Mon Sep 17 00:00:00 2001
+From: Ting Liu <b28495@freescale.com>
+Date: Tue, 26 Jun 2012 23:49:16 -0400
+Subject: [PATCH] fix linking target library with native tclsh issue
+
+Signed-off-by: Ting Liu <b28495@freescale.com>
+---
+ Makefile.in |   24 ++++++++++++------------
+ 1 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index 5046f2e..5bf5e9f 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -590,12 +590,12 @@ tcltest-real:
+ #	% make test TESTFLAGS="-verbose bps -file fileName.test"
+ 
+ test: tcltest@EXEEXT@
+-	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
++	@LD_LIBRARY_PATH_VAR@="$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
+ 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
+ 	./tcltest@EXEEXT@ $(TOP_DIR)/tests/all.tcl $(TESTFLAGS)
+ 
+ gdb-test: tcltest@EXEEXT@
+-	@echo "set env @LD_LIBRARY_PATH_VAR@=\"`pwd`:$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
++	@echo "set env @LD_LIBRARY_PATH_VAR@=\"$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
+ 	@echo "set env TCL_LIBRARY=${TCL_BUILDTIME_LIBRARY}" >> gdb.run
+ 	@echo "set args $(TOP_DIR)/tests/all.tcl $(TESTFLAGS) -singleproc 1" >> gdb.run
+ 	$(GDB) ./tcltest@EXEEXT@ --command=gdb.run
+@@ -603,34 +603,34 @@ gdb-test: tcltest@EXEEXT@
+ 
+ # Useful target to launch a built tcltest with the proper path,...
+ runtest: tcltest@EXEEXT@
+-	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
++	@LD_LIBRARY_PATH_VAR@="$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
+ 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
+ 	./tcltest@EXEEXT@
+ 
+ # Useful target for running the test suite with an unwritable current
+ # directory...
+ ro-test: tcltest@EXEEXT@
+-	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
++	@LD_LIBRARY_PATH_VAR@="$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
+ 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
+ 	echo 'exec chmod -w .;package require tcltest;tcltest::temporaryDirectory /tmp;source ../tests/all.tcl;exec chmod +w .' | ./tcltest@EXEEXT@
+ 
+ # This target can be used to run tclsh from the build directory
+ # via `make shell SCRIPT=/tmp/foo.tcl`
+ shell: ${TCL_EXE}
+-	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
++	@LD_LIBRARY_PATH_VAR@="$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
+ 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
+ 	${TCL_EXE} $(SCRIPT)
+ 
+ # This target can be used to run tclsh inside either gdb or insight
+ gdb: ${TCL_EXE}
+-	@echo "set env @LD_LIBRARY_PATH_VAR@=\"`pwd`:$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
++	@echo "set env @LD_LIBRARY_PATH_VAR@=\"$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
+ 	@echo "set env TCL_LIBRARY=${TCL_BUILDTIME_LIBRARY}" >> gdb.run
+ 	$(GDB) ${TCL_EXE} --command=gdb.run
+ 	rm gdb.run
+ 
+ # This target can be used to run tclsh inside ddd
+ ddd: ${TCL_EXE}
+-	@echo "set env @LD_LIBRARY_PATH_VAR@=\"`pwd`:$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
++	@echo "set env @LD_LIBRARY_PATH_VAR@=\"$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
+ 	@echo "set env TCL_LIBRARY=${TCL_BUILDTIME_LIBRARY}" >> gdb.run
+ 	$(DDD) -command=gdb.run ${TCL_EXE}
+ 	rm gdb.run
+@@ -638,12 +638,12 @@ ddd: ${TCL_EXE}
+ VALGRINDARGS=--tool=memcheck --num-callers=8 --leak-resolution=high --leak-check=yes --show-reachable=yes -v
+ 
+ valgrind: ${TCL_EXE} tcltest@EXEEXT@
+-	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
++	@LD_LIBRARY_PATH_VAR@="$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
+ 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
+ 	valgrind $(VALGRINDARGS) ./tcltest@EXEEXT@ $(TOP_DIR)/tests/all.tcl -singleproc 1 $(TESTFLAGS)
+ 
+ valgrindshell: ${TCL_EXE}
+-	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
++	@LD_LIBRARY_PATH_VAR@="$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
+ 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
+ 	valgrind $(VALGRINDARGS) ${TCL_EXE} $(SCRIPT)
+ 
+@@ -807,14 +807,14 @@ install-libraries: libraries $(INSTALL_TZDATA) install-msgs
+ 
+ install-tzdata: ${TCL_EXE}
+ 	@echo "Installing time zone data"
+-	@@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
++	@@LD_LIBRARY_PATH_VAR@="$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
+ 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
+ 	${TCL_EXE} $(TOOL_DIR)/installData.tcl \
+ 	    $(TOP_DIR)/library/tzdata "$(SCRIPT_INSTALL_DIR)"/tzdata
+ 
+ install-msgs: ${TCL_EXE}
+ 	@echo "Installing message catalogs"
+-	@@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
++	@@LD_LIBRARY_PATH_VAR@="$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
+ 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
+ 	${TCL_EXE} $(TOOL_DIR)/installData.tcl \
+ 	    $(TOP_DIR)/library/msgs "$(SCRIPT_INSTALL_DIR)"/msgs
+@@ -1754,7 +1754,7 @@ html-tk: ${TCL_EXE}
+ 	@EXTRA_BUILD_HTML@
+ 
+ BUILD_HTML = \
+-	@@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
++	@@LD_LIBRARY_PATH_VAR@="$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
+ 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
+ 	${TCL_EXE} $(TOOL_DIR)/tcltk-man2html.tcl --htmldir="$(HTML_INSTALL_DIR)" \
+ 		--srcdir=$(TOP_DIR)/.. $(BUILD_HTML_FLAGS)
+-- 
+1.7.3.4
+
