@@ -44,8 +44,8 @@ SRC_URI += "${PATHFIXPATCH} \
             file://py-compile-compile-only-optimized-byte-code.patch"
 
 
-SRC_URI[md5sum] = "93ecb319f0365cb801990b00f658d026"
-SRC_URI[sha256sum] = "921b5188057e57bdd9c0ba06e21d0b0ea7dafa61a9bd08a2b041215bcff12f55"
+SRC_URI[md5sum] = "d8a8f6bd898a6b34a874728cd1e47a95"
+SRC_URI[sha256sum] = "6dcc0c5971c74da369dda00fceaf5416c1f186d635eb14cc301d1ce29e5a9a26"
 
 PR = "r0"
 
