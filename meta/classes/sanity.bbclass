@@ -90,6 +90,15 @@ def check_toolchain(data):
 
     return ""
 
+def check_bbclassextend(data):
+    allowed = ('native', 'nativesdk', 'multilib', 'cross')
+    extends = (data.getVar("BBCLASSEXTEND", True) or "").split()
+    errors = []
+    for pair in [x.split(':') for x in extends]:
+        if pair[0] not in allowed:
+            errors.append('BBCLASSEXTEND has invalid value: %s' % pair[0])
+    return '\n'.join(errors)
+
 def check_conf_exists(fn, data):
     bbpath = []
     fn = data.expand(fn)
@@ -431,6 +440,10 @@ def check_sanity(sanity_data):
     toolchain_msg = check_toolchain(sanity_data)
     if toolchain_msg != "":
         messages = messages + toolchain_msg + '\n'
+
+    bbclassextend_msg = check_bbclassextend(e.data)
+    if bbclassextend_msg != "":
+        messages = messages + bbclassextend_msg + '\n'
 
     # Check if DISPLAY is set if IMAGETEST is set
     if not sanity_data.getVar( 'DISPLAY', True ) and sanity_data.getVar( 'IMAGETEST', True ) == 'qemu':
