@@ -18,7 +18,13 @@ FILES_${PN} += "${datadir}/telepathy \
                 ${datadir}/dbus-1"
 
 do_install_append() {
-	rmdir ${D}${bindir}
-	rmdir ${D}${libexecdir}
-	rmdir ${D}${servicedir}
+	if [ -d ${D}${bindir} ] ; then
+		rmdir ${D}${bindir}
+	fi
+	if [ -d ${D}${libexecdir} ] ; then
+		rmdir ${D}${libexecdir}
+	fi
+	if [ -d ${D}${servicedir} ] ; then
+		rmdir ${D}${servicedir}
+	fi
 }
