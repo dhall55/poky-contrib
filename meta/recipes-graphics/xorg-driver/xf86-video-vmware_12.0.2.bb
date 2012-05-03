@@ -18,5 +18,7 @@ COMPATIBLE_HOST = '(i.86.*-linux|x86_64.*-linux)'
 
 do_install_append () {
 	# Remove useless empty directory
-	rmdir ${D}${bindir}
+	if [ -d ${D}${bindir} ]; then
+		rmdir ${D}${bindir}
+	fi
 }
