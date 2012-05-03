@@ -1,0 +1,7 @@
+PV = 5.4.0
+PR = r36
+RDEPENDS = 
+RRECOMMENDS = db-dbg eglibc-dbg elfutils-dbg file-dbg libacl-dbg libattr-dbg libbz2-dbg libcrypto-dbg libpcre-dbg libpcreposix-dbg libssl-dbg popt-dbg rpm-libs-dbg zlib-dbg
+PKGSIZE = 800381
+FILES = /usr/lib/python*/rpm/.debug/_*
+FILELIST = /usr/lib/python2.7/rpm/.debug/_rpmmodule.so

@@ -1,0 +1,7 @@
+PV = 5.4.0
+PR = r36
+RDEPENDS = db (>= 5.1.19) eglibc (>= 2.15) elfutils (>= 0.148) file (>= 5.11) libacl (>= 2.2.51) libattr (>= 2.4.46) libbz2 (>= 1.0.6) libcrypto (>= 1.0.0i) libgcc (>= 4.7.0+svnr186651) libpcre (>= 8.21) libpcreposix (>= 8.21) libssl (>= 1.0.0i) popt (>= 1.16) zlib (>= 1.2.6)
+RRECOMMENDS = 
+PKGSIZE = 2400176
+FILES = /usr/lib/librpm-*.so /usr/lib/librpmconstant-*.so /usr/lib/librpmdb-*.so /usr/lib/librpmio-*.so /usr/lib/librpmmisc-*.so /usr/lib/librpmbuild-*.so
+FILELIST = /usr/lib/librpm-5.4.so /usr/lib/librpmbuild-5.4.so /usr/lib/librpmconstant-5.4.so /usr/lib/librpmdb-5.4.so /usr/lib/librpmio-5.4.so /usr/lib/librpmmisc-5.4.so

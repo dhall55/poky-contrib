@@ -1,0 +1,4 @@
+PV = 0.1+git1+810b0b08eb79e4685202da2ec347b990bb467e07
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native pkgconfig-native virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = matchbox-desktop-sato-dbg matchbox-desktop-sato-staticdev matchbox-desktop-sato matchbox-desktop-sato-doc matchbox-desktop-sato-dev matchbox-desktop-sato-locale

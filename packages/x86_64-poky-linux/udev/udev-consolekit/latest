@@ -1,0 +1,7 @@
+PV = 164
+PR = r13
+RDEPENDS = udev-acl
+RRECOMMENDS = 
+PKGSIZE = 18
+FILES = /usr/lib/ConsoleKit
+FILELIST = /usr/lib/ConsoleKit/run-seat.d/udev-acl.ck

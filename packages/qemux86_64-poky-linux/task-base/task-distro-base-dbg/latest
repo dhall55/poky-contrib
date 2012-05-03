@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r73
+RDEPENDS = 
+RRECOMMENDS = qemu-config-dbg task-core-boot-dbg
+PKGSIZE = 0
+FILES = 
+FILELIST = 

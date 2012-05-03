@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r9
+RDEPENDS = task-core-boot (= 1.0-r9)
+RRECOMMENDS = base-files-dev base-passwd-dev busybox-dev initscripts-dev modutils-initscripts-dev netbase-dev sysvinit-dev task-core-boot-dev tinylogin-dev udev-dev update-alternatives-cworth-dev v86d-dev
+PKGSIZE = 0
+FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o
+FILELIST = 

@@ -1,0 +1,7 @@
+PV = 8.21
+PR = r1
+RDEPENDS = eglibc (>= 2.15) libgcc (>= 4.7.0+svnr186651) libpcre (>= 8.21) libstdc++ (>= 4.7.0+svnr186651)
+RRECOMMENDS = 
+PKGSIZE = 33243
+FILES = /usr/lib/libpcrecpp.so.0 /usr/lib/libpcrecpp.so.0.0.0
+FILELIST = /usr/lib/libpcrecpp.so.0 /usr/lib/libpcrecpp.so.0.0.0

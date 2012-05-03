@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r31
+DEPENDS = virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = task-core-x11-sato task-core-x11-sato-dbg task-core-x11-sato-dev

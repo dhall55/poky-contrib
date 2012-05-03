@@ -1,0 +1,7 @@
+PV = 4.7.0+svnr186651
+PR = r1
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 89910
+FILES = /usr/lib/libssp*.a
+FILELIST = /usr/lib/libssp.a

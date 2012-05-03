@@ -1,0 +1,7 @@
+PV = 0.1+git1+1379fd230a32509e94971961183f1031f469737a
+PR = r2
+RDEPENDS = gst-plugins-base-dev gstreamer-dev gtk+-dev libowl-av (= 0.1+git1+1379fd230a32509e94971961183f1031f469737a-r2) pkgconfig
+RRECOMMENDS = atk-dev cairo-dev eglibc-dev expat-dev fontconfig-dev freetype-dev gdk-pixbuf-dev glib-2.0-dev gst-meta-base-dev gst-plugins-base-dev gstreamer-dev gtk+-dev libffi-dev libgstinterfaces-0.10-dev libowl-av-dev libpng12-dev libstdc++-dev libx11-trim-dev libxau-dev libxcb-dev libxcb-render-dev libxcb-shm-dev libxdmcp-dev libxml2-dev libxrender-dev pango-dev pixman-dev pkgconfig-dev zlib-dev
+PKGSIZE = 13757
+FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o
+FILELIST = /usr/include/libowl-av/owl-audio-player.h /usr/include/libowl-av/owl-tag-reader.h /usr/include/libowl-av/owl-video-widget.h /usr/lib/libowl-av.la /usr/lib/libowl-av.so /usr/lib/pkgconfig/libowl-av.pc

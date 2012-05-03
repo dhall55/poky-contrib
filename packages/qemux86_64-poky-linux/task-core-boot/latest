@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r9
+DEPENDS = virtual/kernel virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = task-core-boot task-core-boot-dbg task-core-boot-dev

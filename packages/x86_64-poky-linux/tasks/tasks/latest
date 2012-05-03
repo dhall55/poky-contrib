@@ -1,0 +1,7 @@
+PV = 0.19
+PR = r2
+RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.30.3) gtk+ (>= 2.24.8) hicolor-icon-theme libecal (>= 2.30+git1+7337d11aed576e7caaa12b4e881ad8d33668799f) libedataserver (>= 2.30+git1+7337d11aed576e7caaa12b4e881ad8d33668799f) libical (>= 0.48) libowl (>= 0.1+git1+6ebc8ac8f8575278dd40a535cadefa26374e44b1)
+RRECOMMENDS = 
+PKGSIZE = 160554
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/tasks /usr/lib/tasks/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers /usr/share/icons/hicolor
+FILELIST = /usr/bin/tasks /usr/share/applications/tasks.desktop /usr/share/icons/hicolor/16x16/apps/tasks.png /usr/share/icons/hicolor/22x22/apps/tasks.png /usr/share/icons/hicolor/24x24/apps/tasks.png /usr/share/icons/hicolor/26x26/apps/tasks.png /usr/share/icons/hicolor/32x32/apps/tasks.png /usr/share/icons/hicolor/48x48/apps/tasks.png /usr/share/icons/hicolor/64x64/apps/tasks.png /usr/share/icons/hicolor/scalable/apps/tasks.svg

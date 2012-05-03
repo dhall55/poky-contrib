@@ -1,0 +1,4 @@
+PV = 2.18.3
+PR = r8
+DEPENDS = autoconf-native automake-native avahi gnu-config-native gtk+ libtool-cross libtool-native pkgconfig-native update-rc.d-native virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = distcc-dbg distcc-staticdev distcc distcc-doc distcc-dev distcc-locale distcc-distmon-gnome

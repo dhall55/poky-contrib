@@ -1,0 +1,4 @@
+PV = 1.2.0
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native libgpg-error libtool-cross libtool-native virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = libksba-dbg libksba-staticdev libksba libksba-doc libksba-dev libksba-locale

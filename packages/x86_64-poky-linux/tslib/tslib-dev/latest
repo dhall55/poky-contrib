@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r20
+RDEPENDS = pkgconfig tslib (= 1.0-r20)
+RRECOMMENDS = eglibc-dev pkgconfig-dev tslib-conf-dev tslib-dev
+PKGSIZE = 8498
+FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/ts/*.la
+FILELIST = /usr/include/tslib.h /usr/lib/libts.la /usr/lib/libts.so /usr/lib/pkgconfig/tslib-1.0.pc /usr/lib/ts/dejitter.la /usr/lib/ts/input.la /usr/lib/ts/linear.la /usr/lib/ts/linear_h2200.la /usr/lib/ts/pthres.la /usr/lib/ts/variance.la

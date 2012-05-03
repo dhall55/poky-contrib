@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r24
+DEPENDS = update-rc.d-native
+PACKAGES = qemu-config-dbg qemu-config-staticdev qemu-config qemu-config-doc qemu-config-dev qemu-config-locale

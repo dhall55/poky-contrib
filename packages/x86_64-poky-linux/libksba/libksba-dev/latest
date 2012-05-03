@@ -1,0 +1,7 @@
+PV = 1.2.0
+PR = r0
+RDEPENDS = libksba (= 1.2.0-r0)
+RRECOMMENDS = eglibc-dev libgpg-error-dev libksba-dev
+PKGSIZE = 29051
+FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o
+FILELIST = /usr/include/ksba.h /usr/lib/libksba.la /usr/lib/libksba.so /usr/share/aclocal/ksba.m4

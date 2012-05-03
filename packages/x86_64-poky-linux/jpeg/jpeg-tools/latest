@@ -1,0 +1,7 @@
+PV = 8c
+PR = r3
+RDEPENDS = eglibc (>= 2.15) jpeg (>= 8c)
+RRECOMMENDS = 
+PKGSIZE = 77432
+FILES = /usr/bin/*
+FILELIST = /usr/bin/cjpeg /usr/bin/djpeg /usr/bin/jpegtran /usr/bin/rdjpgcom /usr/bin/wrjpgcom

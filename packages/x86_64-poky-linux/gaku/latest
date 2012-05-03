@@ -1,0 +1,4 @@
+PV = 0.1+git1+a0be2fe4b5f12b8b07f4e3bd624b3729657f0ac5
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native gstreamer gtk+ libowl-av libtool-cross libtool-native pkgconfig-native virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = gaku-dbg gaku-staticdev gaku gaku-doc gaku-dev gaku-locale

@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r31
+RDEPENDS = connman-gnome gthumb gtk-sato-engine libsdl matchbox-config-gtk matchbox-desktop matchbox-keyboard matchbox-session-sato matchbox-stroke sato-icon-theme settings-daemon x11vnc xcursor-transparent-theme
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/task-core-x11-sato /usr/lib/task-core-x11-sato/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers
+FILELIST = 

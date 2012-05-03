@@ -1,0 +1,7 @@
+PV = 1.8.4p4
+PR = r0
+RDEPENDS = sudo virtual-locale-pl
+RRECOMMENDS = 
+PKGSIZE = 51994
+FILES = /usr/share/locale/pl
+FILELIST = /usr/share/locale/pl/LC_MESSAGES/sudo.mo /usr/share/locale/pl/LC_MESSAGES/sudoers.mo

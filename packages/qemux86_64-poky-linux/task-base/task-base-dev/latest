@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r73
+RDEPENDS = task-base (= 1.0-r73)
+RRECOMMENDS = module-init-tools-dev sysfsutils-dev task-base-alsa-dev task-base-apm-dev task-base-bluetooth-dev task-base-ipv6-dev task-base-irda-dev task-base-nfs-dev task-base-pcmcia-dev task-base-usbgadget-dev task-base-zeroconf-dev task-distro-base-dev task-machine-base-dev
+PKGSIZE = 0
+FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o
+FILELIST = 

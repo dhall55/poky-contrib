@@ -1,0 +1,7 @@
+PV = 1.8.4p4
+PR = r0
+RDEPENDS = sudo virtual-locale-zh-cn
+RRECOMMENDS = 
+PKGSIZE = 44933
+FILES = /usr/share/locale/zh_CN
+FILELIST = /usr/share/locale/zh_CN/LC_MESSAGES/sudo.mo /usr/share/locale/zh_CN/LC_MESSAGES/sudoers.mo

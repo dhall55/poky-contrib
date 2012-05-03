@@ -1,0 +1,7 @@
+PV = 0.1+git1+810b0b08eb79e4685202da2ec347b990bb467e07
+PR = r0
+RDEPENDS = matchbox-desktop-sato (= 0.1+git1+810b0b08eb79e4685202da2ec347b990bb467e07-r0) pkgconfig
+RRECOMMENDS = matchbox-desktop-sato-dev pkgconfig-dev
+PKGSIZE = 0
+FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o
+FILELIST = 

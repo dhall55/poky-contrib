@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r1
+RDEPENDS = nfs-utils nfs-utils-client
+RRECOMMENDS = glibc-utils
+PKGSIZE = 0
+FILES = 
+FILELIST = 

@@ -1,0 +1,7 @@
+PV = 1.2.0
+PR = r0
+RDEPENDS = eglibc (>= 2.15) libgpg-error (>= 1.10)
+RRECOMMENDS = 
+PKGSIZE = 216101
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/libksba /usr/lib/libksba/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers
+FILELIST = /usr/bin/ksba-config /usr/lib/libksba.so.8 /usr/lib/libksba.so.8.11.0

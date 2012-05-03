@@ -1,0 +1,7 @@
+PV = 3.7.11
+PR = r0
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 671443
+FILES = /usr/lib/*.so.*
+FILELIST = /usr/lib/libsqlite3.so.0 /usr/lib/libsqlite3.so.0.8.6

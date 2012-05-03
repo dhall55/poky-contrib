@@ -1,0 +1,7 @@
+PV = 1.2.49
+PR = r0
+RDEPENDS = eglibc (>= 2.15) zlib (>= 1.2.6)
+RRECOMMENDS = 
+PKGSIZE = 168472
+FILES = /usr/lib/lib*.so.*
+FILELIST = /usr/lib/libpng.so.3 /usr/lib/libpng.so.3.49.0

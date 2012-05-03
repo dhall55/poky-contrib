@@ -1,0 +1,4 @@
+PV = 2.1.0
+PR = r3
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = libsysfs libsysfs-dev libsysfs-staticdev sysfsutils-dbg sysfsutils-staticdev sysfsutils sysfsutils-doc sysfsutils-dev sysfsutils-locale

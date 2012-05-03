@@ -1,0 +1,7 @@
+PV = 1.5.3-git1+2c5bb6ceb99ecd950ef993e43d77bf0569ea0582
+PR = r2
+RDEPENDS = zypper (= 1.5.3-git1+2c5bb6ceb99ecd950ef993e43d77bf0569ea0582-r2)
+RRECOMMENDS = augeas-dev eglibc-dev libaugeas-dev libgcc-dev libstdc++-dev libzypp-dev readline-dev rpm-libs-dev zypper-dev
+PKGSIZE = 1776
+FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o
+FILELIST = /usr/include/zypper/prompt.h

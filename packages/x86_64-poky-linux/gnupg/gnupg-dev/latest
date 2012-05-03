@@ -1,0 +1,7 @@
+PV = 2.0.18
+PR = r1
+RDEPENDS = gnupg (= 2.0.18-r1)
+RRECOMMENDS = bzip2-dev eglibc-dev gnupg-dev libassuan-dev libbz2-dev libgcrypt-dev libgpg-error-dev libksba-dev libusb-compat-dev pth-dev readline-dev zlib-dev
+PKGSIZE = 0
+FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o
+FILELIST = 

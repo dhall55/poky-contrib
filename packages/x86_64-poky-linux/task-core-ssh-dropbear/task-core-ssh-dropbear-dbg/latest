@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r0
+RDEPENDS = dropbear-dbg
+RRECOMMENDS = dropbear-dbg task-core-ssh-dropbear (= 1.0-r0) task-core-ssh-dropbear-dbg
+PKGSIZE = 0
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/task-core-ssh-dropbear/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = 

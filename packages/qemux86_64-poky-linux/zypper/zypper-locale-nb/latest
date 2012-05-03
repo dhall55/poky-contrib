@@ -1,0 +1,7 @@
+PV = 1.5.3-git1+2c5bb6ceb99ecd950ef993e43d77bf0569ea0582
+PR = r2
+RDEPENDS = virtual-locale-nb zypper
+RRECOMMENDS = 
+PKGSIZE = 123521
+FILES = /usr/share/locale/nb
+FILELIST = /usr/share/locale/nb/LC_MESSAGES/zypper.mo

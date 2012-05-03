@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r28
+RDEPENDS = 
+RRECOMMENDS = contacts-dbg dates-dbg evolution-data-server-dbg gaku-dbg task-core-apps-x11-pimlico (= 1.0-r28) task-core-apps-x11-pimlico-dbg tasks-dbg
+PKGSIZE = 0
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/task-core-apps-x11-pimlico/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = 

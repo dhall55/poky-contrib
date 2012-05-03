@@ -1,0 +1,7 @@
+PV = 0.1
+PR = r29
+RDEPENDS = 
+RRECOMMENDS = formfactor-dbg gtk-sato-engine-dbg gtk-theme-sato-dbg initscripts-dbg matchbox-desktop-sato-dbg matchbox-panel-2-dbg matchbox-session-dbg matchbox-session-sato (= 0.1-r29) matchbox-session-sato-dbg matchbox-theme-sato-dbg
+PKGSIZE = 0
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/matchbox-session-sato/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = 

@@ -1,0 +1,7 @@
+PV = 0.79
+PR = r3
+RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.30.3) gnutls (>= 2.12.18)
+RRECOMMENDS = 
+PKGSIZE = 45008
+FILES = /usr/bin/wispr
+FILELIST = /usr/bin/wispr

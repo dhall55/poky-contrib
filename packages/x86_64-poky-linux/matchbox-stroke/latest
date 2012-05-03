@@ -1,0 +1,4 @@
+PV = 0.0+git1+2b772583b61d2f6e8358e7c80e10293fc27cfcb7
+PR = r0
+DEPENDS = autoconf-native automake-native expat gettext-native gnu-config-native libfakekey libtool-cross libtool-native libxft pkgconfig-native virtual/gettext virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = matchbox-stroke-dbg matchbox-stroke-staticdev matchbox-stroke matchbox-stroke-doc matchbox-stroke-dev matchbox-stroke-locale

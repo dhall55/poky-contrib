@@ -1,0 +1,7 @@
+PV = 164
+PR = r13
+RDEPENDS = eglibc (>= 2.15) udev (= 164-r13)
+RRECOMMENDS = 
+PKGSIZE = 53296
+FILES = /lib/libudev.so.*
+FILELIST = /lib/libudev.so.0 /lib/libudev.so.0.9.3

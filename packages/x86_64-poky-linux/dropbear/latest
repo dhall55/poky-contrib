@@ -1,0 +1,4 @@
+PV = 2012.55
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native update-rc.d-native virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc zlib
+PACKAGES = dropbear-dbg dropbear-staticdev dropbear dropbear-doc dropbear-dev dropbear-locale

@@ -1,0 +1,7 @@
+PV = 0.0-git1+15b6c52260bbc52b3d8e585e271b67e10cc7c433
+PR = r20
+RDEPENDS = eglibc (>= 2.15) expat (>= 2.0.1) gnupg gzip libcrypto (>= 1.0.0i) libcurl (>= 7.24.0) libgcc (>= 4.7.0+svnr186651) libstdc++ (>= 4.7.0+svnr186651) libudev (>= 164) libxml2 (>= 2.7.8) rpm-libs rpm-libs (>= 5.4.0) sat-solver zlib (>= 1.2.6)
+RRECOMMENDS = 
+PKGSIZE = 4540485
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/libzypp /usr/lib/libzypp/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers /usr/lib/zypp /usr/share/zypp /usr/share/icons
+FILELIST = /etc/logrotate.d/zypp-history.lr /etc/zypp/systemCheck /etc/zypp/zypp.conf /usr/bin/zypp-CheckAccessDeleted /usr/lib/libzypp.so.810 /usr/lib/libzypp.so.810.1.0 /usr/lib/zypp/notify-message /usr/share/zypp/schema/yum/common-inc.rng /usr/share/zypp/schema/yum/deltainfo.rng /usr/share/zypp/schema/yum/filelists.rng /usr/share/zypp/schema/yum/other.rng /usr/share/zypp/schema/yum/patch.rng /usr/share/zypp/schema/yum/patches.rng /usr/share/zypp/schema/yum/patterns.rng /usr/share/zypp/schema/yum/primary.rng /usr/share/zypp/schema/yum/product.rng /usr/share/zypp/schema/yum/products.rng /usr/share/zypp/schema/yum/repomd.rng /usr/share/zypp/schema/yum/rpm-inc.rng /usr/share/zypp/schema/yum/susedata.rng /usr/share/zypp/schema/yum/suseinfo.rng /usr/share/zypp/schema/yum/updateinfo.rng

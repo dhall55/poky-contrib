@@ -1,0 +1,7 @@
+PV = 0.0+git1+0f174f463dfed500b65533e249cd22942e439c77
+PR = r0
+RDEPENDS = eglibc (>= 2.15) gconf gconf (>= 3.2.3) glib-2.0 (>= 2.30.3) gtk+ (>= 2.24.8) libx11-trim (>= 1.4.4)
+RRECOMMENDS = 
+PKGSIZE = 27896
+FILES = /usr/bin/* /etc
+FILELIST = /etc/X11/Xsession.d/70settings-daemon.sh /etc/gconf/schemas/settings-daemon.schemas /usr/bin/settings-daemon

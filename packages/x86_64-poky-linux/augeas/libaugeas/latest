@@ -1,0 +1,7 @@
+PV = 0.10.0
+PR = r1
+RDEPENDS = augeas-lenses eglibc (>= 2.15) libgcc (>= 4.7.0+svnr186651) libxml2 (>= 2.7.8) zlib (>= 1.2.6)
+RRECOMMENDS = augeas
+PKGSIZE = 513777
+FILES = /usr/lib/lib*.so.*
+FILELIST = /usr/lib/libaugeas.so.0 /usr/lib/libaugeas.so.0.15.0 /usr/lib/libfa.so.1 /usr/lib/libfa.so.1.3.5

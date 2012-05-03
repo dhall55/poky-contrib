@@ -1,0 +1,7 @@
+PV = 5.4.0
+PR = r36
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 7515326
+FILES = /usr/lib/python*/rpm/*.a
+FILELIST = /usr/lib/python2.7/rpm/_rpmmodule.a

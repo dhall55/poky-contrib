@@ -1,0 +1,7 @@
+PV = 0.4.1
+PR = r2
+RDEPENDS = 
+RRECOMMENDS = pkgconfig-dbg sato-icon-theme (= 0.4.1-r2) sato-icon-theme-dbg
+PKGSIZE = 0
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/sato-icon-theme/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = 

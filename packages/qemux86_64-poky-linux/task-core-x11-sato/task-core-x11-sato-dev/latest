@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r31
+RDEPENDS = task-core-x11-sato (= 1.0-r31)
+RRECOMMENDS = connman-gnome-dev gthumb-dev gtk-sato-engine-dev libsdl-dev matchbox-config-gtk-dev matchbox-desktop-dev matchbox-keyboard-dev matchbox-session-sato-dev matchbox-stroke-dev sato-icon-theme-dev settings-daemon-dev task-core-x11-sato-dev x11vnc-dev xcursor-transparent-theme-dev
+PKGSIZE = 0
+FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o
+FILELIST = 

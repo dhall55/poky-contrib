@@ -1,0 +1,7 @@
+PV = 4.7.0+svnr186651
+PR = r1
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 187868
+FILES = /usr/lib/x86_64-poky-linux/4.7.1/libgcov.a
+FILELIST = /usr/lib/x86_64-poky-linux/4.7.1/libgcov.a

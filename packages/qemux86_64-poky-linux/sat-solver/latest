@@ -1,0 +1,4 @@
+PV = 0.0-git1+0a7378d5f482f477a01cf1690d76871ab8bdcc32
+PR = r13
+DEPENDS = autoconf-native automake-native cmake-native db expat gnu-config-native libcheck libtool-cross libtool-native pkgconfig-native rpm virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc zlib
+PACKAGES = sat-solver-dbg sat-solver-staticdev sat-solver sat-solver-doc sat-solver-dev sat-solver-locale

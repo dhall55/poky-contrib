@@ -1,0 +1,7 @@
+PV = 0.1+git1+1379fd230a32509e94971961183f1031f469737a
+PR = r2
+RDEPENDS = libowl-av-dev (= 0.1+git1+1379fd230a32509e94971961183f1031f469737a-r2)
+RRECOMMENDS = 
+PKGSIZE = 386130
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/libowl-av/*.a
+FILELIST = /usr/lib/libowl-av.a

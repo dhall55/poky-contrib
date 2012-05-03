@@ -1,0 +1,4 @@
+PV = 2.88dsf
+PR = r6
+DEPENDS = virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = sysvinit-pidof sysvinit-sulogin sysvinit-dbg sysvinit-staticdev sysvinit sysvinit-doc sysvinit-dev sysvinit-locale

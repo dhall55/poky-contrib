@@ -1,0 +1,4 @@
+PV = 3.0.3
+PR = r4
+DEPENDS = autoconf-native automake-native cmake-native expat gnu-config-native libtool-cross libtool-native neon pkgconfig-native virtual/libc virtual/x86_64-poky-linux-compilerlibs virtual/x86_64-poky-linux-gcc
+PACKAGES = libmusicbrainz-dbg libmusicbrainz-staticdev libmusicbrainz libmusicbrainz-doc libmusicbrainz-dev libmusicbrainz-locale

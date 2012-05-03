@@ -1,0 +1,7 @@
+PV = 1.2.15
+PR = r0
+RDEPENDS = eglibc (>= 2.15) tslib (>= 1.0)
+RRECOMMENDS = 
+PKGSIZE = 368388
+FILES = /usr/libexec /usr/lib/lib*.so.* /etc /com /var /lib/*.so.* /usr/share/libsdl /usr/lib/libsdl
+FILELIST = /usr/lib/libSDL-1.2.so.0 /usr/lib/libSDL-1.2.so.0.11.4
