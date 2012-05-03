@@ -18,8 +18,12 @@ do_install () {
 do_install_extra () {
     install -d ${D}${base_bindir}
     mv ${D}${bindir}/tar ${D}${base_bindir}/tar.${PN}
-    rmdir ${D}${bindir}/
-    rmdir ${D}${sbindir}/
+    if [ -d ${D}${bindir}/ ] ; then 
+        rmdir ${D}${bindir}/
+    fi
+    if [ -d ${D}${sbindir}/ ] ; then 
+        rmdir ${D}${sbindir}/
+    fi
     mv ${D}${libexecdir}/rmt ${D}${libexecdir}/rmt.${PN}
 }
 
