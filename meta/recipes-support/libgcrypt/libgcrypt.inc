@@ -23,7 +23,9 @@ do_install_append() {
 	install -m 0644 ${S}/src/libgcrypt.pc ${D}/${libdir}/pkgconfig/
 	
 	# Remove empty sbin directory since we don't build the daemon that would install there
-	rmdir ${D}${sbindir}
+	if [ -d ${D}${sbindir} ] ; then
+		rmdir ${D}${sbindir}
+	fi
 }
 
 ARM_INSTRUCTION_SET = "arm"
