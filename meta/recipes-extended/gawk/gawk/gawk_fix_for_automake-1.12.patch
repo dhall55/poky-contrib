@@ -1,0 +1,23 @@
+Upstream-Status: Pending
+
+This patch fixes following issue with automake 1.12
+
+| configure.ac:120: error: automatic de-ANSI-fication support has been removed
+
+Signed-Off-By: Nitin A Kamble <nitin.a.kamble@intel.com>
+2012/05/03
+
+Index: gawk-4.0.0/configure.ac
+===================================================================
+--- gawk-4.0.0.orig/configure.ac
++++ gawk-4.0.0/configure.ac
+@@ -116,9 +116,6 @@ dnl Set the programming language for che
+ dnl this only needs to be set once, since everything is in C.
+ AC_LANG([C])
+ 
+-dnl check for C compiler for automake. Needed for dfa.h.
+-AM_C_PROTOTYPES
+-
+ dnl Cygwin doesn't like to get libs with full paths
+ dnl since that overrides linking against DLLs.
+ case `(uname) 2> /dev/null` in
