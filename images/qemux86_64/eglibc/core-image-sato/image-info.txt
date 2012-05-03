@@ -1,0 +1,11 @@
+DISTRO = poky
+DISTRO_VERSION = 1.2+snapshot-20120503
+USER_CLASSES = image-mklibs image-prelink
+IMAGE_CLASSES = image_types
+IMAGE_FEATURES = debug-tweaks apps-console-core x11-base apps-x11-core package-management apps-x11-games apps-x11-pimlico package-management x11-sato ssh-server-dropbear
+IMAGE_LINGUAS = en-us en-gb
+IMAGE_INSTALL = task-core-boot task-base-extended
+BAD_RECOMMENDATIONS = 
+ROOTFS_POSTPROCESS_COMMAND = buildhistory_get_image_installed ;   rootfs_update_timestamp ;  
+IMAGE_POSTPROCESS_COMMAND =   buildhistory_get_imageinfo ; 
+IMAGESIZE = 133800
