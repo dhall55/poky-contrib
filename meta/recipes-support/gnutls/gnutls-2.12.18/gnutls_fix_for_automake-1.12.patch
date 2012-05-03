@@ -1,0 +1,53 @@
+Upstream-Status: Pending
+
+This patch fixes following kind of issue with automake 1.12
+
+| automake: warnings are treated as errors
+| /srv/home/nitin/builds/build-gcc47/tmp/sysroots/x86_64-linux/usr/share/automake-1.12/am/ltlibrary.am: warning: 'libgnutls.la': linking libtool libraries using a non-POSIX
+| /srv/home/nitin/builds/build-gcc47/tmp/sysroots/x86_64-linux/usr/share/automake-1.12/am/ltlibrary.am: archiver requires 'AM_PROG_AR' in 'configure.ac'
+
+Signed-Off-By: Nitin A Kamble <nitin.a.kamble@intel.com>
+2012/05/03
+
+Index: gnutls-2.12.18/configure.ac
+===================================================================
+--- gnutls-2.12.18.orig/configure.ac
++++ gnutls-2.12.18/configure.ac
+@@ -36,6 +36,9 @@ AC_MSG_RESULT([***
+ 
+ dnl Checks for programs.
+ AC_PROG_CC
++# automake 1.12 seems to require this, but automake 1.11 doesn't recognize it
++m4_pattern_allow([AM_PROG_AR])
++AM_PROG_AR
+ AC_PROG_LN_S
+ GTK_DOC_CHECK(1.1)
+ AC_PATH_PROG([GAA], [gaa])
+Index: gnutls-2.12.18/lib/configure.ac
+===================================================================
+--- gnutls-2.12.18.orig/lib/configure.ac
++++ gnutls-2.12.18/lib/configure.ac
+@@ -31,6 +31,9 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_R
+ AM_CONFIG_HEADER(config.h)
+ 
+ AC_PROG_CC
++# automake 1.12 seems to require this, but automake 1.11 doesn't recognize it
++m4_pattern_allow([AM_PROG_AR])
++AM_PROG_AR
+ lgl_EARLY
+ 
+ AC_LIBTOOL_WIN32_DLL
+Index: gnutls-2.12.18/libextra/configure.ac
+===================================================================
+--- gnutls-2.12.18.orig/libextra/configure.ac
++++ gnutls-2.12.18/libextra/configure.ac
+@@ -31,6 +31,9 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_R
+ AM_CONFIG_HEADER(config.h)
+ 
+ AC_PROG_CC
++# automake 1.12 seems to require this, but automake 1.11 doesn't recognize it
++m4_pattern_allow([AM_PROG_AR])
++AM_PROG_AR
+ xgl_EARLY
+ 
+ AC_LIBTOOL_WIN32_DLL
