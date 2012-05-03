@@ -28,5 +28,7 @@ FILES_${PN} = "${libdir}/libgpgme.so.*"
 FILES_${PN}-dev += "${bindir}/gpgme-config ${datadir}/common-lisp/source/gpgme/*"
 
 do_install_append() {
-	rmdir ${D}/usr/libexec
+	if [ -d ${D}/usr/libexec ] ; then
+		rmdir ${D}/usr/libexec
+	fi
 }
