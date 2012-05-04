@@ -1,17 +1,22 @@
 SYSROOT_PREPROCESS_FUNCS += "relocatable_binaries_preprocess"
 
-CHRPATH_BIN ?= "chrpath"
+ELFEDIT_BIN ?= "chrpath"
+ELFEDIT_LIST ?= "-l"
+ELFEDIT_SET ?= "-r"
 PREPROCESS_RELOCATE_DIRS ?= ""
 
+# Recursively process 'directory' and modify the RPATH of child binaries
 def process_dir (directory, d):
-    import subprocess as sub
+    import oe.process
     import stat
 
-    cmd = d.expand('${CHRPATH_BIN}')
+    cmd = d.expand('${ELFEDIT_BIN}')
+    listarg = d.getVar('ELFEDIT_LIST')
+    setarg = d.getVar('ELFEDIT_SET')
     tmpdir = d.getVar('TMPDIR')
     basedir = d.expand('${base_prefix}')
 
-    #bb.debug("Checking %s for binaries to process" % directory)
+    #bb.note("Checking %s for binaries to process" % directory)
     if not os.path.exists(directory):
         return
 
@@ -38,31 +43,35 @@ def process_dir (directory, d):
                 # Temporarily make the file writeable so we can chrpath it
                 os.chmod(fpath, perms|stat.S_IRWXU)
 
-            p = sub.Popen([cmd, '-l', fpath],stdout=sub.PIPE,stderr=sub.PIPE)
-            err, out = p.communicate()
-            # If returned succesfully, process stderr for results
-            if p.returncode != 0:
+            try:
+                out = oe.process.run([cmd, listarg, fpath])
+            except oe.process.ExecutionError as err:
+                #bb.warn("Failed to read RPATH of %s" % fpath)
+                #bb.note("error messages for failure '%s'" % str(err))
                 continue
 
             # Throw away everything other than the rpath list
-            curr_rpath = err.partition("RPATH=")[2]
-            #bb.note("Current rpath for %s is %s" % (fpath, curr_rpath.strip()))
+            curr_rpath = out.partition("RPATH=")[2]
+            #bb.note("Current rpath of %s is %s" % (fpath, curr_rpath.strip()))
             rpaths = curr_rpath.split(":")
             new_rpaths = []
             for rpath in rpaths:
                 # If rpath is already dynamic continue
                 if rpath.find("$ORIGIN") != -1:
                     continue
-                # If the rpath shares a root with base_prefix determine a new dynamic rpath from the
-                # base_prefix shared root
+                # If the rpath shares a root with base_prefix determine a new
+                # dynamic rpath from the base_prefix shared root
                 if rpath.find(basedir) != -1:
+                    #bb.note("Setting ORIGIN from %s" % basedir)
                     depth = fpath.partition(basedir)[2].count('/')
                     libpath = rpath.partition(basedir)[2].strip()
-                # otherwise (i.e. cross packages) determine a shared root based on the TMPDIR
-                # NOTE: This will not work reliably for cross packages, particularly in the case
-                # where your TMPDIR is a short path (i.e. /usr/poky) as chrpath cannot insert an
+                # Otherwise (i.e. cross packages) determine a shared root based
+                # on the TMPDIR. NOTE: This will *not* work reliably for cross
+                # packages, particularly in the case where your TMPDIR is a
+                # short path (i.e. /usr/poky) as chrpath cannot insert an
                 # rpath longer than that which is already set.
                 else:
+                    #bb.note("Setting ORIGIN from %s" % tmpdir)
                     depth = fpath.rpartition(tmpdir)[2].count('/')
                     libpath = rpath.partition(tmpdir)[2].strip()
 
@@ -76,11 +85,18 @@ def process_dir (directory, d):
             if len(new_rpaths):
                 args = ":".join(new_rpaths)
                 #bb.note("Setting rpath for %s to %s" %(fpath, args))
-                sub.call([cmd, '-r', args, fpath])
+                try:
+                    oe.process.run([cmd, setarg, args, fpath])
+                except oe.process.ExecutionError as err:
+                    bb.warn("Unable to set relocatable RPATH for %s" % fpath)
+                    #bb.note("error messages for failure '%s'" % str(err))
 
+            # Reset the permissions if we had to change them
             if perms:
                 os.chmod(fpath, perms)
 
+# Iterate all children of 'path' which are likely to contain binary
+# files and call process_dir on each directory
 def rpath_replace (path, d):
     bindirs = d.expand("${bindir} ${sbindir} ${base_sbindir} ${base_bindir} ${libdir} ${base_libdir} ${libexecdir} ${PREPROCESS_RELOCATE_DIRS}").split()
 
