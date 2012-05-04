@@ -1,4 +1,4 @@
-qemux86-64: core-image-sato configured for poky 1.2+snapshot-20120503
+qemux86-64: core-image-sato configured for poky 1.2+snapshot-20120504
 Configured metadata layers:
 meta              
 meta-yocto        = "master:2e9bb9d103def3ce7499e1a09e47b9297f85c488"

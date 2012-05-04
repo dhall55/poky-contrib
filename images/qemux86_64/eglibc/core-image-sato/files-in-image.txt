@@ -984,7 +984,7 @@ lrwxrwxrwx root       root               17 ./usr/bin/deallocvt -> ../../bin/bus
 lrwxrwxrwx root       root               17 ./usr/bin/diff -> ../../bin/busybox
 lrwxrwxrwx root       root               17 ./usr/bin/dirname -> ../../bin/busybox
 -rwxr-xr-x root       root            82328 ./usr/bin/distcc  
--rwxr-xr-x root       root            78264 ./usr/bin/distccd  
+-rwxr-xr-x root       root            78232 ./usr/bin/distccd  
 -rwxr-xr-x root       root            37792 ./usr/bin/distccmon-text  
 -rwxr-xr-x root       root             9528 ./usr/bin/dlist_test  
 lrwxrwxrwx root       root               17 ./usr/bin/du -> ../../bin/busybox
@@ -6237,7 +6237,7 @@ drwxr-xr-x root       root             4096 ./var/lib/rpm
 -rw-r--r-- root       root            16384 ./var/lib/rpm/Release  
 -rw-r--r-- root       root           176128 ./var/lib/rpm/Requirename  
 -rw-r--r-- root       root             8192 ./var/lib/rpm/Seqno  
--rw-r--r-- root       root            49152 ./var/lib/rpm/Sha1header  
+-rw-r--r-- root       root            45056 ./var/lib/rpm/Sha1header  
 -rw-r--r-- root       root            24576 ./var/lib/rpm/Sigmd5  
 -rw-r--r-- root       root             8192 ./var/lib/rpm/Sourcepkgid  
 -rw-r--r-- root       root             8192 ./var/lib/rpm/Triggername  

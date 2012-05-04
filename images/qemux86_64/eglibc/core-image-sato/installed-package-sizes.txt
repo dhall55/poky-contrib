@@ -26,7 +26,7 @@
 452	KiB xkeyboard-config
 452	KiB bash
 432	KiB sato-icon-theme
-408	KiB shared-mime-info
+404	KiB shared-mime-info
 384	KiB libtheora
 384	KiB libasound2
 348	KiB libsqlite3-0

@@ -1,5 +1,5 @@
 DISTRO = poky
-DISTRO_VERSION = 1.2+snapshot-20120503
+DISTRO_VERSION = 1.2+snapshot-20120504
 USER_CLASSES = image-mklibs image-prelink
 IMAGE_CLASSES = image_types
 IMAGE_FEATURES = debug-tweaks apps-console-core x11-base apps-x11-core package-management apps-x11-games apps-x11-pimlico package-management x11-sato ssh-server-dropbear
