@@ -1,0 +1,73 @@
+Upstream-Status: Pending
+
+This patch fixes following kind of issues with automake 1.12
+
+| automake: warnings are treated as errors
+| Makefile.am:15: warning: '%'-style pattern rules are a GNU make extension
+...
+| Makefile.am:21: warning: pkgconfig_DATA:-$(API_VERSION: non-POSIX variable name
+...
+| /srv/home/nitin/builds/build-gcc47/tmp/sysroots/x86_64-linux/usr/share/automake-1.12/am/ltlibrary.am: warning: 'libebookbackendfile.la': linking libtool libraries using a non-POSIX
+| /srv/home/nitin/builds/build-gcc47/tmp/sysroots/x86_64-linux/usr/share/automake-1.12/am/ltlibrary.am: archiver requires 'AM_PROG_AR' in 'configure.ac'
+...
+| addressbook/libebook/Makefile.am:55: warning: '%'-style pattern rules are a GNU make extension
+...
+| addressbook/libebook/Makefile.am:65: warning: '%'-style pattern rules are a GNU make extension
+| addressbook/libebook/Makefile.am:66: warning: subst -,_,$*: non-POSIX variable name
+| addressbook/libebook/Makefile.am:66: (probably a GNU make extension)
+| addressbook/libebook/Makefile.am:72: warning: pkgconfig_DATA:-$(API_VERSION: non-POSIX variable name
+
+
+Signed-Off-By: Nitin A Kamble <nitin.a.kamble@intel.com>
+2012/05/03
+
+Index: git/Makefile.am
+===================================================================
+--- git.orig/Makefile.am
++++ git/Makefile.am
+@@ -12,7 +12,7 @@ DIST_SUBDIRS = libedataserver libebacken
+ changelogs =			\
+ 	ChangeLog
+ 
+-%-$(API_VERSION).pc: %.pc
++.pc.-$(API_VERSION).pc:
+ 	 cp $< $@
+ 
+ pkgconfigdir = $(libdir)/pkgconfig
+Index: git/configure.ac
+===================================================================
+--- git.orig/configure.ac
++++ git/configure.ac
+@@ -25,6 +25,10 @@ AC_CONFIG_MACRO_DIR([m4])
+ AC_CONFIG_SRCDIR(README)
+ AC_CONFIG_HEADERS(config.h)
+ 
++# automake 1.12 seems to require this, but automake 1.11 doesn't recognize it
++m4_pattern_allow([AM_PROG_AR])
++AM_PROG_AR
++
+ dnl This is for the autoconf tests only - it set's the language we use
+ AC_LANG(C)
+ 
+Index: git/addressbook/libebook/Makefile.am
+===================================================================
+--- git.orig/addressbook/libebook/Makefile.am
++++ git/addressbook/libebook/Makefile.am
+@@ -52,7 +52,7 @@ libebookinclude_HEADERS =				\
+ 	e-name-western.h				\
+ 	e-vcard.h
+ 
+-%-$(API_VERSION).pc: %.pc
++.pc.-$(API_VERSION).pc:
+ 	 cp $< $@
+ 
+ e-name-western-tables.h: e-name-western-tables.h.in
+@@ -62,7 +62,7 @@ pkgconfigdir = $(libdir)/pkgconfig
+ pkgconfig_DATA = libebook-$(API_VERSION).pc
+ 
+ DBUS_GENERATED_H = e-data-book-factory-bindings.h e-data-book-bindings.h e-data-book-view-bindings.h
+-%-bindings.h: $(top_srcdir)/addressbook/libedata-book/%.xml
++./%-bindings.h: $(top_srcdir)/addressbook/libedata-book/%.xml
+ 	@DBUS_BINDING_TOOL@ --mode=glib-client --output=$@ --prefix=$(subst -,_,$*) $^
+ 
+ BUILT_SOURCES = $(DBUS_GENERATED_H) $(MARSHAL_GENERATED)
