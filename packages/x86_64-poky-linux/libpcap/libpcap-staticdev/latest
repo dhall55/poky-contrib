@@ -2,6 +2,6 @@ PV = 1.2.1
 PR = r1.0
 RDEPENDS = libpcap-dev (= 1.2.1-r1.0)
 RRECOMMENDS = 
-PKGSIZE = 1397122
+PKGSIZE = 1432434
 FILES = /usr/lib/*.a /lib/*.a /usr/lib/libpcap/*.a
 FILELIST = /usr/lib/libpcap.a
