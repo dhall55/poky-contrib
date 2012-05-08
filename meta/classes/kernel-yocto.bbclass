@@ -290,4 +290,10 @@ do_kernel_link_vmlinux() {
 	ln -sf ../../../vmlinux
 }
 
+OE_TERMINAL_EXPORTS += "GUILT_BASE"
+python do_devshell () {
+    d.setVar("GUILT_BASE", "meta")
+    oe_terminal( d.getVar('SHELL', True), 'OpenEmbedded Developer Shell', d)
+}
+
 
