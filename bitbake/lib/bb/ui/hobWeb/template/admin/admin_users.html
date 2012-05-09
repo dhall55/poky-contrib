@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>user list</title>
+<script language="Javascript">
+<!--
+  function user_register(){
+	var href ="/register/";
+	window.location=href;
+  }
+
+  function del_user(){
+	document.getElementById('operator').submit();
+  }
+//-->
+</script>
+</head>
+<body>
+  <input type="button" name="add" value="add" onclick="user_register()"/>&nbsp;&nbsp;
+  <input type="button" name="del" value="del" onclick="del_user()"/><br/>
+  <form action="/administrator/del_operator/" method="post" id="operator">
+	<table cellpadding="0" cellspacing="0" border="1">
+	 <tbody>
+	  <tr>
+	   <td>checkbox</td>
+	   <td>id</td>
+	   <td>name</td>
+	   <td>email</td>
+	   <td>valid</td>
+	   <td>status</td>
+	   <td>create_date</td>
+	   <td>edit</td>
+	  </tr>
+     {% for varibale in operators %}
+	  <tr>
+	   <td><input type="checkbox" name="checkbox" value="{{ varibale.id }}"/></td>
+	   <td>{{ varibale.id }}</td>
+	   <td>{{ varibale.username }}</td>
+	   <td>{{ varibale.email }}</td>
+	   <td>{% ifequal varibale.valid '0' %} valid  {% endifequal %}
+	       {% ifequal varibale.valid '1' %} invalid  {% endifequal %}
+	   </td>
+	   <td>{% ifequal varibale.status '0' %} busy  {% endifequal %}
+	        {% ifequal varibale.status '1' %} idle  {% endifequal %}
+	   </td>
+	   <td>{{ varibale.create_date }}</td>
+	   <td><a href="/register/?id={{ varibale.id }}">update</a></td>
+	  </tr>
+     {% empty %}
+	  <tr>
+	   <td colspan="8"><font color="red">no data!</font></td>
+	  </tr>
+     {% endfor %}
+	 </tbody>
+	</table>
+  </form>
+  <input type="button" value="back" onclick="javascript:history.go(-1);"/>
+</body>
+</html>

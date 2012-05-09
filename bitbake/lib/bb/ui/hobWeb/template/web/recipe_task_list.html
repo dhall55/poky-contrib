@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>recipe-task-list</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="/static/js/tabber.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/tabber.css"/>
+<script type="text/javascript">
+	function get_recipe_dependency(param){
+		var is_checked = '';
+		if($("#"+param).attr('checked')==undefined){
+			is_checked=0;
+		}else{
+			is_checked=1;
+		}
+		var href ='/hob/get_recipe_dependency/?selected_recipe='+param+'&is_checked='+is_checked;
+		window.location = href;
+	}
+</script>
+</head>
+<body>
+<form action="/hob/buildPackage_request/" method="post">
+<div align="center" id="container">
+  <table border="0" cellspacing="0" width="68%">
+   <tbody>
+   <tr>
+    <td>
+	<!-- context -->
+	  <table border="0" cellspacing="0" width="100%" height="120px">
+	     <tbody>
+	       <tr bgcolor="#FCFCFC" height="60px">
+	         <td align="left" >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Recipe selection</b></td>
+	         <td align="right" width="50%">
+	         	<b>Total recipes and tasks:{{ rcp_total }}/{{ tasks_total }}</b><br/>
+	         	<b>Included recipes and tasks:{{ rcp_included }}/{{ task_included }}</b>
+	         </td>
+	       </tr>
+	       <tr height="100px" bgcolor="#FFFFFF">
+	         <td colspan="2" align="left">
+	         <div class="tabber" id="tab1">
+				<div class="tabbertab">
+					<h2><a name="tab1">Included (<b>{{ included_total }}</b>)</a></h2>
+					<table border="1" cellspacing="0" width="96%" align="center">
+					  <tbody>
+					  <tr align="center">
+					    <th>Id</th>
+					    <th>Recipe name</th>
+					    <th>Brought in by</th>
+					    <th>Group</th>
+					    <th>Included</th>
+					  </tr>
+					  {% for val in included %}
+					  <tr>
+					    <td align="center" width="10%">{{ forloop.counter }}</td>
+					    <td width="30%">{{ val.name }}</td>
+					    <td width="30%">......</td>
+					    <td width="20%">{{ val.group }}</td>
+					    <td align="center" width="10%"><input type="checkbox" name="include_checkbox" value="{{ val.name }}" checked="checked"/></td>
+					  </tr>
+					  {% empty %}
+					  <tr>
+					    <td colspan="5"><font>no data!</font></td>
+					  </tr>
+					  {% endfor %}
+					  </tbody>
+					</table>
+				</div>
+				<div class="tabbertab">
+					<h2>All recipes</h2>
+					<table border="1" cellspacing="0" width="96%" align="center">
+					  <tbody>
+					  <tr align="center">
+					    <th>Id</th>
+					    <th>Recipe name</th>
+					    <th>License</th>
+					    <th>Group</th>
+					    <th>Included</th>
+					  </tr>
+					  {% for val in recipes %}
+				      <tr>
+					    <td align="center" width="10%">{{ forloop.counter }}</td>
+					    <td width="30%">{{ val.name }}</td>
+					    <td width="30%">{{ val.license }}</td>
+					    <td width="20%">{{ val.group }}</td>
+					    <td align="center" width="10%"><input type="checkbox" name="recipe_checkbox" id="{{ val.name }}" value="{{ val.name }}" {% if val.is_included %} checked="checked" {% endif %}  onclick="get_recipe_dependency(this.value)"/></td>
+					  </tr>
+					  {% empty %}
+					  <tr>
+					    <td colspan="5"><font>no data!</font></td>
+					  </tr>
+					  {% endfor %}
+					  </tbody>
+					</table>
+				</div>
+				<div class="tabbertab">
+					<h2>Tasks</h2>
+					<table border="1" cellspacing="0" width="96%" align="center">
+					  <tbody>
+					  <tr align="center">
+					    <th>Id</th>
+					    <th>Task name</th>
+					    <th>Description</th>
+					    <th>Included</th>
+					  </tr>
+					  {% for val in tasks %}
+					  <tr>
+					    <td align="center" width="10%">{{ forloop.counter }}</td>
+					    <td width="30%">{{ val.name }}</td>
+					    <td width="50%">{{ val.description }}</td>
+					    <td align="center" width="10%"><input type="checkbox" name="task_checkbox" id="{{ val.name }}" value="{{ val.name }}" {% if val.is_included %} checked="checked" {% endif %} onclick="get_recipe_dependency(this.value)"/></td>
+					  </tr>
+					  {% empty %}
+					  <tr>
+					    <td colspan="4"><font>no data!</font></td>
+					  </tr>
+					  {% endfor %}
+					  </tbody>
+					</table>
+				</div>
+	         </div>
+	         </td>
+	       </tr>
+	       <tr>
+	         <td align="center"><input type="button" name="Previous" value="Previous" onclick="javascript:history.go(-1);"/></td>
+	         <td align="center"><input type="submit" name="Build packages" value="Build packages"/></td>
+	       </tr>
+	     </tbody>
+	  </table>
+    </td>
+   </tr>
+   </tbody>
+  </table>
+</div>
+</form>
+</body>
+</html>

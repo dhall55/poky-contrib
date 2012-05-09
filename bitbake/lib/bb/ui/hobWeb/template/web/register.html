@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>register</title>
+</head>
+<body>
+  <form name="loginForm" action="/hob/edit_user/" method="post">
+    <input type="hidden" name="id" value="{{ operator.id }}"/>
+	<center>
+	  <fieldset style="width: 300px">
+	  <legend>register</legend>
+	  username:<input type="text" name="username" value="{{ operator.username }}"/><br/>
+	  password:<input type="password" name="password" value="{{ operator.password }}" /><br/>
+	  email:<input type="text" name="email" value="{{ operator.email }}" /><br/>
+	  valid:<select name="valid">
+	         <option value="0" {% ifequal operator.valid '0' %} selected="selected"  {% endifequal %}>normal</option>
+	         <option value="1" {% ifequal operator.valid '1' %} selected="selected"  {% endifequal %}>error</option>
+	        </select><br/>
+	  <input type="submit" name="submit" value="submit"/> &nbsp;&nbsp;
+	  <input type="reset" name="reset" value="reset"/>
+	  </fieldset>
+	</center>
+  </form>
+</body>
+</html>

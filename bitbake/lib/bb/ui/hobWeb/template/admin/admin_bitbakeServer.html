@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>bitbake server list</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<script language="Javascript">
+<!--
+  function addServer(){
+    var href="/administrator/add_server/";
+	window.location = href;
+  }
+
+  function deleteServer(){
+	document.getElementById('bitbake_server').submit();
+  }
+//-->
+</script>
+
+</head>
+<body>
+  <input type="button" name="add" value="add" onclick="addServer()"/>&nbsp;&nbsp;
+  <input type="button" name="delete" value="delete" onclick="deleteServer()"/><br/>
+  <form action="/administrator/del_server/" method="post" id="bitbake_server">
+	<table cellpadding="0" cellspacing="0" border="1">
+	 <tbody>
+	 <tr>
+	   <td>checkbox</td>
+	   <td>id</td>
+	   <td>server name</td>
+	   <td>port</td>
+	   <td>ip address</td>
+	   <td>status</td>
+	   <td>edit</td>
+	 </tr>
+    {% for varibale in servers %}
+	 <tr>
+	   <td><input type="checkbox" name="checkbox" value="{{ varibale.id }}"/></td>
+	   <td>{{ forloop.counter  }}</td>
+	   <td>{{ varibale.name }}</td>
+	   <td>{{ varibale.port|default:'80' }}</td>
+	   <td>{{ varibale.ip }}</td>
+	   <td>{% ifequal varibale.status '0' %} idle  {% endifequal %}
+	       {% ifequal varibale.status '1' %} used  {% endifequal %}
+	       {% ifequal varibale.status '2' %} error  {% endifequal %}</td>
+	   <td>
+	     <a href="/administrator/add_server/?id={{ varibale.id }}">update</a>&nbsp;&nbsp;
+	   </td>
+	 </tr>
+    {% empty %}
+	 <tr>
+	   <td colspan="7"><font color="red">no data!</font></td>
+	 </tr>
+    {% endfor %}
+	 </tbody>
+	</table><br/>
+  </form>
+  <input type="button" value="back" onclick="javascript:history.go(-1);"/>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>build package log</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="/static/js/tabber.js"></script>
+<script type="text/javascript" src="/static/js/progress_bar.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/hob.css"/>
+<link rel="stylesheet" type="text/css" href="/static/css/tabber.css"/>
+<script type="text/javascript" src="/static/js/build_image.js"></script>
+</head>
+<body>
+<div align="center" id="container">
+  <table border="0" cellspacing="0" width="68%">
+   <tbody>
+   <tr>
+    <td>
+	<!-- context -->
+	  <table border="0" cellspacing="0" width="100%" height="120px">
+	     <tbody>
+	       <tr bgcolor="#FCFCFC" height="60px">
+	         <td align="left" >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Building packages</b></td>
+	         <td align="right" width="50%">
+	         	<b>Runing task <span id="current_task"></span> of <span id="total_task"></span>:do fetch</b><br/>
+	         	<b>Recipe:<span id="current_pkg"></span></b>
+	         </td>
+	       </tr>
+	       <tr>
+	         <td colspan="2" align="left">
+	         <div id="center"> 
+				<div id="message"></div>
+				<div id="loading"><div></div></div>
+	         </div>
+	         </td>
+	       </tr>
+	       <tr height="100px" bgcolor="#FFFFFF">
+	         <td colspan="2" align="left">
+	         <div class="tabber" id="tab1">
+				<div class="tabbertab">
+					<h2><a name="tab1">Build configuration</a></h2>
+					<table cellspacing="0" width="96%" align="center" style="border: 1px dashed #000">
+					  <tbody>
+					  <tr>
+					    <td>
+					      <table border="0" cellspacing="0" width="100%">
+					        <tbody>
+					        <tr>
+					          <td width="15%" align="right"><b>BB version:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>1.15.1</td>
+					        </tr>
+					        <tr>
+					          <td align="right"><b>Target arch:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>i586</td>
+					        </tr>
+					        <tr>
+					          <td align="right"><b>Target OS:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>linux</td>
+					        </tr>
+					        <tr>
+					          <td align="right"><b>Machine:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>{{ build_img.curr_mach }}</td>
+					        </tr>
+					        <tr>
+					          <td align="right"><b>Distro:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>{{ build_img.curr_distro }}</td>
+					        </tr>
+					        <tr>
+					          <td align="right"><b>Distro version:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>1.2+snapshot-20120503</td>
+					        </tr>
+					        <tr>
+					          <td align="right"><b>SDK machine:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>{{ build_img.curr_sdk_machine }}</td>
+					        </tr>
+					        <tr>
+					          <td align="right"><b>Tune features:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>i586</td>
+					        </tr>
+					        <tr>
+					          <td align="right"><b>Layers:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>/home/lvchunhua/lxt/poky-contrib/meta</td>
+					        </tr>
+					        <tr>
+					          <td align="right"></td>
+					          <td>/home/lvchunhua/lxt/poky-contrib/meta-yocto</td>
+					        </tr>
+					        <tr>
+					          <td align="right"><b>Branch:</b>&nbsp;&nbsp;&nbsp;</td>
+					          <td>master</td>
+					        </tr>
+					        </tbody>
+					      </table>
+					    </td>
+					  </tr>
+					  </tbody>
+					</table>
+				</div>
+				<div class="tabbertab">
+					<h2>Issues <span id="error_count"></span></h2>
+					<table cellspacing="0" width="96%" align="center" style="border: 1px dashed #000">
+					  <tbody>
+					  <tr>
+					    <td>
+					      <div id='error_event' style="overflow:scroll; height:400px; scrollbar-face-color: #FFFFFF; scrollbar-shadow-color: #D2E5F4; scrollbar-highlight-color: #D2E5F4; scrollbar-3dlight-color: #FFFFFF; scrollbar-darkshadow-color: #FFFFFF; scrollbar-track-color: #FFFFFF; scrollbar-arrow-color: #D2E5F4;"></div>
+					    </td>
+					  </tr>
+					  </tbody>
+					</table>
+				</div>
+				<div class="tabbertab">
+					<h2>Log</h2>
+					<table cellspacing="0" width="96%" align="center" style="border: 1px dashed #000">
+					  <tbody>
+					  <tr>
+					    <td>
+					      <div id="buildstart_flag">Build started(05/03/2012 11:01:28)</div><br/>
+					      <p>
+					      <b>
+					        OE Build Configuration:<br/>
+					        BB_VERSION = "1.15.1"<br/>
+					        TARGET_ARCH = "i586"<br/>
+					        TARGET_OS = "linux"<br/>
+					        MACHINE = {{ build_img.curr_mach }}<br/>
+					        DISTRO = {{ build_img.curr_distro }}<br/>
+					        DISTRO_VERSION = "1.2+snapshot-20120503"<br/>
+					        TUNE_FEATURES = "m32i586"<br/>
+					        TARGET_FPU = ""<br/>
+					        meta<br/>
+					        meta-yocto<br/></b>
+					        <p></p><p></p><p></p>
+					        <div id='build_logs' style="overflow:scroll; height:400px; scrollbar-face-color: #FFFFFF; scrollbar-shadow-color: #D2E5F4; scrollbar-highlight-color: #D2E5F4; scrollbar-3dlight-color: #FFFFFF; scrollbar-darkshadow-color: #FFFFFF; scrollbar-track-color: #FFFFFF; scrollbar-arrow-color: #D2E5F4;"></div>
+					    </td>
+					  </tr>
+					  </tbody>
+					</table>
+				</div>
+	         </div>
+	         </td>
+	       </tr>
+	     </tbody>
+	  </table>
+    </td>
+   </tr>
+   </tbody>
+  </table>
+</div>
+</body>
+</html>

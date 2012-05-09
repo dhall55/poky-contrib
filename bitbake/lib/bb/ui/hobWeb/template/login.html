@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>login</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<script language="Javascript">
+<!--
+function user_register(){
+	var href ="/register/";
+	window.location=href;
+}
+//-->
+</script>
+</head>
+<body>
+	<form name="loginForm" action="/login/" method="post">
+	  <input type="hidden" name="flag" value="0"/>
+	  <center>
+		<fieldset style="width: 300px">
+		<legend>login</legend>
+		  username:<input type="text" name="username" value=""/><br/>
+		  password:<input type="password" name="password" value="" /><br/>
+		  <input type="submit" name="login in" value="login in"/> &nbsp;&nbsp;
+		  <a href="javascript:user_register()">register</a> &nbsp;&nbsp;
+		  <a href="#">forget your password</a>
+		</fieldset>
+	  </center>
+	</form>
+</body>
+</html>
