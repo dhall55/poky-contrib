@@ -12,3 +12,6 @@ COMPATIBLE_MACHINE_mpc8315e-rdb = "mpc8315e-rdb"
 COMPATIBLE_MACHINE_routerstationpro = "routerstationpro"
 COMPATIBLE_MACHINE_beagleboard = "beagleboard"
 COMPATIBLE_MACHINE_atom-pc = "atom-pc"
+
+FILESEXTRAPATHS_prepend := "${THISDIR}/linux-yocto-3.2:"
+SRC_URI_append_atom-pc = " file://lzma.cfg"
