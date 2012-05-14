@@ -22,16 +22,17 @@ SRC_URI = "\
     "
 
 # Only use the GL passthrough patches for native/nativesdk versions
-QEMUGLPATCHES = "\
-    file://qemu-git-qemugl-host.patch \
-    file://fix-nogl.patch \
-    file://qemugl-allow-glxcontext-release.patch \
-    file://init-info.patch \
-    file://enable-i386-linux-user.patch \
-    file://qemugl-fix.patch \
-    file://opengl-sdl-fix.patch \
-    file://opengl-args-copy-fix.patch \
-    "
+QEMUGLPATCHES = ""
+#\
+#    file://qemu-git-qemugl-host.patch \
+#    file://fix-nogl.patch \
+#    file://qemugl-allow-glxcontext-release.patch \
+#    file://init-info.patch \
+#    file://enable-i386-linux-user.patch \
+#    file://qemugl-fix.patch \
+#    file://opengl-sdl-fix.patch \
+#    file://opengl-args-copy-fix.patch \
+#    "
 
 SRC_URI_append_virtclass-native = "\
     ${QEMUGLPATCHES} \
