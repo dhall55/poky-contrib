@@ -131,7 +131,10 @@ EOF
 	install -d ${IMAGE_ROOTFS}/${sysconfdir}
 	echo ${BUILDNAME} > ${IMAGE_ROOTFS}/${sysconfdir}/version
 
+	echo "--- RPM_POSTPROCESS_COMMANDS ---"
 	${RPM_POSTPROCESS_COMMANDS}
+
+	echo "--- ROOTFS_POSTPROCESS_COMMANDS ---"
 	${ROOTFS_POSTPROCESS_COMMAND}
 	
 	rm -rf ${IMAGE_ROOTFS}/var/cache2/

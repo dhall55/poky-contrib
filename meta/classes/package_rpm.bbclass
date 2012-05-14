@@ -130,6 +130,7 @@ resolve_package_rpm () {
 	shift
 	local pkg_name=""
 	for solve in `cat ${conffile}`; do
+		echo "Attempting to resolve: $@ in $solve" >&2
 		pkg_name=$(${RPM} -D "_dbpath $solve" -D "__dbi_txn create nofsync" -q --qf "%{packageorigin}\n" "$@" | grep -v "is not installed" || true)
 		if [ -n "$pkg_name" -a "$pkg_name" != "(none)" ]; then
 			echo $pkg_name
@@ -257,6 +258,7 @@ package_install_internal_rpm () {
 
 	# Uclibc builds don't provide this stuff...
 	if [ x${TARGET_OS} = "xlinux" ] || [ x${TARGET_OS} = "xlinux-gnueabi" ] ; then
+		echo "Resolving linguas packages..."
 		if [ ! -z "${package_linguas}" ]; then
 			for pkg in ${package_linguas}; do
 				echo "Processing $pkg..."
@@ -279,11 +281,13 @@ package_install_internal_rpm () {
 					echo "Unable to find package $pkg ($ml_pkg)!"
 					exit 1
 				fi
+				echo "Found package $pkg ($ml_pkg): $pkg_name"
 				echo $pkg_name >> ${target_rootfs}/install/${manifest}
 			done
 		fi
 	fi
 	if [ ! -z "${package_to_install}" ]; then
+		echo "Resolving install packages..."
 		for pkg in ${package_to_install} ; do
 			echo "Processing $pkg..."
 
@@ -321,7 +325,7 @@ package_install_internal_rpm () {
 		${target_rootfs}/install/install.manifest
 
 	if [ ! -z "${package_attemptonly}" ]; then
-		echo "Adding attempt only packages..."
+		echo "Resolving attempt only packages..."
 		for pkg in ${package_attemptonly} ; do
 			echo "Processing $pkg..."
 			archvar=base_archs
