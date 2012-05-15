@@ -268,30 +268,31 @@ def verify_checksum(u, ud, d):
     matched
     """
 
-    if not ud.type in ["http", "https", "ftp", "ftps"]:
+    if not ud.method.supports_checksum(ud):
         return
 
     md5data = bb.utils.md5_file(ud.localpath)
     sha256data = bb.utils.sha256_file(ud.localpath)
 
-    # If strict checking enabled and neither sum defined, raise error
-    strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
-    if (strict and ud.md5_expected == None and ud.sha256_expected == None):
-        raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
-                         'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
-                         (ud.localpath, ud.md5_name, md5data,
-                         ud.sha256_name, sha256data), u)
+    if ud.method.recommends_checksum(ud):
+        # If strict checking enabled and neither sum defined, raise error
+        strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
+        if (strict and ud.md5_expected == None and ud.sha256_expected == None):
+            raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
+                             'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
+                             (ud.localpath, ud.md5_name, md5data,
+                              ud.sha256_name, sha256data), u)
 
-    # Log missing sums so user can more easily add them
-    if ud.md5_expected == None:
-        logger.warn('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                    'SRC_URI[%s] = "%s"',
-                    ud.localpath, ud.md5_name, md5data)
+        # Log missing sums so user can more easily add them
+        if ud.md5_expected == None:
+            logger.warn('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
+                        'SRC_URI[%s] = "%s"',
+                        ud.localpath, ud.md5_name, md5data)
 
-    if ud.sha256_expected == None:
-        logger.warn('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                    'SRC_URI[%s] = "%s"',
-                    ud.localpath, ud.sha256_name, sha256data)
+        if ud.sha256_expected == None:
+            logger.warn('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
+                        'SRC_URI[%s] = "%s"',
+                        ud.localpath, ud.sha256_name, sha256data)
 
     md5mismatch = False
     sha256mismatch = False
@@ -574,10 +575,14 @@ class FetchData(object):
             self.sha256_name = "sha256sum"
         if self.md5_name in self.parm:
             self.md5_expected = self.parm[self.md5_name]
+        elif self.type not in ["http", "https", "ftp", "ftps"]:
+            self.md5_expected = None
         else:
             self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name)
         if self.sha256_name in self.parm:
             self.sha256_expected = self.parm[self.sha256_name]
+        elif self.type not in ["http", "https", "ftp", "ftps"]:
+            self.sha256_expected = None
         else:
             self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name)
 
@@ -655,6 +660,19 @@ class FetchMethod(object):
         and duplicate code execution)
         """
         return os.path.join(data.getVar("DL_DIR", d, True), urldata.localfile)
+
+    def supports_checksum(self, urldata):
+        """
+        Is localpath something that can be represented by a checksum?
+        """
+        return True
+
+    def recommends_checksum(self, urldata):
+        """
+        Is the backend on where checksumming is recommended (should warnings 
+        by displayed if there is no checksum)?
+        """
+        return False
 
     def _strip_leading_slashes(self, relpath):
         """
