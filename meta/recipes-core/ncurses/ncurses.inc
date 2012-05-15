@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://ncurses/base/version.c;beginline=1;endline=27;md5=cbc
 SECTION = "libs"
 DEPENDS = "ncurses-native"
 DEPENDS_virtclass-native = ""
-INC_PR = "r8"
+INC_PR = "r9"
 
 inherit autotools binconfig multilib_header
 
@@ -153,12 +153,6 @@ shell_do_install() {
 
         rm -f ${D}${libdir}/terminfo
 
-        if [ "${PN}" = "ncurses" ]; then
-                mv ${D}${bindir}/clear ${D}${bindir}/clear.${PN}
-                mv ${D}${bindir}/reset ${D}${bindir}/reset.${PN}
-        fi
-
-
         # create linker scripts for libcurses.so and libncurses to
         # link against -ltinfo when needed. Some builds might break
         # else when '-Wl,--no-copy-dt-needed-entries' has been set in
@@ -207,19 +201,11 @@ python populate_packages_prepend () {
 }
 
 
-pkg_postinst_ncurses-tools () {
-        if [ "${PN}" = "ncurses" ]; then
-                update-alternatives --install ${bindir}/clear clear clear.${PN} 100
-                update-alternatives --install ${bindir}/reset reset reset.${PN} 100
-        fi
-}
+inherit update-alternatives
 
-pkg_prerm_ncurses-tools () {
-        if [ "${PN}" = "ncurses" ]; then
-                update-alternatives --remove clear clear.${PN}
-                update-alternatives --remove reset reset.${PN}
-        fi
-}
+ALTERNATIVE_PRIORITY = "100"
+
+ALTERNATIVE_ncurses-tools = "clear reset"
 
 BBCLASSEXTEND = "native nativesdk"
 
