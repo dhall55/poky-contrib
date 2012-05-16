@@ -1,4 +1,5 @@
-SYSROOT_PREPROCESS_FUNCS += "relocatable_binaries_preprocess"
+SYSROOT_PREPROCESS_FUNCS += "relocatable_sysroot_preprocess"
+PACKAGE_PREPROCESS_FUNCS += "relocatable_package_preprocess"
 
 ELFEDIT_BIN ?= "chrpath"
 ELFEDIT_LIST ?= "-l"
@@ -104,6 +105,11 @@ def rpath_replace (path, d):
         directory = path + "/" + bindir
         process_dir (directory, d)
 
-python relocatable_binaries_preprocess() {
+python relocatable_sysroot_preprocess() {
     rpath_replace(d.expand('${SYSROOT_DESTDIR}'), d)
+}
+
+python relocatable_package_preprocess() {
+    if bb.data.inherits_class('nativesdk', d):
+        rpath_replace(d.expand('${PKGD}'), d)
 }
