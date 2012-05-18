@@ -1,0 +1,66 @@
+Add --force-bad-version to allow installing packages with bogus versions
+
+This allows to install old packages with such versions, to ease debugging, testing, etc.
+
+Upstream-Status: Backport
+
+Upstream change:
+http://anonscm.debian.org/gitweb/?p=dpkg/dpkg.git;a=commitdiff;h=6d50a5ac6ae54f4374070e5849070530a6d57a49;hp=f9fac280b7805165819ece32980841b7f6a39333
+
+Signed-off-by: Joshua Lock <josh@linux.intel.com>
+
+Index: dpkg-1.15.8.7/src/main.c
+===================================================================
+--- dpkg-1.15.8.7.orig/src/main.c
++++ dpkg-1.15.8.7/src/main.c
+@@ -186,6 +186,7 @@ int fc_conff_old=0, fc_conff_def=0;
+ int fc_conff_ask = 0;
+ int fc_unsafe_io = 0;
+ int fc_badverify = 0;
++int fc_badversion = 0;
+ 
+ int errabort = 50;
+ const char *admindir= ADMINDIR;
+@@ -218,6 +219,7 @@ static const struct forceinfo {
+   { "unsafe-io",           &fc_unsafe_io                },
+   { "architecture",        &fc_architecture             },
+   { "bad-verify",          &fc_badverify                },
++  { "bad-version",	   &fc_badversion		},
+   {  NULL                                               }
+ };
+ 
+@@ -412,6 +414,7 @@ static void setforce(const struct cmdinf
+ "  overwrite              Overwrite a file from one package with another\n"
+ "  overwrite-diverted     Overwrite a diverted file with an undiverted version\n"
+ "  bad-verify             Install a package even if it fails authenticity check\n"
++"  bad-version            Process even packaged with wrong versions\n"
+ "  depends-version [!]    Turn dependency version problems into warnings\n"
+ "  depends [!]            Turn all dependency problems into warnings\n"
+ "  confnew [!]            Always use the new config files, don't prompt\n"
+Index: dpkg-1.15.8.7/src/main.h
+===================================================================
+--- dpkg-1.15.8.7.orig/src/main.h
++++ dpkg-1.15.8.7/src/main.h
+@@ -131,6 +131,7 @@ extern int fc_nonroot, fc_overwritedir,
+ extern int fc_conff_old, fc_conff_def;
+ extern int fc_conff_ask;
+ extern int fc_badverify;
++extern int fc_badversion;
+ extern int fc_unsafe_io;
+ 
+ extern bool abort_processing;
+Index: dpkg-1.15.8.7/src/processarc.c
+===================================================================
+--- dpkg-1.15.8.7.orig/src/processarc.c
++++ dpkg-1.15.8.7/src/processarc.c
+@@ -237,8 +237,8 @@ void process_archive(const char *filenam
+ 
+   strcpy(cidirrest,CONTROLFILE);
+ 
+-  parsedb(cidir, pdb_recordavailable | pdb_rejectstatus | pdb_ignorefiles,
+-          &pkg,NULL,NULL);
++  parsedb(cidir, pdb_recordavailable | pdb_rejectstatus | pdb_ignorefiles |
++          fc_badversion ? pdb_lax_parser : 0, &pkg,NULL,NULL);
+   if (!pkg->files) {
+     pkg->files= nfmalloc(sizeof(struct filedetails));
+     pkg->files->next = NULL;
