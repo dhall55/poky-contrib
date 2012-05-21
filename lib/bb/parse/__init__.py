@@ -88,7 +88,11 @@ def handle(fn, data, include = 0):
     """Call the handler that is appropriate for this file"""
     for h in handlers:
         if h['supports'](fn, data):
-            return h['handle'](fn, data, include)
+            data.includeLog(fn)
+            try:
+                return h['handle'](fn, data, include)
+            finally:
+                data.includeLogDone(fn)
     raise ParseError("not a BitBake file", fn)
 
 def init(fn, data):

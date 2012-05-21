@@ -28,7 +28,9 @@ BitBake build tools.
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
+import traceback
 import copy, re
+import sys
 from collections import MutableMapping
 import logging
 import hashlib
@@ -114,12 +116,50 @@ class ExpansionError(Exception):
 class DataSmart(MutableMapping):
     def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
         self.dict = {}
+        self.history = {}
+        self.include_history = []
+        self.include_stack = [(-1, self.include_history)]
 
         # cookie monster tribute
         self._special_values = special
         self._seen_overrides = seen
+        self._tracking_enabled = False
 
         self.expand_cache = {}
+
+    def includeLog(self, filename):
+        """includeLog(included_file) shows that the file was included
+        by the currently-processed file or context."""
+        if self._tracking_enabled:
+            event = (filename, [])
+            position = (len(self.include_stack[-1][1]), event[1])
+            self.include_stack[-1][1].append(event)
+            self.include_stack.append(position)
+
+    def includeLogDone(self, filename):
+        if self._tracking_enabled:
+            if len(self.include_stack) > 1:
+                self.include_stack.pop()
+            else:
+                bb.warn("Uh-oh:  includeLogDone(%s) tried to empty the stack." % filename)
+
+    def getIncludeHistory(self):
+        return self.include_history
+
+    def tracking(self):
+        return self._tracking_enabled
+
+    def enableTracking(self):
+        self._tracking_enabled = True
+
+    def disableTracking(self):
+        self._tracking_enabled = False
+
+    def eventLog(self, var, event, value, filename = None, lineno = None):
+        if self._tracking_enabled and filename != 'Ignore':
+            if var not in self.history:
+                self.history[var] = []
+            self.history[var].append((event, filename, lineno, value))
 
     def expandWithRefs(self, s, varname):
 
@@ -153,6 +193,14 @@ class DataSmart(MutableMapping):
     def expand(self, s, varname = None):
         return self.expandWithRefs(s, varname).value
 
+    # Figure out how to describe the caller when file/line weren't
+    # specified.
+    def infer_file_and_line(self, filename, lineno):
+        details = lineno
+        if self._tracking_enabled and not filename and filename != 'Ignore':
+            filename, lineno, func, line = traceback.extract_stack(limit=3)[0]
+            details = "%d [%s]" % (lineno, func)
+        return filename, details
 
     def finalize(self):
         """Performs final steps upon the datastore, including application of overrides"""
@@ -186,10 +234,14 @@ class DataSmart(MutableMapping):
             for var in vars:
                 name = var[:-l]
                 try:
-                    self.setVar(name, self.getVar(var, False))
-                    self.delVar(var)
-                except Exception:
-                    logger.info("Untracked delVar")
+                    # Move the history of the override into the history of
+                    # the overridden:
+                    for event in self.getHistory(var):
+                        self.eventLog(name, 'override:%s' % o, event[3], event[1], event[2])
+                    self.setVar(name, self.getVar(var, False), 'Ignore')
+                    self.delVar(var, 'Ignore')
+                except Exception, e:
+                    logger.info("Untracked delVar %s: %s" % (var, e))
 
         # now on to the appends and prepends
         for op in __setvar_keyword__:
@@ -210,16 +262,17 @@ class DataSmart(MutableMapping):
                         if op == "_append":
                             sval = self.getVar(append, False) or ""
                             sval += a
-                            self.setVar(append, sval)
+                            self.setVar(append, sval, 'Ignore')
                         elif op == "_prepend":
                             sval = a + (self.getVar(append, False) or "")
-                            self.setVar(append, sval)
+                            self.setVar(append, sval, 'Ignore')
 
                     # We save overrides that may be applied at some later stage
+                    # ... but we don't need to report on this.
                     if keep:
-                        self.setVarFlag(append, op, keep)
+                        self.setVarFlag(append, op, keep, 'Ignore')
                     else:
-                        self.delVarFlag(append, op)
+                        self.delVarFlag(append, op, 'Ignore')
 
     def initVar(self, var):
         self.expand_cache = {}
@@ -247,7 +300,15 @@ class DataSmart(MutableMapping):
         else:
             self.initVar(var)
 
-    def setVar(self, var, value):
+    # In some cases, we want to set a value, but only record part of it;
+    # for instance, when appending something, we want to record what we
+    # appended, not what the complete value of the now-appended value.
+    # This becomes especially obvious when looking at the output for
+    # BBCLASSEXTEND. "details", if provided, replace the variable value
+    # in the log.
+
+    def setVar(self, var, value, filename = None, lineno = None, op = 'set', details = None):
+        filename, lineno = self.infer_file_and_line(filename, lineno)
         self.expand_cache = {}
         match  = __setvar_regexp__.match(var)
         if match and match.group("keyword") in __setvar_keyword__:
@@ -255,8 +316,13 @@ class DataSmart(MutableMapping):
             keyword = match.group("keyword")
             override = match.group('add')
             l = self.getVarFlag(base, keyword) or []
-            l.append([value, override])
-            self.setVarFlag(base, keyword, l)
+            # Compute new details: This is what we're actually appending.
+            details = [value, override]
+            l.append(details)
+            # Log the details using the keyword as the op name, instead
+            # of logging the entire new value as a flag change.
+            self.setVarFlag(base, keyword, l, 'Ignore')
+            self.eventLog(base, keyword, details, filename, lineno)
 
             # todo make sure keyword is not __doc__ or __module__
             # pay the cookie monster
@@ -281,6 +347,12 @@ class DataSmart(MutableMapping):
 
         # setting var
         self.dict[var]["content"] = value
+        self.eventLog(var, op, details or value, filename, lineno)
+
+    def getHistory(self, var):
+        if var in self.history:
+            return self.history[var]
+        return []
 
     def getVar(self, var, expand=False, noweakdefault=False):
         value = self.getVarFlag(var, "content", False, noweakdefault)
@@ -290,13 +362,14 @@ class DataSmart(MutableMapping):
             return self.expand(value, var)
         return value
 
-    def renameVar(self, key, newkey):
+    def renameVar(self, key, newkey, filename = None, lineno = None):
         """
         Rename the variable key to newkey
         """
+        filename, lineno = self.infer_file_and_line(filename, lineno)
         val = self.getVar(key, 0)
         if val is not None:
-            self.setVar(newkey, val)
+            self.setVar(newkey, val, filename, lineno, 'rename-create')
 
         for i in ('_append', '_prepend'):
             src = self.getVarFlag(key, i)
@@ -305,34 +378,40 @@ class DataSmart(MutableMapping):
 
             dest = self.getVarFlag(newkey, i) or []
             dest.extend(src)
-            self.setVarFlag(newkey, i, dest)
+            self.setVarFlag(newkey, i, dest, filename, lineno, 'rename')
 
             if i in self._special_values and key in self._special_values[i]:
                 self._special_values[i].remove(key)
                 self._special_values[i].add(newkey)
 
-        self.delVar(key)
+        self.delVar(key, filename, lineno, 'rename-delete')
 
-    def appendVar(self, key, value):
-        value = (self.getVar(key, False) or "") + value
-        self.setVar(key, value)
+    def appendVar(self, key, newValue, filename = None, lineno = None):
+        filename, lineno = self.infer_file_and_line(filename, lineno)
+        value = (self.getVar(key, False) or "") + newValue
+        self.setVar(key, value, filename, lineno, 'append', newValue)
 
-    def prependVar(self, key, value):
-        value = value + (self.getVar(key, False) or "")
-        self.setVar(key, value)
+    def prependVar(self, key, newValue, filename = None, lineno = None):
+        filename, lineno = self.infer_file_and_line(filename, lineno)
+        value = newValue + (self.getVar(key, False) or "")
+        self.setVar(key, value, filename, lineno, 'prepend', newValue)
 
-    def delVar(self, var):
+    def delVar(self, var, filename = None, lineno = None, op = 'del'):
+        filename, lineno = self.infer_file_and_line(filename, lineno)
         self.expand_cache = {}
         self.dict[var] = {}
+        self.eventLog(var, op, '', filename, lineno)
         if '_' in var:
             override = var[var.rfind('_')+1:]
             if override and override in self._seen_overrides and var in self._seen_overrides[override]:
                 self._seen_overrides[override].remove(var)
 
-    def setVarFlag(self, var, flag, flagvalue):
+    def setVarFlag(self, var, flag, flagvalue, filename = None, lineno = None, op = 'set', details = None):
+        filename, lineno = self.infer_file_and_line(filename, lineno)
         if not var in self.dict:
             self._makeShadowCopy(var)
         self.dict[var][flag] = flagvalue
+        self.eventLog(var, '[flag %s] %s' % (flag, op), details or flagvalue, filename, lineno)
 
     def getVarFlag(self, var, flag, expand=False, noweakdefault=False):
         local_var = self._findVar(var)
@@ -346,31 +425,37 @@ class DataSmart(MutableMapping):
             value = self.expand(value, None)
         return value
 
-    def delVarFlag(self, var, flag):
+    def delVarFlag(self, var, flag, filename = None, lineno = None):
         local_var = self._findVar(var)
         if not local_var:
             return
         if not var in self.dict:
             self._makeShadowCopy(var)
 
+        filename, lineno = self.infer_file_and_line(filename, lineno)
+        self.eventLog(var, 'del flag %s' % flag, '', filename, lineno)
         if var in self.dict and flag in self.dict[var]:
             del self.dict[var][flag]
 
-    def appendVarFlag(self, key, flag, value):
-        value = (self.getVarFlag(key, flag, False) or "") + value
-        self.setVarFlag(key, flag, value)
+    def appendVarFlag(self, key, flag, newValue, filename = None, lineno = None):
+        filename, lineno = self.infer_file_and_line(filename, lineno)
+        value = (self.getVarFlag(key, flag, False) or "") + newValue
+        self.setVarFlag(key, flag, value, filename, lineno, 'append', newValue)
 
-    def prependVarFlag(self, key, flag, value):
-        value = value + (self.getVarFlag(key, flag, False) or "")
-        self.setVarFlag(key, flag, value)
+    def prependVarFlag(self, key, flag, newValue, filename = None, lineno = None):
+        filename, lineno = self.infer_file_and_line(filename, lineno)
+        value = newValue + (self.getVarFlag(key, flag, False) or "")
+        self.setVarFlag(key, flag, value, filename, lineno, 'prepend', newValue)
 
-    def setVarFlags(self, var, flags):
+    def setVarFlags(self, var, flags, filename = None, lineno = None, details = None):
+        filename, lineno = self.infer_file_and_line(filename, lineno)
         if not var in self.dict:
             self._makeShadowCopy(var)
 
         for i in flags:
             if i == "content":
                 continue
+            self.eventLog(var, 'set flag %s' % i, details or flags[i], filename, lineno)
             self.dict[var][i] = flags[i]
 
     def getVarFlags(self, var):
@@ -388,13 +473,15 @@ class DataSmart(MutableMapping):
         return flags
 
 
-    def delVarFlags(self, var):
+    def delVarFlags(self, var, filename = None, lineno = None):
         if not var in self.dict:
             self._makeShadowCopy(var)
 
         if var in self.dict:
             content = None
 
+            filename, lineno = self.infer_file_and_line(filename, lineno)
+            self.eventLog(var, 'clear all flags', '', filename, lineno)
             # try to save the content
             if "content" in self.dict[var]:
                 content  = self.dict[var]["content"]
@@ -411,10 +498,25 @@ class DataSmart(MutableMapping):
         # we really want this to be a DataSmart...
         data = DataSmart(seen=self._seen_overrides.copy(), special=self._special_values.copy())
         data.dict["_data"] = self.dict
-
+        if self._tracking_enabled:
+            data._tracking_enabled = self._tracking_enabled
+            data.history = copy.deepcopy(self.history)
+            data.include_history = copy.deepcopy(self.include_history)
+            data.include_stack = []
+            oldref = self.include_history
+            newref = data.include_history
+            # Create corresponding references, if we can
+            try:
+                for item in self.include_stack:
+                    if item[0] >= 0:
+                        newref = newref[item[0]][1]
+                    newevent = (item[0], newref)
+                    data.include_stack.append(newevent)
+            except Exception:
+                sys.exc_clear()
         return data
 
-    def expandVarref(self, variable, parents=False):
+    def expandVarref(self, variable, parents=False, filename = None, lineno = None):
         """Find all references to variable in the data and expand it
            in place, optionally descending to parent datastores."""
 
@@ -423,12 +525,13 @@ class DataSmart(MutableMapping):
         else:
             keys = self.localkeys()
 
+        filename, lineno = self.infer_file_and_line(filename, lineno)
         ref = '${%s}' % variable
         value = self.getVar(variable, False)
         for key in keys:
             referrervalue = self.getVar(key, False)
             if referrervalue and ref in referrervalue:
-                self.setVar(key, referrervalue.replace(ref, value))
+                self.setVar(key, referrervalue.replace(ref, value), filename, lineno, 'expandVarref')
 
     def localkeys(self):
         for key in self.dict:

@@ -69,7 +69,7 @@ class ExportNode(AstNode):
         self.var = var
 
     def eval(self, data):
-        data.setVarFlag(self.var, "export", 1)
+        data.setVarFlag(self.var, "export", 1, self.filename, self.lineno)
 
 class DataNode(AstNode):
     """
@@ -91,33 +91,45 @@ class DataNode(AstNode):
     def eval(self, data):
         groupd = self.groupd
         key = groupd["var"]
+        op = 'set'
+        details = None
         if "exp" in groupd and groupd["exp"] != None:
-            data.setVarFlag(key, "export", 1)
+            data.setVarFlag(key, "export", 1, self.filename, self.lineno)
         if "ques" in groupd and groupd["ques"] != None:
             val = self.getFunc(key, data)
             if val == None:
                 val = groupd["value"]
+                op = 'set?'
         elif "colon" in groupd and groupd["colon"] != None:
             e = data.createCopy()
             bb.data.update_data(e)
             val = e.expand(groupd["value"], key + "[:=]")
+            op = 'immediate'
         elif "append" in groupd and groupd["append"] != None:
             val = "%s %s" % ((self.getFunc(key, data) or ""), groupd["value"])
+            op = 'append'
+            details = groupd["value"]
         elif "prepend" in groupd and groupd["prepend"] != None:
             val = "%s %s" % (groupd["value"], (self.getFunc(key, data) or ""))
+            op = 'prepend'
+            details = groupd["value"]
         elif "postdot" in groupd and groupd["postdot"] != None:
             val = "%s%s" % ((self.getFunc(key, data) or ""), groupd["value"])
+            op = 'postdot'
+            details = groupd["value"]
         elif "predot" in groupd and groupd["predot"] != None:
             val = "%s%s" % (groupd["value"], (self.getFunc(key, data) or ""))
+            op = 'predot'
+            details = groupd["value"]
         else:
             val = groupd["value"]
 
         if 'flag' in groupd and groupd['flag'] != None:
-            data.setVarFlag(key, groupd['flag'], val)
+            data.setVarFlag(key, groupd['flag'], val, self.filename, self.lineno, op)
         elif groupd["lazyques"]:
-            data.setVarFlag(key, "defaultval", val)
+            data.setVarFlag(key, "defaultval", val, self.filename, self.lineno, op)
         else:
-            data.setVar(key, val)
+            data.setVar(key, val, self.filename, self.lineno, op, details)
 
 class MethodNode(AstNode):
     def __init__(self, filename, lineno, func_name, body):
@@ -133,10 +145,10 @@ class MethodNode(AstNode):
                 bb.methodpool.insert_method(funcname, text, self.filename)
             anonfuncs = data.getVar('__BBANONFUNCS') or []
             anonfuncs.append(funcname)
-            data.setVar('__BBANONFUNCS', anonfuncs)
+            data.setVar('__BBANONFUNCS', anonfuncs, self.filename, self.lineno)
         else:
-            data.setVarFlag(self.func_name, "func", 1)
-            data.setVar(self.func_name, '\n'.join(self.body))
+            data.setVarFlag(self.func_name, "func", 1, self.filename, self.lineno)
+            data.setVar(self.func_name, '\n'.join(self.body), self.filename, self.lineno)
 
 class PythonMethodNode(AstNode):
     def __init__(self, filename, lineno, function, define, body):
@@ -152,9 +164,9 @@ class PythonMethodNode(AstNode):
         text = '\n'.join(self.body)
         if not bb.methodpool.parsed_module(self.define):
             bb.methodpool.insert_method(self.define, text, self.filename)
-        data.setVarFlag(self.function, "func", 1)
-        data.setVarFlag(self.function, "python", 1)
-        data.setVar(self.function, text)
+        data.setVarFlag(self.function, "func", 1, self.filename, self.lineno)
+        data.setVarFlag(self.function, "python", 1, self.filename, self.lineno)
+        data.setVar(self.function, text, self.filename, self.lineno)
 
 class MethodFlagsNode(AstNode):
     def __init__(self, filename, lineno, key, m):
@@ -166,16 +178,16 @@ class MethodFlagsNode(AstNode):
         if data.getVar(self.key):
             # clean up old version of this piece of metadata, as its
             # flags could cause problems
-            data.setVarFlag(self.key, 'python', None)
-            data.setVarFlag(self.key, 'fakeroot', None)
+            data.setVarFlag(self.key, 'python', None, self.filename, self.lineno)
+            data.setVarFlag(self.key, 'fakeroot', None, self.filename, self.lineno)
         if self.m.group("py") is not None:
-            data.setVarFlag(self.key, "python", "1")
+            data.setVarFlag(self.key, "python", "1", self.filename, self.lineno)
         else:
-            data.delVarFlag(self.key, "python")
+            data.delVarFlag(self.key, "python", self.filename, self.lineno)
         if self.m.group("fr") is not None:
-            data.setVarFlag(self.key, "fakeroot", "1")
+            data.setVarFlag(self.key, "fakeroot", "1", self.filename, self.lineno)
         else:
-            data.delVarFlag(self.key, "fakeroot")
+            data.delVarFlag(self.key, "fakeroot", self.filename, self.lineno)
 
 class ExportFuncsNode(AstNode):
     def __init__(self, filename, lineno, fns, classes):
@@ -201,21 +213,21 @@ class ExportFuncsNode(AstNode):
                     continue
 
                 if data.getVar(var):
-                    data.setVarFlag(var, 'python', None)
-                    data.setVarFlag(var, 'func', None)
+                    data.setVarFlag(var, 'python', None, self.filename, self.lineno)
+                    data.setVarFlag(var, 'func', None, self.filename, self.lineno)
 
                 for flag in [ "func", "python" ]:
                     if data.getVarFlag(calledvar, flag):
-                        data.setVarFlag(var, flag, data.getVarFlag(calledvar, flag))
+                        data.setVarFlag(var, flag, data.getVarFlag(calledvar, flag), self.filename, self.lineno)
                 for flag in [ "dirs" ]:
                     if data.getVarFlag(var, flag):
-                        data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag))
+                        data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag), self.filename, self.lineno)
 
                 if data.getVarFlag(calledvar, "python"):
-                    data.setVar(var, "    bb.build.exec_func('" + calledvar + "', d)\n")
+                    data.setVar(var, "    bb.build.exec_func('" + calledvar + "', d)\n", self.filename, self.lineno)
                 else:
-                    data.setVar(var, "    " + calledvar + "\n")
-                data.setVarFlag(var, 'export_func', '1')
+                    data.setVar(var, "    " + calledvar + "\n", self.filename, self.lineno)
+                data.setVarFlag(var, 'export_func', '1', self.filename, self.lineno)
 
 class AddTaskNode(AstNode):
     def __init__(self, filename, lineno, func, before, after):
@@ -229,11 +241,11 @@ class AddTaskNode(AstNode):
         if self.func[:3] != "do_":
             var = "do_" + self.func
 
-        data.setVarFlag(var, "task", 1)
+        data.setVarFlag(var, "task", 1, self.filename, self.lineno)
         bbtasks = data.getVar('__BBTASKS') or []
         if not var in bbtasks:
             bbtasks.append(var)
-        data.setVar('__BBTASKS', bbtasks)
+        data.setVar('__BBTASKS', bbtasks, self.filename, self.lineno)
 
         existing = data.getVarFlag(var, "deps") or []
         if self.after is not None:
@@ -241,13 +253,13 @@ class AddTaskNode(AstNode):
             for entry in self.after.split():
                 if entry not in existing:
                     existing.append(entry)
-        data.setVarFlag(var, "deps", existing)
+        data.setVarFlag(var, "deps", existing, self.filename, self.lineno)
         if self.before is not None:
             # set up things that depend on this func
             for entry in self.before.split():
                 existing = data.getVarFlag(entry, "deps") or []
                 if var not in existing:
-                    data.setVarFlag(entry, "deps", [var] + existing)
+                    data.setVarFlag(entry, "deps", [var] + existing, self.filename, self.lineno)
 
 class BBHandlerNode(AstNode):
     def __init__(self, filename, lineno, fns):
@@ -258,7 +270,7 @@ class BBHandlerNode(AstNode):
         bbhands = data.getVar('__BBHANDLERS') or []
         for h in self.hs:
             bbhands.append(h)
-            data.setVarFlag(h, "handler", 1)
+            data.setVarFlag(h, "handler", 1, self.filename, self.lineno)
         data.setVar('__BBHANDLERS', bbhands)
 
 class InheritNode(AstNode):

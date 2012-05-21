@@ -74,14 +74,22 @@ def createCopy(source):
     """
     return source.createCopy()
 
+# These are used in dataSmart, here as protection against KeyErrors.
+def enableTracking():
+    pass
+
+def disableTracking():
+    pass
+
 def initVar(var, d):
     """Non-destructive var init for data structure"""
     d.initVar(var)
 
 
-def setVar(var, value, d):
+def setVar(var, value, d, filename = None, lineno = None):
     """Set a variable to a given value"""
-    d.setVar(var, value)
+    filename, lineno = d.infer_file_and_line(filename, lineno)
+    d.setVar(var, value, filename, lineno)
 
 
 def getVar(var, d, exp = 0):
@@ -89,27 +97,31 @@ def getVar(var, d, exp = 0):
     return d.getVar(var, exp)
 
 
-def renameVar(key, newkey, d):
+def renameVar(key, newkey, d, filename = None, lineno = None):
     """Renames a variable from key to newkey"""
-    d.renameVar(key, newkey)
+    filename, lineno = d.infer_file_and_line(filename, lineno)
+    d.renameVar(key, newkey, filename, lineno)
 
-def delVar(var, d):
+def delVar(var, d, filename = None, lineno = None):
     """Removes a variable from the data set"""
-    d.delVar(var)
+    filename, lineno = d.infer_file_and_line(filename, lineno)
+    d.delVar(var, filename, lineno)
 
-def setVarFlag(var, flag, flagvalue, d):
+def setVarFlag(var, flag, flagvalue, d, filename = None, lineno = None):
     """Set a flag for a given variable to a given value"""
-    d.setVarFlag(var, flag, flagvalue)
+    filename, lineno = d.infer_file_and_line(filename, lineno)
+    d.setVarFlag(var, flag, flagvalue, filename, lineno)
 
 def getVarFlag(var, flag, d):
     """Gets given flag from given var"""
     return d.getVarFlag(var, flag)
 
-def delVarFlag(var, flag, d):
+def delVarFlag(var, flag, d, filename = None, lineno = None):
     """Removes a given flag from the variable's flags"""
-    d.delVarFlag(var, flag)
+    filename, lineno = d.infer_file_and_line(filename, lineno)
+    d.delVarFlag(var, flag, filename, lineno)
 
-def setVarFlags(var, flags, d):
+def setVarFlags(var, flags, d, filename = None, lineno = None):
     """Set the flags for a given variable
 
     Note:
@@ -117,15 +129,17 @@ def setVarFlags(var, flags, d):
         flags. Think of this method as
         addVarFlags
     """
-    d.setVarFlags(var, flags)
+    filename, lineno = d.infer_file_and_line(filename, lineno)
+    d.setVarFlags(var, flags, filename, lineno)
 
 def getVarFlags(var, d):
     """Gets a variable's flags"""
     return d.getVarFlags(var)
 
-def delVarFlags(var, d):
+def delVarFlags(var, d, filename = None, lineno = None):
     """Removes a variable's flags"""
-    d.delVarFlags(var)
+    filename, lineno = d.infer_file_and_line(filename, lineno)
+    d.delVarFlags(var, filename, lineno)
 
 def keys(d):
     """Return a list of keys in d"""
@@ -195,6 +209,13 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
 
     if all:
         commentVal = re.sub('\n', '\n#', str(oval))
+        history = d.getHistory(var)
+        if history:
+            o.write('#\n# %s [%d]\n' % (var, len(history)))
+            for events in history:
+                events = (events[0], events[1], events[2], re.sub('\n', '\n#     ', str(events[3])))
+                o.write('#   %s %s:%s:\n#     <%s>\n' % events)
+            o.write('#\n')
         o.write('# %s=%s\n' % (var, commentVal))
 
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
@@ -232,9 +253,25 @@ def emit_env(o=sys.__stdout__, d = init(), all=False):
     isfunc = lambda key: bool(d.getVarFlag(key, "func"))
     keys = sorted((key for key in d.keys() if not key.startswith("__")), key=isfunc)
     grouped = groupby(keys, isfunc)
+    # Include history!
+    if d.tracking():
+        o.write('#\n# INCLUDE HISTORY:\n#\n')
+        emit_history(o, d.getIncludeHistory())
+        
     for isfunc, keys in grouped:
         for key in keys:
             emit_var(key, o, d, all and not isfunc) and o.write('\n')
+
+def emit_history(o, h, depth = 0):
+    if not h:
+        return
+    for event in h:
+        o.write("# %*s%s" % (depth * 2, "", event[0]))
+        if event[1]:
+            o.write(" includes:\n")
+            emit_history(o, event[1], depth + 1)
+        else:
+            o.write("\n")
 
 def exported_keys(d):
     return (key for key in d.keys() if not key.startswith('__') and

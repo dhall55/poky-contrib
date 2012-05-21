@@ -110,10 +110,10 @@ def handle(fn, data, include):
         feeder(lineno, s, fn, statements)
 
     # DONE WITH PARSING... time to evaluate
-    data.setVar('FILE', abs_fn)
+    data.setVar('FILE', abs_fn, 'Ignore')
     statements.eval(data)
     if oldfile:
-        data.setVar('FILE', oldfile)
+        data.setVar('FILE', oldfile, 'Ignore')
 
     for f in confFilters:
         f(fn, data)
