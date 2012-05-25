@@ -25,24 +25,25 @@
 #########################################
 
 export SLAVEBASEDIR=`pwd`/yocto-slave
-PUBLISH_BUILDS = False
-PUBLISH_SOURCE_MIRROR = False
-PUBLISH_SSTATE = False
-SSTATE_PUBLISH_DIR = "/tmp/yocto-autobuilder/sstate_mirror"
-SOURCE_PUBLISH_DIR = "/tmp/yocto-autobuilder/source"
-BUILD_PUBLISH_DIR = "/tmp/yocto-autobuilder/builds"
-BUILD_HISTORY_COLLECT = False
-SOURCE_DL_DIR = "/tmp/yocto-autobuilder/downloads"
-SOURCE_SSTATE_DIR = "/tmp/yocto-autobuilder/sstate"
-LSB_SSTATE_DIR = "/tmp/yocto-autobuilder/lsb-sstate"
-CLEAN_SOURCE_DIR = False
-BUILD_HISTORY_DIR = "/tmp/yocto-autobuilder/buildhistory"
-BUILD_HISTORY_REPO = "file:////tmp/yocto-autobuilder/buildhistory-repo"
-EMGD_DRIVER_DIR = "/tmp/yocto-autobuilder/emgd-driver"
+export PUBLISH_BUILDS=False
+export PUBLISH_SOURCE_MIRROR=False
+export PUBLISH_SSTATE=False
+export SSTATE_PUBLISH_DIR="/tmp/yocto-autobuilder/sstate_mirror"
+export SOURCE_PUBLISH_DIR="/tmp/yocto-autobuilder/source"
+export BUILD_PUBLISH_DIR="/tmp/yocto-autobuilder/builds"
+export BUILD_HISTORY_COLLECT=False
+export SOURCE_DL_DIR="/tmp/yocto-autobuilder/downloads"
+export SOURCE_SSTATE_DIR="/tmp/yocto-autobuilder/sstate"
+export LSB_SSTATE_DIR="/tmp/yocto-autobuilder/lsb-sstate"
+export CLEAN_SOURCE_DIR=False
+export BUILD_HISTORY_DIR="/tmp/yocto-autobuilder/buildhistory"
+export BUILD_HISTORY_REPO="file:////tmp/yocto-autobuilder/buildhistory-repo"
+export EMGD_DRIVER_DIR="/tmp/yocto-autobuilder/emgd-driver"
 
 export PYTHONPATH=`pwd`/lib/python2.6/site-packages/:$PYTHONPATH
 export PATH=`pwd`/bin:`pwd`/yocto-autobuilder/scripts:$PATH
 config_check=`cat ${PWD}/yocto-master/master.cfg|grep "'<USER>', '<PASS>'"`
+
 
 #########################################
 #
