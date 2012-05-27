@@ -1054,7 +1054,6 @@ publishArtifacts(f68, "ipk", "build/build/tmp")
 f68.addStep(ShellCommand, description="Moving non-lsb TMPDIR", workdir="build/build", command="mv tmp non-lsbtmp; mkdir tmp")
 nightlyQEMU(f68, 'qemuarm', "poky-lsb", "yocto")
 nightlyBSP(f68, 'beagleboard', 'poky-lsb', "yocto")
-nightlyQEMU(f68, 'qemuarm', "poky-rt", "yocto")
 f68.addStep(NoOp(name="nightly"))
 b68 = {'name': "nightly-arm",
       'slavenames': ["ab02",  "ab04", "ab05", "ab06"],
@@ -1090,7 +1089,6 @@ publishArtifacts(f69, "ipk", "build/build/tmp")
 f69.addStep(ShellCommand, description="Moving non-lsb TMPDIR", workdir="build/build", command="mv tmp non-lsbtmp; mkdir tmp")
 nightlyQEMU(f69, 'qemumips', "poky-lsb", "yocto")
 nightlyBSP(f69, 'routerstationpro', 'poky-lsb', "yocto")
-nightlyQEMU(f69, 'qemumips', "poky-rt", "yocto")
 f69.addStep(NoOp(name="nightly"))
 b69 = {'name': "nightly-mips",
       'slavenames': ["ab02",  "ab04", "ab05", "ab06"],
@@ -1127,7 +1125,6 @@ publishArtifacts(f70, "ipk", "build/build/tmp")
 f70.addStep(ShellCommand, description="Moving non-lsb TMPDIR", workdir="build/build", command="mv tmp non-lsbtmp; mkdir tmp")
 nightlyQEMU(f70, 'qemuppc', 'poky-lsb', 'yocto')
 nightlyBSP(f70, 'mpc8315e-rdb', 'poky-lsb' , 'yocto')
-nightlyQEMU(f70, 'qemuppc', 'poky-rt', 'yocto')
 f70.addStep(NoOp(name="nightly"))
 b70 = {'name': "nightly-ppc",
       'slavenames': ["ab02",  "ab04", "ab05", "ab06"],
