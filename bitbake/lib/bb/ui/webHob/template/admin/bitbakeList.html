@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>bitbake list</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="/static/js/admin.js"></script>
+</head>
+<body>
+	<form action="/management/remove_bitbakes/" method="post" name="userform">
+	<center>
+		<table border="1" cellpadding="0" cellspacing="0" width="80%">
+			<tbody>
+			<tr>
+				<th>Id</th>
+				<th>Checkbox&nbsp;<input type="checkbox" name="checkboxAll" value="1" id="checkboxAll"/></th>
+				<th>Name</th>
+				<th>Ip</th>
+				<th>Port</th>
+				<th>Status</th>
+				<th>Edit</th>
+			</tr>
+			{% for val in bitbakes %}
+			<tr>
+				<td>{{ forloop.counter }}</td>
+				<td><input type="checkbox" name="checkbox" value="{{ val.id }}"/></td>
+				<td>{{ val.name }}</td>
+				<td>{{ val.ip }}</td>
+				<td>{{ val.port }}</td>
+				<td>
+					{% ifequal val.status '0' %} idle {% endifequal %}
+					{% ifequal val.status '1' %} working {% endifequal %}</td>
+				<td><a href="/management/saveOrupdate_bitbake/?id={{ val.id }}">update</a></td>
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="7" style="color: red">No Data !</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		<table border="0" cellpadding="0" cellspacing="0" width="80%">
+			<tbody>
+			<tr>
+				<td align="right">
+					<input type="button" name="add" value="add" onclick="add_bitbake()"/>&nbsp;&nbsp;
+					<input type="button" name="delete" value="delete" onclick="del_items()"/>&nbsp;&nbsp;
+					<input type="button" name="back" value="back" onclick="backto_managelist()"/>
+				</td>
+			</tr>
+			</tbody>
+		</table>
+	</center>
+	</form>
+</body>
+</html>

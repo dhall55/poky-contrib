@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>save bitbake</title>
+</head>
+<body>
+	<form name="bitbakeForm" action="/management/save_bitbake/" method="post">
+	<input type="hidden" name="id" value="{{ bitbake.id }}"/>
+	<center>
+		<fieldset style="width: 400px;height: 200px">
+		<legend><b>bitbake information</b></legend>
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+				<tbody>
+				<tr height="40">
+					<td align="right">name:</td>
+					<td align="left"><input type="text" name="name" value="{{ bitbake.name }}"/><font color="red">*</font></td>
+				</tr>
+				<tr height="40">
+					<td align="right">ip:</td>
+					<td align="left"><input type="text" name="ip" value="{{ bitbake.ip }}" /><font color="red">*</font></td>
+				</tr>
+				<tr height="40">
+					<td align="right">port:</td>
+					<td align="left"><input type="text" name="port" value="{{ bitbake.port }}" /><font color="red">*</font></td>
+				</tr>
+				{% if bitbake.id %}
+				<tr height="40">
+					<td align="right">status:</td>
+					<td align="left">
+						<input type="radio" name="status" value="0" {% ifequal bitbake.status '0' %} checked="checked" {% endifequal %}/>&nbsp;idle&nbsp;
+						<input type="radio" name="status" value="1" {% ifequal bitbake.status '1' %} checked="checked" {% endifequal %}/>&nbsp;working
+					</td>
+				</tr>
+				{% endif %}
+				<tr>
+					<td colspan="2">
+						<input type="button" name="back" value="back" onclick="javascript:history.go(-1);"/>&nbsp;
+						<input type="submit" name="save" value="save"/>&nbsp;
+						<input type="reset" name="reset" value="reset"/>&nbsp;
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</fieldset>
+	</center>
+	</form>
+</body>
+</html>

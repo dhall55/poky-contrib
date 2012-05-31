@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>build package log</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/main.css"/>
+<script type="text/javascript" src="/static/js/tabber.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/tabber.css"/>
+<link rel="stylesheet" type="text/css" href="/static/css/progress.css"/>
+<script type="text/javascript" src="/static/js/package.js"></script>
+</head>
+<body>
+	<div class="wrap">
+		<div class="setting_nav">
+			<h2>Build package</h2>
+			<table align="right">
+				<tbody>
+				<tr>
+					<td align="right"><b>Running task:</b></td>
+					<td><span id="current_task"></span></td>
+				</tr>
+				<tr>
+					<td align="right"><b>Recipe:</b></td>
+					<td><span id="current_package"></span></td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class='main_conf' id='rcp_pct' style='display:block'>
+			<div class="progress-bar">
+				<span></span>
+				<p></p>
+			</div>
+		</div>
+		<div class='main_conf' style='border-bottom: 1px #ddd solid;'>
+			<div id="container">
+				<div class="tabber" id="tab1">
+					<div class="tabbertab">
+						<h2><a name="tab1">Build configuration</a></h2>
+						<table cellspacing="0" width="96%" align="center" style="border: 1px dashed #000">
+							<tbody>
+							<tr><td><div id="build_config" style="overflow:scroll; height:400px; scrollbar-face-color: #FFFFFF; scrollbar-shadow-color: #D2E5F4; scrollbar-highlight-color: #D2E5F4; scrollbar-3dlight-color: #FFFFFF; scrollbar-darkshadow-color: #FFFFFF; scrollbar-track-color: #FFFFFF; scrollbar-arrow-color: #D2E5F4;"></div></td></tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="tabbertab">
+						<h2>Issues <span id="error_count"></span></h2>
+						<table cellspacing="0" width="96%" align="center" style="border: 1px dashed #000">
+							<tbody>
+							<tr>
+								<td><div id='error_event' style="overflow:scroll; height:400px; scrollbar-face-color: #FFFFFF; scrollbar-shadow-color: #D2E5F4; scrollbar-highlight-color: #D2E5F4; scrollbar-3dlight-color: #FFFFFF; scrollbar-darkshadow-color: #FFFFFF; scrollbar-track-color: #FFFFFF; scrollbar-arrow-color: #D2E5F4;"></div></td>
+							</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="tabbertab">
+						<h2>Logs</h2>
+						<table cellspacing="0" width="96%" align="center" style="border: 1px dashed #000">
+							<tbody>
+							<tr>
+								<td>
+									<div id="buildstart"></div><br/>
+									<div id="config_logs"></div><br/>
+									<div id="logs"></div><br/>
+									<div id='tasklogs' style="overflow:scroll; height:400px; scrollbar-face-color: #FFFFFF; scrollbar-shadow-color: #D2E5F4; scrollbar-highlight-color: #D2E5F4; scrollbar-3dlight-color: #FFFFFF; scrollbar-darkshadow-color: #FFFFFF; scrollbar-track-color: #FFFFFF; scrollbar-arrow-color: #D2E5F4;"></div>
+								</td>
+							</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div><br/>
+		</div>
+
+		<div class='main_conf' id='build_p_i' style='display:block;'>
+			<div style='float:right'>
+				<input class='build_button' name="button" id='build_pkg' type="button" value="Build Packages" title='build package'/>
+				or
+				<input class='build_button' name="button" id='build_image' type="button" value="Build Image" title='build image'/>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

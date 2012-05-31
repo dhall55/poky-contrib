@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/main.css"/>
+<script type="text/javascript" src="/static/js/tabber.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/tabber.css"/>
+<script type="text/javascript" src="/static/js/package_list.js"></script>
+</head>
+<body>
+	<form action="/hob/buildImage_request/" method="post">
+	<div class="wrap">
+		<div class="setting_nav">
+			<h2>Package selection</h2>
+			<table align="right">
+				<tbody>
+				<tr>
+					<td align="right">
+						<b>Total packages:{{ packages|length }}</b><br/>
+						<b>Packages included:{{ included_packages|length }}</b><br/>
+						<b>Selected packages size:{{ pkg_size }}MB</b><br/>
+						<b>total image size:{{ pkg_size }}MB</b>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class='main_conf' style='border-bottom: 1px #ddd solid;'>
+			<div id="container">
+				<div class="tabber" id="tab1">
+					<div class="tabbertab">
+						<h2><a name="tab1">Included (<b>{{ included_packages|length }}</b>)</a></h2>
+						<table border="1" cellspacing="0" width="96%" align="center">
+							<tbody>
+							<tr>
+								<th>Id</th><th>Package name</th><th>Brought in by</th><th>Group</th><th>Included</th>
+							</tr>
+							{% for val in included_packages %}
+							<tr>
+								<td>{{ forloop.counter }}</td>
+								<td>{{ val.name }}</td>
+								<td></td>
+								<td>{{ val.group }}</td>
+								<td><input type="checkbox" name="include_checkbox" value="{{ val.name }}" checked="checked" disabled="disabled"/></td>
+							</tr>
+							{% empty %}
+							<tr>
+								<td colspan="5" style="color: red" align="center">No Data!</td>
+							</tr>
+							{% endfor %}
+							</tbody>
+						</table>
+					</div>
+					<div class="tabbertab">
+						<h2>All packages</h2>
+						<table border="1" cellspacing="0" width="96%" align="center">
+							<tbody>
+							<tr><th>Id</th><th>Package name</th><th>Size</th><th>Included</th></tr>
+							{% for val in parent_packages %}
+							<tr>
+								<td align="center" width="10%">{{ forloop.counter }}</td>
+								<td>{{ val.name }}</td>
+								<td></td>
+								<td align="center" width="10%"><input type="checkbox" name="package_checkbox" id="{{ val.name }}" value="{{ val.name }}" {% if item.is_included %} checked="checked" {% endif %}  onclick="get_package_dependency(this.value)"/></td>
+							</tr>
+								{% for item in packages %}
+									{% ifequal item.pkg_parent val.name %}
+							<tr>
+								<td></td>
+								<td>--->{{ item.name }}</td>
+								<td>{{ item.size }} KB</td>
+								<td align="center"><input type="checkbox" name="package_checkbox" id="{{ item.name }}" value="{{ item.name }}" {% if item.is_included %} checked="checked" {% endif %}  onclick="get_package_dependency(this.value)"/></td>
+							</tr>
+									{% endifequal %}
+								{% endfor %}
+							{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div><br/>
+		</div>
+
+		<div class='main_conf' id='build_p_i' style='display:block;'>
+			<div style='float:right'>
+				<input class='build_button' name="button" id='build_image' type="button" value="Build Image" title='build image'/>
+			</div>
+		</div>
+	</div>
+	</form>
+</body>
+</html>

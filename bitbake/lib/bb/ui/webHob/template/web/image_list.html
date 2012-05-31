@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Image Successful</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/main.css"/>
+<script type="text/javascript" src="/static/js/tabber.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/tabber.css"/>
+<script type="text/javascript" src="/static/js/history.js"></script>
+</head>
+<body>
+	<form action="/hob/history_list/" method="post">
+	<div class="wrap">
+		<div class="setting_nav">
+			<h2>Image Successful Information</h2>
+			<table align="right">
+				<tbody>
+				<tr>
+					<td align="right">
+						<b>Image size:{{ buildConfig.image_size }}MB</b><br/>
+						<b>Total recipes:{{ recipes|length }}</b><br/>
+						<b>Total packages:{{ packages|length }}</b><br/>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class='main_conf' style='border-bottom: 1px #ddd solid;'>
+			<div id="container">
+				<div class="tabber" id="tab1">
+					<div class="tabbertab">
+						<h2><a name="tab1">Image generated</a></h2>
+						<table border="1" cellspacing="0" width="96%" align="center">
+							<tbody>
+							<tr>
+								<th>Id</th><th>Image Name</th><th>Image Size</th><th>Download</th>
+							</tr>
+							</tbody>
+						</table>
+						<table>
+							<tbody>
+							<tr>
+								<td><b>Configuration:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Machine:</b></td>
+								<td>{{ buildConfig.machine }}</td>
+							</tr>
+							<tr>
+								<td align="right"><b>Layers:</b></td>
+								<td>{{ buildConfig.layers }}</td>
+							</tr>
+							<tr>
+								<td align="right"><b>Package Format:</b></td>
+								<td>{{ buildConfig.package_format }}</td>
+							</tr>
+							<tr>
+								<td align="right"><b>BaseImage:</b></td>
+								<td>{{ buildConfig.base_image }}</td>
+							</tr>
+							<tr>
+								<td align="right"><b>Included recipe ({{ recipes|length }}):</b></td>
+								<td>{{ buildConfig.recipes }}</td>
+							</tr>
+							<tr>
+								<td align="right"><b>Include packages ({{ packages|length }}):</b></td>
+								<td>{{ buildConfig.packages }}</td>
+							</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div><br/>
+		</div>
+
+		<div class='main_conf' id='build_p_i' style='display:block;'>
+			<div style='float:right'>
+				<input class='build_button' name="button" id='image_history' type="button" value="history" title='successful config'/>
+			</div>
+		</div>
+	</div>
+	</form>
+</body>
+</html>

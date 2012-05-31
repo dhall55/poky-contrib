@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>buildconfig list</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="/static/js/admin.js"></script>
+</head>
+<body>
+	<form action="/management/remove_BuildConfig/" method="post" name="userform">
+	<center>
+		<table border="1" cellpadding="0" cellspacing="0" width="80%">
+			<tbody>
+			<tr>
+				<th>Id</th>
+				<th>Checkbox&nbsp;<input type="checkbox" name="checkboxAll" value="1" id="checkboxAll"/></th>
+				<th>Username</th>
+				<th>BitbakeName</th>
+				<th>Result</th>
+				<th>CreateDate</th>
+			</tr>
+			{% for val in configs %}
+			<tr>
+				<td>{{ forloop.counter }}</td>
+				<td><input type="checkbox" name="checkbox" value="{{ val.id }}"/></td>
+				<td>{{ val.operator.name }}</td>
+				<td>{{ val.bitbakeserver.name }}</td>
+				<td>{{ val.build_result }}</td>
+				<td>{{ val.create_date|date:"Y-m-d H:i:s" }}</td>
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="6" style="color: red">No Data !</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		<table border="0" cellpadding="0" cellspacing="0" width="80%">
+			<tbody>
+			<tr>
+				<td align="right">
+					<input type="button" name="delete" value="delete" onclick="del_items()"/>&nbsp;&nbsp;
+					<input type="button" name="back" value="back" onclick="backto_managelist()"/>
+				</td>
+			</tr>
+			</tbody>
+		</table>
+	</center>
+	</form>
+</body>
+</html>

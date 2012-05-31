@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>user info</title>
+</head>
+<body>
+	<form name="userForm" action="/management/save_userInfo/" method="post">
+	<input type="hidden" name="id" value="{{ operator.id }}"/>
+	<center>
+		<fieldset style="width: 400px;height: 280px">
+		<legend>user basic info</legend>
+			<table cellpadding="0" cellspacing="0" border="0" width="100%">
+				<tbody>
+				<tr height="40">
+					<td align="right">username:</td>
+					<td align="left"><input type="text" name="username" value="{{ operator.username }}"/></td>
+				</tr>
+				<tr height="40">
+					<td align="right">password:</td>
+					<td align="left"><input type="password" name="password" value="{{ operator.password }}" /></td>
+				</tr>
+				<tr height="40">
+					<td align="right">email:</td>
+					<td align="left"><input type="text" name="email" value="{{ operator.email }}"/></td>
+				</tr>
+				<tr height="40">
+					<td align="right">valid:</td>
+					<td align="left">
+						<select name="valid">
+							<option value="0" {% ifequal operator.valid '0' %} selected="selected" {% endifequal %}>invalid</option>
+							<option value="1" {% ifequal operator.valid '1' %} selected="selected" {% endifequal %}>normal</option>
+						</select>
+					</td>
+				</tr>
+				<tr height="40">
+					<td align="right">status:</td>
+					<td align="left">
+						<select name="status">
+							<option value="0" {% ifequal operator.status '0' %} selected="selected" {% endifequal %}>idle</option>
+							<option value="1" {% ifequal operator.status '1' %} selected="selected" {% endifequal %}>working</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<input type="submit" name="save" value="save"/>&nbsp;
+						<input type="button" name="back" value="back" onclick="javascript:history.go(-1);"/>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</fieldset>
+	</center>
+	</form>
+</body>
+</html>

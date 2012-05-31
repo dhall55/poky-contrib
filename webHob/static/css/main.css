@@ -1,0 +1,250 @@
+body {
+	font-size: 16px;
+	font-family: Helvetica, Arial;
+}
+
+select {
+	background-color: #fff;
+	border: 1px #61a8ee solid;
+}
+
+.wrap {
+	width: 80%;
+	min-width: 820px;
+	margin: 15px auto;
+	overflow: hidden;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	-khtml-border-radius: 5px;
+	border-radius: 5px;
+	border: 1px #DEDEDE solid;
+	min-height: 600px;
+}
+
+.setting_nav {
+	height: 85px;
+	background-color: #EFEFEF;
+	border-bottom: 1px #DEDEDE solid;
+	padding: 5px;
+}
+
+.setting_nav h2 {
+	float: left;
+	line-height: 85px;
+	font-size: 22px;
+	font-weight: bold;
+	padding-left: 15px;
+}
+
+.main_conf {
+	margin: 20px 50px;
+	overflow: hidden;
+	min-width: 700px;
+	clear: both;
+}
+
+.tab_wrap {
+	margin: 20px 50px;
+	overflow: hidden;
+	min-width: 700px;
+	clear: both;
+}
+
+.tab_wrap dl {
+	padding-left: 10px;
+	border-bottom: 2px #DEDEDE solid;
+	overflow: hidden;
+}
+
+.tab_wrap dl dd {
+	float: left;
+	width: 160px;
+	height: 35px;
+	line-height: 35px;
+	text-align: center;
+	font-weight: bold;
+	-moz-top-right-border-radius: 5px;
+	-moz-top-left-border-radius: 5px;
+	-webkit-border-top-right-radius: 5px;
+	-webkit-border-top-left-radius: 5px;
+	-khtml-border-top-right-radius: 5px;
+	-khtml-border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	border-top-left-radius: 5px;
+	border: 2px #DEDEDE solid;
+	background-color: #eee;
+	border-bottom: none;
+	color: #999;
+	cursor: pointer;
+}
+
+.tab_wrap dl dd.on {
+	border: 2px #61a8ee solid;
+	border-bottom: none;
+	background-color: #FFF;
+	color: #000;
+}
+
+.tab_wrap ul li ol {
+	padding: 10px 5px;
+}
+
+.tab_wrap ul li {
+	overflow: hidden;
+}
+
+.tab_wrap ul li ol li.l {
+	width: 70%;
+	margin-right: 2%;
+	float: left;
+}
+
+.tab_wrap ul li ol li.r {
+	width: 27%;
+	float: right;
+	border: 1px solid #D5D5D5;
+	height: 660px;
+	overflow-y: auto;
+}
+
+@-webkit-keyframes animate-stripes {
+	0% {background-position: 0 0;} 100% {background-position: 60px 0;}
+}
+
+@-moz-keyframes animate-stripes {
+	0% {background-position: 0 0;} 100% {background-position: 60px 0;}
+}
+
+.build_button {
+	width: 150px;
+	height: 35px;
+	line-height: 35px;
+	text-align: center;
+	font-weight: bold;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	-khtml-border-radius: 5px;
+	border: 2px #61A8EE solid;
+	background-color: #eee;
+	cursor: pointer;
+	color: #61A8EE;
+}
+
+.build_button:focus {
+	border: 1px solid #61a8ee;
+	background-color: #F2F7F9;
+}
+
+.rcp_table_out {
+	border-collapse: collapse;
+	width: 100%
+}
+
+.rcp_table_out,.rcp_table_out td {
+	border: 1px solid #D5D5D5;
+}
+
+.rcp_table_out td {
+	font-size: 12px;
+	padding: 2px 5px;
+}
+
+.rcp_table_out tfoot td {
+	background-color: #EEE;
+	padding: 7px 5px;
+	font-weight: bold;
+}
+
+.rcp_table_out th {
+	background-color: #EEE;
+	font-size: 14px;
+	font-weight: bold;
+	padding: 7px 5px;
+	text-align: center;
+}
+
+.rcp_table_out td.wrap_td {
+	padding: 0px;
+}
+
+.rcp_table_out td.wrap_td table {
+	width: 100%
+}
+
+.rcp_table_out td.wrap_td table,.rcp_table_out td.wrap_td td {
+	border: none
+}
+
+.rcp_table_out td.wrap_td table tr {
+	height: 25px;
+}
+
+.rcp_table_out td.wrap_td table td {
+	border-bottom: 1px solid #D5D5D5;
+	border-right: 1px solid #D5D5D5;
+	padding: 0px 5px;
+	line-height: 25px;
+}
+
+.rcp_table_out td.wrap_td div {
+	height: 600px;
+	overflow-y: auto;
+}
+
+.selectedrecipes span.on {
+	background-color: #FC3;
+}
+
+.selectedrecipes span.slct {
+	background-color: #6c0;
+}
+
+#toggle_pkglog {
+	border: 1px #ddd solid;
+	padding: 2px 10px;
+	display: inline-block;
+	cursor: pointer;
+}
+
+#pkg_list h3 {
+	background-color: #EEE;
+	font-weight: bold;
+	margin-top: 20px;
+	line-height: 30px;
+	font-size: 24px;
+}
+
+#pkg_list li {
+	padding: 2px;
+	line-height: 28px;
+	clear: both
+}
+
+#pkg_list li span {
+	display: inline-block;
+	width: 200px;
+	height: 25px;
+	line-height: 25px;
+	float: left;
+	font-weight: bolder;
+}
+
+#pkg_list li p {
+	line-height: 25px;
+	float: left;
+}
+
+#loading {
+	width: 120px;
+	height: 30px;
+	color: #FFF;
+	font-size: 18px;
+	line-height: 30px;
+	text-align: center;
+	border: 1px #61A8EE solid;
+	background-color: #A500CC;
+	display: none;
+	position: absolute;
+	top: 0;
+	right: 0;
+}

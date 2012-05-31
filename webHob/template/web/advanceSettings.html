@@ -1,0 +1,257 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>advance setting</title>
+<link rel="stylesheet" type="text/css" href="/static/css/main.css"/>
+<script type="text/javascript" src="/static/js/tabber.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/tabber.css"/>
+</head>
+<body>
+	<form action="/hob/save_advanceSetting/" method="post" name="advancesettingForm">
+	<div class="wrap">
+		<div class="setting_nav">
+			<h2>Advance Setting</h2>
+			<table align="right">
+				<tbody>
+				<tr>
+					<td align="right"></td>
+					<td></td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class='main_conf' style='border-bottom: 1px #ddd solid;'>
+			<div id="container">
+				<div class="tabber" id="tab1">
+					<div class="tabbertab">
+						<h2><a name="tab1">Image types</a></h2>
+						<b>Select image types:</b><br/>
+						<table align="center" border="0" width="75%">
+							<tbody>
+							<tr>
+								<td><input type="checkbox" name="imgTypes" value="jffs2" {% for val in img_types %} {% ifequal val 'jffs2' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;jffs2</td>
+								<td><input type="checkbox" name="imgTypes" value="squashfs-lzma" {% for val in img_types %} {% ifequal val 'squashfs-lzma' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;squashfs-lzma</td>
+								<td><input type="checkbox" name="imgTypes" value="sum.jffs2" {% for val in img_types %} {% ifequal val 'sum.jffs2' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;sum.jffs2</td>
+								<td><input type="checkbox" name="imgTypes" value="ubi" {% for val in img_types %} {% ifequal val 'ubi' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;ubi</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" name="imgTypes" value="cramfs" {% for val in img_types %} {% ifequal val 'cramfs' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;cramfs</td>
+								<td><input type="checkbox" name="imgTypes" value="tar" {% for val in img_types %} {% ifequal val 'tar' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;tar</td>
+								<td><input type="checkbox" name="imgTypes" value="ext2" {% for val in img_types %} {% ifequal val 'ext2' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;ext2</td>
+								<td><input type="checkbox" name="imgTypes" value="tar.gz" {% for val in img_types %} {% ifequal val 'tar.gz' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;tar.gz</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" name="imgTypes" value="ext2.gz" {% for val in img_types %} {% ifequal val 'ext2.gz' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;ext2.gz</td>
+								<td><input type="checkbox" name="imgTypes" value="tar.bz2" {% for val in img_types %} {% ifequal val 'tar.bz2' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;tar.bz2</td>
+								<td><input type="checkbox" name="imgTypes" value="ext2.bz2" {% for val in img_types %} {% ifequal val 'ext2.bz2' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;ext2.bz2</td>
+								<td><input type="checkbox" name="imgTypes" value="tar.xz" {% for val in img_types %} {% ifequal val 'tar.xz' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;tar.xz</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" name="imgTypes" value="ext3" {% for val in img_types %} {% ifequal val 'ext3' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;ext3</td>
+								<td><input type="checkbox" name="imgTypes" value="cpio" {% for val in img_types %} {% ifequal val 'cpio' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;cpio</td>
+								<td><input type="checkbox" name="imgTypes" value="ext3.gz" {% for val in img_types %} {% ifequal val 'ext3.gz' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;ext3.gz</td>
+								<td><input type="checkbox" name="imgTypes" value="cpio.gz" {% for val in img_types %} {% ifequal val 'cpio.gz' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;cpio.gz</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" name="imgTypes" value="ext2.lzma" {% for val in img_types %} {% ifequal val 'ext2.lzma' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;ext2.lzma</td>
+								<td><input type="checkbox" name="imgTypes" value="cpio.xz" {% for val in img_types %} {% ifequal val 'cpio.xz' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;cpio.xz</td>
+								<td><input type="checkbox" name="imgTypes" value="btrfs" {% for val in img_types %} {% ifequal val 'btrfs' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;btrfs</td>
+								<td><input type="checkbox" name="imgTypes" value="cpio.lzma" {% for val in img_types %} {% ifequal val 'cpio.lzma' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;cpio.lzma</td>
+							</tr>
+							<tr>
+								<td><input type="checkbox" name="imgTypes" value="live" {% for val in img_types %} {% ifequal val 'live' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;live</td>
+								<td><input type="checkbox" name="imgTypes" value="vmdk" {% for val in img_types %} {% ifequal val 'vmdk' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;vmdk</td>
+								<td><input type="checkbox" name="imgTypes" value="squashfs" {% for val in img_types %} {% ifequal val 'squashfs' %} checked="checked" {% endifequal %} {% endfor %} />&nbsp;squashfs</td>
+								<td></td>
+							</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="tabbertab">
+						<h2>Output</h2>
+						<table>
+							<tbody>
+							<tr>
+								<td align="right"><b>Packaging format:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>
+								{% for val in system_configs %}
+									{% if 'formats' in val.types %}
+									<input type="checkbox" name="package_format" value="{{ val.name }}"  {% if val.name in current_config.package_format %} checked="checked" {% endif %}/>&nbsp;{{ val.name }}
+									{% endif %}
+								{% endfor %}
+								</td>
+							</tr>
+							<tr>
+								<td align="right"><b>Image rootfs size:(MB)</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="image_rootfs" value="{{ current_config.image_rootfs }}"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Image extra size:(MB)</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="image_extra" value="{{ current_config.image_extra }}"/></td>
+							</tr>
+							<tr>
+								<td colspan="2"><input type="checkbox" name="exclude_gplv3" value=""/>&nbsp;Exclude GPLv3 packages</td>
+							</tr>
+							<tr>
+								<td colspan="2"><input type="checkbox" name="build_toolchain_flag" value=""/>&nbsp;Build toolchain&nbsp;
+									<select name="build_toolchain">
+									{% for val in system_configs %}
+										{% if 'machines-sdk' in val.types %}
+										<option value="{{ val.name }}" {% if val.name in current_config.build_toolchain %} selected="selected" {% endif %}>{{ val.name }}</option>
+										{% endif %}
+									{% endfor %}
+									</select>
+								</td>
+							</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="tabbertab">
+						<h2>Build environment</h2>
+						<table>
+							<tbody>
+							<tr>
+								<td align="right"><b>Select distro:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>
+									<select name="distro">
+									{% for val in system_configs %}
+										{% if 'distros' in val.types %}
+										<option value="{{ val.name }}" {% if val.name in current_config.distro %} selected="selected" {% endif %}>{{ val.name }}</option>
+										{% endif %}
+									{% endfor %}
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<td align="right"><b>BB number threads:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="bb_number_threads" value="{{ current_config.bb_number_threads }}" size="5"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Parallel make:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="parallel_make" value="{{ current_config.parallel_make }}" size="5"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Select download directory:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="download_directory" value="{{ current_config.download_directory }}" size="80"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Select SSTATE directory:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="sstate_directory" value="{{ current_config.sstate_directory }}" size="80"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Select SSTATE mirror:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="sstate_mirror" value="{{ current_config.sstate_mirror }}" size="80"/></td>
+							</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="tabbertab">
+						<h2>Proxies</h2>
+						<input type="checkbox" name="proxy" />&nbsp;<b>Enable proxy</b>
+						<table>
+							<tbody>
+							<tr>
+								<td align="right"><b>Set all proxy:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="dddir" value="" size="80" disabled="disabled"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Set http proxy:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="dddir" value="http://proxy-shz.intel.com:911" size="80" disabled="disabled"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Set https proxy:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="dddir" value="http://proxy-shz.intel.com:911" size="80" disabled="disabled"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Set ftp proxy:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="dddir" value="http://proxy-shz.intel.com:911" size="80" disabled="disabled"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Set git proxy:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="dddir" value="" size="80" disabled="disabled"/></td>
+							</tr>
+							<tr>
+								<td align="right"><b>Set cvs proxy:</b></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><input type="text" name="dddir" value="" size="80" disabled="disabled"/></td>
+							</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="tabbertab">
+						<h2>Others</h2>
+						add your own variables
+					</div>
+				</div>
+			</div><br/>
+		</div>
+
+		<div align="center">
+			<input type="submit" name="save" value="save"/>&nbsp;&nbsp;
+			<input type="button" name="cancel" value="cancel" onclick="javascript:history.go(-1);"/>
+		</div>
+	</div>
+	</form>
+</body>
+</html>

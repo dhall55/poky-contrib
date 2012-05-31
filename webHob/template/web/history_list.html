@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Image History</title>
+<script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/main.css"/>
+<script type="text/javascript" src="/static/js/tabber.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/css/tabber.css"/>
+<script type="text/javascript" src="/static/js/history.js"></script>
+</head>
+<body>
+	<div class="wrap">
+		<div class="setting_nav">
+			<h2>Build History</h2>
+			<table align="right">
+				<tbody>
+				<tr>
+					<td align="right"></td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class='main_conf' style='border-bottom: 1px #ddd solid;'>
+			<div id="container">
+				<div class="tabber" id="tab1">
+					<div class="tabbertab">
+						<h2><a name="tab1">History</a></h2>
+						<table border="1" cellspacing="0" width="96%" align="center">
+							<tbody>
+							<tr>
+								<th>Id</th><th>machine</th><th>BaseImage</th><th>Distro</th><th>Detail</th>
+							</tr>
+							{% for val in buildConfigs%}
+							<tr>
+								<td>{{ forloop.counter }}</td>
+								<td>{{ val.machine }}</td>
+								<td>{{ val.base_image }}</td>
+								<td>{{ val.distro }}</td>
+								<td><a href="/hob/image_detail/?id={{ val.id }}">Detail</a></td>
+							</tr>
+							{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div><br/>
+		</div>
+		<div class='main_conf' id='build_p_i' style='display:block;'>
+			<div style='float:right'>
+				<input class='build_button' name="button" id='logout' type="button" value="logout" title='logout'  />
+			</div>
+		</div>
+	</div>
+</body>
+</html>
