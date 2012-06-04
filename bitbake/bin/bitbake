@@ -40,7 +40,7 @@ from bb import cooker
 from bb import ui
 from bb import server
 
-__version__ = "1.15.1"
+__version__ = "1.15.2"
 logger = logging.getLogger("BitBake")
 
 
@@ -56,10 +56,11 @@ class BBConfiguration(object):
 
 
 def get_ui(config):
-    if config.ui:
-        interface = config.ui
-    else:
-        interface = 'knotty'
+    if not config.ui:
+        # modify 'ui' attribute because it is also read by cooker
+        config.ui = os.environ.get('BITBAKE_UI', 'knotty')
+
+    interface = config.ui
 
     try:
         # Dynamically load the UI based on the ui name. Although we

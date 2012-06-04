@@ -985,12 +985,12 @@ class BBCooker:
         """
         Find the .bb files which match the expression in 'buildfile'.
         """
-
         if bf.startswith("/") or bf.startswith("../"):
             bf = os.path.abspath(bf)
         filelist, masked = self.collect_bbfiles()
         try:
             os.stat(bf)
+            bf = os.path.abspath(bf)
             return [bf]
         except OSError:
             regexp = re.compile(bf)
@@ -1175,7 +1175,7 @@ class BBCooker:
             return
 
         if self.state in (state.shutdown, state.stop):
-            self.parser.shutdown(clean=False)
+            self.parser.shutdown(clean=False, force = True)
             sys.exit(1)
 
         if self.state != state.parsing:
@@ -1570,6 +1570,7 @@ class CookerParser(object):
             def init():
                 Parser.cfg = self.cfgdata
                 multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, args=(self.cfgdata,), exitpriority=1)
+                multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, args=(self.cfgdata,), exitpriority=1)
 
             self.feeder_quit = multiprocessing.Queue(maxsize=1)
             self.parser_quit = multiprocessing.Queue(maxsize=self.num_processes)
@@ -1608,16 +1609,20 @@ class CookerParser(object):
                 self.parser_quit.put(None)
 
             self.jobs.cancel_join_thread()
-            sys.exit(1)
 
         for process in self.processes:
-            process.join()
+            if force:
+                process.join(.1)
+                process.terminate()
+            else:
+                process.join()
         self.feeder.join()
 
         sync = threading.Thread(target=self.bb_cache.sync)
         sync.start()
         multiprocessing.util.Finalize(None, sync.join, exitpriority=-100)
         bb.codeparser.parser_cache_savemerge(self.cooker.configuration.data)
+        bb.fetch.fetcher_parse_done(self.cooker.configuration.data)
 
     def load_cached(self):
         for filename, appends in self.fromcache:
@@ -1641,6 +1646,8 @@ class CookerParser(object):
                     yield result
 
     def parse_next(self):
+        result = []
+        parsed = None
         try:
             parsed, result = self.results.next()
         except StopIteration:
@@ -1650,8 +1657,12 @@ class CookerParser(object):
             logger.error('Unable to parse %s: %s' %
                      (exc.recipe, bb.exceptions.to_string(exc.realexception)))
             self.shutdown(clean=False)
-        except (bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
+        except bb.parse.ParseError as exc:
             logger.error(str(exc))
+            self.shutdown(clean=False)
+        except bb.data_smart.ExpansionError as exc:
+            _, value, _ = sys.exc_info()
+            logger.error('ExpansionError during parsing %s: %s', value.recipe, str(exc))
             self.shutdown(clean=False)
         except SyntaxError as exc:
             logger.error('Unable to parse %s', exc.recipe)

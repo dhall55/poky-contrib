@@ -107,14 +107,7 @@ def do_split_packages(d, root, file_regex, output_pattern, description, postinst
 					objs.append(relpath)
 
 	if extra_depends == None:
-		# This is *really* broken
-		mainpkg = packages[0]
-		# At least try and patch it up I guess...
-		if mainpkg.find('-dbg'):
-			mainpkg = mainpkg.replace('-dbg', '')
-		if mainpkg.find('-dev'):
-			mainpkg = mainpkg.replace('-dev', '')
-		extra_depends = mainpkg
+		extra_depends = d.getVar("PN", True)
 
 	for o in sorted(objs):
 		import re, stat
@@ -190,7 +183,7 @@ def splitfile(file, debugfile, debugsrcdir, d):
     # The debug information is then processed for src references.  These
     # references are copied to debugsrcdir, if defined.
 
-    import commands, stat
+    import commands, stat, subprocess
 
     dvar = d.getVar('PKGD', True)
     pathprefix = "export PATH=%s; " % d.getVar('PATH', True)
@@ -212,14 +205,14 @@ def splitfile(file, debugfile, debugsrcdir, d):
 
     # We need to extract the debug src information here...
     if debugsrcdir:
-	os.system("%s'%s' -b '%s' -d '%s' -i -l '%s' '%s'" % (pathprefix, debugedit, workparentdir, debugsrcdir, sourcefile, file))
+	subprocess.call("%s'%s' -b '%s' -d '%s' -i -l '%s' '%s'" % (pathprefix, debugedit, workparentdir, debugsrcdir, sourcefile, file), shell=True)
 
     bb.mkdirhier(os.path.dirname(debugfile))
 
-    os.system("%s'%s' --only-keep-debug '%s' '%s'" % (pathprefix, objcopy, file, debugfile))
+    subprocess.call("%s'%s' --only-keep-debug '%s' '%s'" % (pathprefix, objcopy, file, debugfile), shell=True)
 
     # Set the debuglink to have the view of the file path on the target
-    os.system("%s'%s' --add-gnu-debuglink='%s' '%s'" % (pathprefix, objcopy, debugfile, file))
+    subprocess.call("%s'%s' --add-gnu-debuglink='%s' '%s'" % (pathprefix, objcopy, debugfile, file), shell=True)
 
     if newmode:
         os.chmod(file, origmode)
@@ -232,7 +225,7 @@ def splitfile2(debugsrcdir, d):
     # The debug src information processed in the splitfile2 is further procecessed
     # and copied to the destination here.
 
-    import commands, stat
+    import commands, stat, subprocess
 
     sourcefile = d.expand("${WORKDIR}/debugsources.list")
     if debugsrcdir and os.path.isfile(sourcefile):
@@ -259,14 +252,14 @@ def splitfile2(debugsrcdir, d):
        processdebugsrc += "fgrep -z '%s' | "
        processdebugsrc += "(cd '%s' ; cpio -pd0mL --no-preserve-owner '%s%s' 2>/dev/null)"
 
-       os.system(processdebugsrc % (sourcefile, workbasedir, workparentdir, dvar, debugsrcdir))
+       subprocess.call(processdebugsrc % (sourcefile, workbasedir, workparentdir, dvar, debugsrcdir), shell=True)
 
        # The copy by cpio may have resulted in some empty directories!  Remove these
        for root, dirs, files in os.walk("%s%s" % (dvar, debugsrcdir)):
           for d in dirs:
               dir = os.path.join(root, d)
               #bb.note("rmdir -p %s" % dir)
-              os.system("rmdir -p %s 2>/dev/null" % dir)
+              subprocess.call("rmdir -p %s 2>/dev/null" % dir, shell=True)
 
        # Also remove debugsrcdir if its empty
        for p in nosuchdir[::-1]:
@@ -282,14 +275,14 @@ def runstrip(file, elftype, d):
     # 4 - executable
     # 8 - shared library
 
-    import commands, stat
+    import commands, stat, subprocess
 
     pathprefix = "export PATH=%s; " % d.getVar('PATH', True)
     strip = d.getVar("STRIP", True)
 
     # Handle kernel modules specifically - .debug directories here are pointless
     if file.find("/lib/modules/") != -1 and file.endswith(".ko"):
-        return os.system("%s'%s' --strip-debug --remove-section=.comment --remove-section=.note --preserve-dates '%s'" % (pathprefix, strip, file))
+        return subprocess.call("%s'%s' --strip-debug --remove-section=.comment --remove-section=.note --preserve-dates '%s'" % (pathprefix, strip, file), shell=True)
 
     newmode = None
     if not os.access(file, os.W_OK) or os.access(file, os.R_OK):
@@ -308,7 +301,7 @@ def runstrip(file, elftype, d):
     stripcmd = "'%s' %s '%s'" % (strip, extraflags, file)
     bb.debug(1, "runstrip: %s" % stripcmd)
 
-    ret = os.system("%s%s" % (pathprefix, stripcmd))
+    ret = subprocess.call("%s%s" % (pathprefix, stripcmd), shell=True)
 
     if newmode:
         os.chmod(file, origmode)
@@ -404,24 +397,17 @@ python package_do_split_locales() {
 
 	locales = os.listdir(localedir)
 
-	# This is *really* broken
-	mainpkg = packages[0]
-	# At least try and patch it up I guess...
-	if mainpkg.find('-dbg'):
-		mainpkg = mainpkg.replace('-dbg', '')
-	if mainpkg.find('-dev'):
-		mainpkg = mainpkg.replace('-dev', '')
-
 	summary = d.getVar('SUMMARY', True) or pn
 	description = d.getVar('DESCRIPTION', True) or "" 
         locale_section = d.getVar('LOCALE_SECTION', True)
+	mlprefix = d.getVar('MLPREFIX', True) or ""
 	for l in sorted(locales):
 		ln = legitimize_package_name(l)
 		pkg = pn + '-locale-' + ln
 		packages.append(pkg)
 		d.setVar('FILES_' + pkg, os.path.join(datadir, 'locale', l))
-		d.setVar('RDEPENDS_' + pkg, '%s virtual-locale-%s' % (mainpkg, ln))
-		d.setVar('RPROVIDES_' + pkg, '%s-locale %s-translation' % (pn, ln))
+		d.setVar('RDEPENDS_' + pkg, '%s %svirtual-locale-%s' % (pn, mlprefix, ln))
+		d.setVar('RPROVIDES_' + pkg, '%s-locale %s%s-translation' % (pn, mlprefix, ln))
 		d.setVar('SUMMARY_' + pkg, '%s - %s translations' % (summary, l))
 		d.setVar('DESCRIPTION_' + pkg, '%s  This package contains language translation files for the %s locale.' % (description, l))
 		if locale_section:
@@ -435,12 +421,13 @@ python package_do_split_locales() {
 	# glibc-localedata-translit* won't install as a dependency
 	# for some other package which breaks meta-toolchain
 	# Probably breaks since virtual-locale- isn't provided anywhere
-	#rdep = (d.getVar('RDEPENDS_%s' % mainpkg, True) or d.getVar('RDEPENDS', True) or "").split()
+	#rdep = (d.getVar('RDEPENDS_%s' % pn, True) or d.getVar('RDEPENDS', True) or "").split()
 	#rdep.append('%s-locale*' % pn)
-	#d.setVar('RDEPENDS_%s' % mainpkg, ' '.join(rdep))
+	#d.setVar('RDEPENDS_%s' % pn, ' '.join(rdep))
 }
 
 python perform_packagecopy () {
+	import subprocess
 	dest = d.getVar('D', True)
 	dvar = d.getVar('PKGD', True)
 
@@ -448,9 +435,9 @@ python perform_packagecopy () {
 
 	# Start by package population by taking a copy of the installed 
 	# files to operate on
-	os.system('rm -rf %s/*' % (dvar))
+	subprocess.call('rm -rf %s/*' % (dvar), shell=True)
 	# Preserve sparse files and hard links
-	os.system('tar -cf - -C %s -ps . | tar -xf - -C %s' % (dest, dvar))
+	subprocess.call('tar -cf - -C %s -ps . | tar -xf - -C %s' % (dest, dvar), shell=True)
 }
 
 # We generate a master list of directories to process, we start by
@@ -682,7 +669,7 @@ python fixup_perms () {
 }
 
 python split_and_strip_files () {
-	import commands, stat, errno
+	import commands, stat, errno, subprocess
 
 	dvar = d.getVar('PKGD', True)
 	pn = d.getVar('PN', True)
@@ -852,7 +839,7 @@ python split_and_strip_files () {
 					os.unlink(fpath)
 					# This could leave an empty debug directory laying around
 					# take care of the obvious case...
-					os.system("rmdir %s 2>/dev/null" % os.path.dirname(fpath))
+					subprocess.call("rmdir %s 2>/dev/null" % os.path.dirname(fpath), shell=True)
 
 		# Process the debugsrcdir if requested...
 		# This copies and places the referenced sources for later debugging...
@@ -870,13 +857,21 @@ python split_and_strip_files () {
 				elf_file = int(file_list[file][5:])
 				#bb.note("Strip %s" % file)
 				runstrip(file, elf_file, d)
+
+
+	if (d.getVar('INHIBIT_PACKAGE_STRIP', True) != '1'):	
+		for root, dirs, files in os.walk(dvar):
+			for f in files:
+				if not f.endswith(".ko"):
+					continue
+				runstrip(os.path.join(root, f), None, d)
 	#
 	# End of strip
 	#
 }
 
 python populate_packages () {
-	import glob, stat, errno, re
+	import glob, stat, errno, re, subprocess
 
 	workdir = d.getVar('WORKDIR', True)
 	outdir = d.getVar('DEPLOY_DIR', True)
@@ -902,7 +897,7 @@ python populate_packages () {
 				package_list.append(pkg)
 	d.setVar('PACKAGES', ' '.join(package_list))
 	pkgdest = d.getVar('PKGDEST', True)
-	os.system('rm -rf %s' % pkgdest)
+	subprocess.call('rm -rf %s' % pkgdest, shell=True)
 
 	seen = []
 
@@ -922,6 +917,9 @@ python populate_packages () {
 		files = filesvar.split()
 		file_links = {}
 		for file in files:
+			if file.find("//") != -1:
+				bb.warn("FILES variable for package %s contains '//' which is invalid. Attempting to fix this but you should correct the metadata.\n" % pkg)
+				file.replace("//", "/")
 			if os.path.isabs(file):
 				file = '.' + file
 			if not os.path.islink(file):
@@ -1162,6 +1160,15 @@ python package_do_filedeps() {
 	rpmdeps = d.expand("${RPMDEPS}")
 	r = re.compile(r'[<>=]+ +[^ ]*')
 
+	def file_translate(file):
+		ft = file.replace("@", "@at@")
+		ft = ft.replace(" ", "@space@")
+		ft = ft.replace("\t", "@tab@")
+		ft = ft.replace("[", "@openbrace@")
+		ft = ft.replace("]", "@closebrace@")
+		ft = ft.replace("_", "@underscore@")
+		return ft
+
 	# Quick routine to process the results of the rpmdeps call...
 	def process_deps(pipe, pkg, provides_files, requires_files):
 		provides = {}
@@ -1179,12 +1186,7 @@ python package_do_filedeps() {
 				continue
 
 			file = f.replace(pkgdest + "/" + pkg, "")
-			file = file.replace("@", "@at@")
-			file = file.replace(" ", "@space@")
-			file = file.replace("\t", "@tab@")
-			file = file.replace("[", "@openbrace@")
-			file = file.replace("]", "@closebrace@")
-			file = file.replace("_", "@underscore@")
+			file = file_translate(file)
 			value = line.split(":", 1)[1].strip()
 			value = r.sub(r'(\g<0>)', value)
 
@@ -1272,7 +1274,8 @@ python package_do_shlibs() {
 		for l in lines:
 			m = re.match("\s+NEEDED\s+([^\s]*)", l)
 			if m:
-				needed[pkg].append(m.group(1))
+				if m.group(1) not in needed[pkg]:
+					needed[pkg].append(m.group(1))
 			m = re.match("\s+SONAME\s+([^\s]*)", l)
 			if m:
 				this_soname = m.group(1)
@@ -1344,7 +1347,7 @@ python package_do_shlibs() {
 								name = dep.replace("-l", "lib")
 							if pkg not in needed:
 								needed[pkg] = []
-							if name:
+							if name and name not in needed[pkg]:
 								needed[pkg].append(name)
 								#bb.note("Adding %s for %s" % (name, pkg))
 
@@ -1448,6 +1451,8 @@ python package_do_shlibs() {
 		for n in needed[pkg]:
 			if n in shlib_provider.keys():
 				(dep_pkg, ver_needed) = shlib_provider[n]
+
+				bb.debug(2, '%s: Dependency %s requires package %s' % (pkg, n, dep_pkg))
 
 				if dep_pkg == pkg:
 					continue
@@ -1780,7 +1785,7 @@ addtask package_write before do_build after do_package
 # Helper functions for the package writing classes
 #
 
-python package_mapping_rename_hook () {
+def mapping_rename_hook(d):
 	"""
 	Rewrite variables to account for package renaming in things
 	like debian.bbclass or manual PKG variable name changes
@@ -1791,6 +1796,4 @@ python package_mapping_rename_hook () {
 	runtime_mapping_rename("RPROVIDES", d)
 	runtime_mapping_rename("RREPLACES", d)
 	runtime_mapping_rename("RCONFLICTS", d)
-}
 
-EXPORT_FUNCTIONS mapping_rename_hook

@@ -145,6 +145,7 @@ def sstate_install(ss, d):
 
 def sstate_installpkg(ss, d):
     import oe.path
+    import subprocess
 
     def prepdir(dir):
         # remove dir if it exists, ensure any parent directories do exist
@@ -174,18 +175,29 @@ def sstate_installpkg(ss, d):
     bb.build.exec_func('sstate_unpack_package', d)
 
     # Fixup hardcoded paths
+    #
+    # Note: The logic below must match the reverse logic in
+    # sstate_hardcode_path(d)
+
     fixmefn =  sstateinst + "fixmepath"
     if os.path.isfile(fixmefn):
         staging = d.getVar('STAGING_DIR', True)
         staging_target = d.getVar('STAGING_DIR_TARGET', True)
         staging_host = d.getVar('STAGING_DIR_HOST', True)
-        fixmefd = open(fixmefn, "r")
-        fixmefiles = fixmefd.readlines()
-        fixmefd.close()
-        for file in fixmefiles:
-            os.system("sed -i -e s:FIXMESTAGINGDIRTARGET:%s:g %s" % (staging_target, sstateinst + file))
-            os.system("sed -i -e s:FIXMESTAGINGDIRHOST:%s:g %s" % (staging_host, sstateinst + file))
-            os.system("sed -i -e s:FIXMESTAGINGDIR:%s:g %s" % (staging, sstateinst + file))
+
+	if bb.data.inherits_class('native', d) or bb.data.inherits_class('nativesdk', d) or bb.data.inherits_class('crosssdk', d) or bb.data.inherits_class('cross-canadian', d):
+		sstate_sed_cmd = "sed -i -e 's:FIXMESTAGINGDIR:%s:g'" % (staging)
+	elif bb.data.inherits_class('cross', d):
+		sstate_sed_cmd = "sed -i -e 's:FIXMESTAGINGDIRTARGET:%s:g; s:FIXMESTAGINGDIR:%s:g'" % (staging_target, staging)
+	else:
+		sstate_sed_cmd = "sed -i -e 's:FIXMESTAGINGDIRHOST:%s:g'" % (staging_host)
+
+	# Add sstateinst to each filename in fixmepath, use xargs to efficiently call sed
+	sstate_hardcode_cmd = "sed -e 's:^:%s:g' %s | xargs %s" % (sstateinst, fixmefn, sstate_sed_cmd)
+
+	print "Replacing fixme paths in sstate package: %s" % (sstate_hardcode_cmd)
+	subprocess.call(sstate_hardcode_cmd, shell=True)
+
         # Need to remove this or we'd copy it into the target directory and may 
         # conflict with another writer
         os.remove(fixmefn)
@@ -298,8 +310,13 @@ python sstate_cleanall() {
 }
 
 def sstate_hardcode_path(d):
+	import subprocess
+
 	# Need to remove hardcoded paths and fix these when we install the
 	# staging packages.
+	#
+	# Note: the logic in this function needs to match the reverse logic
+	# in sstate_installpkg(ss, d)
 
 	staging = d.getVar('STAGING_DIR', True)
 	staging_target = d.getVar('STAGING_DIR_TARGET', True)
@@ -307,24 +324,36 @@ def sstate_hardcode_path(d):
 	sstate_builddir = d.getVar('SSTATE_BUILDDIR', True)
 
 	if bb.data.inherits_class('native', d) or bb.data.inherits_class('nativesdk', d) or bb.data.inherits_class('crosssdk', d) or bb.data.inherits_class('cross-canadian', d):
+		sstate_grep_cmd = "grep -l -e '%s'" % (staging)
 		sstate_sed_cmd = "sed -i -e 's:%s:FIXMESTAGINGDIR:g'" % (staging)
 	elif bb.data.inherits_class('cross', d):
+		sstate_grep_cmd = "grep -l -e '(%s|%s)'" % (staging_target, staging)
 		sstate_sed_cmd = "sed -i -e 's:%s:FIXMESTAGINGDIRTARGET:g; s:%s:FIXMESTAGINGDIR:g'" % (staging_target, staging)
 	else:
+		sstate_grep_cmd = "grep -l -e '%s'" % (staging_host)
 		sstate_sed_cmd = "sed -i -e 's:%s:FIXMESTAGINGDIRHOST:g'" % (staging_host)
 	
+	fixmefn =  sstate_builddir + "fixmepath"
+
 	sstate_scan_cmd = d.getVar('SSTATE_SCAN_CMD', True)
-	sstate_filelist_cmd = "tee %sfixmepath" % (sstate_builddir)
+	sstate_filelist_cmd = "tee %s" % (fixmefn)
 
 	# fixmepath file needs relative paths, drop sstate_builddir prefix
-	sstate_filelist_relative_cmd = "sed -i -e 's:^%s::g' %sfixmepath" % (sstate_builddir, sstate_builddir)
+	sstate_filelist_relative_cmd = "sed -i -e 's:^%s::g' %s" % (sstate_builddir, fixmefn)
 
-	sstate_hardcode_cmd = "%s | %s | xargs %s" % (sstate_scan_cmd, sstate_filelist_cmd, sstate_sed_cmd)
+	# Limit the fixpaths and sed operations based on the initial grep search
+	# This has the side effect of making sure the vfs cache is hot
+	sstate_hardcode_cmd = "%s | xargs %s | %s | xargs --no-run-if-empty %s" % (sstate_scan_cmd, sstate_grep_cmd, sstate_filelist_cmd, sstate_sed_cmd)
 
 	print "Removing hardcoded paths from sstate package: '%s'" % (sstate_hardcode_cmd)
-	os.system(sstate_hardcode_cmd)
-	print "Replacing absolute paths in fixmepath file: '%s'" % (sstate_filelist_relative_cmd)
-	os.system(sstate_filelist_relative_cmd)
+	subprocess.call(sstate_hardcode_cmd, shell=True)
+
+        # If the fixmefn is empty, remove it..
+	if os.stat(fixmefn).st_size == 0:
+		os.remove(fixmefn)
+	else:
+		print "Replacing absolute paths in fixmepath file: '%s'" % (sstate_filelist_relative_cmd)
+		subprocess.call(sstate_filelist_relative_cmd, shell=True)
 
 def sstate_package(ss, d):
     import oe.path
@@ -454,6 +483,7 @@ sstate_create_package () {
 	else
 		tar -cz --file=$TFILE --files-from=/dev/null
 	fi
+	chmod 0664 $TFILE 
 	mv $TFILE ${SSTATE_PKG}
 
 	cd ${WORKDIR}

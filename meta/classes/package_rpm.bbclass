@@ -40,12 +40,13 @@ package_update_index_rpm_common () {
 	rpmconf_base="$1"
 	shift
 
+        createdirs=""
 	for archvar in "$@"; do
 		eval archs=\${${archvar}}
 		packagedirs=""
 		for arch in $archs; do
 			packagedirs="${DEPLOY_DIR_RPM}/$arch $packagedirs"
-			rm -rf ${DEPLOY_DIR_RPM}/$arch/solvedb
+			rm -rf ${DEPLOY_DIR_RPM}/$arch/solvedb.done
 		done
 
 		cat /dev/null > ${rpmconf_base}-${archvar}.conf
@@ -53,22 +54,11 @@ package_update_index_rpm_common () {
 			if [ -e $pkgdir/ ]; then
 				echo "Generating solve db for $pkgdir..."
 				echo $pkgdir/solvedb >> ${rpmconf_base}-${archvar}.conf
-				if [ -d $pkgdir/solvedb ]; then
-					# We've already processed this and it's a duplicate
-					continue
-				fi
-				mkdir -p $pkgdir/solvedb
-				echo "# Dynamically generated solve manifest" >> $pkgdir/solvedb/manifest
-				find $pkgdir -maxdepth 1 -type f >> $pkgdir/solvedb/manifest
-				${RPM} -i --replacepkgs --replacefiles --oldpackage \
-					-D "_dbpath $pkgdir/solvedb" --justdb \
-					--noaid --nodeps --noorder --noscripts --notriggers --noparentdirs --nolinktos --stats \
-					--ignoresize --nosignature --nodigest \
-					-D "__dbi_txn create nofsync" \
-					$pkgdir/solvedb/manifest
+                                createdirs="$createdirs $pkgdir"
 			fi
 		done
 	done
+	rpm-createsolvedb.py "${RPM}" $createdirs
 }
 
 #
@@ -168,28 +158,24 @@ rpm_common_comand () {
 rpm_update_pkg () {
 
     manifest=$1
-    btmanifest=$manifest.bt
+    btmanifest=$manifest.bt.manifest
+    pre_btmanifest=${T}/${btmanifest##/*/}
     local target_rootfs="${INSTALL_ROOTFS_RPM}"
 
     # Save the rpm's build time for incremental image generation, and the file
     # would be moved to ${T}
-    rm -f $btmanifest
     for i in `cat $manifest`; do
         # Use "rpm" rather than "${RPM}" here, since we don't need the
         # '--dbpath' option
-        echo "$i `rpm -qp --qf '%{BUILDTIME}\n' $i`" >> $btmanifest
-    done
+        echo "$i `rpm -qp --qf '%{BUILDTIME}\n' $i`"
+    done | sort -u > $btmanifest
 
     # Only install the different pkgs if incremental image generation is set
-    if [ "${INC_RPM_IMAGE_GEN}" = "1" -a -f ${T}/total_solution_bt.manifest -a \
+    if [ "${INC_RPM_IMAGE_GEN}" = "1" -a -f "$pre_btmanifest" -a \
         "${IMAGE_PKGTYPE}" = "rpm" ]; then
-        cur_list="$btmanifest"
-        pre_list="${T}/total_solution_bt.manifest"
-        sort -u $cur_list -o $cur_list
-        sort -u $pre_list -o $pre_list
-        comm -1 -3 $cur_list $pre_list | sed 's#.*/\(.*\)\.rpm .*#\1#' > \
+        comm -1 -3 $btmanifest $pre_btmanifest | sed 's#.*/\(.*\)\.rpm .*#\1#' > \
             ${target_rootfs}/install/remove.manifest
-        comm -2 -3 $cur_list $pre_list | awk '{print $1}' > \
+        comm -2 -3 $btmanifest $pre_btmanifest | awk '{print $1}' > \
             ${target_rootfs}/install/incremental.manifest
 
         # Attempt to remove unwanted pkgs, the scripts(pre, post, etc.) has not
@@ -472,7 +458,7 @@ EOF
 	# probably a feature. The only way to convince rpm to actually run the preinstall scripts 
 	# for base-passwd and shadow first before installing packages that depend on these packages 
 	# is to do two image installs, installing one set of packages, then the other.
-	if [ "${INC_RPM_IMAGE_GEN}" = "1" -a -f ${T}/total_solution_bt.manifest ]; then
+	if [ "${INC_RPM_IMAGE_GEN}" = "1" -a -f "$pre_btmanifest" ]; then
 		echo "Skipping pre install due to exisitng image"
 	else
 		echo "# Initial Install manifest" > ${target_rootfs}/install/initial_install.manifest
@@ -710,7 +696,7 @@ python write_specfile () {
 		translate_vers('RCONFLICTS', localdata)
 
 		# Map the dependencies into their final form
-		bb.build.exec_func("mapping_rename_hook", localdata)
+		mapping_rename_hook(localdata)
 
 		splitrdepends    = strip_multilib(localdata.getVar('RDEPENDS', True), d) or ""
 		splitrrecommends = strip_multilib(localdata.getVar('RRECOMMENDS', True), d) or ""
@@ -719,10 +705,6 @@ python write_specfile () {
 		splitrreplaces   = strip_multilib(localdata.getVar('RREPLACES', True), d) or ""
 		splitrconflicts  = strip_multilib(localdata.getVar('RCONFLICTS', True), d) or ""
 		splitrobsoletes  = []
-
-		# For now we need to manually supplement RPROVIDES with any update-alternatives links
-		if pkg == d.getVar("PN", True):
-			splitrprovides = splitrprovides + " " + (d.getVar('ALTERNATIVE_LINK', True) or '') + " " + (d.getVar('ALTERNATIVE_LINKS', True) or '')
 
 		# Gather special src/first package data
 		if srcname == splitname:
@@ -1004,8 +986,9 @@ python do_package_rpm () {
 
 	# Construct per file dependencies file
 	def dump_filerdeps(varname, outfile, d):
-		outfile.write("#!/bin/sh\n")
-		outfile.write("\n# Dependency table\n")
+		outfile.write("#!/usr/bin/env python\n\n")
+		outfile.write("# Dependency table\n")
+		outfile.write('deps = {\n')
 		for pkg in packages.split():
 			dependsflist_key = 'FILE' + varname + 'FLIST' + "_" + pkg
 			dependsflist = (d.getVar(dependsflist_key, True) or "")
@@ -1018,7 +1001,7 @@ python do_package_rpm () {
 				file = file.replace("@tab@", "\t")
 				file = file.replace("@space@", " ")
 				file = file.replace("@at@", "@")
-				outfile.write("#" + pkgd + file + "\t")
+				outfile.write('"' + pkgd + file + '" : "')
 				for dep in depends_dict:
 					ver = depends_dict[dep]
 					if dep and ver:
@@ -1027,12 +1010,15 @@ python do_package_rpm () {
 						outfile.write(dep + " " + ver + " ")
 					else:
 						outfile.write(dep + " ")
-				outfile.write("\n")
-		outfile.write("\n\nwhile read file_name ; do\n")
-		outfile.write("\tlength=$(echo \"#${file_name}\t\" | wc -c )\n")
-		outfile.write("\tline=$(grep \"^#${file_name}\t\" $0 | cut -c ${length}- )\n")
-		outfile.write("\tprintf \"%s\\n\" ${line}\n")
-		outfile.write("done\n")
+				outfile.write('",\n')
+		outfile.write('}\n\n')
+		outfile.write("import sys\n")
+		outfile.write("while 1:\n")
+		outfile.write("\tline = sys.stdin.readline().strip()\n")
+		outfile.write("\tif not line:\n")
+		outfile.write("\t\tsys.exit(0)\n")
+		outfile.write("\tif line in deps:\n")
+		outfile.write("\t\tprint(deps[line] + '\\n')\n")
 
 	# OE-core dependencies a.k.a. RPM requires
 	outdepends = workdir + "/" + srcname + ".requires"

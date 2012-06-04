@@ -8,6 +8,7 @@ BitBake build tools.
 """
 
 # Copyright (C) 2003, 2004  Chris Larson
+# Copyright (C) 2012  Intel Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -28,10 +29,13 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os, re
 import logging
+import urllib
 import bb.persist_data, bb.utils
+import bb.checksum
 from bb import data
 
 __version__ = "2"
+_checksum_cache = bb.checksum.FileChecksumCache()
 
 logger = logging.getLogger("BitBake.Fetcher")
 
@@ -62,6 +66,9 @@ class FetchError(BBFetchException):
          self.url = url
          BBFetchException.__init__(self, msg)
          self.args = (message, url)
+
+class ChecksumError(FetchError):
+    """Exception when mismatched checksum encountered"""
 
 class UnpackError(BBFetchException):
     """General fetcher exception when something happens incorrectly when unpacking"""
@@ -99,12 +106,15 @@ class ParameterError(BBFetchException):
 class NetworkAccess(BBFetchException):
     """Exception raised when network access is disabled but it is required."""
     def __init__(self, url, cmd):
-         msg = "Network access disabled through BB_NO_NETWORK but access rquested with command %s (for url %s)" % (cmd, url)
+         msg = "Network access disabled through BB_NO_NETWORK but access requested with command %s (for url %s)" % (cmd, url)
          self.url = url
          self.cmd = cmd
          BBFetchException.__init__(self, msg)
          self.args = (url, cmd)
 
+class NonLocalMethod(Exception):
+    def __init__(self):
+        Exception.__init__(self)
 
 def decodeurl(url):
     """Decodes an URL into the tokens (scheme, network location, path,
@@ -144,14 +154,14 @@ def decodeurl(url):
             s1, s2 = s.split('=')
             p[s1] = s2
 
-    return (type, host, path, user, pswd, p)
+    return type, host, urllib.unquote(path), user, pswd, p
 
 def encodeurl(decoded):
     """Encodes a URL from tokens (scheme, network location, path,
     user, password, parameters).
     """
 
-    (type, host, path, user, pswd, p) = decoded
+    type, host, path, user, pswd, p = decoded
 
     if not path:
         raise MissingParameterError('path', "encoded from the data %s" % str(decoded))
@@ -165,7 +175,7 @@ def encodeurl(decoded):
         url += "@"
     if host and type != "file":
         url += "%s" % host
-    url += "%s" % path
+    url += "%s" % urllib.quote(path)
     if p:
         for parm in p:
             url += ";%s=%s" % (parm, p[parm])
@@ -229,9 +239,17 @@ def fetcher_init(d):
     else:
         raise FetchError("Invalid SRCREV cache policy of: %s" % srcrev_policy)
 
+    _checksum_cache.init_cache(d)
+
     for m in methods:
         if hasattr(m, "init"):
             m.init(d)
+
+def fetcher_parse_save(d):
+    _checksum_cache.save_extras(d)
+
+def fetcher_parse_done(d):
+    _checksum_cache.save_merge(d)
 
 def fetcher_compare_revisions(d):
     """
@@ -259,39 +277,37 @@ def verify_checksum(u, ud, d):
     """
     verify the MD5 and SHA256 checksum for downloaded src
 
-    return value:
-        - True: a checksum matched
-        - False: neither checksum matched
+    Raises a FetchError if one or both of the SRC_URI checksums do not match
+    the downloaded file, or if BB_STRICT_CHECKSUM is set and there are no
+    checksums specified.
 
-    if checksum is missing in recipes file, "BB_STRICT_CHECKSUM" decide the return value.
-    if BB_STRICT_CHECKSUM = "1" then return false as unmatched, otherwise return true as
-    matched
     """
 
-    if not ud.type in ["http", "https", "ftp", "ftps"]:
+    if not ud.method.supports_checksum(ud):
         return
 
     md5data = bb.utils.md5_file(ud.localpath)
     sha256data = bb.utils.sha256_file(ud.localpath)
 
-    # If strict checking enabled and neither sum defined, raise error
-    strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
-    if (strict and ud.md5_expected == None and ud.sha256_expected == None):
-        raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
-                         'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
-                         (ud.localpath, ud.md5_name, md5data,
-                         ud.sha256_name, sha256data), u)
+    if ud.method.recommends_checksum(ud):
+        # If strict checking enabled and neither sum defined, raise error
+        strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
+        if (strict and ud.md5_expected == None and ud.sha256_expected == None):
+            raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
+                             'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
+                             (ud.localpath, ud.md5_name, md5data,
+                              ud.sha256_name, sha256data), u)
 
-    # Log missing sums so user can more easily add them
-    if ud.md5_expected == None:
-        logger.warn('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                    'SRC_URI[%s] = "%s"',
-                    ud.localpath, ud.md5_name, md5data)
+        # Log missing sums so user can more easily add them
+        if ud.md5_expected == None:
+            logger.warn('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
+                        'SRC_URI[%s] = "%s"',
+                        ud.localpath, ud.md5_name, md5data)
 
-    if ud.sha256_expected == None:
-        logger.warn('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                    'SRC_URI[%s] = "%s"',
-                    ud.localpath, ud.sha256_name, sha256data)
+        if ud.sha256_expected == None:
+            logger.warn('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
+                        'SRC_URI[%s] = "%s"',
+                        ud.localpath, ud.sha256_name, sha256data)
 
     md5mismatch = False
     sha256mismatch = False
@@ -312,7 +328,7 @@ def verify_checksum(u, ud, d):
         msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'sha256', sha256data, ud.sha256_expected)
 
     if len(msg):
-        raise FetchError('Checksum mismatch!%s' % msg, u)
+        raise ChecksumError('Checksum mismatch!%s' % msg, u)
 
 
 def update_stamp(u, ud, d):
@@ -476,10 +492,8 @@ def try_mirrors(d, origud, mirrors, check = False):
 
             if not os.path.exists(ud.donestamp) or ud.method.need_update(newuri, ud, ld):
                 ud.method.download(newuri, ud, ld)
-                if os.path.exists(ud.localpath):
-                    open(ud.donestamp, 'w').close()
-                    if hasattr(ud.method,"build_mirror_data"):
-                        ud.method.build_mirror_data(newuri, ud, ld)
+                if hasattr(ud.method,"build_mirror_data"):
+                    ud.method.build_mirror_data(newuri, ud, ld)
 
             if not ud.localpath or not os.path.exists(ud.localpath):
                 continue
@@ -491,6 +505,7 @@ def try_mirrors(d, origud, mirrors, check = False):
             # If that tarball is a local file:// we need to provide a symlink to it
             dldir = ld.getVar("DL_DIR", True)
             if os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
+                open(ud.donestamp, 'w').close()
                 dest = os.path.join(dldir, os.path.basename(ud.localpath))
                 if not os.path.exists(dest):
                     os.symlink(ud.localpath, dest)
@@ -498,17 +513,21 @@ def try_mirrors(d, origud, mirrors, check = False):
             # Otherwise the result is a local file:// and we symlink to it
             if not os.path.exists(origud.localpath):
                  os.symlink(ud.localpath, origud.localpath)
+            update_stamp(newuri, origud, ld)
             return ud.localpath
 
         except bb.fetch2.NetworkAccess:
             raise
 
         except bb.fetch2.BBFetchException as e:
-            logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
-            logger.debug(1, str(e))
+            if isinstance(e, ChecksumError):
+                logger.warn("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (newuri, origud.url))
+                logger.warn(str(e))
+            else:
+                logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
+                logger.debug(1, str(e))
             try:
-                if os.path.isfile(ud.localpath):
-                    bb.utils.remove(ud.localpath)
+                ud.method.clean(ud, ld)
             except UnboundLocalError:
                 pass
             continue
@@ -545,11 +564,85 @@ def srcrev_internal_helper(ud, d, name):
 
     return rev
 
+
+def get_checksum_file_list(d):
+    """ Get a list of files checksum in SRC_URI
+
+    Returns the resolved local paths of all local file entries in
+    SRC_URI as a space-separated string
+    """
+    fetch = Fetch([], d, cache = False, localonly = True)
+
+    dl_dir = d.getVar('DL_DIR', True)
+    filelist = []
+    for u in fetch.urls:
+        ud = fetch.ud[u]
+
+        if ud and isinstance(ud.method, local.Local):
+            ud.setup_localpath(d)
+            f = ud.localpath
+            if f.startswith(dl_dir):
+                # The local fetcher's behaviour is to return a path under DL_DIR if it couldn't find the file anywhere else
+                if os.path.exists(f):
+                    bb.warn("Getting checksum for %s SRC_URI entry %s: file not found except in DL_DIR" % (d.getVar('PN', True), os.path.basename(f)))
+                else:
+                    bb.warn("Unable to get checksum for %s SRC_URI entry %s: file could not be found" % (d.getVar('PN', True), os.path.basename(f)))
+                    continue
+            filelist.append(f)
+
+    return " ".join(filelist)
+
+
+def get_file_checksums(filelist, pn):
+    """Get a list of the checksums for a list of local files
+
+    Returns the checksums for a list of local files, caching the results as
+    it proceeds
+
+    """
+
+    def checksum_file(f):
+        try:
+            checksum = _checksum_cache.get_checksum(f)
+        except OSError as e:
+            import traceback
+            bb.warn("Unable to get checksum for %s SRC_URI entry %s: %s" % (pn, os.path.basename(f), e))
+            return None
+        return checksum
+
+    checksums = []
+    for pth in filelist.split():
+        checksum = None
+        if '*' in pth:
+            # Handle globs
+            import glob
+            for f in glob.glob(pth):
+                checksum = checksum_file(f)
+                if checksum:
+                    checksums.append((f, checksum))
+        elif os.path.isdir(pth):
+            # Handle directories
+            for root, dirs, files in os.walk(pth):
+                for name in files:
+                    fullpth = os.path.join(root, name)
+                    checksum = checksum_file(fullpth)
+                    if checksum:
+                        checksums.append((fullpth, checksum))
+        else:
+            checksum = checksum_file(pth)
+
+        if checksum:
+            checksums.append((pth, checksum))
+
+    checksums.sort()
+    return checksums
+
+
 class FetchData(object):
     """
     A class which represents the fetcher state for a given URI.
     """
-    def __init__(self, url, d):
+    def __init__(self, url, d, localonly = False):
         # localpath is the location of a downloaded result. If not set, the file is local.
         self.donestamp = None
         self.localfile = ""
@@ -574,10 +667,14 @@ class FetchData(object):
             self.sha256_name = "sha256sum"
         if self.md5_name in self.parm:
             self.md5_expected = self.parm[self.md5_name]
+        elif self.type not in ["http", "https", "ftp", "ftps"]:
+            self.md5_expected = None
         else:
             self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name)
         if self.sha256_name in self.parm:
             self.sha256_expected = self.parm[self.sha256_name]
+        elif self.type not in ["http", "https", "ftp", "ftps"]:
+            self.sha256_expected = None
         else:
             self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name)
 
@@ -591,6 +688,9 @@ class FetchData(object):
 
         if not self.method:
             raise NoMethodError(url)
+
+        if localonly and not isinstance(self.method, local.Local):
+            raise NonLocalMethod()
 
         if hasattr(self.method, "urldata_init"):
             self.method.urldata_init(self, d)
@@ -656,6 +756,26 @@ class FetchMethod(object):
         """
         return os.path.join(data.getVar("DL_DIR", d, True), urldata.localfile)
 
+    def supports_checksum(self, urldata):
+        """
+        Is localpath something that can be represented by a checksum?
+        """
+
+        # We cannot compute checksums for directories
+        if os.path.isdir(urldata.localpath) == True:
+            return False
+        if urldata.localpath.find("*") != -1:
+             return False
+
+        return True
+
+    def recommends_checksum(self, urldata):
+        """
+        Is the backend on where checksumming is recommended (should warnings 
+        by displayed if there is no checksum)?
+        """
+        return False
+
     def _strip_leading_slashes(self, relpath):
         """
         Remove leading slash as os.path.join can't cope
@@ -706,7 +826,7 @@ class FetchMethod(object):
 
         dots = file.split(".")
         if dots[-1] in ['gz', 'bz2', 'Z']:
-            efile = os.path.join(data.getVar('WORKDIR', True),os.path.basename('.'.join(dots[0:-1])))
+            efile = os.path.join(rootdir, os.path.basename('.'.join(dots[0:-1])))
         else:
             efile = file
         cmd = None
@@ -782,7 +902,9 @@ class FetchMethod(object):
             bb.utils.mkdirhier(newdir)
             os.chdir(newdir)
 
-        cmd = "PATH=\"%s\" %s" % (data.getVar('PATH', True), cmd)
+        path = data.getVar('PATH', True)
+        if path:
+            cmd = "PATH=\"%s\" %s" % (path, cmd)
         bb.note("Unpacking %s to %s/" % (file, os.getcwd()))
         ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True)
 
@@ -893,7 +1015,10 @@ class FetchMethod(object):
         return "%s-%s" % (key, d.getVar("PN", True) or "")
 
 class Fetch(object):
-    def __init__(self, urls, d, cache = True):
+    def __init__(self, urls, d, cache = True, localonly = False):
+        if localonly and cache:
+            raise Exception("bb.fetch2.Fetch.__init__: cannot set cache and localonly at same time")
+
         if len(urls) == 0:
             urls = d.getVar("SRC_URI", True).split()
         self.urls = urls
@@ -906,7 +1031,12 @@ class Fetch(object):
 
         for url in urls:
             if url not in self.ud:
-                self.ud[url] = FetchData(url, d)
+                try:
+                    self.ud[url] = FetchData(url, d, localonly)
+                except NonLocalMethod:
+                    if localonly:
+                        self.ud[url] = None
+                        pass
 
         if cache:
             urldata_cache[fn] = self.ud
@@ -978,12 +1108,14 @@ class Fetch(object):
                         raise
 
                     except BBFetchException as e:
-                        logger.warn('Failed to fetch URL %s' % u)
-                        logger.debug(1, str(e))
+                        if isinstance(e, ChecksumError):
+                            logger.warn("Checksum error encountered with download (will attempt other sources): %s" % str(e))
+                        else:
+                            logger.warn('Failed to fetch URL %s, attempting MIRRORS if available' % u)
+                            logger.debug(1, str(e))
                         firsterr = e
                         # Remove any incomplete fetch
-                        if os.path.isfile(ud.localpath):
-                            bb.utils.remove(ud.localpath)
+                        m.clean(ud, self.d)
                         logger.debug(1, "Trying MIRRORS")
                         mirrors = mirror_from_string(self.d.getVar('MIRRORS', True))
                         localpath = try_mirrors (self.d, ud, mirrors)

@@ -39,6 +39,7 @@ class PackageSelectionPage (HobPage):
          'columns' : [{
                        'col_name' : 'Package name',
                        'col_id'   : PackageListModel.COL_NAME,
+                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 300,
@@ -46,6 +47,7 @@ class PackageSelectionPage (HobPage):
                       }, {
                        'col_name' : 'Brought in by',
                        'col_id'   : PackageListModel.COL_BINB,
+                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'binb',
                        'col_min'  : 100,
                        'col_max'  : 350,
@@ -53,6 +55,7 @@ class PackageSelectionPage (HobPage):
                       }, {
                        'col_name' : 'Size',
                        'col_id'   : PackageListModel.COL_SIZE,
+                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 300,
@@ -60,7 +63,9 @@ class PackageSelectionPage (HobPage):
                       }, {
                        'col_name' : 'Included',
                        'col_id'   : PackageListModel.COL_INC,
+                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'check toggle',
+                       'col_group': 'tree store group',
                        'col_min'  : 100,
                        'col_max'  : 100
                      }]
@@ -70,6 +75,7 @@ class PackageSelectionPage (HobPage):
          'columns' : [{
                        'col_name' : 'Package name',
                        'col_id'   : PackageListModel.COL_NAME,
+                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 400,
@@ -77,6 +83,7 @@ class PackageSelectionPage (HobPage):
                       }, {
                        'col_name' : 'Size',
                        'col_id'   : PackageListModel.COL_SIZE,
+                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 500,
@@ -85,6 +92,7 @@ class PackageSelectionPage (HobPage):
                        'col_name' : 'Included',
                        'col_id'   : PackageListModel.COL_INC,
                        'col_style': 'check toggle',
+                       'col_group': 'tree store group',
                        'col_min'  : 100,
                        'col_max'  : 100
                       }]
@@ -101,8 +109,14 @@ class PackageSelectionPage (HobPage):
         # create visual elements
         self.create_visual_elements()
 
+    def included_clicked_cb(self, button):
+        self.ins.set_current_page(0)
+
     def create_visual_elements(self):
-        self.label = gtk.Label("Packages included: 0\nSelected packages size: 0 MB")
+        self.label = gtk.Button("Packages included: 0\nSelected packages size: 0 MB")
+        self.label.set_can_default(False)
+        self.label.set_relief(gtk.RELIEF_HALF)
+        self.label.connect("clicked", self.included_clicked_cb)
         self.eventbox = self.add_onto_top_bar(self.label, 73)
         self.pack_start(self.eventbox, expand=False, fill=False)
         self.pack_start(self.group_align, expand=True, fill=True)
@@ -117,11 +131,11 @@ class PackageSelectionPage (HobPage):
             filter = page['filter']
             tab.set_model(self.package_model.tree_model(filter))
             tab.connect("toggled", self.table_toggled_cb, page['name'])
+            tab.connect_group_selection(self.table_selected_cb)
             if page['name'] == "Included":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            label = gtk.Label(page['name'])
-            self.ins.append_page(tab, label)
+            self.ins.append_page(tab, page['name'])
             self.tables.append(tab)
 
         self.ins.set_entry("Search packages:")
@@ -183,7 +197,7 @@ class PackageSelectionPage (HobPage):
             image_total_size += (51200 * 1024)
         image_total_size_str = HobPage._size_to_string(image_total_size)
 
-        self.label.set_text("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
+        self.label.set_label("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
                             (selected_packages_num, selected_packages_size_str, image_total_size_str))
         self.ins.show_indicator_icon("Included", selected_packages_num)
 
@@ -247,3 +261,20 @@ class PackageSelectionPage (HobPage):
     def after_fadeout_checkin_include(self, table, ctrl, cell, tree):
         tree.set_model(self.package_model.tree_model(self.pages[0]['filter']))
         tree.expand_all()
+
+    def foreach_cell_change_font(self, model, path, iter, paths=None):
+        # Changed the font for a group cells
+        if path and iter and path[0] == paths[0]:
+            self.package_model.set(iter, self.package_model.COL_FONT, "bold")
+        else:
+            if iter and model.iter_parent(iter) == None:
+                self.package_model.set(iter, self.package_model.COL_FONT, '11')
+            else:
+                self.package_model.set(iter, self.package_model.COL_FONT, '10')
+
+    def table_selected_cb(self, selection):
+        model, paths = selection.get_selected_rows()
+        if paths:
+            child_path = self.package_model.convert_vpath_to_path(model, paths[0])
+            self.package_model.foreach(self.foreach_cell_change_font, child_path)
+

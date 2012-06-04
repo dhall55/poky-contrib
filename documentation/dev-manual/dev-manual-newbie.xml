@@ -335,7 +335,8 @@
                 The area is created when you <filename>source</filename> the Yocto Project setup 
                 environment script that is found in the Yocto Project files area
                 (i.e. <filename>oe-init-build-env</filename>).
-                The <filename>TOPDIR</filename> variable points to the build directory.</para>
+                The <ulink url='&YOCTO_DOCS_REF_URL;#var-TOPDIR'><filename>TOPDIR</filename></ulink>
+                variable points to the build directory.</para>
            
                 <para>You have a lot of flexibility when creating the Yocto Project Build Directory.
                 Following are some examples that show how to create the directory:
@@ -494,7 +495,8 @@
             Git uses "branches" to organize different development efforts. 
             For example, the <filename>poky</filename> repository has 
             <filename>laverne</filename>, <filename>bernard</filename>, 
-            <filename>edison</filename>, and <filename>master</filename> branches among 
+            <filename>edison</filename>, <filename>denzil</filename> and 
+            <filename>master</filename> branches among 
             others.
             You can see all the branches by going to  
             <ulink url='&YOCTO_GIT_URL;/cgit.cgi/poky/'></ulink> and 
@@ -525,7 +527,7 @@
      $ cd ~
      $ git clone git://git.yoctoproject.org/poky
      $ cd poky
-     $ git checkout &DISTRO_NAME; -b &DISTRO_NAME;
+     $ git checkout -b &DISTRO_NAME; origin/&DISTRO_NAME;
             </literallayout>
             In this example, the name of the top-level directory of your local Yocto Project 
             Files Git repository is <filename>poky</filename>.
@@ -577,14 +579,14 @@
      $ cd ~
      $ git clone git://git.yoctoproject.org/poky
      $ cd poky
-     $ git checkout &DISTRO_NAME;-&POKYVERSION; -b &DISTRO_NAME;-&POKYVERSION;
+     $ git checkout -b my-&DISTRO_NAME;-&POKYVERSION; &DISTRO_NAME;-&POKYVERSION;
             </literallayout>
             In this example, the name of the top-level directory of your local Yocto Project 
             Files Git repository is <filename>poky</filename>.
             And, the name of the local branch you have created and checked out is
-            <filename>&DISTRO_NAME;-&POKYVERSION;</filename>.
+            <filename>my-&DISTRO_NAME;-&POKYVERSION;</filename>.
             The files in your repository now exactly match the Yocto Project &DISTRO;
-            Release tag (&DISTRO_NAME;).
+            Release tag (<filename>&DISTRO_NAME;-&POKYVERSION;</filename>).
             It is important to understand that when you create and checkout a local 
             working branch based on a tag, your environment matches a specific point 
             in time and not a development branch.

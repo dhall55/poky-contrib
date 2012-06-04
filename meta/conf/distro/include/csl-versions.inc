@@ -83,7 +83,7 @@ def csl_get_kernel_version(d):
 def csl_get_gdb_version(d):
 	try:
 		stdout, stderr = csl_run(d, 'gdb', '-v')
-	except CmdError:
+	except bb.process.CmdError:
 		return 'UNKNOWN'
 	else:
 		first_line = stdout.splitlines()[0]
@@ -103,3 +103,7 @@ python csl_version_handler () {
     d.setVar('CSL_VER_GDB', csl_get_gdb_version(ld))
 }
 addhandler csl_version_handler
+
+# Ensure that any variable which includes the --sysroot (CC, CXX, etc) also
+# depends on the toolchain version
+TOOLCHAIN_OPTIONS[vardeps] += "CSL_VER_MAIN CSL_VER_GCC"

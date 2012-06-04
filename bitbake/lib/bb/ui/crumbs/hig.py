@@ -25,12 +25,12 @@ import gobject
 import hashlib
 import os
 import re
-import subprocess
 import shlex
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
 from bb.ui.crumbs.progressbar import HobProgressBar
 import bb.ui.crumbs.utils
+import bb.process
 
 """
 The following are convenience classes for implementing GNOME HIG compliant
@@ -137,6 +137,8 @@ class AdvancedSettingDialog (CrumbsDialog):
     def entry_widget_select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        text = entry.get_text()
+        dialog.set_current_folder(text if len(text) > 0 else os.getcwd())
         button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
         HobAltButton.style_button(button)
         button = dialog.add_button("Open", gtk.RESPONSE_YES)
@@ -171,6 +173,45 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         hbox.show_all()
         return hbox, entry
+
+    def details_cb(self, button, parent, protocol):
+        dialog = ProxyDetailsDialog(title = protocol.upper() + " Proxy Details",
+            user = self.configuration.proxies[protocol][1],
+            passwd = self.configuration.proxies[protocol][2],
+            parent = parent,
+            flags = gtk.DIALOG_MODAL
+                    | gtk.DIALOG_DESTROY_WITH_PARENT
+                    | gtk.DIALOG_NO_SEPARATOR)
+        dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_OK)
+        response = dialog.run()
+        if response == gtk.RESPONSE_OK:
+            self.configuration.proxies[protocol][1] = dialog.user
+            self.configuration.proxies[protocol][2] = dialog.passwd
+            self.refresh_proxy_components()
+        dialog.destroy()
+
+    def gen_proxy_entry_widget(self, protocol, parent, need_button=True):
+        hbox = gtk.HBox(False, 12)
+
+        label = gtk.Label(protocol.upper() + " proxy")
+        hbox.pack_start(label, expand=True, fill=False, padding=24)
+
+        proxy_entry = gtk.Entry()
+        proxy_entry.set_size_request(300, -1)
+        hbox.pack_start(proxy_entry, expand=False, fill=False)
+
+        hbox.pack_start(gtk.Label(":"), expand=False, fill=False)
+
+        port_entry = gtk.Entry()
+        port_entry.set_size_request(60, -1)
+        hbox.pack_start(port_entry, expand=False, fill=False)
+
+        details_button = HobAltButton("Details")
+        details_button.connect("clicked", self.details_cb, parent, protocol) 
+        hbox.pack_start(details_button, expand=False, fill=False)
+
+        hbox.show_all()
+        return hbox, proxy_entry, port_entry, details_button
 
     def rootfs_combo_changed_cb(self, rootfs_combo, all_package_format, check_hbox):
         combo_item = self.rootfs_combo.get_active_text()
@@ -309,7 +350,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
     def __init__(self, title, configuration, all_image_types,
             all_package_formats, all_distros, all_sdk_machines,
-            max_threads, enable_proxy, parent, flags, buttons=None):
+            max_threads, parent, flags, buttons=None):
         super(AdvancedSettingDialog, self).__init__(title, parent, flags, buttons)
 
         # class members from other objects
@@ -320,7 +361,6 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.all_distros = all_distros
         self.all_sdk_machines = all_sdk_machines
         self.max_threads = max_threads
-        self.enable_proxy = enable_proxy
 
         # class members for internal use
         self.distro_combo = None
@@ -356,6 +396,10 @@ class AdvancedSettingDialog (CrumbsDialog):
         data += ("SDK_MACHINE: "          + self._get_sorted_value(self.configuration.curr_sdk_machine))
         data += ("TOOLCHAIN_BUILD: "      + self._get_sorted_value(self.configuration.toolchain_build))
         data += ("IMAGE_FSTYPES: "        + self._get_sorted_value(self.configuration.image_fstypes))
+        data += ("ENABLE_PROXY: "         + self._get_sorted_value(self.configuration.enable_proxy))
+        if self.configuration.enable_proxy:
+            for protocol in self.configuration.proxies.keys():
+                data += (protocol + ": " + self._get_sorted_value(self.configuration.combine_proxy(protocol)))
         for key in self.configuration.extra_setting.keys():
             data += (key + ": " + self._get_sorted_value(self.configuration.extra_setting[key]))
         return hashlib.md5(data).hexdigest()
@@ -423,15 +467,15 @@ class AdvancedSettingDialog (CrumbsDialog):
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
         label = self.gen_label_widget("<span weight=\"bold\">Image rootfs size: (MB)</span>")
         tooltip = "Sets the basic size of your target image.\nThis is the basic size of your target image unless your selected package size exceeds this value or you select \'Image Extra Size\'."
-        rootfs_size_widget, self.rootfs_size_spinner = self.gen_spinner_widget(int(self.configuration.image_rootfs_size*1.0/1024), 0, 1024, tooltip)
+        rootfs_size_widget, self.rootfs_size_spinner = self.gen_spinner_widget(int(self.configuration.image_rootfs_size*1.0/1024), 0, 65536, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(rootfs_size_widget, expand=False, fill=False)
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
         label = self.gen_label_widget("<span weight=\"bold\">Image extra size: (MB)</span>")
-        tooltip = "Sets the extra free space of your target image.\nBy default, the system reserves 30% of your image size as free space. If your image contains zypper, it brings in 50MB more space. The maximum free space is 1024MB."
-        extra_size_widget, self.extra_size_spinner = self.gen_spinner_widget(int(self.configuration.image_extra_size*1.0/1024), 0, 1024, tooltip)
+        tooltip = "Sets the extra free space of your target image.\nBy default, the system reserves 30% of your image size as free space. If your image contains zypper, it brings in 50MB more space. The maximum free space is 64GB."
+        extra_size_widget, self.extra_size_spinner = self.gen_spinner_widget(int(self.configuration.image_extra_size*1.0/1024), 0, 65536, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(extra_size_widget, expand=False, fill=False)
 
@@ -450,7 +494,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.toolchain_checkbox.set_active(self.configuration.toolchain_build)
         sub_hbox.pack_start(self.toolchain_checkbox, expand=False, fill=False)
 
-        tooltip = "Selects the Host platform for which you want to run the toolchain"
+        tooltip = "Selects the host platform for which you want to run the toolchain"
         sdk_machine_widget, self.sdk_machine_combo = self.gen_combo_widget(self.configuration.curr_sdk_machine, self.all_sdk_machines, tooltip)
         sub_hbox.pack_start(sdk_machine_widget, expand=False, fill=False)
 
@@ -520,60 +564,56 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        self.proxy_checkbox = gtk.CheckButton("Enable proxy")
+        label = self.gen_label_widget("<span weight=\"bold\">Set the proxies that will be used during fetching source code</span>")
+        tooltip = "Set the proxies that will be used during fetching source code or set none for direct the Internet connection"
+        info = HobInfoButton(tooltip, self)
+        hbox = gtk.HBox(False, 12)
+        hbox.pack_start(label, expand=True, fill=True)
+        hbox.pack_start(info, expand=False, fill=False)
+        sub_vbox.pack_start(hbox, expand=False, fill=False)
+
+        self.direct_checkbox = gtk.RadioButton(None, "Direct internet connection")
+        self.direct_checkbox.set_tooltip_text("Check this box to connect the Internet directly without any proxy")
+        self.direct_checkbox.set_active(not self.configuration.enable_proxy)
+        sub_vbox.pack_start(self.direct_checkbox, expand=False, fill=False)
+
+        self.proxy_checkbox = gtk.RadioButton(self.direct_checkbox, "Manual proxy configuration")
         self.proxy_checkbox.set_tooltip_text("Check this box to setup the proxy you specified")
-        self.proxy_checkbox.set_active(self.enable_proxy)
-        self.proxy_checkbox.connect("toggled", self.proxy_checkbox_toggled_cb)
+        self.proxy_checkbox.set_active(self.configuration.enable_proxy)
         sub_vbox.pack_start(self.proxy_checkbox, expand=False, fill=False)
 
-        label = self.gen_label_widget("<span weight=\"bold\">Set all proxy:</span>")
-        tooltip = "Set the all proxy that will be used if the proxy for a URL isn't specified."
-        proxy_widget, self.all_proxy_text = self.gen_entry_widget(self.configuration.all_proxy, self, tooltip, False)
-        self.all_proxy_text.set_editable(self.enable_proxy)
-        self.all_proxy_text.set_sensitive(self.enable_proxy)
-        sub_vbox.pack_start(label, expand=False, fill=False)
+        self.same_checkbox = gtk.CheckButton("Use the same proxy for all protocols")
+        self.same_checkbox.set_tooltip_text("Use the same proxy as the first proxy i.e. http proxy for all protocols")
+        self.same_checkbox.set_active(self.configuration.same_proxy)
+        hbox = gtk.HBox(False, 12)
+        hbox.pack_start(self.same_checkbox, expand=False, fill=False, padding=24)
+        sub_vbox.pack_start(hbox, expand=False, fill=False)
+
+        proxy_widget, self.http_proxy, self.http_proxy_port, self.http_proxy_details = self.gen_proxy_entry_widget(
+            "http", self, True)
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
-        label = self.gen_label_widget("<span weight=\"bold\">Set http proxy:</span>")
-        tooltip = "Set the http proxy that will be used in do_fetch() source code"
-        proxy_widget, self.http_proxy_text = self.gen_entry_widget(self.configuration.http_proxy, self, tooltip, False)
-        self.http_proxy_text.set_editable(self.enable_proxy)
-        self.http_proxy_text.set_sensitive(self.enable_proxy)
-        sub_vbox.pack_start(label, expand=False, fill=False)
+        proxy_widget, self.https_proxy, self.https_proxy_port, self.https_proxy_details = self.gen_proxy_entry_widget(
+            "https", self, True)
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
-        label = self.gen_label_widget("<span weight=\"bold\">Set https proxy:</span>")
-        tooltip = "Set the https proxy that will be used in do_fetch() source code"
-        proxy_widget, self.https_proxy_text = self.gen_entry_widget(self.configuration.https_proxy, self, tooltip, False)
-        self.https_proxy_text.set_editable(self.enable_proxy)
-        self.https_proxy_text.set_sensitive(self.enable_proxy)
-        sub_vbox.pack_start(label, expand=False, fill=False)
+        proxy_widget, self.ftp_proxy, self.ftp_proxy_port, self.ftp_proxy_details = self.gen_proxy_entry_widget(
+            "ftp", self, True)
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
-        label = self.gen_label_widget("<span weight=\"bold\">Set ftp proxy:</span>")
-        tooltip = "Set the ftp proxy that will be used in do_fetch() source code"
-        proxy_widget, self.ftp_proxy_text = self.gen_entry_widget(self.configuration.ftp_proxy, self, tooltip, False)
-        self.ftp_proxy_text.set_editable(self.enable_proxy)
-        self.ftp_proxy_text.set_sensitive(self.enable_proxy)
-        sub_vbox.pack_start(label, expand=False, fill=False)
+        proxy_widget, self.git_proxy, self.git_proxy_port, self.git_proxy_details = self.gen_proxy_entry_widget(
+            "git", self, True)
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
-        label = self.gen_label_widget("<span weight=\"bold\">Set git proxy:</span>")
-        tooltip = "Set the git proxy that will be used in do_fetch() source code"
-        proxy_widget, self.git_proxy_text = self.gen_entry_widget(self.configuration.git_proxy_host + ':' + self.configuration.git_proxy_port, self, tooltip, False)
-        self.git_proxy_text.set_editable(self.enable_proxy)
-        self.git_proxy_text.set_sensitive(self.enable_proxy)
-        sub_vbox.pack_start(label, expand=False, fill=False)
+        proxy_widget, self.cvs_proxy, self.cvs_proxy_port, self.cvs_proxy_details = self.gen_proxy_entry_widget(
+            "cvs", self, True)
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
-        label = self.gen_label_widget("<span weight=\"bold\">Set cvs proxy:</span>")
-        tooltip = "Set the cvs proxy that will be used in do_fetch() source code"
-        proxy_widget, self.cvs_proxy_text = self.gen_entry_widget(self.configuration.cvs_proxy_host + ':' + self.configuration.cvs_proxy_port, self, tooltip, False)
-        self.cvs_proxy_text.set_editable(self.enable_proxy)
-        self.cvs_proxy_text.set_sensitive(self.enable_proxy)
-        sub_vbox.pack_start(label, expand=False, fill=False)
-        sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
+        self.direct_checkbox.connect("toggled", self.proxy_checkbox_toggled_cb)
+        self.proxy_checkbox.connect("toggled", self.proxy_checkbox_toggled_cb)
+        self.same_checkbox.connect("toggled", self.same_checkbox_toggled_cb)
 
+        self.refresh_proxy_components()
         return advanced_vbox
 
     def create_others_page(self):
@@ -590,20 +630,59 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         return advanced_vbox
 
+    def refresh_proxy_components(self):
+        self.same_checkbox.set_sensitive(self.configuration.enable_proxy)
+
+        self.http_proxy.set_text(self.configuration.combine_host_only("http"))
+        self.http_proxy.set_editable(self.configuration.enable_proxy)
+        self.http_proxy.set_sensitive(self.configuration.enable_proxy)
+        self.http_proxy_port.set_text(self.configuration.combine_port_only("http"))
+        self.http_proxy_port.set_editable(self.configuration.enable_proxy)
+        self.http_proxy_port.set_sensitive(self.configuration.enable_proxy)
+        self.http_proxy_details.set_sensitive(self.configuration.enable_proxy)
+
+        self.https_proxy.set_text(self.configuration.combine_host_only("https"))
+        self.https_proxy.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.https_proxy.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.https_proxy_port.set_text(self.configuration.combine_port_only("https"))
+        self.https_proxy_port.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.https_proxy_port.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.https_proxy_details.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+
+        self.ftp_proxy.set_text(self.configuration.combine_host_only("ftp"))
+        self.ftp_proxy.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.ftp_proxy.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.ftp_proxy_port.set_text(self.configuration.combine_port_only("ftp"))
+        self.ftp_proxy_port.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.ftp_proxy_port.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.ftp_proxy_details.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+
+        self.git_proxy.set_text(self.configuration.combine_host_only("git"))
+        self.git_proxy.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.git_proxy.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.git_proxy_port.set_text(self.configuration.combine_port_only("git"))
+        self.git_proxy_port.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.git_proxy_port.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.git_proxy_details.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+
+        self.cvs_proxy.set_text(self.configuration.combine_host_only("cvs"))
+        self.cvs_proxy.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.cvs_proxy.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.cvs_proxy_port.set_text(self.configuration.combine_port_only("cvs"))
+        self.cvs_proxy_port.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.cvs_proxy_port.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.cvs_proxy_details.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+
     def proxy_checkbox_toggled_cb(self, button):
-        self.enable_proxy = self.proxy_checkbox.get_active()
-        self.all_proxy_text.set_editable(self.enable_proxy)
-        self.all_proxy_text.set_sensitive(self.enable_proxy)
-        self.http_proxy_text.set_editable(self.enable_proxy)
-        self.http_proxy_text.set_sensitive(self.enable_proxy)
-        self.https_proxy_text.set_editable(self.enable_proxy)
-        self.https_proxy_text.set_sensitive(self.enable_proxy)
-        self.ftp_proxy_text.set_editable(self.enable_proxy)
-        self.ftp_proxy_text.set_sensitive(self.enable_proxy)
-        self.git_proxy_text.set_editable(self.enable_proxy)
-        self.git_proxy_text.set_sensitive(self.enable_proxy)
-        self.cvs_proxy_text.set_editable(self.enable_proxy)
-        self.cvs_proxy_text.set_sensitive(self.enable_proxy)
+        self.configuration.enable_proxy = self.proxy_checkbox.get_active()
+        if not self.configuration.enable_proxy:
+            self.configuration.same_proxy = False
+            self.same_checkbox.set_active(self.configuration.same_proxy)
+        self.refresh_proxy_components()
+
+    def same_checkbox_toggled_cb(self, button):
+        self.configuration.same_proxy = self.same_checkbox.get_active()
+        self.refresh_proxy_components()
 
     def response_cb(self, dialog, response_id):
         package_format = []
@@ -647,12 +726,17 @@ class AdvancedSettingDialog (CrumbsDialog):
             self.configuration.extra_setting[key] = value
             it = self.setting_store.iter_next(it)
 
-        self.configuration.all_proxy = self.all_proxy_text.get_text()
-        self.configuration.http_proxy = self.http_proxy_text.get_text()
-        self.configuration.https_proxy = self.https_proxy_text.get_text()
-        self.configuration.ftp_proxy = self.ftp_proxy_text.get_text()
-        self.configuration.git_proxy_host, self.configuration.git_proxy_port = self.git_proxy_text.get_text().split(':')
-        self.configuration.cvs_proxy_host, self.configuration.cvs_proxy_port = self.cvs_proxy_text.get_text().split(':')
+        self.configuration.split_proxy("http", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+        if self.configuration.same_proxy:
+            self.configuration.split_proxy("https", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+            self.configuration.split_proxy("ftp", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+            self.configuration.split_proxy("git", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+            self.configuration.split_proxy("cvs", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+        else:
+            self.configuration.split_proxy("https", self.https_proxy.get_text() + ":" + self.https_proxy_port.get_text())
+            self.configuration.split_proxy("ftp", self.ftp_proxy.get_text() + ":" + self.ftp_proxy_port.get_text())
+            self.configuration.split_proxy("git", self.git_proxy.get_text() + ":" + self.git_proxy_port.get_text())
+            self.configuration.split_proxy("cvs", self.cvs_proxy.get_text() + ":" + self.cvs_proxy_port.get_text())
 
         md5 = self.config_md5()
         self.settings_changed = (self.md5 != md5)
@@ -717,7 +801,8 @@ class DeployImageDialog (CrumbsDialog):
         self.progress_bar.hide()
 
     def popen_read(self, cmd):
-        return os.popen("%s 2>/dev/null" % cmd).read().strip()
+        tmpout, errors = bb.process.run("%s" % cmd)
+        return tmpout.strip()
 
     def find_all_usb_devices(self):
         usb_devs = [ os.readlink(u)
@@ -746,7 +831,7 @@ class DeployImageDialog (CrumbsDialog):
                 cmdline = bb.ui.crumbs.utils.which_terminal()
                 if cmdline:
                     cmdline += "\"sudo dd if=" + self.image_path + " of=" + combo_item + "\""
-                    subprocess.Popen(args=shlex.split(cmdline))
+                    bb.process.Popen(shlex.split(cmdline))
 
     def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)
@@ -1064,12 +1149,13 @@ class ImageSelectionDialog (CrumbsDialog):
         self.image_table = HobViewTable(self.__columns__)
         self.image_table.set_size_request(-1, 300)
         self.image_table.connect("toggled", self.toggled_cb)
+        self.image_table.connect_group_selection(self.table_selected_cb)
+        self.image_table.connect("row-activated", self.row_actived_cb)
         self.vbox.pack_start(self.image_table, expand=True, fill=True)
 
         self.show_all()
 
-    def toggled_cb(self, table, cell, path, columnid, tree):
-        model = tree.get_model()
+    def change_image_cb(self, model, path, columnid):
         if not model:
             return
         iter = model.get_iter_first()
@@ -1080,9 +1166,24 @@ class ImageSelectionDialog (CrumbsDialog):
 
         model[path][columnid] = True
 
+    def toggled_cb(self, table, cell, path, columnid, tree):
+        model = tree.get_model()
+        self.change_image_cb(model, path, columnid)
+
+    def table_selected_cb(self, selection):
+        model, paths = selection.get_selected_rows()
+        if paths:
+            self.change_image_cb(model, paths[0], 1)
+
+    def row_actived_cb(self, tab, model, path):
+        self.change_image_cb(model, path, 1)
+        self.emit('response', gtk.RESPONSE_YES)
+
     def select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        text = entry.get_text()
+        dialog.set_current_folder(text if len(text) > 0 else os.getcwd())
         button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
         HobAltButton.style_button(button)
         button = dialog.add_button("Open", gtk.RESPONSE_YES)
@@ -1127,3 +1228,63 @@ class ImageSelectionDialog (CrumbsDialog):
                             self.image_names.append(f)
                     break            
                 iter = self.image_store.iter_next(iter)
+
+class ProxyDetailsDialog (CrumbsDialog):
+
+    def __init__(self, title, user, passwd, parent, flags, buttons=None):
+        super(ProxyDetailsDialog, self).__init__(title, parent, flags, buttons)
+        self.connect("response", self.response_cb)
+
+        self.auth = not (user == None or passwd == None or user == "")
+        self.user = user or ""
+        self.passwd = passwd or ""
+
+        # create visual elements on the dialog
+        self.create_visual_elements()
+
+    def create_visual_elements(self):
+        self.auth_checkbox = gtk.CheckButton("Use authentication")
+        self.auth_checkbox.set_tooltip_text("Check this box to set the username and the password")
+        self.auth_checkbox.set_active(self.auth)
+        self.auth_checkbox.connect("toggled", self.auth_checkbox_toggled_cb)
+        self.vbox.pack_start(self.auth_checkbox, expand=False, fill=False)
+
+        hbox = gtk.HBox(False, 6)
+        self.user_label = gtk.Label("Username:")
+        self.user_text = gtk.Entry()
+        self.user_text.set_text(self.user)
+        hbox.pack_start(self.user_label, expand=False, fill=False)
+        hbox.pack_end(self.user_text, expand=False, fill=False)
+        self.vbox.pack_start(hbox, expand=False, fill=False)
+
+        hbox = gtk.HBox(False, 6)
+        self.passwd_label = gtk.Label("Password:")
+        self.passwd_text = gtk.Entry()
+        self.passwd_text.set_text(self.passwd)
+        hbox.pack_start(self.passwd_label, expand=False, fill=False)
+        hbox.pack_end(self.passwd_text, expand=False, fill=False)
+        self.vbox.pack_start(hbox, expand=False, fill=False)
+
+        self.refresh_auth_components()
+        self.show_all()
+
+    def refresh_auth_components(self):
+        self.user_label.set_sensitive(self.auth)
+        self.user_text.set_editable(self.auth)
+        self.user_text.set_sensitive(self.auth)
+        self.passwd_label.set_sensitive(self.auth)
+        self.passwd_text.set_editable(self.auth)
+        self.passwd_text.set_sensitive(self.auth)
+
+    def auth_checkbox_toggled_cb(self, button):
+        self.auth = self.auth_checkbox.get_active()
+        self.refresh_auth_components()
+
+    def response_cb(self, dialog, response_id):
+        if response_id == gtk.RESPONSE_OK:
+            if self.auth:
+                self.user = self.user_text.get_text()
+                self.passwd = self.passwd_text.get_text()
+            else:
+                self.user = None
+                self.passwd = None

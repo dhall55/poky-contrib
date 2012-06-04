@@ -6,6 +6,8 @@ ARCHIVE_EXCLUDE_FROM ?= ".pc autom4te.cache"
 ARCHIVE_TYPE ?= "TAR SRPM"
 DISTRO ?= "poky"
 PATCHES_ARCHIVE_WITH_SERIES = 'TRUE'
+SOURCE_ARCHIVE_LOG_WITH_SCRIPTS ?= 'logs_with_scripts'
+SOURCE_ARCHIVE_PACKAGE_TYPE ?= 'tar'
 
 def get_bb_inc(d):
 	'''create a directory "script-logs" including .bb and .inc file in ${WORKDIR}'''
@@ -277,7 +279,7 @@ def get_package(d):
 	try:
 		f = open(tarpackage,'r')
 		line = list(set(f.readline().replace('\n','').split()))
-	except IOError:
+	except UnboundLocalError,IOError:
 		pass
 	f.close()
 	return line
@@ -360,6 +362,7 @@ def dumpdata(d):
 def create_diff_gz(d):
 	'''creating .diff.gz in ${DEPLOY_DIR_SRC}/${P}-${PR}.diff.g gz for mapping all content in 's' including patches to  xxx.diff.gz'''
 	import shutil
+	import subprocess
 
 	work_dir = d.getVar('WORKDIR', True)
 	exclude_from = d.getVar('ARCHIVE_EXCLUDE_FROM', True).split()
@@ -385,7 +388,7 @@ def create_diff_gz(d):
 			try:
 				shutil.copy(i, dest)
 			except IOError:
-				os.system('fakeroot cp -rf ' + i + " " + dest )
+				subprocess.call('fakeroot cp -rf ' + i + " " + dest, shell=True)
 	
 	bb.note("Creating .diff.gz in ${DEPLOY_DIR_SRC}/${P}-${PR}.diff.gz")
 	cmd = "LC_ALL=C TZ=UTC0 diff --exclude-from=" + work_dir + "/temp/exclude-from-file -Naur " + s + '.org' + ' ' +  s + " | gzip -c > " + diff_file

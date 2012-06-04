@@ -43,10 +43,10 @@
      $ git clone git://git.yoctoproject.org/poky
      $ cd poky
         </literallayout> 
-        Alternatively, you can start with the downloaded Poky "edison" tarball.
+        Alternatively, you can start with the downloaded Poky "&DISTRO_NAME;" tarball.
         These commands unpack the tarball into a Yocto Project File directory structure.
         By default, the top-level directory of the file structure is named
-        <filename>poky-&YOCTO_POKY;</filename>:
+        <filename>&YOCTO_POKY;</filename>:
         <literallayout class='monospaced'>
      $ tar xfj &YOCTO_POKY_TARBALL;
      $ cd &YOCTO_POKY;
@@ -54,7 +54,7 @@
         <note><para>If you're using the tarball method, you can ignore all the following steps that
         ask you to carry out Git operations.  
         You already have the results of those operations
-        in the form of the edison release tarballs.
+        in the form of the &DISTRO_NAME; release tarballs.
         Consequently, there is nothing left to do other than extract those tarballs into the 
         proper locations.</para>
 
@@ -67,7 +67,7 @@
         and keep changes in revision control.
         See the 
         "<link linkend='repositories-tags-and-branches'>Repositories, Tags, and Branches</link>" section
-        for more discussion around these differneces.</para></note>
+        for more discussion around these differences.</para></note>
     </para>
 
     <para>
@@ -133,7 +133,8 @@
 
     <para>
         You need to have the base BSP layer on your development system.  
-        Similar to the local Yocto Project files, you can get the BSP 
+        Similar to the local <link linkend='yocto-project-files'>Yocto Project Files</link>, 
+        you can get the BSP 
         layer in a couple of different ways:  
         download the BSP tarball and extract it, or set up a local Git repository that 
         has the Yocto Project BSP layers.  
@@ -160,15 +161,15 @@
      $ cd meta-intel
         </literallayout> 
         Alternatively, you can start with the downloaded Crown Bay tarball.
-        You can download the edison version of the BSP tarball from the
+        You can download the &DISTRO_NAME; version of the BSP tarball from the
         <ulink url='&YOCTO_HOME_URL;/download'>Download</ulink> page of the 
         Yocto Project website. 
         Here is the specific link for the tarball needed for this example:
-        <ulink url='&YOCTO_MACHINES_DL_URL;/crownbay-noemgd/crownbay-noemgd-&DISTRO_NAME;-6.0.0.tar.bz2'></ulink>.
+        <ulink url='&YOCTO_MACHINES_DL_URL;/crownbay-noemgd/crownbay-noemgd-&DISTRO_NAME;-&POKYVERSION;.tar.bz2'></ulink>.
         Again, be sure that you are already in the <filename>poky</filename> directory
         as described previously before installing the tarball:
         <literallayout class='monospaced'>
-     $ tar xfj crownbay-noemgd-&DISTRO_NAME;-6.0.0.tar.bz2
+     $ tar xfj crownbay-noemgd-&DISTRO_NAME;-&POKYVERSION;.tar.bz2
      $ cd meta-intel
         </literallayout> 
     </para>
@@ -177,7 +178,7 @@
         The <filename>meta-intel</filename> directory contains all the metadata 
         that supports BSP creation.  
         If you're using the Git method, the following
-        step will switch to the edison metadata.
+        step will switch to the &DISTRO_NAME; metadata.
         If you're using the tarball method, you already have the correct metadata and can 
         skip to the next step.
         Because <filename>meta-intel</filename> is its own Git repository, you will want
@@ -185,6 +186,7 @@
         For this example we are going to use the <filename>&DISTRO_NAME;</filename> branch. 
         <literallayout class='monospaced'>
      $ git checkout -b &DISTRO_NAME; origin/&DISTRO_NAME;
+     Branch &DISTRO_NAME; set up to track remote branch &DISTRO_NAME; from origin.
      Switched to a new branch '&DISTRO_NAME;'
         </literallayout>
     </para>
@@ -261,10 +263,10 @@
 
         <para>
             Note that inside the <filename>mymachine.conf</filename> is the 
-            <filename>PREFERRED_PROVIDER_virtual/kernel</filename> statement. 
+            <filename>PREFERRED_VERSION_linux-yocto</filename> statement. 
             This statement identifies the kernel that the BSP is going to use.
             In this case, the BSP is using <filename>linux-yocto</filename>, which is the 
-            current Linux Yocto kernel based on the Linux 3.0 release. 
+            current Linux Yocto kernel based on the Linux 3.2 release. 
         </para>
 
         <para>
@@ -283,6 +285,8 @@
      BBFILE_COLLECTIONS += "crownbay"
      BBFILE_PATTERN_crownbay := "^${LAYERDIR}/"
      BBFILE_PRIORITY_crownbay = "6"
+
+     LAYERDEPENDS_crownbay = "intel"
             </literallayout>
         </para>
 
@@ -293,6 +297,8 @@
      BBFILE_COLLECTIONS += "mymachine"
      BBFILE_PATTERN_mymachine := "^${LAYERDIR}/"
      BBFILE_PRIORITY_mymachine = "6"
+
+     LAYERDEPENDS_mymachine = "intel"
             </literallayout>
         </para>
     </section>
@@ -391,7 +397,7 @@
                 The recipe for that kernel is not located in the  
                 BSP layer but rather in the local Yocto Project files at 
                 <filename>meta/recipes-kernel/linux</filename> and is 
-                named <filename>linux-yocto_3.0.bb</filename>.
+                named <filename>linux-yocto_3.2.bb</filename>.
                 The <filename>SRCREV_machine</filename> and <filename>SRCREV_meta</filename>
                 statements point to the exact commits used by the Yocto Project development team
                 in their source repositories that identify the right kernel for our hardware.
@@ -404,7 +410,7 @@
             <para>
                 However, in the <filename>meta-mymachine</filename> layer in 
                 <filename>recipes-kernel/linux</filename> resides a <filename>.bbappend</filename>
-                file named <filename>linux-yocto_3.0.bbappend</filename> that 
+                file named <filename>linux-yocto_3.2.bbappend</filename> that 
                 appends information to the recipe of the same name in <filename>meta/recipes-kernel/linux</filename>.
                 Thus, the <filename>SRCREV</filename> statements in the append file override
                 the more general statements found in <filename>meta</filename>.
@@ -413,17 +419,20 @@
             <para>
                 The <filename>SRCREV</filename> statements in the append file currently identify
                 the kernel that supports the Crown Bay BSP with and without EMGD support.
-                Here are the statements: 
+                Here are the statements:
+                <note>The commit ID strings used in this manual might not match the actual commit
+                    ID strings found in the <filename>linux-yocto_3.2.bbappend</filename> file.
+                    For the example, this difference does not matter.</note> 
                 <literallayout class='monospaced'>
      SRCREV_machine_pn-linux-yocto_crownbay ?= \
-        "2247da9131ea7e46ed4766a69bb1353dba22f873"
+        "211fc7f4d10ec2b82b424286aabbaff9254b7cbd"
      SRCREV_meta_pn-linux-yocto_crownbay ?= \
-        "d05450e4aef02c1b7137398ab3a9f8f96da74f52"
+        "514847185c78c07f52e02750fbe0a03ca3a31d8f"
 
      SRCREV_machine_pn-linux-yocto_crownbay-noemgd ?= \
-        "2247da9131ea7e46ed4766a69bb1353dba22f873"
+        "211fc7f4d10ec2b82b424286aabbaff9254b7cbd"
      SRCREV_meta_pn-linux-yocto_crownbay-noemgd ?= \
-        "d05450e4aef02c1b7137398ab3a9f8f96da74f52"
+        "514847185c78c07f52e02750fbe0a03ca3a31d8f"
                 </literallayout>
             </para>
 
@@ -438,19 +447,19 @@
             </para>
 
             <para>  
-                To fix this situation in <filename>linux-yocto_3.0.bbappend</filename>,
+                To fix this situation in <filename>linux-yocto_3.2.bbappend</filename>,
                 we delete the two <filename>SRCREV</filename> statements that support 
                 EMGD (the top pair).
                 We also change the remaining pair to specify <filename>mymachine</filename>
                 and insert the commit identifiers to identify the kernel in which we 
                 are interested, which will be based on the <filename>atom-pc-standard</filename>
                 kernel.
-                In this case, because we're working with the edison branch of everything, we
+                In this case, because we're working with the &DISTRO_NAME; branch of everything, we
                 need to use the <filename>SRCREV</filename> values for the atom-pc branch
-                that are associated with the edison release.  
+                that are associated with the &DISTRO_NAME; release.  
                 To find those values, we need to find the <filename>SRCREV</filename>
-                values that edison uses for the atom-pc branch, which we find in the
-                <filename>poky/meta-yocto/recipes-kernel/linux/linux-yocto_3.0.bbappend</filename>
+                values that &DISTRO_NAME; uses for the atom-pc branch, which we find in the
+                <filename>poky/meta-yocto/recipes-kernel/linux/linux-yocto_3.2.bbappend</filename>
                 file.
             </para>
 
@@ -459,23 +468,21 @@
                 <filename>SRCREV_machine_atom-pc</filename> variable.  
                 The meta <filename>SRCREV</filename> isn't specified in this file, so it must be 
                 specified in the base kernel recipe in the
-                <filename>poky/meta/recipes-kernel/linux/linux-yocto_3.0.bb</filename>
-                file, in the <filename>SRCREV_meta variable</filename> found there.  
-                It happens to be the same as the value we already inherited from the 
-                <filename>meta-crownbay</filename> BSP.
+                <filename>poky/meta/recipes-kernel/linux/linux-yocto_3.2.bb</filename>
+                file, in the <filename>SRCREV_meta</filename>  variable found there.  
                 Here are the final <filename>SRCREV</filename> statements:
                 <literallayout class='monospaced'>
-     SRCREV_machine_pn-linux-yocto_mymachine ?= \ 
-        "1e18e44adbe79b846e382370eb29bc4b8cd5a1a0"
-     SRCREV_meta_pn-linux-yocto_mymachine ?= \ 
-        "d05450e4aef02c1b7137398ab3a9f8f96da74f52"
+     SRCREV_machine_pn-linux-yocto_mymachine ?= \
+        "f29531a41df15d74be5ad47d958e4117ca9e489e"
+     SRCREV_meta_pn-linux-yocto_mymachine ?= \
+        "b14a08f5c7b469a5077c10942f4e1aec171faa9d"
                 </literallayout>
             </para>
 
             <para>
                 In this example, we're using the <filename>SRCREV</filename> values we 
-                found already captured in the edison release because we're creating a BSP based on 
-                edison.  
+                found already captured in the &DISTRO_NAME; release because we're creating a BSP based on 
+                &DISTRO_NAME;.  
                 If, instead, we had based our BSP on the master branches, we would want to use 
                 the most recent <filename>SRCREV</filename> values taken directly from the kernel repo.
                 We will not be doing that for this example.
@@ -484,19 +491,19 @@
                 exact commit strings in the Yocto Project source repositories you need to change 
                 the <filename>SRCREV</filename> statements.  
                 You can find all the <filename>machine</filename> and <filename>meta</filename> 
-                branch points (commits) for the <filename>linux-yocto-3.0</filename> kernel at
-                <ulink url='&YOCTO_GIT_URL;/cgit/cgit.cgi/linux-yocto-3.0'></ulink>.  
+                branch points (commits) for the <filename>linux-yocto-3.2</filename> kernel at
+                <ulink url='&YOCTO_GIT_URL;/cgit/cgit.cgi/linux-yocto-3.2'></ulink>.  
             </para>
 
             <para>
                 If you need a little more assistance after going to the link then do the following:
                 <orderedlist>
                     <listitem><para>Expand the list of branches by clicking <filename>[…]</filename></para></listitem>
-                    <listitem><para>Click on the <filename>yocto/standard/common-pc/atom-pc</filename> 
+                    <listitem><para>Click on the <filename>standard/default/common-pc/atom-pc</filename> 
                         branch</para></listitem>
                     <listitem><para>Click on the commit column header to view the top commit</para></listitem>
                     <listitem><para>Copy the commit string for use in the 
-                        <filename>linux-yocto_3.0.bbappend</filename> file</para></listitem>
+                        <filename>linux-yocto_3.2.bbappend</filename> file</para></listitem>
                 </orderedlist>
             </para>
 
@@ -507,32 +514,34 @@
             </para>
 
             <para>
-                Also in the <filename>linux-yocto_3.0.bbappend</filename> file are 
+                Also in the <filename>linux-yocto_3.2.bbappend</filename> file are 
                 <filename>COMPATIBLE_MACHINE</filename>, <filename>KMACHINE</filename>, 
-                and <filename>KERNEL_FEATURES</filename> statements.  
+                and <filename>KBRANCH</filename> statements.  
                 Two sets of these exist: one set supports EMGD and one set does not.
                 Because we are not interested in supporting EMGD those three can be deleted.
                 The remaining three must be changed so that <filename>mymachine</filename> replaces
                 <filename>crownbay-noemgd</filename> and <filename>crownbay</filename>.
-                Because we are using the atom-pc branch for this new BSP, we can also find
-                the exact branch we need for the KMACHINE variable in our new BSP from the value
+                Because we are using the <filename>atom-pc</filename> branch for this new BSP, we can also find
+                the exact branch we need for the <filename>KMACHINE</filename>  
+                and <filename>KBRANCH</filename> variables in our new BSP from the value
                 we find in the
-                <filename>poky/meta-yocto/recipes-kernel/linux/linux-yocto_3.0.bbappend</filename>
+                <filename>poky/meta-yocto/recipes-kernel/linux/linux-yocto_3.2.bbappend</filename>
                 file we looked at in a previous step.  
-                In this case, the value we want is in the KMACHINE_atom-pc variable in that file.
-                Here is the final <filename>linux-yocto_3.0.bbappend</filename> file after all 
+                In this case, the values we want are in the <filename>KMACHINE_atom-pc</filename> variable
+                and the <filename>KBRANCH_atom-pc</filename> variables in that file.
+                Here is the final <filename>linux-yocto_3.2.bbappend</filename> file after all 
                 the edits:
                 <literallayout class='monospaced'>
      FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
      COMPATIBLE_MACHINE_mymachine = "mymachine"
-     KMACHINE_mymachine  = "yocto/standard/common-pc/atom-pc"
-     KERNEL_FEATURES_append_mymachine += " cfg/smp.scc"
+     KMACHINE_mymachine  = "atom-pc"
+     KBRANCH_mymachine  = "standard/default/common-pc/atom-pc"
 
      SRCREV_machine_pn-linux-yocto_mymachine ?= \
-        "1e18e44adbe79b846e382370eb29bc4b8cd5a1a0"
+        "f29531a41df15d74be5ad47d958e4117ca9e489e"
      SRCREV_meta_pn-linux-yocto_mymachine ?= \
-        "d05450e4aef02c1b7137398ab3a9f8f96da74f52"
+        "b14a08f5c7b469a5077c10942f4e1aec171faa9d"
                 </literallayout>
             </para>
         </section>
@@ -600,11 +609,12 @@
                 both the <filename>BB_NUMBER_THREADS</filename> and <filename>PARALLEL_MAKE</filename> 
                 variables to twice the number of cores your system supports.</para></listitem>
             <listitem><para>Update the <filename>bblayers.conf</filename> file so that it includes 
-                the path to your new BSP layer.  
-                In this example you need to include the pathname to <filename>meta-mymachine</filename>.
-                For this example the 
-                <filename>BBLAYERS</filename> variable in the file would need to include the following path:
+                both the path to your new BSP layer and the path to the 
+                <filename>meta-intel</filename> layer.  
+                In this example, you need to include both these paths as part of the 
+                <filename>BBLAYERS</filename> variable:
                 <literallayout class='monospaced'>
+     $HOME/poky/meta-intel
      $HOME/poky/meta-intel/meta-mymachine
                 </literallayout></para></listitem>
         </orderedlist>
@@ -682,12 +692,12 @@
     </para>
 
     <para>
-        For reference, the sato image produced by the previous steps for edison 
+        For reference, the sato image produced by the previous steps for &DISTRO_NAME; 
         should look like the following in terms of size.
         If your sato image is much different from this,
         you probably made a mistake in one of the above steps:
         <literallayout class='monospaced'>
-     358715392 2011-11-01 19:11 core-image-sato-mymachine-20111101223904.hddimg
+     260538368 2012-04-27 01:44 core-image-sato-mymachine-20120427025051.hddimg
         </literallayout>
         <note>The previous instructions are also present in the README that was copied
         from meta-crownbay, which should also be updated to reflect the specifics of your

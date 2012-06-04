@@ -26,6 +26,7 @@ import copy
 import os
 import subprocess
 import shlex
+import re
 from bb.ui.crumbs.template import TemplateMgr
 from bb.ui.crumbs.imageconfigurationpage import ImageConfigurationPage
 from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
@@ -41,6 +42,44 @@ import bb.ui.crumbs.utils
 
 class Configuration:
     '''Represents the data structure of configuration.'''
+
+    @classmethod
+    def parse_proxy_string(cls, proxy):
+        pattern = "^\s*((http|https|ftp|git|cvs)://)?((\S+):(\S+)@)?(\S+):(\d+)/?"
+        match = re.search(pattern, proxy)
+        if match:
+            return match.group(2), match.group(4), match.group(5), match.group(6), match.group(7)
+        else:
+            return None, None, None, "", ""
+
+    @classmethod
+    def make_host_string(cls, prot, user, passwd, host, default_prot=""):
+        if host == None or host == "":
+            return ""
+
+        passwd = passwd or ""
+
+        if user != None and user != "":
+            if prot == None or prot == "":
+                prot = default_prot
+            return prot + "://" + user + ":" + passwd + "@" + host
+        else:
+            if prot == None or prot == "":
+                return host
+            else:
+                return prot + "://" + host
+
+    @classmethod
+    def make_port_string(cls, port):
+        port = port or ""
+        return port
+
+    @classmethod
+    def make_proxy_string(cls, prot, user, passwd, host, port, default_prot=""):
+        if host == None or host == "" or port == None or port == "":
+            return ""
+
+        return Configuration.make_host_string(prot, user, passwd, host, default_prot) + ":" + Configuration.make_port_string(port)
 
     def __init__(self):
         self.curr_mach = ""
@@ -67,14 +106,42 @@ class Configuration:
         self.default_task = "build"
 
         # proxy settings
-        self.all_proxy = self.http_proxy = self.ftp_proxy = self.https_proxy = ""
-        self.git_proxy_host = self.git_proxy_port = ""
-        self.cvs_proxy_host = self.cvs_proxy_port = ""
+        self.enable_proxy = None
+        self.same_proxy = False
+        self.proxies = {
+            "http"  : [None, None, None, "", ""],  # protocol : [prot, user, passwd, host, port]
+            "https" : [None, None, None, "", ""],
+            "ftp"   : [None, None, None, "", ""],
+            "git"   : [None, None, None, "", ""],
+            "cvs"   : [None, None, None, "", ""],
+        }
 
     def clear_selection(self):
         self.selected_image = None
         self.selected_recipes = []
         self.selected_packages = []
+
+    def split_proxy(self, protocol, proxy):
+        entry = []
+        prot, user, passwd, host, port = Configuration.parse_proxy_string(proxy)
+        entry.append(prot)
+        entry.append(user)
+        entry.append(passwd)
+        entry.append(host)
+        entry.append(port)
+        self.proxies[protocol] = entry
+
+    def combine_proxy(self, protocol):
+        entry = self.proxies[protocol]
+        return Configuration.make_proxy_string(entry[0], entry[1], entry[2], entry[3], entry[4], protocol)
+
+    def combine_host_only(self, protocol):
+        entry = self.proxies[protocol]
+        return Configuration.make_host_string(entry[0], entry[1], entry[2], entry[3], protocol)
+
+    def combine_port_only(self, protocol):
+        entry = self.proxies[protocol]
+        return Configuration.make_port_string(entry[4])
 
     def update(self, params):
         # settings
@@ -99,14 +166,14 @@ class Configuration:
         self.default_task = params["default_task"]
 
         # proxy settings
-        self.all_proxy = params["all_proxy"]
-        self.http_proxy = params["http_proxy"]
-        self.ftp_proxy = params["ftp_proxy"]
-        self.https_proxy = params["https_proxy"]
-        self.git_proxy_host = params["git_proxy_host"]
-        self.git_proxy_port = params["git_proxy_port"]
-        self.cvs_proxy_host = params["cvs_proxy_host"]
-        self.cvs_proxy_port = params["cvs_proxy_port"]
+        self.enable_proxy = params["http_proxy"] != "" or params["https_proxy"] != "" or params["ftp_proxy"] != "" \
+            or params["git_proxy_host"] != "" or params["git_proxy_port"] != ""                                    \
+            or params["cvs_proxy_host"] != "" or params["cvs_proxy_port"] != ""
+        self.split_proxy("http", params["http_proxy"])
+        self.split_proxy("https", params["https_proxy"])
+        self.split_proxy("ftp", params["ftp_proxy"])
+        self.split_proxy("git", params["git_proxy_host"] + ":" + params["git_proxy_port"])
+        self.split_proxy("cvs", params["cvs_proxy_host"] + ":" + params["cvs_proxy_port"])
 
     def load(self, template):
         self.curr_mach = template.getVar("MACHINE")
@@ -146,14 +213,13 @@ class Configuration:
         self.selected_recipes = template.getVar("DEPENDS").split()
         self.selected_packages = template.getVar("IMAGE_INSTALL").split()
         # proxy
-        self.all_proxy = template.getVar("all_proxy")
-        self.http_proxy = template.getVar("http_proxy")
-        self.ftp_proxy = template.getVar("ftp_proxy")
-        self.https_proxy = template.getVar("https_proxy")
-        self.git_proxy_host = template.getVar("GIT_PROXY_HOST")
-        self.git_proxy_port = template.getVar("GIT_PROXY_PORT")
-        self.cvs_proxy_host = template.getVar("CVS_PROXY_HOST")
-        self.cvs_proxy_port = template.getVar("CVS_PROXY_PORT")
+        self.enable_proxy = eval(template.getVar("enable_proxy"))
+        self.same_proxy = eval(template.getVar("use_same_proxy"))
+        self.split_proxy("http", template.getVar("http_proxy"))
+        self.split_proxy("https", template.getVar("https_proxy"))
+        self.split_proxy("ftp", template.getVar("ftp_proxy"))
+        self.split_proxy("git", template.getVar("GIT_PROXY_HOST") + ":" + template.getVar("GIT_PROXY_PORT"))
+        self.split_proxy("cvs", template.getVar("CVS_PROXY_HOST") + ":" + template.getVar("CVS_PROXY_PORT"))
 
     def save(self, template, defaults=False):
         # bblayers.conf
@@ -183,14 +249,15 @@ class Configuration:
             template.setVar("DEPENDS", self.selected_recipes)
             template.setVar("IMAGE_INSTALL", self.user_selected_packages)
         # proxy
-        template.setVar("all_proxy", self.all_proxy)
-        template.setVar("http_proxy", self.http_proxy)
-        template.setVar("ftp_proxy", self.ftp_proxy)
-        template.setVar("https_proxy", self.https_proxy)
-        template.setVar("GIT_PROXY_HOST", self.git_proxy_host)
-        template.setVar("GIT_PROXY_PORT", self.git_proxy_port)
-        template.setVar("CVS_PROXY_HOST", self.cvs_proxy_host)
-        template.setVar("CVS_PROXY_PORT", self.cvs_proxy_port)
+        template.setVar("enable_proxy", self.enable_proxy)
+        template.setVar("use_same_proxy", self.same_proxy)
+        template.setVar("http_proxy", self.combine_proxy("http"))
+        template.setVar("https_proxy", self.combine_proxy("https"))
+        template.setVar("ftp_proxy", self.combine_proxy("ftp"))
+        template.setVar("GIT_PROXY_HOST", self.combine_host_only("git"))
+        template.setVar("GIT_PROXY_PORT", self.combine_port_only("git"))
+        template.setVar("CVS_PROXY_HOST", self.combine_host_only("cvs"))
+        template.setVar("CVS_PROXY_PORT", self.combine_port_only("cvs"))
 
 class Parameters:
     '''Represents other variables like available machines, etc.'''
@@ -212,7 +279,8 @@ class Parameters:
         self.all_sdk_machines = []
         self.all_layers = []
         self.image_names = []
-        self.enable_proxy = False
+        self.image_white_pattern = ""
+        self.image_black_pattern = ""
 
         # for build log to show
         self.bb_version = ""
@@ -230,6 +298,8 @@ class Parameters:
         self.runnable_machine_patterns = params["runnable_machine_patterns"].split()
         self.deployable_image_types = params["deployable_image_types"].split()
         self.tmpdir = params["tmpdir"]
+        self.image_white_pattern = params["image_white_pattern"]
+        self.image_black_pattern = params["image_black_pattern"]
         # for build log to show
         self.bb_version = params["bb_version"]
         self.target_arch = params["target_arch"]
@@ -354,6 +424,9 @@ class Builder(gtk.Window):
         self.handler.connect("data-generated",           self.handler_data_generated_cb)
         self.handler.connect("command-succeeded",        self.handler_command_succeeded_cb)
         self.handler.connect("command-failed",           self.handler_command_failed_cb)
+        self.handler.connect("sanity-failed",            self.handler_sanity_failed_cb)
+        self.handler.connect("recipe-populated",         self.handler_recipe_populated_cb)
+        self.handler.connect("package-populated",        self.handler_package_populated_cb)
 
         self.handler.set_config_filter(hob_conf_filter)
 
@@ -405,6 +478,9 @@ class Builder(gtk.Window):
         self.set_user_config()
         self.handler.generate_configuration()
 
+    def sanity_check(self):
+        self.handler.trigger_sanity_check()
+
     def populate_recipe_package_info_async(self):
         self.switch_page(self.RCPPKGINFO_POPULATING)
         # Parse recipes
@@ -435,7 +511,7 @@ class Builder(gtk.Window):
         toolchain_packages = []
         if self.configuration.toolchain_build:
             toolchain_packages = self.package_model.get_selected_packages_toolchain()
-        if self.configuration.selected_image == self.recipe_model.__dummy_image__:
+        if self.configuration.selected_image == self.recipe_model.__custom_image__:
             packages = self.package_model.get_selected_packages()
             image = self.hob_image
         else:
@@ -575,13 +651,18 @@ class Builder(gtk.Window):
         self.handler.set_extra_inherit("packageinfo")
         self.handler.set_extra_inherit("image_types")
         # set proxies
-        if self.parameters.enable_proxy:
-            self.handler.set_http_proxy(self.configuration.http_proxy)
-            self.handler.set_https_proxy(self.configuration.https_proxy)
-            self.handler.set_ftp_proxy(self.configuration.ftp_proxy)
-            self.handler.set_all_proxy(self.configuration.all_proxy)
-            self.handler.set_git_proxy(self.configuration.git_proxy_host, self.configuration.git_proxy_port)
-            self.handler.set_cvs_proxy(self.configuration.cvs_proxy_host, self.configuration.cvs_proxy_port)
+        if self.configuration.enable_proxy == True:
+            self.handler.set_http_proxy(self.configuration.combine_proxy("http"))
+            self.handler.set_https_proxy(self.configuration.combine_proxy("https"))
+            self.handler.set_ftp_proxy(self.configuration.combine_proxy("ftp"))
+            self.handler.set_git_proxy(self.configuration.combine_host_only("git"), self.configuration.combine_port_only("git"))
+            self.handler.set_cvs_proxy(self.configuration.combine_host_only("cvs"), self.configuration.combine_port_only("cvs"))
+        elif self.configuration.enable_proxy == False:
+            self.handler.set_http_proxy("")
+            self.handler.set_https_proxy("")
+            self.handler.set_ftp_proxy("")
+            self.handler.set_git_proxy("", "")
+            self.handler.set_cvs_proxy("", "")
 
     def update_recipe_model(self, selected_image, selected_recipes):
         self.recipe_model.set_selected_image(selected_image)
@@ -618,6 +699,8 @@ class Builder(gtk.Window):
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.GENERATE_CONFIGURATION:
             self.update_configuration_parameters(self.get_parameters_sync())
+            self.sanity_check()
+        elif initcmd == self.handler.SANITY_CHECK:
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
@@ -645,8 +728,12 @@ class Builder(gtk.Window):
 
     def handler_command_failed_cb(self, handler, msg):
         if msg:
-            msg = msg.replace("your local.conf", "Settings")
             self.show_error_dialog(msg)
+        self.reset()
+
+    def handler_sanity_failed_cb(self, handler, msg):
+        msg = msg.replace("your local.conf", "Settings")
+        self.show_error_dialog(msg)
         self.reset()
 
     def window_sensitive(self, sensitive):
@@ -683,7 +770,7 @@ class Builder(gtk.Window):
         selected_packages = self.configuration.selected_packages[:]
 
         self.image_configuration_page.update_image_combo(self.recipe_model, selected_image)
-        self.image_configuration_page.update_image_desc(selected_image)
+        self.image_configuration_page.update_image_desc()
         self.update_recipe_model(selected_image, selected_recipes)
         self.update_package_model(selected_packages)
 
@@ -692,6 +779,12 @@ class Builder(gtk.Window):
 
     def packagelist_changed_cb(self, package_model):
         self.package_details_page.refresh_selection()
+
+    def handler_recipe_populated_cb(self, handler):
+        self.image_configuration_page.update_progress_bar("Populated recipes", 0.99)
+
+    def handler_package_populated_cb(self, handler):
+        self.image_configuration_page.update_progress_bar("Populated packages", 1.0)
 
     def handler_parsing_started_cb(self, handler, message):
         if self.current_step != self.RCPPKGINFO_POPULATING:
@@ -712,7 +805,7 @@ class Builder(gtk.Window):
 
         fraction = message["current"] * 1.0/message["total"]
         if message["eventname"] == "TreeDataPreparationProgress":
-            fraction = 0.6 + 0.4 * fraction
+            fraction = 0.6 + 0.38 * fraction
         else:
             fraction = 0.6 * fraction
         self.image_configuration_page.update_progress_bar(message["title"], fraction)
@@ -722,7 +815,7 @@ class Builder(gtk.Window):
             return
 
         if message["eventname"] == "TreeDataPreparationCompleted":
-            fraction = 1.0
+            fraction = 0.98
         else:
             fraction = 0.6
         self.image_configuration_page.update_progress_bar(message["title"], fraction)
@@ -747,7 +840,7 @@ class Builder(gtk.Window):
             fraction = 1.0
             self.parameters.image_names = []
             selected_image = self.recipe_model.get_selected_image()
-            if selected_image == self.recipe_model.__dummy_image__:
+            if selected_image == self.recipe_model.__custom_image__:
                 linkname = 'hob-image-' + self.configuration.curr_mach
             else:
                 linkname = selected_image + '-' + self.configuration.curr_mach
@@ -773,12 +866,20 @@ class Builder(gtk.Window):
             message = "Build stopped: "
             fraction = self.build_details_page.progress_bar.get_fraction()
         else:
+            fail_to_next_edit = ""
             if self.current_step == self.FAST_IMAGE_GENERATING:
+                fail_to_next_edit = "image configuration"
                 fraction = 0.9
             elif self.current_step == self.IMAGE_GENERATING:
+                if self.previous_step == self.FAST_IMAGE_GENERATING:
+                    fail_to_next_edit = "image configuration"
+                else:
+                    fail_to_next_edit = "packages"
                 fraction = 1.0
             elif self.current_step == self.PACKAGE_GENERATING:
+                fail_to_next_edit = "recipes"
                 fraction = 1.0
+            self.build_details_page.show_fail_page(fail_to_next_edit.split(' ')[0], fail_to_next_edit)
             status = "fail"
             message = "Build failed: "
         self.build_details_page.update_progress_bar(message, fraction, status)
@@ -885,7 +986,7 @@ class Builder(gtk.Window):
         selected_packages = self.package_model.get_selected_packages() or []
 
         # If no base image and no selected packages don't build anything
-        if not (selected_packages or selected_image != self.recipe_model.__dummy_image__):
+        if not (selected_packages or selected_image != self.recipe_model.__custom_image__):
             lbl = "<b>No selections made</b>\nYou have not made any selections"
             lbl = lbl + " so there isn't anything to bake at this time."
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
@@ -991,7 +1092,6 @@ class Builder(gtk.Window):
             all_distros = self.parameters.all_distros,
             all_sdk_machines = self.parameters.all_sdk_machines,
             max_threads = self.parameters.max_threads,
-            enable_proxy = self.parameters.enable_proxy,
             parent = self,
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT
@@ -1003,7 +1103,6 @@ class Builder(gtk.Window):
         response = dialog.run()
         settings_changed = False
         if response == gtk.RESPONSE_YES:
-            self.parameters.enable_proxy = dialog.enable_proxy
             self.configuration = dialog.configuration
             self.save_defaults() # remember settings
             settings_changed = dialog.settings_changed
@@ -1042,6 +1141,21 @@ class Builder(gtk.Window):
         response = dialog.run()
         dialog.destroy()
 
+    def get_kernel_file_name(self, image_path):
+        name_list = []
+        kernel_name = ""
+        if image_path:
+            files = [f for f in os.listdir(image_path) if f[0] <> '.']
+            for check_file in files:
+                if check_file.endswith(".bin"):
+                    name_splits = check_file.split(".")[0]
+                    if self.configuration.curr_mach in name_splits.split("-"):
+                        kernel_name = check_file
+                    if not os.path.islink(os.path.join(image_path, check_file)):
+                        name_list.append(check_file)
+
+        return kernel_name, len(name_list)
+
     def runqemu_image(self, image_name):
         if not image_name:
             lbl = "<b>Please select an image to launch in QEMU.</b>"
@@ -1052,24 +1166,31 @@ class Builder(gtk.Window):
             dialog.destroy()
             return
 
-        dialog = gtk.FileChooserDialog("Load Kernel Files", self,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE)
-        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
-        HobAltButton.style_button(button)
-        button = dialog.add_button("Open", gtk.RESPONSE_YES)
-        HobButton.style_button(button)
-        filter = gtk.FileFilter()
-        filter.set_name("Kernel Files")
-        filter.add_pattern("*.bin")
-        dialog.add_filter(filter)
+        kernel_name, kernels_number = self.get_kernel_file_name(self.parameters.image_addr)
+        if not kernel_name or kernels_number > 1:
+            dialog = gtk.FileChooserDialog("Load Kernel Files", self,
+                                           gtk.FILE_CHOOSER_ACTION_SAVE)
+            button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+            HobAltButton.style_button(button)
+            button = dialog.add_button("Open", gtk.RESPONSE_YES)
+            HobButton.style_button(button)
+            filter = gtk.FileFilter()
+            filter.set_name("Kernel Files")
+            filter.add_pattern("*.bin")
+            dialog.add_filter(filter)
 
-        dialog.set_current_folder(self.parameters.image_addr)
+            dialog.set_current_folder(self.parameters.image_addr)
 
-        response = dialog.run()
-        if response == gtk.RESPONSE_YES:
-            kernel_path = dialog.get_filename()
+            response = dialog.run()
+            if response == gtk.RESPONSE_YES:
+                kernel_path = dialog.get_filename()
+                image_path = os.path.join(self.parameters.image_addr, image_name)
+            dialog.destroy()
+
+        elif kernel_name:
+            kernel_path = os.path.join(self.parameters.image_addr, kernel_name)
             image_path = os.path.join(self.parameters.image_addr, image_name)
-        dialog.destroy()
+            response = gtk.RESPONSE_YES
 
         if response == gtk.RESPONSE_YES:
             source_env_path = os.path.join(self.parameters.core_base, "oe-init-build-env")

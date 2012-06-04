@@ -1,11 +1,12 @@
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #
-# BitBake 'Event' implementation
+# BitBake Cache implementation
 #
 # Caching of bitbake variables before task execution
 
 # Copyright (C) 2006        Richard Purdie
+# Copyright (C) 2012        Intel Corporation
 
 # but small sections based on code from bin/bitbake:
 # Copyright (C) 2003, 2004  Chris Larson
@@ -42,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "143"
+__cache_version__ = "144"
 
 def getCacheFile(path, filename, data_hash):
     return os.path.join(path, filename + "." + data_hash)
@@ -75,9 +76,13 @@ class RecipeInfoCommon(object):
                     for task in tasks)
 
     @classmethod
-    def flaglist(cls, flag, varlist, metadata):
-        return dict((var, metadata.getVarFlag(var, flag, True))
+    def flaglist(cls, flag, varlist, metadata, squash=False):
+        out_dict = dict((var, metadata.getVarFlag(var, flag, True))
                     for var in varlist)
+        if squash:
+            return dict((k,v) for (k,v) in out_dict.iteritems() if v)
+        else:
+            return out_dict
 
     @classmethod
     def getvar(cls, var, metadata):
@@ -127,6 +132,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.stamp = self.getvar('STAMP', metadata)
         self.stamp_base = self.flaglist('stamp-base', self.tasks, metadata)
         self.stamp_extrainfo = self.flaglist('stamp-extra-info', self.tasks, metadata)
+        self.file_checksums = self.flaglist('file-checksums', self.tasks, metadata, True)
         self.packages_dynamic = self.listvar('PACKAGES_DYNAMIC', metadata)
         self.depends          = self.depvar('DEPENDS', metadata)
         self.provides         = self.depvar('PROVIDES', metadata)
@@ -153,6 +159,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.stamp = {}
         cachedata.stamp_base = {}
         cachedata.stamp_extrainfo = {}
+        cachedata.file_checksums = {}
         cachedata.fn_provides = {}
         cachedata.pn_provides = defaultdict(list)
         cachedata.all_depends = []
@@ -184,6 +191,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.stamp[fn] = self.stamp
         cachedata.stamp_base[fn] = self.stamp_base
         cachedata.stamp_extrainfo[fn] = self.stamp_extrainfo
+        cachedata.file_checksums[fn] = self.file_checksums
 
         provides = [self.pn]
         for provide in self.provides:
@@ -703,4 +711,115 @@ class CacheData(object):
         for info in info_array:
             info.add_cacheData(self, fn)
 
-        
+
+class MultiProcessCache(object):
+    """
+    BitBake multi-process cache implementation
+
+    Used by the codeparser & file checksum caches
+    """
+
+    def __init__(self):
+        self.cachefile = None
+        self.cachedata = self.create_cachedata()
+        self.cachedata_extras = self.create_cachedata()
+
+    def init_cache(self, d):
+        cachedir = (d.getVar("PERSISTENT_DIR", True) or
+                    d.getVar("CACHE", True))
+        if cachedir in [None, '']:
+            return
+        bb.utils.mkdirhier(cachedir)
+        self.cachefile = os.path.join(cachedir, self.__class__.cache_file_name)
+        logger.debug(1, "Using cache in '%s'", self.cachefile)
+
+        try:
+            p = pickle.Unpickler(file(self.cachefile, "rb"))
+            data, version = p.load()
+        except:
+            return
+
+        if version != self.__class__.CACHE_VERSION:
+            return
+
+        self.cachedata = data
+
+    def internSet(self, items):
+        new = set()
+        for i in items:
+            new.add(intern(i))
+        return new
+
+    def compress_keys(self, data):
+        # Override in subclasses if desired
+        return
+
+    def create_cachedata(self):
+        data = [{}]
+        return data
+
+    def save_extras(self, d):
+        if not self.cachefile:
+            return
+
+        glf = bb.utils.lockfile(self.cachefile + ".lock", shared=True)
+
+        i = os.getpid()
+        lf = None
+        while not lf:
+            lf = bb.utils.lockfile(self.cachefile + ".lock." + str(i), retry=False)
+            if not lf or os.path.exists(self.cachefile + "-" + str(i)):
+                if lf:
+                    bb.utils.unlockfile(lf)
+                    lf = None
+                i = i + 1
+                continue
+
+            p = pickle.Pickler(file(self.cachefile + "-" + str(i), "wb"), -1)
+            p.dump([self.cachedata_extras, self.__class__.CACHE_VERSION])
+
+        bb.utils.unlockfile(lf)
+        bb.utils.unlockfile(glf)
+
+    def merge_data(self, source, dest):
+        for j in range(0,len(dest)):
+            for h in source[j]:
+                if h not in dest[j]:
+                    dest[j][h] = source[j][h]
+
+    def save_merge(self, d):
+        if not self.cachefile:
+            return
+
+        glf = bb.utils.lockfile(self.cachefile + ".lock")
+
+        try:
+            p = pickle.Unpickler(file(self.cachefile, "rb"))
+            data, version = p.load()
+        except (IOError, EOFError):
+            data, version = None, None
+
+        if version != self.__class__.CACHE_VERSION:
+            data = self.create_cachedata()
+
+        for f in [y for y in os.listdir(os.path.dirname(self.cachefile)) if y.startswith(os.path.basename(self.cachefile) + '-')]:
+            f = os.path.join(os.path.dirname(self.cachefile), f)
+            try:
+                p = pickle.Unpickler(file(f, "rb"))
+                extradata, version = p.load()
+            except (IOError, EOFError):
+                extradata, version = self.create_cachedata(), None
+
+            if version != self.__class__.CACHE_VERSION:
+                continue
+
+            self.merge_data(extradata, data)
+            os.unlink(f)
+
+        self.compress_keys(data)
+
+        p = pickle.Pickler(file(self.cachefile, "wb"), -1)
+        p.dump([data, self.__class__.CACHE_VERSION])
+
+        bb.utils.unlockfile(glf)
+

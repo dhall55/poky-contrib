@@ -2,6 +2,8 @@ DESCRIPTION = "Dropbear is a lightweight SSH and SCP implementation"
 HOMEPAGE = "http://matt.ucc.asn.au/dropbear/dropbear.html"
 SECTION = "console/network"
 
+INC_PR = "r0"
+
 # some files are from other projects and have others license terms:
 #   public domain, OpenSSH 3.5p1, OpenSSH3.6.1p2, PuTTY
 LICENSE = "MIT"
@@ -72,10 +74,12 @@ do_install() {
 
 }
 
-pkg_postinst_${PN} () {
-	update-alternatives --install ${bindir}/scp scp ${sbindir}/dropbearmulti 20
-	update-alternatives --install ${bindir}/ssh ssh ${sbindir}/dropbearmulti 20
-}
+inherit update-alternatives
+
+ALTERNATIVE_PRIORITY = "20"
+ALTERNATIVE_${PN} = "scp ssh"
+
+ALTERNATIVE_TARGET = "${sbindir}/dropbearmulti"
 
 pkg_postrm_append_${PN} () {
   if [ -f "${sysconfdir}/dropbear/dropbear_rsa_host_key" ]; then
@@ -84,6 +88,4 @@ pkg_postrm_append_${PN} () {
   if [ -f "${sysconfdir}/dropbear/dropbear_dss_host_key" ]; then
         rm ${sysconfdir}/dropbear/dropbear_dss_host_key
   fi
-  update-alternatives --remove ssh ${bindir}/dropbearmulti
-  update-alternatives --remove scp ${bindir}/dropbearmulti
 }

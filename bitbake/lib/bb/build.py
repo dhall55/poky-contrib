@@ -174,8 +174,19 @@ def exec_func(func, d, dirs = None):
         lockfiles = None
 
     tempdir = data.getVar('T', d, 1)
-    bb.utils.mkdirhier(tempdir)
-    runfile = os.path.join(tempdir, 'run.{0}.{1}'.format(func, os.getpid()))
+
+    # or func allows items to be executed outside of the normal
+    # task set, such as buildhistory
+    task = data.getVar('BB_RUNTASK', d, 1) or func
+    if task == func:
+        taskfunc = task
+    else:
+        taskfunc = "%s.%s" % (task, func)
+
+    runfmt = data.getVar('BB_RUNFMT', d, 1) or "run.{func}.{pid}"
+    runfn = runfmt.format(taskfunc=taskfunc, task=task, func=func, pid=os.getpid())
+    runfile = os.path.join(tempdir, runfn)
+    bb.utils.mkdirhier(os.path.dirname(runfile))
 
     with bb.utils.fileslocked(lockfiles):
         if ispython:
@@ -206,6 +217,8 @@ def exec_func_python(func, d, runfile, cwd=None):
             olddir = None
         os.chdir(cwd)
 
+    bb.debug(2, "Executing python function %s" % func)
+
     try:
         comp = utils.better_compile(code, func, bbfile)
         utils.better_exec(comp, {"d": d}, code, bbfile)
@@ -215,13 +228,15 @@ def exec_func_python(func, d, runfile, cwd=None):
 
         raise FuncFailed(func, None)
     finally:
+        bb.debug(2, "Python function %s finished" % func)
+
         if cwd and olddir:
             try:
                 os.chdir(olddir)
             except OSError:
                 pass
 
-def exec_func_shell(function, d, runfile, cwd=None):
+def exec_func_shell(func, d, runfile, cwd=None):
     """Execute a shell function from the metadata
 
     Note on directory behavior.  The 'dirs' varflag should contain a list
@@ -234,18 +249,18 @@ def exec_func_shell(function, d, runfile, cwd=None):
 
     with open(runfile, 'w') as script:
         script.write('#!/bin/sh -e\n')
-        data.emit_func(function, script, d)
+        data.emit_func(func, script, d)
 
         if bb.msg.loggerVerboseLogs:
             script.write("set -x\n")
         if cwd:
             script.write("cd %s\n" % cwd)
-        script.write("%s\n" % function)
+        script.write("%s\n" % func)
 
     os.chmod(runfile, 0775)
 
     cmd = runfile
-    if d.getVarFlag(function, 'fakeroot'):
+    if d.getVarFlag(func, 'fakeroot'):
         fakerootcmd = d.getVar('FAKEROOT', True)
         if fakerootcmd:
             cmd = [fakerootcmd, runfile]
@@ -255,11 +270,15 @@ def exec_func_shell(function, d, runfile, cwd=None):
     else:
         logfile = sys.stdout
 
+    bb.debug(2, "Executing shell function %s" % func)
+
     try:
         bb.process.run(cmd, shell=False, stdin=NULL, log=logfile)
     except bb.process.CmdError:
         logfn = d.getVar('BB_LOGFILE', True)
-        raise FuncFailed(function, logfn)
+        raise FuncFailed(func, logfn)
+
+    bb.debug(2, "Shell function %s finished" % func)
 
 def _task_data(fn, task, d):
     localdata = data.createCopy(d)
@@ -290,8 +309,23 @@ def _exec_task(fn, task, d, quieterr):
         bb.fatal("T variable not set, unable to build")
 
     bb.utils.mkdirhier(tempdir)
+
+    # Determine the logfile to generate
+    logfmt = localdata.getVar('BB_LOGFMT', True) or 'log.{task}.{pid}'
+    logbase = logfmt.format(task=task, pid=os.getpid())
+
+    # Document the order of the tasks...
+    logorder = os.path.join(tempdir, 'log.task_order')
+    try:
+        logorderfile = file(logorder, 'a')
+    except OSError:
+        logger.exception("Opening log file '%s'", logorder)
+        pass
+    logorderfile.write('{0} ({1}): {2}\n'.format(task, os.getpid(), logbase))
+    logorderfile.close()
+
+    # Setup the courtesy link to the logfn
     loglink = os.path.join(tempdir, 'log.{0}'.format(task))
-    logbase = 'log.{0}.{1}'.format(task, os.getpid())
     logfn = os.path.join(tempdir, logbase)
     if loglink:
         bb.utils.remove(loglink)
@@ -314,6 +348,7 @@ def _exec_task(fn, task, d, quieterr):
     # Handle logfiles
     si = file('/dev/null', 'r')
     try:
+        bb.utils.mkdirhier(os.path.dirname(logfn))
         logfile = file(logfn, 'w')
     except OSError:
         logger.exception("Opening log file '%s'", logfn)
@@ -340,6 +375,7 @@ def _exec_task(fn, task, d, quieterr):
     bblogger.addHandler(errchk)
 
     localdata.setVar('BB_LOGFILE', logfn)
+    localdata.setVar('BB_RUNTASK', task)
 
     event.fire(TaskStarted(task, localdata), localdata)
     try:

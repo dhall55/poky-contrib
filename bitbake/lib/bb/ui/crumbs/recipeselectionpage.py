@@ -99,7 +99,7 @@ class RecipeSelectionPage (HobPage):
                       }]
         }, {
          'name'    : 'Tasks',
-         'tooltip' : 'All tasks availabel in the Yocto Project',
+         'tooltip' : 'All tasks available in the Yocto Project',
          'filter'  : { RecipeListModel.COL_TYPE : ['task'] },
          'columns' : [{
                        'col_name' : 'Task name',
@@ -134,8 +134,14 @@ class RecipeSelectionPage (HobPage):
         # create visual elements
         self.create_visual_elements()
 
+    def included_clicked_cb(self, button):
+        self.ins.set_current_page(0)
+
     def create_visual_elements(self):
-        self.label = gtk.Label()
+        self.label = gtk.Button('Recipes included: 0')
+        self.label.set_can_default(False)
+        self.label.set_relief(gtk.RELIEF_HALF)
+        self.label.connect("clicked", self.included_clicked_cb)
         self.eventbox = self.add_onto_top_bar(self.label, 73)
         self.pack_start(self.eventbox, expand=False, fill=False)
         self.pack_start(self.group_align, expand=True, fill=True)
@@ -153,10 +159,7 @@ class RecipeSelectionPage (HobPage):
             if page['name'] == "Included":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            label = gtk.Label(page['name'])
-            label.set_selectable(False)
-            label.set_tooltip_text(page['tooltip'])
-            self.ins.append_page(tab, label)
+            self.ins.append_page(tab, page['name'], page['tooltip'])
             self.tables.append(tab)
 
         self.ins.set_entry("Search recipes:")
@@ -202,7 +205,7 @@ class RecipeSelectionPage (HobPage):
     def refresh_selection(self):
         self.builder.configuration.selected_image = self.recipe_model.get_selected_image()
         _, self.builder.configuration.selected_recipes = self.recipe_model.get_selected_recipes()
-        self.label.set_text("Recipes included: %s" % len(self.builder.configuration.selected_recipes))
+        self.label.set_label("Recipes included: %s" % len(self.builder.configuration.selected_recipes))
         self.ins.show_indicator_icon("Included", len(self.builder.configuration.selected_recipes))
 
     def toggle_item_idle_cb(self, path, view_tree, cell, pagename):
@@ -219,7 +222,7 @@ class RecipeSelectionPage (HobPage):
         self.refresh_selection()
         if not self.builder.customized:
             self.builder.customized = True
-            self.builder.configuration.selected_image = self.recipe_model.__dummy_image__
+            self.builder.configuration.selected_image = self.recipe_model.__custom_image__
             self.builder.rcppkglist_populated()
 
         self.builder.window_sensitive(True)

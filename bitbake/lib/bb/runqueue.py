@@ -781,101 +781,7 @@ class RunQueue:
 
         self.rqexe = None
 
-    def check_stamps(self):
-        unchecked = {}
-        current = []
-        notcurrent = []
-        buildable = []
-
-        if self.stamppolicy == "perfile":
-            fulldeptree = False
-        else:
-            fulldeptree = True
-            stampwhitelist = []
-            if self.stamppolicy == "whitelist":
-                stampwhitelist = self.rqdata.stampfnwhitelist
-
-        for task in xrange(len(self.rqdata.runq_fnid)):
-            unchecked[task] = ""
-            if len(self.rqdata.runq_depends[task]) == 0:
-                buildable.append(task)
-
-        def check_buildable(self, task, buildable):
-            for revdep in self.rqdata.runq_revdeps[task]:
-                alldeps = 1
-                for dep in self.rqdata.runq_depends[revdep]:
-                    if dep in unchecked:
-                        alldeps = 0
-                if alldeps == 1:
-                    if revdep in unchecked:
-                        buildable.append(revdep)
-
-        for task in xrange(len(self.rqdata.runq_fnid)):
-            if task not in unchecked:
-                continue
-            fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
-            taskname = self.rqdata.runq_task[task]
-            stampfile = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
-            # If the stamp is missing its not current
-            if not os.access(stampfile, os.F_OK):
-                del unchecked[task]
-                notcurrent.append(task)
-                check_buildable(self, task, buildable)
-                continue
-            # If its a 'nostamp' task, it's not current
-            taskdep = self.rqdata.dataCache.task_deps[fn]
-            if 'nostamp' in taskdep and task in taskdep['nostamp']:
-                del unchecked[task]
-                notcurrent.append(task)
-                check_buildable(self, task, buildable)
-                continue
-
-        while (len(buildable) > 0):
-            nextbuildable = []
-            for task in buildable:
-                if task in unchecked:
-                    fn = self.taskData.fn_index[self.rqdata.runq_fnid[task]]
-                    taskname = self.rqdata.runq_task[task]
-                    stampfile = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
-                    iscurrent = True
-
-                    t1 = os.stat(stampfile)[stat.ST_MTIME]
-                    for dep in self.rqdata.runq_depends[task]:
-                        if iscurrent:
-                            fn2 = self.taskData.fn_index[self.rqdata.runq_fnid[dep]]
-                            taskname2 = self.rqdata.runq_task[dep]
-                            stampfile2 = bb.build.stampfile(taskname2, self.rqdata.dataCache, fn2)
-                            if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
-                                if dep in notcurrent:
-                                    iscurrent = False
-                                else:
-                                    t2 = os.stat(stampfile2)[stat.ST_MTIME]
-                                    if t1 < t2:
-                                        iscurrent = False
-                    del unchecked[task]
-                    if iscurrent:
-                        current.append(task)
-                    else:
-                        notcurrent.append(task)
-
-                check_buildable(self, task, nextbuildable)
-
-            buildable = nextbuildable
-
-        #for task in range(len(self.runq_fnid)):
-        #    fn = self.taskData.fn_index[self.runq_fnid[task]]
-        #    taskname = self.runq_task[task]
-        #    print "%s %s.%s" % (task, taskname, fn)
-
-        #print "Unchecked: %s" % unchecked
-        #print "Current: %s" % current
-        #print "Not current: %s" % notcurrent
-
-        if len(unchecked) > 0:
-            bb.msg.fatal("RunQueue", "check_stamps fatal internal error")
-        return current
-
-    def check_stamp_task(self, task, taskname = None, recurse = False):
+    def check_stamp_task(self, task, taskname = None, recurse = False, cache = None):
         def get_timestamp(f):
             try:
                 if not os.access(f, os.F_OK):
@@ -911,10 +817,16 @@ class RunQueue:
         if taskname != "do_setscene" and taskname.endswith("_setscene"):
             return True
 
+        if cache is None:
+            cache = {}
+
         iscurrent = True
         t1 = get_timestamp(stampfile)
         for dep in self.rqdata.runq_depends[task]:
             if iscurrent:
+                if dep in cache:
+                    iscurrent = cache[dep]
+                    continue
                 fn2 = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[dep]]
                 taskname2 = self.rqdata.runq_task[dep]
                 stampfile2 = bb.build.stampfile(taskname2, self.rqdata.dataCache, fn2)
@@ -931,7 +843,9 @@ class RunQueue:
                         logger.debug(2, 'Stampfile %s < %s', stampfile, stampfile2)
                         iscurrent = False
                     if recurse and iscurrent:
-                        iscurrent = self.check_stamp_task(dep, recurse=True)
+                        iscurrent = self.check_stamp_task(dep, recurse=True, cache=cache)
+                        cache[dep] = iscurrent
+        cache[task] = iscurrent
         return iscurrent
 
     def execute_runqueue(self):
@@ -1041,23 +955,36 @@ class RunQueueExecute:
         self.build_stamps = {}
         self.failed_fnids = []
 
+        self.stampcache = {}
+
     def runqueue_process_waitpid(self):
         """
         Return none is there are no processes awaiting result collection, otherwise
         collect the process exit codes and close the information pipe.
         """
-        result = os.waitpid(-1, os.WNOHANG)
-        if result[0] == 0 and result[1] == 0:
+        pid, status = os.waitpid(-1, os.WNOHANG)
+        if pid == 0 or os.WIFSTOPPED(status):
             return None
-        task = self.build_pids[result[0]]
-        del self.build_pids[result[0]]
-        self.build_pipes[result[0]].close()
-        del self.build_pipes[result[0]]
-        # self.build_stamps[result[0]] may not exist when use shared work directory.
-        if result[0] in self.build_stamps.keys():
-            del self.build_stamps[result[0]]
-        if result[1] != 0:
-            self.task_fail(task, result[1]>>8)
+
+        if os.WIFEXITED(status):
+            status = os.WEXITSTATUS(status)
+        elif os.WIFSIGNALED(status):
+            # Per shell conventions for $?, when a process exits due to
+            # a signal, we return an exit code of 128 + SIGNUM
+            status = 128 + os.WTERMSIG(status)
+
+        task = self.build_pids[pid]
+        del self.build_pids[pid]
+
+        self.build_pipes[pid].close()
+        del self.build_pipes[pid]
+
+        # self.build_stamps[pid] may not exist when use shared work directory.
+        if pid in self.build_stamps:
+            del self.build_stamps[pid]
+
+        if status != 0:
+            self.task_fail(task, status)
         else:
             self.task_complete(task)
         return True
@@ -1164,8 +1091,6 @@ class RunQueueExecute:
                 os.umask(umask)
 
             self.cooker.configuration.data.setVar("BB_WORKERCONTEXT", "1")
-            self.cooker.configuration.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self)
-            self.cooker.configuration.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn)
             bb.parse.siggen.set_taskdata(self.rqdata.hashes, self.rqdata.hash_deps)
             ret = 0
             try:
@@ -1373,7 +1298,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 self.task_skip(task)
                 return True
 
-            if self.rq.check_stamp_task(task, taskname):
+            if self.rq.check_stamp_task(task, taskname, cache=self.stampcache):
                 logger.debug(2, "Stamp current task %s (%s)", task,
                                 self.rqdata.get_user_idstring(task))
                 self.task_skip(task)
@@ -1557,7 +1482,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     bb.build.make_stamp(taskname + "_setscene", self.rqdata.dataCache, fn)
                     continue
 
-                if self.rq.check_stamp_task(realtask, taskname + "_setscene"):
+                if self.rq.check_stamp_task(realtask, taskname + "_setscene", cache=self.stampcache):
                     logger.debug(2, 'Setscene stamp current for task %s(%s)', task, self.rqdata.get_user_idstring(realtask))
                     stamppresent.append(task)
                     self.task_skip(task)
@@ -1650,7 +1575,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realtask]]
 
             taskname = self.rqdata.runq_task[realtask] + "_setscene"
-            if self.rq.check_stamp_task(realtask, self.rqdata.runq_task[realtask], recurse = True):
+            if self.rq.check_stamp_task(realtask, self.rqdata.runq_task[realtask], recurse = True, cache=self.stampcache):
                 logger.debug(2, 'Stamp for underlying task %s(%s) is current, so skipping setscene variant',
                              task, self.rqdata.get_user_idstring(realtask))
                 self.task_failoutright(task)
@@ -1662,7 +1587,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                         self.task_failoutright(task)
                         return True
 
-            if self.rq.check_stamp_task(realtask, taskname):
+            if self.rq.check_stamp_task(realtask, taskname, cache=self.stampcache):
                 logger.debug(2, 'Setscene stamp current task %s(%s), so skip it and its dependencies',
                              task, self.rqdata.get_user_idstring(realtask))
                 self.task_skip(task)
@@ -1775,15 +1700,6 @@ class runQueueTaskCompleted(runQueueEvent):
     """
     Event notifing a task completed
     """
-
-def check_stamp_fn(fn, taskname, d):
-    rqexe = d.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY")
-    fn = d.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2")
-    fnid = rqexe.rqdata.taskData.getfn_id(fn)
-    taskid = rqexe.rqdata.get_task_id(fnid, taskname)
-    if taskid is not None:
-        return rqexe.rq.check_stamp_task(taskid)
-    return None
 
 class runQueuePipe():
     """

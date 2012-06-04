@@ -34,7 +34,7 @@ class PackageListModel(gtk.TreeStore):
     providing convenience functions to access gtk.TreeModel subclasses which
     provide filtered views of the data.
     """
-    (COL_NAME, COL_VER, COL_REV, COL_RNM, COL_SEC, COL_SUM, COL_RDEP, COL_RPROV, COL_SIZE, COL_BINB, COL_INC, COL_FADE_INC) = range(12)
+    (COL_NAME, COL_VER, COL_REV, COL_RNM, COL_SEC, COL_SUM, COL_RDEP, COL_RPROV, COL_SIZE, COL_BINB, COL_INC, COL_FADE_INC, COL_FONT) = range(13)
 
     __gsignals__ = {
         "package-selection-changed" : (gobject.SIGNAL_RUN_LAST,
@@ -65,7 +65,8 @@ class PackageListModel(gtk.TreeStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_BOOLEAN,
-                                gobject.TYPE_BOOLEAN)
+                                gobject.TYPE_BOOLEAN,
+                                gobject.TYPE_STRING)
 
 
     """
@@ -189,7 +190,7 @@ class PackageListModel(gtk.TreeStore):
                      self.COL_SEC, section, self.COL_SUM, summary,
                      self.COL_RDEP, rdep + ' ' + rrec,
                      self.COL_RPROV, rprov, self.COL_SIZE, size,
-                     self.COL_BINB, "", self.COL_INC, False)
+                     self.COL_BINB, "", self.COL_INC, False, self.COL_FONT, '10')
 
     """
     Check whether the item at item_path is included or not
@@ -455,7 +456,7 @@ class RecipeListModel(gtk.ListStore):
     """
     (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_INSTALL, COL_PN, COL_FADE_INC) = range(12)
 
-    __dummy_image__ = "Create your own image"
+    __custom_image__ = "Create your own image"
 
     __gsignals__ = {
         "recipe-selection-changed" : (gobject.SIGNAL_RUN_LAST,
@@ -564,12 +565,14 @@ class RecipeListModel(gtk.ListStore):
         self.clear()
 
         # dummy image for prompt
-        self.set(self.append(), self.COL_NAME, self.__dummy_image__,
-                 self.COL_DESC, "",
+        self.set(self.append(), self.COL_NAME, self.__custom_image__,
+                 self.COL_DESC, "Use the 'View recipes' and 'View packages' " \
+                                "options to select what you want to include " \
+                                "in your image.",
                  self.COL_LIC, "", self.COL_GROUP, "",
                  self.COL_DEPS, "", self.COL_BINB, "",
                  self.COL_TYPE, "image", self.COL_INC, False,
-                 self.COL_IMG, False, self.COL_INSTALL, "", self.COL_PN, self.__dummy_image__)
+                 self.COL_IMG, False, self.COL_INSTALL, "", self.COL_PN, self.__custom_image__)
 
         for item in event_model["pn"]:
             name = item

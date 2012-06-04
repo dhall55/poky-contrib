@@ -23,11 +23,13 @@
 import gtk
 import pango
 import gobject
+import bb.process
 from bb.ui.crumbs.progressbar import HobProgressBar
-from bb.ui.crumbs.hobwidget import hic, HobNotebook, HobAltButton, HobWarpCellRendererText
+from bb.ui.crumbs.hobwidget import hic, HobNotebook, HobAltButton, HobWarpCellRendererText, HobButton
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView
 from bb.ui.crumbs.runningbuild import BuildFailureTreeView
 from bb.ui.crumbs.hobpages import HobPage
+from bb.ui.crumbs.hobcolor import HobColors
 
 class BuildConfigurationTreeView(gtk.TreeView):
     def __init__ (self):
@@ -96,11 +98,10 @@ class BuildConfigurationTreeView(gtk.TreeView):
         for path in src_config_info.layers:
             import os, os.path
             if os.path.exists(path):
-                f = os.popen('cd %s; git branch 2>&1 | grep "^* " | tr -d "* "' % path)
-                if f:
-                    branch = f.readline().lstrip('\n').rstrip('\n')
+                branch = bb.process.run('cd %s; git branch | grep "^* " | tr -d "* "' % path)[0]
+                if branch:
+                    branch = branch.strip('\n')
                     vars.append(self.set_vars("Branch:", branch))
-                    f.close()
                 break
 
         self.set_config_model(vars)
@@ -144,7 +145,7 @@ class BuildDetailsPage (HobPage):
         self.scrolled_view_config = gtk.ScrolledWindow ()
         self.scrolled_view_config.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         self.scrolled_view_config.add(self.config_tv)
-        self.notebook.append_page(self.scrolled_view_config, gtk.Label("Build configuration"))
+        self.notebook.append_page(self.scrolled_view_config, "Build configuration")
 
         self.failure_tv = BuildFailureTreeView()
         self.failure_model = self.builder.handler.build.model.failure_model()
@@ -152,14 +153,14 @@ class BuildDetailsPage (HobPage):
         self.scrolled_view_failure = gtk.ScrolledWindow ()
         self.scrolled_view_failure.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         self.scrolled_view_failure.add(self.failure_tv)
-        self.notebook.append_page(self.scrolled_view_failure, gtk.Label("Issues"))
+        self.notebook.append_page(self.scrolled_view_failure, "Issues")
 
         self.build_tv = RunningBuildTreeView(readonly=True, hob=True)
         self.build_tv.set_model(self.builder.handler.build.model)
         self.scrolled_view_build = gtk.ScrolledWindow ()
         self.scrolled_view_build.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         self.scrolled_view_build.add(self.build_tv)
-        self.notebook.append_page(self.scrolled_view_build, gtk.Label("Log"))
+        self.notebook.append_page(self.scrolled_view_build, "Log")
 
         self.builder.handler.build.model.connect_after("row-changed", self.scroll_to_present_row, self.scrolled_view_build.get_vadjustment(), self.build_tv)
 
@@ -197,6 +198,87 @@ class BuildDetailsPage (HobPage):
         children = self.get_children() or []
         for child in children:
             self.remove(child)
+
+    def update_failures_sum_display(self):
+        num = 0
+        it = self.failure_model.get_iter_first()
+        while it:
+            color = self.failure_model.get_value(it, self.builder.handler.build.model.COL_COLOR)
+            if color == HobColors.ERROR:
+                num += 1
+            it = self.failure_model.iter_next(it)
+
+        return num
+
+    def add_build_fail_top_bar(self, actions):
+        mainly_action = "Edit %s" % actions
+        if 'image' in actions:
+            next_action   = ""
+        else:
+            next_action   = "Create new image"
+
+        #set to issue page
+        self.notebook.set_page("Issues")
+
+        color = HobColors.ERROR
+        build_fail_top = gtk.EventBox()
+        build_fail_top.set_size_request(-1, 260)
+        build_fail_top.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse(color))
+
+        build_fail_tab = gtk.Table(7, 40, True)
+        build_fail_top.add(build_fail_tab)
+
+        icon = gtk.Image()
+        icon_pix_buffer = gtk.gdk.pixbuf_new_from_file(hic.ICON_INDI_ERROR_FILE)
+        icon.set_from_pixbuf(icon_pix_buffer)
+        build_fail_tab.attach(icon, 1, 4, 0, 3)
+
+        label = gtk.Label()
+        label.set_alignment(0.0, 0.5)
+        label.set_markup("<span size='x-large'>%s</span>" % self.title)
+        build_fail_tab.attach(label, 4, 20, 0, 3)
+
+        label = gtk.Label()
+        label.set_alignment(0.0, 0.5)
+        num_of_fails = self.update_failures_sum_display()
+        current_fail, recipe_task_status = self.task_status.get_text().split('\n')
+        label.set_markup(" %d tasks failed,  %s, %s" % (num_of_fails, current_fail, recipe_task_status))
+        build_fail_tab.attach(label, 4, 40, 2, 4)
+
+        # create button 'Edit packages'
+        action_button = HobButton(mainly_action)
+        action_button.set_size_request(-1, 49)
+        action_button.connect('clicked', self.failure_main_action_button_clicked_cb, mainly_action)
+        build_fail_tab.attach(action_button, 4, 16, 4, 6)
+
+        if next_action:
+            next_button = HobAltButton(next_action)
+            next_button.set_alignment(0.0, 0.5)
+            next_button.connect('clicked', self.failure_next_action_button_clicked_cb, next_action)
+            build_fail_tab.attach(next_button, 17, 24, 4, 5)
+
+        file_bug_button = HobAltButton('File a bug')
+        file_bug_button.set_alignment(0.0, 0.5)
+        file_bug_button.connect('clicked', self.failure_file_bug_activate_link_cb)
+        build_fail_tab.attach(file_bug_button, 17, 24, 4 + abs(next_action != ""), 6)
+
+        return build_fail_top
+
+    def show_fail_page(self, title, action_names):
+        self._remove_all_widget()
+        self.title = "Hob cannot build your %s" % title
+
+        self.build_fail_bar = self.add_build_fail_top_bar(action_names)
+        self.pack_start(self.build_fail_bar)
+        self.pack_start(self.group_align, expand=True, fill=True)
+
+        self.box_group_area.pack_start(self.vbox, expand=True, fill=True)
+
+        self.vbox.pack_start(self.notebook, expand=True, fill=True)
+
+        self.box_group_area.pack_end(self.button_box, expand=False, fill=False)
+        self.show_all()
+        self.back_button.hide()
 
     def show_page(self, step):
         self._remove_all_widget()
@@ -238,6 +320,7 @@ class BuildDetailsPage (HobPage):
         self.builder.stop_build()
 
     def hide_stop_button(self):
+        self.stop_button.set_sensitive(False)
         self.stop_button.hide()
 
     def scroll_to_present_row(self, model, path, iter, v_adj, treeview):
@@ -250,3 +333,18 @@ class BuildDetailsPage (HobPage):
 
     def show_configurations(self, configurations, params):
         self.config_tv.show(configurations, params)
+
+    def failure_main_action_button_clicked_cb(self, button, action):
+        if "Edit recipes" in action:
+            self.builder.show_recipes()
+        elif "Edit packages" in action:
+            self.builder.show_packages()
+        elif "Edit image configuration" in action:
+            self.builder.show_configuration()
+
+    def failure_next_action_button_clicked_cb(self, button, action):
+        if "Create new image" in action:
+            self.builder.initiate_new_build_async()
+
+    def failure_file_bug_activate_link_cb(self, button):
+        button.child.emit('activate-link', "http://bugzilla.yoctoproject.org")

@@ -9,6 +9,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=3bf50002aefd002f49e7bb854063f7e7 \
 SECTION = "libs"
 
 DEPENDS = "libpng glib-2.0 jpeg"
+DEPENDS_append_linuxstdbase = " virtual/libx11"
 
 SRC_URI = "http://ftp.acc.umu.se/pub/GNOME/sources/gdk-pixbuf/2.24/gdk-pixbuf-${PV}.tar.xz \
            file://configure_nm.patch \
@@ -19,7 +20,7 @@ SRC_URI = "http://ftp.acc.umu.se/pub/GNOME/sources/gdk-pixbuf/2.24/gdk-pixbuf-${
 SRC_URI[md5sum] = "72f39b34b20f68148c1609bd27415412"
 SRC_URI[sha256sum] = "da7a3f00db360913716368e19e336402755cafa93769f3cfa28a969303e4bee1"
 
-PR = "r0"
+PR = "r3"
 
 inherit autotools pkgconfig gettext
 
@@ -28,9 +29,16 @@ LIBV = "2.10.0"
 EXTRA_OECONF = "\
   --without-libtiff \
   --with-libpng \
-  --without-x11 \
+  ${X11DEPENDS} \
   --disable-introspection \
 "
+X11DEPENDS = "--without-x11"
+X11DEPENDS_linuxstdbase = "${@base_contains('DISTRO_FEATURES', 'x11', '--with-x11', '--without-x11', d)}"
+
+PACKAGES =+ "${PN}-xlib"
+
+FILES_${PN}-xlib = "${libdir}/*pixbuf_xlib*${SOLIBS}"
+ALLOW_EMPTY_${PN}-xlib = "1"
 
 FILES_${PN} = "${bindir}/gdk-pixbuf-query-loaders \
 	${libdir}/lib*.so.*"

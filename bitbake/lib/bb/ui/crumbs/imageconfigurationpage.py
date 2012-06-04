@@ -22,6 +22,7 @@
 
 import gtk
 import glib
+import re
 from bb.ui.crumbs.progressbar import HobProgressBar
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hic, HobImageButton, HobInfoButton, HobAltButton, HobButton
@@ -32,6 +33,9 @@ from bb.ui.crumbs.hobpages import HobPage
 # ImageConfigurationPage
 #
 class ImageConfigurationPage (HobPage):
+
+    __dummy_machine__ = "--select a machine--"
+    __dummy_image__   = "--select a base image--"
 
     def __init__(self, builder):
         super(ImageConfigurationPage, self).__init__(builder, "Image configuration")
@@ -147,7 +151,6 @@ class ImageConfigurationPage (HobPage):
         self.machine_title_desc.set_markup(mark)
 
         self.machine_combo = gtk.combo_box_new_text()
-        self.machine_combo.set_wrap_width(1)
         self.machine_combo.connect("changed", self.machine_combo_changed_cb)
 
         icon_file = hic.ICON_LAYERS_DISPLAY_FILE
@@ -196,11 +199,12 @@ class ImageConfigurationPage (HobPage):
         self.image_title_desc.set_markup(mark)
 
         self.image_combo = gtk.combo_box_new_text()
-        self.image_combo.set_wrap_width(1)
         self.image_combo_id = self.image_combo.connect("changed", self.image_combo_changed_cb)
 
         self.image_desc = gtk.Label()
         self.image_desc.set_alignment(0.0, 0.5)
+        self.image_desc.set_size_request(360, -1)
+        self.image_desc.set_justify(gtk.JUSTIFY_LEFT)
         self.image_desc.set_line_wrap(True)
 
         # button to view recipes
@@ -259,8 +263,14 @@ class ImageConfigurationPage (HobPage):
 
     def machine_combo_changed_cb(self, machine_combo):
         combo_item = machine_combo.get_active_text()
-        if not combo_item:
+        if not combo_item or combo_item == self.__dummy_machine__:
             return
+
+        # remove __dummy_machine__ item from the store list after first user selection
+        # because it is no longer valid
+        combo_store = machine_combo.get_model()
+        if len(combo_store) and (combo_store[0][0] == self.__dummy_machine__):
+            machine_combo.remove_text(0)
 
         self.builder.configuration.curr_mach = combo_item
         if self.machine_combo_changed_by_manual:
@@ -272,13 +282,13 @@ class ImageConfigurationPage (HobPage):
         self.builder.populate_recipe_package_info_async()
 
     def update_machine_combo(self):
-        all_machines = self.builder.parameters.all_machines
+        all_machines = [self.__dummy_machine__] + self.builder.parameters.all_machines
 
         model = self.machine_combo.get_model()
         model.clear()
         for machine in all_machines:
             self.machine_combo.append_text(machine)
-        self.machine_combo.set_active(-1)
+        self.machine_combo.set_active(0)
 
     def switch_machine_combo(self):
         self.machine_combo_changed_by_manual = False
@@ -289,10 +299,15 @@ class ImageConfigurationPage (HobPage):
                 self.machine_combo.set_active(active)
                 return
             active += 1
-        self.machine_combo.set_active(-1)
 
-    def update_image_desc(self, selected_image):
+        if model[0][0] != self.__dummy_machine__:
+            self.machine_combo.insert_text(0, self.__dummy_machine__)
+
+        self.machine_combo.set_active(0)
+
+    def update_image_desc(self):
         desc = ""
+        selected_image = self.image_combo.get_active_text()
         if selected_image and selected_image in self.builder.recipe_model.pn_path.keys():
             image_path = self.builder.recipe_model.pn_path[selected_image]
             image_iter = self.builder.recipe_model.get_iter(image_path)
@@ -309,8 +324,14 @@ class ImageConfigurationPage (HobPage):
     def image_combo_changed_cb(self, combo):
         self.builder.window_sensitive(False)
         selected_image = self.image_combo.get_active_text()
-        if not selected_image:
+        if not selected_image or (selected_image == self.__dummy_image__):
             return
+
+        # remove __dummy_image__ item from the store list after first user selection
+        # because it is no longer valid
+        combo_store = combo.get_model()
+        if len(combo_store) and (combo_store[0][0] == self.__dummy_image__):
+            combo.remove_text(0)
 
         self.builder.customized = False
 
@@ -319,7 +340,7 @@ class ImageConfigurationPage (HobPage):
         image_path = self.builder.recipe_model.pn_path[selected_image]
         image_iter = self.builder.recipe_model.get_iter(image_path)
         selected_packages = self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_INSTALL).split()
-        self.update_image_desc(selected_image)
+        self.update_image_desc()
 
         self.builder.recipe_model.reset()
         self.builder.package_model.reset()
@@ -342,32 +363,62 @@ class ImageConfigurationPage (HobPage):
         # populate image combo
         filter = {RecipeListModel.COL_TYPE : ['image']}
         image_model = recipe_model.tree_model(filter)
-        active = -1
+        active = 0
         cnt = 0
+
+        white_pattern = []
+        if self.builder.parameters.image_white_pattern:
+            for i in self.builder.parameters.image_white_pattern.split():
+                white_pattern.append(re.compile(i))
+
+        black_pattern = []
+        if self.builder.parameters.image_black_pattern:
+            for i in self.builder.parameters.image_black_pattern.split():
+                black_pattern.append(re.compile(i))
 
         it = image_model.get_iter_first()
         self._image_combo_disconnect_signal()
         model = self.image_combo.get_model()
         model.clear()
+        # Set a indicator text to combo store when first open
+        self.image_combo.append_text(self.__dummy_image__)
         # append and set active
         while it:
             path = image_model.get_path(it)
             it = image_model.iter_next(it)
             image_name = image_model[path][recipe_model.COL_NAME]
-            if image_name == self.builder.recipe_model.__dummy_image__:
+            if image_name == self.builder.recipe_model.__custom_image__:
                 continue
-            self.image_combo.append_text(image_name)
-            if image_name == selected_image:
-                active = cnt
-            cnt = cnt + 1
-        self.image_combo.append_text(self.builder.recipe_model.__dummy_image__)
-        if selected_image == self.builder.recipe_model.__dummy_image__:
+
+            if black_pattern:
+                allow = True
+                for pattern in black_pattern:
+                    if pattern.search(image_name):
+                        allow = False
+                        break
+            elif white_pattern:
+                allow = False
+                for pattern in white_pattern:
+                    if pattern.search(image_name):
+                        allow = True
+                        break
+            else:
+                allow = True
+
+            if allow:
+                self.image_combo.append_text(image_name)
+                if image_name == selected_image:
+                    active = cnt
+                cnt = cnt + 1
+
+        self.image_combo.append_text(self.builder.recipe_model.__custom_image__)
+        if selected_image == self.builder.recipe_model.__custom_image__:
             active = cnt
 
-        self.image_combo.set_active(-1)
+        self.image_combo.set_active(0)
         self.image_combo.set_active(active)
 
-        if active != -1:
+        if active != 0:
             self.show_baseimg_selected()
 
         self._image_combo_connect_signal()

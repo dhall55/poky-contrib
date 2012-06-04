@@ -1,18 +1,18 @@
 PACKAGES = "\
-  ${PN} ${PN}-symlinks \
+  ${PN} ${PN}-plugins ${PN}-symlinks \
   g++ g++-symlinks \
   cpp cpp-symlinks \
   g77 g77-symlinks \
   gfortran gfortran-symlinks \
   gcov gcov-symlinks \
+  ${PN}-plugin-dev \
   ${PN}-doc \
   ${PN}-dev \
   ${PN}-dbg \
 "
 
 FILES_${PN} = "\
-  ${bindir}/${TARGET_PREFIX}gcc \
-  ${bindir}/${TARGET_PREFIX}gccbug \
+  ${bindir}/${TARGET_PREFIX}gcc* \
   ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/collect2 \
   ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/cc* \
   ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/lto* \
@@ -28,17 +28,27 @@ INSANE_SKIP_${PN} += "dev-so"
 
 FILES_${PN}-dbg += "\
   ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/.debug/ \
+  ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/plugin/.debug/ \
 "
 FILES_${PN}-dev = "\
-  ${gcclibdir}/${TARGET_SYS}/${BINV}/plugin/include/ \
   ${gcclibdir}/${TARGET_SYS}/${BINV}/lib*${SOLIBSDEV} \
   ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/lib*${SOLIBSDEV} \
+"
+FILES_${PN}-plugin-dev = "\
+  ${gcclibdir}/${TARGET_SYS}/${BINV}/plugin/include/ \
+  ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/plugin/gengtype \
+  ${gcclibdir}/${TARGET_SYS}/${BINV}/plugin/gtype.state \
 "
 FILES_${PN}-symlinks = "\
   ${bindir}/cc \
   ${bindir}/gcc \
   ${bindir}/gccbug \
 "
+
+FILES_${PN}-plugins = "\
+  ${gcclibdir}/${TARGET_SYS}/${BINV}/plugin \
+"
+ALLOW_EMPTY_${PN}-plugins = "1"
 
 FILES_g77 = "\
   ${bindir}/${TARGET_PREFIX}g77 \
@@ -88,6 +98,7 @@ do_install () {
 	rm -r ${D}${libdir}/gcc/${TARGET_SYS}/${BINV}/install-tools
 	rm -r ${D}${libexecdir}/gcc/${TARGET_SYS}/${BINV}/install-tools
 	rm -rf ${D}${libexecdir}/gcc/${TARGET_SYS}/${BINV}/*.la
+	rmdir ${D}${includedir}
 
 	# Hack around specs file assumptions
 	test -f ${D}${libdir}/gcc/${TARGET_SYS}/${BINV}/specs && sed -i -e '/^*cross_compile:$/ { n; s/1/0/; }' ${D}${libdir}/gcc/${TARGET_SYS}/${BINV}/specs

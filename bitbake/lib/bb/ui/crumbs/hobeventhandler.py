@@ -42,6 +42,9 @@ class HobHandler(gobject.GObject):
          "command-failed"          : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      (gobject.TYPE_STRING,)),
+         "sanity-failed"           : (gobject.SIGNAL_RUN_LAST,
+                                      gobject.TYPE_NONE,
+                                     (gobject.TYPE_STRING,)),
          "generating-data"         : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      ()),
@@ -57,10 +60,16 @@ class HobHandler(gobject.GObject):
          "parsing-completed"       : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      (gobject.TYPE_PYOBJECT,)),
+         "recipe-populated"        : (gobject.SIGNAL_RUN_LAST,
+                                      gobject.TYPE_NONE,
+                                     ()),
+         "package-populated"       : (gobject.SIGNAL_RUN_LAST,
+                                      gobject.TYPE_NONE,
+                                     ()),
     }
 
-    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(5)
-    (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE) = range(10)
+    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO, SANITY_CHECK) = range(6)
+    (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_SANITY_CHECK, SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE) = range(11)
 
     def __init__(self, server, recipe_model, package_model):
         super(HobHandler, self).__init__()
@@ -129,6 +138,8 @@ class HobHandler(gobject.GObject):
             self.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
         elif next_command == self.SUB_GENERATE_PKGINFO:
             self.runCommand(["triggerEvent", "bb.event.RequestPackageInfo()"])
+        elif next_command == self.SUB_SANITY_CHECK:
+            self.runCommand(["triggerEvent", "bb.event.SanityCheck()"])
         elif next_command == self.SUB_BUILD_RECIPES:
             self.clear_busy()
             self.building = True
@@ -156,7 +167,14 @@ class HobHandler(gobject.GObject):
 
         if isinstance(event, bb.event.PackageInfo):
             self.package_model.populate(event._pkginfolist)
+            self.emit("package-populated")
             self.run_next_command()
+
+        elif isinstance(event, bb.event.SanityCheckPassed):
+            self.run_next_command()
+
+        elif isinstance(event, bb.event.SanityCheckFailed):
+            self.emit("sanity-failed", event._msg)
 
         elif isinstance(event, logging.LogRecord):
             if event.levelno >= logging.ERROR:
@@ -166,6 +184,7 @@ class HobHandler(gobject.GObject):
             self.current_phase = "data generation"
             if event._model:
                 self.recipe_model.populate(event._model)
+                self.emit("recipe-populated")
         elif isinstance(event, bb.event.ConfigFilesFound):
             self.current_phase = "configuration lookup"
             var = event._variable
@@ -194,6 +213,8 @@ class HobHandler(gobject.GObject):
             self.clear_busy()
             self.emit("command-failed", self.error_msg)
             self.error_msg = ""
+            if self.building:
+                self.building = False
         elif isinstance(event, (bb.event.ParseStarted,
                  bb.event.CacheLoadStarted,
                  bb.event.TreeDataPreparationStarted,
@@ -297,9 +318,6 @@ class HobHandler(gobject.GObject):
     def set_ftp_proxy(self, ftp_proxy):
         self.runCommand(["setVariable", "ftp_proxy", ftp_proxy])
 
-    def set_all_proxy(self, all_proxy):
-        self.runCommand(["setVariable", "all_proxy", all_proxy])
-
     def set_git_proxy(self, host, port):
         self.runCommand(["setVariable", "GIT_PROXY_HOST", host])
         self.runCommand(["setVariable", "GIT_PROXY_PORT", port])
@@ -311,6 +329,10 @@ class HobHandler(gobject.GObject):
     def request_package_info(self):
         self.commands_async.append(self.SUB_GENERATE_PKGINFO)
         self.run_next_command(self.POPULATE_PACKAGEINFO)
+
+    def trigger_sanity_check(self):
+        self.commands_async.append(self.SUB_SANITY_CHECK)
+        self.run_next_command(self.SANITY_CHECK)
 
     def generate_configuration(self):
         self.commands_async.append(self.SUB_PARSE_CONFIG)
@@ -485,9 +507,10 @@ class HobHandler(gobject.GObject):
         params["http_proxy"] = self.runCommand(["getVariable", "http_proxy"]) or ""
         params["ftp_proxy"] = self.runCommand(["getVariable", "ftp_proxy"]) or ""
         params["https_proxy"] = self.runCommand(["getVariable", "https_proxy"]) or ""
-        params["all_proxy"] = self.runCommand(["getVariable", "all_proxy"]) or ""
 
         params["cvs_proxy_host"] = self.runCommand(["getVariable", "CVS_PROXY_HOST"]) or ""
         params["cvs_proxy_port"] = self.runCommand(["getVariable", "CVS_PROXY_PORT"]) or ""
 
+        params["image_white_pattern"] = self.runCommand(["getVariable", "BBUI_IMAGE_WHITE_PATTERN"]) or ""
+        params["image_black_pattern"] = self.runCommand(["getVariable", "BBUI_IMAGE_BLACK_PATTERN"]) or ""
         return params

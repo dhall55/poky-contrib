@@ -231,13 +231,14 @@ python do_checkpkg() {
 	import sys
 	import re
 	import tempfile
+	import subprocess
 
 	"""
 	sanity check to ensure same name and type. Match as many patterns as possible
 	such as:
 		gnome-common-2.20.0.tar.gz (most common format)
 		gtk+-2.90.1.tar.gz
-		xf86-intput-synaptics-12.6.9.tar.gz
+		xf86-input-synaptics-12.6.9.tar.gz
 		dri2proto-2.3.tar.gz
 		blktool_4.orig.tar.gz
 		libid3tag-0.15.1b.tar.gz
@@ -373,7 +374,7 @@ python do_checkpkg() {
 		f.close()
 		if status != "ErrHostNoDir" and re.match("Err", status):
 			logpath = d.getVar('LOG_DIR', True)
-			os.system("cp %s %s/" % (f.name, logpath))
+			subprocess.call("cp %s %s/" % (f.name, logpath), shell=True)
 		os.unlink(f.name)
 		return status
 
@@ -432,7 +433,7 @@ python do_checkpkg() {
 		"""if host hasn't directory information, no need to save tmp file"""
 		if status != "ErrHostNoDir" and re.match("Err", status):
 			logpath = d.getVar('LOG_DIR', True)
-			os.system("cp %s %s/" % (f.name, logpath))
+			subprocess.call("cp %s %s/" % (f.name, logpath), shell=True)
 		os.unlink(f.name)
 		return status
 

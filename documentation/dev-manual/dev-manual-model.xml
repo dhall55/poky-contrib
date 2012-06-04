@@ -120,13 +120,15 @@
                     Crown Bay that does not support the <trademark class='registered'>Intel</trademark> 
                     Embedded Media Graphics Driver (EMGD).  
                     The remainder of this example uses that base BSP.</para>
-                    <para>To see the supported BSPs, go to the Yocto Project
-                    <ulink url='&YOCTO_DL_URL;/download'>download page</ulink> and click 
-                    on “BSP Downloads.”</para></listitem>
+                    <para>To see the supported BSPs, go to the 
+                    <ulink url='&YOCTO_HOME_URL;/download'>Download</ulink> page on the Yocto Project
+                    website and click on “BSP Downloads.”</para></listitem>
                 <listitem><para><emphasis>Create your own BSP layer</emphasis>:  Layers are ideal for 
                     isolating and storing work for a given piece of hardware.  
-                    A layer is really just a location or area in which you place the recipes for your BSP.  
+                    A layer is really just a location or area in which you place the recipes for your BSP.
                     In fact, a BSP is, in itself, a special type of layer.   
+                    </para>
+                    <para>
                     Another example that illustrates a layer is an application.  
                     Suppose you are creating an application that has library or other dependencies in 
                     order for it to compile and run.  
@@ -134,16 +136,22 @@
                     are kept.  
                     The key point for a layer is that it is an isolated area that contains 
                     all the relevant information for the project that the Yocto Project build 
-                    system knows about.</para>
+                    system knows about.
+                    For more information on layers, see the 
+                    "<link linkend='understanding-and-creating-layers'>Understanding and Creating Layers</link>"
+                    section.
+                    For more information on BSP layers, see the
+                    "<ulink url='&YOCTO_DOCS_BSP_URL;#bsp-layers'>BSP Layers</ulink>" section in the 
+                    Yocto Project Board Support Package (BSP) Developer's Guide.</para>
                     <note>The Yocto Project supports four BSPs that are part of the 
                     Yocto Project release: <filename>atom-pc</filename>, <filename>beagleboard</filename>,
                     <filename>mpc8315e</filename>, and <filename>routerstationpro</filename>.  
                     The recipes and configurations for these four BSPs are located and dispersed 
-                    within the local Yocto Project files.
-                    Consequently, they are not totally isolated in the spirit of layers unless you think 
-                    of <filename>meta-yocto</filename> as a layer itself.  
+                    within the <link linkend='yocto-project-files'>Yocto Project Files</link>.
                     On the other hand, BSP layers for Crown Bay, Emenlow, Jasper Forest, 
-                    N450, and Sugar Bay are isolated.</note>
+                    N450, Cedar Trail, Fish River, Fish River Island II, Romley, sys940x, tlk, 
+                    and Sugar Bay exist in their own separate layers within the larger 
+                    <filename>meta-intel</filename> layer.</note>
                     <para>When you set up a layer for a new BSP, you should follow a standard layout.  
                     This layout is described in the section
                     "<ulink url='&YOCTO_DOCS_BSP_URL;#bsp-filelayout'>Example Filesystem Layout</ulink>"
@@ -235,7 +243,7 @@
                 <ulink url='&YOCTO_GIT_URL;'></ulink>.
                 If you look at the interface, you will see to the left a grouping of 
                 Git repositories titled "Yocto Linux Kernel."  
-                Within this group, you will find the four different kernels supported by 
+                Within this group, you will find several kernels supported by 
                 the Yocto Project:
                 <itemizedlist>
                     <listitem><para><emphasis><filename>linux-yocto-2.6.34</filename></emphasis> - The 
@@ -247,6 +255,9 @@
                     <listitem><para><emphasis><filename>linux-yocto-3.0-1.1.x</filename></emphasis> - The 
                     stable Linux Yocto kernel to use with the Yocto Project Release 1.1.x. This kernel 
                     is based on the Linux 3.0 release</para></listitem>
+                    <listitem><para><emphasis><filename>linux-yocto-3.2</filename></emphasis> - The 
+                    stable Linux Yocto kernel to use with the Yocto Project Release 1.2. This kernel 
+                    is based on the Linux 3.2 release</para></listitem>
                     <listitem><para><emphasis><filename>linux-yocto-dev</filename></emphasis> - A development
                     kernel based on the latest upstream release candidate available.</para></listitem>
                 </itemizedlist>
@@ -288,7 +299,7 @@
             </para>
 
             <note>
-                Keep in mind the figure does not take into account all four supported Linux Yocto
+                Keep in mind the figure does not take into account all the supported Linux Yocto
                 kernel types, but rather shows a single generic kernel just for conceptual purposes.
                 Also keep in mind that this structure represents the Yocto Project source repositories 
                 that are either pulled from during the build or established on the host development system
@@ -325,7 +336,7 @@
             </para>
 
             <para>
-                <imagedata fileref="figures/kernel-overview-3.png" 
+                <imagedata fileref="figures/kernel-overview-3-denzil.png" 
                     width="6in" depth="4in" align="center" scale="100" />
             </para> 
 
@@ -363,11 +374,11 @@
             <para>
                 Again, for a complete discussion of the Yocto Project kernel's architcture and its 
                 branching strategy,
-                see the <ulink url='&YOCTO_DOCS_KERNEL_URL;'>
+                see <ulink url='&YOCTO_DOCS_KERNEL_URL;'>
                 The Yocto Project Kernel Architecture and Use Manual</ulink>.
-                Also, you can reference 
-                <xref linkend='modifying-the-kernel-source-code'>Modifying the Kernel Source Code</xref>
-                for a detailed example that modifies the kernel.
+                You can also reference the
+                "<link linkend='modifying-the-kernel-source-code'>Modifying the Kernel Source Code</link>"
+                section for a detailed example that modifies the kernel.
             </para>
         </section> 
 
@@ -461,7 +472,7 @@
                     <listitem><para><emphasis>Prepare for the build</emphasis>:  Once you have made all the 
                         changes to your kernel (configurations, source code changes, recipe additions, 
                         or recipe changes), there remains a few things 
-                        you need to do in order for the Yocto Project build system to create your image.  
+                        you need to do in order for the Yocto Project build system (BitBake) to create your image.  
                         If you have not done so, you need to get the build environment ready by sourcing 
                         the environment setup script described earlier.
                         You also need to be sure two key configuration files 
@@ -574,7 +585,7 @@ WRITER NOTE:  The areas to get the kernel and root filesystem are located in the
                     You must have a target kernel image that has been built using the Yocto Project.</para>
                     <para>Depending on whether the Yocto Project has a pre-built image that matches your target
                     architecture and where you are going to run the image while you develop your application
-                    (QEMU or real hardware), the area you get the image from differs.
+                    (QEMU or real hardware), the area from which you get the image differs.
                         <itemizedlist>
                             <listitem><para>Download the image from  
                                 <ulink url='&YOCTO_MACHINES_DL_URL;'>  
@@ -717,8 +728,8 @@ WRITER NOTE:  The areas to get the kernel and root filesystem are located in the
             <listitem><para>You can modify various policy settings such as the package format used to build with, 
                 the parrallelism BitBake uses, whether or not to build an external toolchain, and which host 
                 to build against.</para></listitem>
-            <listitem><para>You can manage <link linkend='understanding-and-creating-layers'>Understanding 
-                and Creating layers</link>.</para></listitem>
+            <listitem><para>You can manage 
+                <link linkend='understanding-and-creating-layers'>layers</link>.</para></listitem>
             <listitem><para>You can select a base image and then add extra packages for your custom build.
                 </para></listitem>
             <listitem><para>You can launch and monitor the build from within Hob.</para></listitem>

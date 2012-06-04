@@ -25,6 +25,7 @@ import gtk
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hic, HobViewTable, HobAltButton, HobButton
 from bb.ui.crumbs.hobpages import HobPage
+import subprocess
 
 #
 # ImageDetailsPage
@@ -37,19 +38,19 @@ class ImageDetailsPage (HobPage):
             'col_style': 'text',
             'col_min'  : 500,
             'col_max'  : 500
-        }, {
+        },{
             'col_name' : 'Image size',
             'col_id'   : 1,
             'col_style': 'text',
             'col_min'  : 100,
             'col_max'  : 100
-        }, {
+        },{
             'col_name' : 'Select',
             'col_id'   : 2,
             'col_style': 'radio toggle',
             'col_min'  : 100,
             'col_max'  : 100
-    }]
+        }]
 
     class DetailBox (gtk.EventBox):
         def __init__(self, widget = None, varlist = None, vallist = None, icon = None, button = None, color = HobColors.LIGHT_GRAY):
@@ -64,27 +65,31 @@ class ImageDetailsPage (HobPage):
             self.hbox.set_border_width(15)
             self.add(self.hbox)
 
+            total_rows = 0
             if widget:
-                row = 1
-            elif varlist and vallist:
+                total_rows = 10
+            if varlist and vallist:
                 # pack the icon and the text on the left
-                row = len(varlist)
-            self.table = gtk.Table(row, 20, True)
+                total_rows += len(varlist)
+            self.table = gtk.Table(total_rows, 20, True)
+            self.table.set_row_spacings(6)
             self.table.set_size_request(100, -1)
             self.hbox.pack_start(self.table, expand=True, fill=True, padding=15)
 
             colid = 0
+            rowid = 0
             self.line_widgets = {}
             if icon:
                 self.table.attach(icon, colid, colid + 2, 0, 1)
                 colid = colid + 2
             if widget:
-                self.table.attach(widget, colid, 20, 0, 1)
-            elif varlist and vallist:
-                for line in range(0, row):
-                    self.line_widgets[varlist[line]] = self.text2label(varlist[line], vallist[line])
-                    self.table.attach(self.line_widgets[varlist[line]], colid, 20, line, line + 1)
-
+                self.table.attach(widget, colid, 20, 0, 10)
+                rowid = 10
+            if varlist and vallist:
+                for row in range(rowid, total_rows):
+                    index = row - rowid
+                    self.line_widgets[varlist[index]] = self.text2label(varlist[index], vallist[index])
+                    self.table.attach(self.line_widgets[varlist[index]], colid, 20, row, row + 1)
             # pack the button on the right
             if button:
                 self.hbox.pack_end(button, expand=False, fill=False)
@@ -172,6 +177,7 @@ class ImageDetailsPage (HobPage):
         for button_id, button in self.button_ids.items():
             button.disconnect(button_id)
         self._remove_all_widget()
+
         # repack
         self.pack_start(self.details_top_buttons, expand=False, fill=False)
         self.pack_start(self.group_align, expand=True, fill=True)
@@ -197,30 +203,48 @@ class ImageDetailsPage (HobPage):
 
         # Name
         self.image_store.clear()
-        default_toggled = False
+        default_toggled = ""
         default_image_size = 0
+        num_toggled = 0
         i = 0
         for image_name in image_names:
             image_size = HobPage._size_to_string(os.stat(os.path.join(image_addr, image_name)).st_size)
+            is_toggled = (self.test_type_runnable(image_name) and self.test_mach_runnable(image_name)) \
+                or self.test_deployable(image_name)
+
             if not default_toggled:
-                default_toggled = (self.test_type_runnable(image_name) and self.test_mach_runnable(image_name)) \
-                    or self.test_deployable(image_name)
                 if i == (len(image_names) - 1):
-                    default_toggled = True
-                self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, default_toggled)
-                if default_toggled:
+                    is_toggled = True
+                self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, is_toggled)
+                if is_toggled:
                     default_image_size = image_size
-                    self.create_bottom_buttons(self.buttonlist, image_name)
+                    default_toggled = image_name
+
             else:
                 self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, False)
             i = i + 1
-        image_table = HobViewTable(self.__columns__)
-        image_table.set_model(self.image_store)
-        image_table.connect("toggled", self.toggled_cb)
+            num_toggled += is_toggled
+
+        self.create_bottom_buttons(self.buttonlist, default_toggled)
+
+        if build_succeeded and (num_toggled < 2):
+            varlist = ["Name: ", "Directory: "]
+            vallist = []
+            vallist.append(image_name.split('.')[0])
+            vallist.append(image_addr)
+            image_table = None
+        else:
+            varlist = None
+            vallist = None
+            image_table = HobViewTable(self.__columns__)
+            image_table.set_model(self.image_store)
+            image_table.connect("row-activated", self.row_activated_cb)
+            image_table.connect_group_selection(self.table_selected_cb)
+
         view_files_button = HobAltButton("View files")
         view_files_button.connect("clicked", self.view_files_clicked_cb, image_addr)
         view_files_button.set_tooltip_text("Open the directory containing the image files")
-        self.image_detail = self.DetailBox(widget=image_table, button=view_files_button)
+        self.image_detail = self.DetailBox(widget=image_table, varlist=varlist, vallist=vallist, button=view_files_button)
         self.box_group_area.pack_start(self.image_detail, expand=True, fill=True)
 
         # Machine, Base image and Layers
@@ -252,7 +276,7 @@ class ImageDetailsPage (HobPage):
             edit_config_button.set_tooltip_text("Edit machine, base image and recipes")
             edit_config_button.connect("clicked", self.edit_config_button_clicked_cb)
             self.setting_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_config_button)
-            self.box_group_area.pack_start(self.setting_detail, expand=False, fill=False)
+            self.box_group_area.pack_start(self.setting_detail, expand=True, fill=True)
 
         # Packages included, and Total image size
         varlist = ["Packages included: ", "Total image size: "]
@@ -274,7 +298,7 @@ class ImageDetailsPage (HobPage):
         self.show_all()
 
     def view_files_clicked_cb(self, button, image_addr):
-        os.system("xdg-open /%s" % image_addr)
+        subprocess.call("xdg-open /%s" % image_addr, shell=True)
 
     def refresh_package_detail_box(self, image_size):
         self.package_detail.update_line_widgets("Total image size: ", image_size)
@@ -303,10 +327,13 @@ class ImageDetailsPage (HobPage):
                 break
         return deployable
 
-    def toggled_cb(self, table, cell, path, columnid, tree):
-        model = tree.get_model()
-        if not model:
+    def table_selected_cb(self, selection):
+        model, paths = selection.get_selected_rows()
+        if (not model) or (not paths):
             return
+
+        path = paths[0]
+        columnid = 2
         iter = model.get_iter_first()
         while iter:
             rowpath = model.get_path(iter)
@@ -335,6 +362,15 @@ class ImageDetailsPage (HobPage):
         self.box_group_area.pack_end(self.details_bottom_buttons, expand=False, fill=False)
         self.show_all()
 
+    def row_activated_cb(self, table, model, path):
+        if not model:
+            return
+        iter = model.get_iter(path)
+        image_name = model[path][0]
+        if iter and model[path][2] == 'runnable':
+            kernel_name, kernel_number = self.get_kernel_file_name(image_name)
+            self.builder.runqemu_image(image_name, kernel_name, kernel_number)
+
     def create_bottom_buttons(self, buttonlist, image_name):
         # Create the buttons at the bottom
         created = False
@@ -348,7 +384,7 @@ class ImageDetailsPage (HobPage):
             deploy_button.set_size_request(205, 49)
             deploy_button.set_tooltip_text("Burn a live image to a USB drive or flash memory")
             deploy_button.set_flags(gtk.CAN_DEFAULT)
-            button_id = deploy_button.connect("clicked", self.deploy_button_clicked_cb)
+            button_id = deploy_button.connect("clicked", self.deploy_button_clicked_cb, image_name)
             self.button_ids[button_id] = deploy_button
             self.details_bottom_buttons.pack_end(deploy_button, expand=False, fill=False)
             created = True
@@ -370,19 +406,10 @@ class ImageDetailsPage (HobPage):
                 run_button.set_flags(gtk.CAN_DEFAULT)
                 packed = True
             run_button.set_tooltip_text("Start up an image with qemu emulator")
-            button_id = run_button.connect("clicked", self.run_button_clicked_cb)
+            button_id = run_button.connect("clicked", self.run_button_clicked_cb, image_name)
             self.button_ids[button_id] = run_button
             self.details_bottom_buttons.pack_end(run_button, expand=False, fill=False)
             created = True
-
-        if not packed:
-            box = gtk.HBox(False, 6)
-            box.show()
-            subbox = gtk.HBox(False, 0)
-            subbox.set_size_request(205, 49)
-            subbox.show()
-            box.add(subbox)
-            self.details_bottom_buttons.pack_end(box, False, False)
 
         name = "Save as template"
         if name in buttonlist:
@@ -391,8 +418,13 @@ class ImageDetailsPage (HobPage):
                 label = gtk.Label(" or ")
                 self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
 
-            # create button "Save as template"
-            save_button = HobAltButton("Save as template")
+                # create button "Save as template"
+                save_button = HobAltButton("Save as template")
+            else:
+                save_button = HobButton("Save as template")
+                save_button.set_size_request(205, 49)
+                save_button.set_flags(gtk.CAN_DEFAULT)
+                packed = True
             save_button.set_tooltip_text("Save the image configuration for reuse")
             button_id = save_button.connect("clicked", self.save_button_clicked_cb)
             self.button_ids[button_id] = save_button
@@ -402,33 +434,42 @@ class ImageDetailsPage (HobPage):
         name = "Build new image"
         if name in buttonlist:
             # create button "Build new image"
-            build_new_button = HobAltButton("Build new image")
+            if packed:
+                build_new_button = HobAltButton("Build new image")
+                self.details_bottom_buttons.pack_start(build_new_button, expand=False, fill=False)
+            else:
+                build_new_button = HobButton("Build new image")
+                build_new_button.set_size_request(205, 49)
+                build_new_button.set_flags(gtk.CAN_DEFAULT)
+                self.details_bottom_buttons.pack_end(build_new_button, expand=False, fill=False)
             build_new_button.set_tooltip_text("Create a new image from scratch")
             button_id = build_new_button.connect("clicked", self.build_new_button_clicked_cb)
             self.button_ids[button_id] = build_new_button
-            self.details_bottom_buttons.pack_start(build_new_button, expand=False, fill=False)
 
-    def _get_selected_image(self):
-        image_name = ""
-        iter = self.image_store.get_iter_first()
-        while iter:
-            path = self.image_store.get_path(iter)
-            if self.image_store[path][2]:
-                image_name = self.image_store[path][0]
-                break
-            iter = self.image_store.iter_next(iter)
+    def get_kernel_file_name(self, image_name):
+        name_list = []
+        kernel_name = ""
+        if image_name:
+            image_path = os.path.join(self.builder.parameters.image_addr)
+            files = [f for f in os.listdir(image_path) if f[0] <> '.']
+            for check_file in files:
+                if check_file.endswith(".bin"):
+                    if  self.test_mach_runnable(check_file):
+                        selected_machine = self.builder.configuration.curr_mach
+                        if selected_machine in check_file:
+                            kernel_name = check_file
+                    if not os.path.islink(os.path.join(image_path, check_file)):
+                        name_list.append(check_file)
 
-        return image_name
+        return kernel_name, len(name_list)
 
     def save_button_clicked_cb(self, button):
         self.builder.show_save_template_dialog()
 
-    def deploy_button_clicked_cb(self, button):
-        image_name = self._get_selected_image()
+    def deploy_button_clicked_cb(self, button, image_name):
         self.builder.deploy_image(image_name)
 
-    def run_button_clicked_cb(self, button):
-        image_name = self._get_selected_image()
+    def run_button_clicked_cb(self, button, image_name):
         self.builder.runqemu_image(image_name)
 
     def build_new_button_clicked_cb(self, button):

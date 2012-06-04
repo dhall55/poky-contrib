@@ -14,14 +14,16 @@ SECTION = "network"
 # python scripts are under GPLv2+
 LICENSE = "GPLv2+ & LGPLv2.1+"
 
-INC_PR = "r1"
+INC_PR = "r4"
 
 DEPENDS = "expat libcap libdaemon dbus glib-2.0"
 
 SRC_URI = "http://avahi.org/download/avahi-${PV}.tar.gz \
           file://00avahi-autoipd \
           file://99avahi-autoipd \
-          file://initscript.patch" 
+          file://initscript.patch \
+          file://avahi_fix_install_issue.patch \
+          "
 
 USERADD_PACKAGES = "avahi-daemon"
 USERADD_PARAM_avahi-daemon = "--system --home /var/run/avahi-daemon \
@@ -112,7 +114,7 @@ do_install() {
 	# if /var/run become non-empty in the future, need to install it via volatile
 	rm -rf ${D}/var/run
 	rm -rf ${D}${datadir}/dbus-1/interfaces
-	rm -rf ${D}/usr/lib/avahi
+	rm -rf ${D}${libdir}/avahi
 }
 
 do_install_avahi-autoipd() {
@@ -123,17 +125,16 @@ do_install_avahi-autoipd() {
 }
 
 # At the time the postinst runs, dbus might not be setup so only restart if running 
+# Don't exit early, because update-rc.d needs to run subsequently.
 
 pkg_postinst_avahi-daemon () {
-	if [ "x$D" != "x" ]; then
-		exit 0
-	fi
-
+if [ -z "$D" ]; then
 	DBUSPID=`pidof dbus-daemon`
 
 	if [ "x$DBUSPID" != "x" ]; then
 		/etc/init.d/dbus-1 force-reload
 	fi
+fi
 }
 
 pkg_postinst_avahi-autoipd () {

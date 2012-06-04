@@ -188,7 +188,8 @@
                     <listitem><para>Store custom layers in a Git repository that uses the 
                         <filename>meta-&lt;layer_name&gt;</filename> format.</para></listitem>
                     <listitem><para>Clone the repository alongside other <filename>meta</filename>
-                        directories in the Yocto Project source files area.</para></listitem>
+                        directories in  
+                        <link linkend='yocto-project-files'>Yocto Project Files</link>.</para></listitem>
                  </itemizedlist>
                  Following these recommendations keeps your Yocto Project files area and 
                  its configuration entirely inside the Yocto Project's core base.
@@ -248,8 +249,8 @@
 
             <para>
                 Append files files must have the same name as the underlying recipe.
-                For example, the append file <filename>someapp_1.1.bbappend</filename> must 
-                apply to <filename>someapp_1.1.bb</filename>.
+                For example, the append file <filename>someapp_&DISTRO;.bbappend</filename> must 
+                apply to <filename>someapp_&DISTRO;.bb</filename>.
                 This means the original recipe and append file names are version number specific.
                 If the underlying recipe is renamed to update to a newer version, the 
                 corresponding <filename>.bbappend</filename> file must be renamed as well.
@@ -269,14 +270,14 @@
                 append file both from the 
                 <link linkend='yocto-project-files'>Yocto Project Files</link>.
                 Here is the main formfactor recipe, which is named <filename>formfactor_0.0.bb</filename> and  
-                located in the meta layer at <filename>meta/bsp-recipes/formfactor</filename>:
+                located in the meta layer at <filename>meta/recipes-bsp/formfactor</filename>:
                 <literallayout class='monospaced'>
      DESCRIPTION = "Device formfactor information"
      SECTION = "base"
      LICENSE = "MIT"
      LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=3f40d7994397109285ec7b81fdeb3b58 \
-                    file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
-     PR = "r19"
+                         file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+     PR = "r20"
 
      SRC_URI = "file://config file://machconfig"
      S = "${WORKDIR}"
@@ -290,11 +291,12 @@
              install -m 0644 ${S}/config ${D}${sysconfdir}/formfactor/
      	if [ -s "${S}/machconfig" ]; then
      	        install -m 0644 ${S}/machconfig ${D}${sysconfdir}/formfactor/
-	     fi
+     	fi
      }
                 </literallayout>
                 Here is the append file, which is named <filename>formfactor_0.0.bbappend</filename> and is from the 
-                Crown Bay BSP Layer named <filename>meta-intel/meta-crownbay</filename>:
+                Crown Bay BSP Layer named <filename>meta-intel/meta-crownbay</filename>.
+                The file is in <filename>recipes-bsp/formfactor</filename>:
                 <literallayout class='monospaced'>
      FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
  
@@ -477,12 +479,12 @@
             </para>
 
             <para>
-                The other method for creating a custom image is to modify an existing image. 
-                For example, if a developer wants to add <filename>strace</filename> into 
-                the <filename>core-image-sato</filename> image, they can use the following recipe:
+                The other method for creating a custom image is to base it on an existing image. 
+                For example, if you want to create an image based on <filename>core-image-sato</filename>
+                but add the additional package <filename>strace</filename> to the image, 
+                copy the <filename>meta/recipes-sato/images/core-image-sato.bb</filename> to a 
+                new <filename>.bb</filename> and add the following line to the end of the copy:
                 <literallayout class='monospaced'>
-     require core-image-sato.bb
-
      IMAGE_INSTALL += "strace"
                 </literallayout>
             </para>
@@ -495,7 +497,7 @@
                 For complex custom images, the best approach is to create a custom task package
                 that is used to build the image or images. 
                 A good example of a tasks package is 
-                <filename>meta/recipes-sato/tasks/task-poky.bb</filename>. 
+                <filename>meta/recipes-core/tasks/task-core-boot.bb</filename>
                 The 
                 <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-PACKAGES'>PACKAGES</ulink></filename> 
                 variable lists the task packages to build along with the complementary
@@ -748,7 +750,7 @@
                 The variable 
                 <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-LIC_FILES_CHKSUM'>LIC_FILES_CHKSUM</ulink></filename> 
                 is used to track source license changes as described in the
-                "<ulink url='&YOCTO_DOCS_REF_URL;#usingpoky-configuring-LIC_FILES_CHKSUM'>Track License Change</ulink>" section. 
+                "<ulink url='&YOCTO_DOCS_REF_URL;#usingpoky-configuring-LIC_FILES_CHKSUM'>Track License Changes</ulink>" section. 
                 You can quickly create Autotool-based recipes in a manner similar to the previous example.
             </para>
         </section>
@@ -953,7 +955,7 @@
                 <filename>postinst</filename> script.
                 Normally 
                 <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-PN'>PN</ulink></filename>
-                can be used, which automatically expands to PACKAGENAME.
+                can be used, which automatically expands to <filename>PACKAGENAME</filename>.
                 A post-installation function has the following structure:
                 <literallayout class='monospaced'>
      pkg_postinst_PACKAGENAME () {
@@ -1082,7 +1084,7 @@ so that there are some definite steps on how to do this.  I need more detail her
                     <listitem><para><filename><ulink url='&YOCTO_DOCS_REF_URL;#var-PREFERRED_PROVIDER'>
                         PREFERRED_PROVIDER</ulink></filename>_virtual/kernel (see below)</para></listitem>
                     <listitem><para><filename><ulink url='&YOCTO_DOCS_REF_URL;#var-MACHINE_FEATURES'>
-                        MACHINE_FEATURES</ulink></filename> (e.g. "kernel26 apm screen wifi")</para></listitem>
+                        MACHINE_FEATURES</ulink></filename> (e.g. "apm screen wifi")</para></listitem>
                 </itemizedlist>
             </para>
 

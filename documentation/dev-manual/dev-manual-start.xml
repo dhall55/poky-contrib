@@ -31,7 +31,8 @@
     </para>
 
     <para>
-        You can use the Yocto Project, which uses the BitBake build tool, to develop complete Linux 
+        You can use the Yocto Project build system, which uses 
+        <ulink url='http://bitbake.berlios.de/manual/'>BitBake</ulink>, to develop complete Linux 
         images and associated user-space applications for architectures based on ARM, MIPS, PowerPC, 
         x86 and x86-64.  
         While the Yocto Project does not provide a strict testing framework,
@@ -109,11 +110,11 @@
                         <literallayout class='monospaced'>
      $ git clone git://git.yoctoproject.org/poky
      Initialized empty Git repository in /home/scottrif/poky/.git/
-     remote: Counting objects: 116882, done.
-     remote: Compressing objects: 100% (35987/35987), done.
-     remote: Total 116882 (delta 80651), reused 113045 (delta 77578)
-     Receiving objects: 100% (116882/116882), 72.13 MiB | 2.68 MiB/s, done.
-     Resolving deltas: 100% (80651/80651), done.
+     remote: Counting objects: 141863, done.
+     remote: Compressing objects: 100% (38624/38624), done.
+     remote: Total 141863 (delta 99661), reused 141816 (delta 99614)
+     Receiving objects: 100% (141863/141863), 76.64 MiB | 126 KiB/s, done.
+     Resolving deltas: 100% (99661/99661), done.
                         </literallayout></para>
                         <para>For another example of how to set up your own local Git repositories, see this
                         <ulink url='&YOCTO_WIKI_URL;/wiki/Transcript:_from_git_checkout_to_meta-intel_BSP'>
@@ -132,29 +133,29 @@
                 For simplicity, it is recommended that you create these structures outside of the 
                 Yocto Project Files Git repository.</para>
                 <para>As an example, the following transcript shows how to create the bare clone
-                of the <filename>linux-yocto-3.0-1.1.x</filename> kernel and then create a copy of 
+                of the <filename>linux-yocto-3.2</filename> kernel and then create a copy of 
                 that clone.
                 <note>When you have a local Linux Yocto kernel Git repository, you can 
                 reference that repository rather than the upstream Git repository as 
                 part of the <filename>clone</filename> command.
                 Doing so can speed up the process.</note></para>
                 <para>In the following example, the bare clone is named 
-                <filename>linux-yocto-3.0-1.1.x.git</filename>, while the 
-                copy is named <filename>my-linux-yocto-3.0-1.1.x-work</filename>: 
+                <filename>linux-yocto-3.2.git</filename>, while the 
+                copy is named <filename>my-linux-yocto-3.2-work</filename>: 
                 <literallayout class='monospaced'>
-     $ git clone --bare git://git.yoctoproject.org/linux-yocto-3.0-1.1.x linux-yocto-3.0-1.1.x.git
-     Initialized empty Git repository in /home/scottrif/linux-yocto-3.0-1.1.x.git/
-     remote: Counting objects: 2259181, done.
-     remote: Compressing objects: 100% (373259/373259), done.
-     remote: Total 2259181 (delta 1892638), reused 2231556 (delta 1865300)
-     Receiving objects: 100% (2259181/2259181), 482.44 MiB | 580 KiB/s, done.
-     Resolving deltas: 100% (1892638/1892638), done.
+     $ git clone --bare git://git.yoctoproject.org/linux-yocto-3.2 linux-yocto-3.2.git
+     Initialized empty Git repository in /home/scottrif/linux-yocto-3.2.git/
+     remote: Counting objects: 2468027, done.
+     remote: Compressing objects: 100% (392255/392255), done.
+     remote: Total 2468027 (delta 2071693), reused 2448773 (delta 2052498)
+     Receiving objects: 100% (2468027/2468027), 530.46 MiB | 129 KiB/s, done.
+     Resolving deltas: 100% (2071693/2071693), done.
                 </literallayout></para>
                 <para>Now create a clone of the bare clone just created:
                 <literallayout class='monospaced'>
-     $ git clone linux-yocto-3.0-1.1.x.git my-linux-yocto-3.0-1.1.x-work
-     Initialized empty Git repository in /home/scottrif/my-linux-yocto-3.0-1.1.x/.git/
-     Checking out files: 100% (36898/36898), done.
+     $ git clone linux-yocto-3.2.git my-linux-yocto-3.2-work
+     Initialized empty Git repository in /home/scottrif/my-linux-yocto-3.2-work/.git/
+     Checking out files: 100% (37619/37619), done.
                 </literallayout></para></listitem>
             <listitem id='poky-extras-repo'><para><emphasis>
                 The <filename>poky-extras</filename> Git Repository</emphasis>:
@@ -175,14 +176,13 @@
                 repository inside the Yocto Project files Git repository, which is named 
                 <filename>poky</filename> in this case:
                 <literallayout class='monospaced'>
-     $ cd ~/poky
      $ git clone git://git.yoctoproject.org/poky-extras poky-extras
      Initialized empty Git repository in /home/scottrif/poky/poky-extras/.git/
-     remote: Counting objects: 561, done.
-     remote: Compressing objects: 100% (501/501), done.
-     remote: Total 561 (delta 159), reused 306 (delta 39)
-     Receiving objects: 100% (561/561), 519.96 KiB | 479 KiB/s, done.
-     Resolving deltas: 100% (159/159), done.
+     remote: Counting objects: 618, done.
+     remote: Compressing objects: 100% (558/558), done.
+     remote: Total 618 (delta 192), reused 307 (delta 39)
+     Receiving objects: 100% (618/618), 526.26 KiB | 111 KiB/s, done.
+     Resolving deltas: 100% (192/192), done.
                 </literallayout></para></listitem>
            <listitem><para id='supported-board-support-packages-(bsps)'><emphasis>Supported Board 
                 Support Packages (BSPs):</emphasis>  
@@ -231,14 +231,13 @@
                         <filename>meta-intel</filename>
                         Git repository inside the <filename>poky</filename> Git repository.
                         <literallayout class='monospaced'>
-     $ cd poky
      $ git clone git://git.yoctoproject.org/meta-intel.git
      Initialized empty Git repository in /home/scottrif/poky/meta-intel/.git/
-     remote: Counting objects: 1325, done.
-     remote: Compressing objects: 100% (1078/1078), done.
-     remote: Total 1325 (delta 546), reused 85 (delta 27)
-     Receiving objects: 100% (1325/1325), 1.56 MiB | 330 KiB/s, done.
-     Resolving deltas: 100% (546/546), done.
+     remote: Counting objects: 3380, done.
+     remote: Compressing objects: 100% (2750/2750), done.
+     remote: Total 3380 (delta 1689), reused 227 (delta 113)
+     Receiving objects: 100% (3380/3380), 1.77 MiB | 128 KiB/s, done.
+     Resolving deltas: 100% (1689/1689), done.
                         </literallayout></para>
                         <para>The same  
                         <ulink url='&YOCTO_WIKI_URL;/wiki/Transcript:_from_git_checkout_to_meta-intel_BSP'>

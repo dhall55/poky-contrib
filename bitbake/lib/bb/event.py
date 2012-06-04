@@ -517,3 +517,21 @@ class PackageInfo(Event):
     def __init__(self, pkginfolist):
         Event.__init__(self)
         self._pkginfolist = pkginfolist
+
+class SanityCheck(Event):
+    """
+    Event to issue sanity check
+    """
+
+class SanityCheckPassed(Event):
+    """
+    Event to indicate sanity check is passed
+    """
+
+class SanityCheckFailed(Event):
+    """
+    Event to indicate sanity check has failed
+    """
+    def __init__(self, msg):
+        Event.__init__(self)
+        self._msg = msg

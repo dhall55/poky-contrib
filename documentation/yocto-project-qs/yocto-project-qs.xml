@@ -21,15 +21,23 @@
     </para>
 
     <para>
-        If you know all about open-source development, Linux development environments, Git source
-        repositories and the like and you just want some quick information that lets you try out
-        the Yocto Project, skip right to the "<link linkend='super-user'>Super User</link>" section at 
-        the end of this quick start.
-        Otherwise, keep reading...
+        If you don't have a system that runs Linux and you want to give the Yocto Project a test run, 
+        you might consider using the Yocto Project Build Appliance.
+        The Build Appliance allows you to build and boot a custom embedded Linux image with the Yocto 
+        Project using a non-Linux development system.  
+        See the <ulink url='http://www.yoctoproject.org/documentation/build-appliance'>Yocto 
+        Project Build Appliance</ulink> for more information.
     </para>
 
     <para>
-        This short document will give you some basic information about the environment and 
+        On the other hand, if you know all about open-source development, Linux development environments, 
+        Git source repositories and the like and you just want some quick information that lets you try out
+        the Yocto Project on your Linux system, skip right to the 
+        "<link linkend='super-user'>Super User</link>" section at the end of this quick start.
+    </para>
+
+    <para>
+        For the rest of you, this short document will give you some basic information about the environment and 
         let you experience it in its simplest form.  
         After reading this document, you will have a basic understanding of what the Yocto Project is
         and how to use some of its core components.  
@@ -220,11 +228,11 @@
             </para>
 
                 <literallayout class='monospaced'>
-     $ sudo apt-get install sed wget cvs subversion git-core coreutils \
+     $ sudo apt-get install sed wget subversion git-core coreutils \
      unzip texi2html texinfo libsdl1.2-dev docbook-utils fop gawk \
-     python-pysqlite2 diffstat help2man make gcc build-essential xsltproc \
+     python-pysqlite2 diffstat make gcc build-essential xsltproc \
      g++ desktop-file-utils chrpath libgl1-mesa-dev libglu1-mesa-dev \
-     mercurial autoconf automake groff libtool xterm libxml-parser-perl
+     autoconf automake groff libtool xterm libxml-parser-perl
                 </literallayout>
         </section>
 
@@ -238,26 +246,16 @@
 
                 <literallayout class='monospaced'>
      $ sudo yum groupinstall "development tools"
-     $ sudo yum install python m4 make wget curl ftp hg tar bzip2 gzip \
-     unzip python-psyco perl texinfo texi2html diffstat openjade \
+     $ sudo yum install python m4 make wget curl ftp tar bzip2 gzip \
+     unzip perl texinfo texi2html diffstat openjade \
      docbook-style-dsssl sed docbook-style-xsl docbook-dtds fop xsltproc \
      docbook-utils sed bc eglibc-devel ccache pcre pcre-devel quilt \
-     groff linuxdoc-tools patch linuxdoc-tools cmake help2man \
+     groff linuxdoc-tools patch cmake \
      perl-ExtUtils-MakeMaker tcl-devel gettext chrpath ncurses apr \
      SDL-devel mesa-libGL-devel mesa-libGLU-devel gnome-doc-utils \
      autoconf automake libtool xterm
                 </literallayout>
 
-            <note><para>
-                If you are using a Fedora version prior to version 15, you will need to take some 
-                extra steps to enable <filename>sudo</filename>, or you will need to run
-                the commands as root user.
-                See the <ulink url='https://fedoraproject.org/wiki/Configuring_Sudo'>Configuring Sudo</ulink> 
-                wiki page for details.
-                For information on other dependencies you will need to install, see the Fedora section on the
-                <ulink url='&YOCTO_WIKI_URL;/wiki/Poky/GettingStarted/Dependencies'>Poky/GettingStarted/Dependencies</ulink>
-                wiki page.
-            </para></note>
         </section>
 
         <section id='opensuse'>
@@ -270,8 +268,8 @@
 
                 <literallayout class='monospaced'>
      $ sudo zypper install python gcc gcc-c++ libtool fop \
-     subversion git chrpath automake make wget help2man xsltproc \
-     diffstat texinfo mercurial freeglut-devel libSDL-devel
+     subversion git chrpath automake make wget xsltproc \
+     diffstat texinfo freeglut-devel libSDL-devel
                 </literallayout>
         </section>
 
@@ -290,7 +288,7 @@
        unzip perl texinfo texi2html diffstat openjade zlib-devel \
        docbook-style-dsssl sed docbook-style-xsl docbook-dtds \
        docbook-utils bc glibc-devel pcre pcre-devel \
-       groff linuxdoc-tools patch linuxdoc-tools cmake \
+       groff linuxdoc-tools patch cmake \
        tcl-devel gettext ncurses apr \
        SDL-devel mesa-libGL-devel mesa-libGLU-devel gnome-doc-utils \
        autoconf automake libtool xterm
@@ -336,7 +334,7 @@
     <title>A Quick Test Run</title>
 
     <para>
-        Now that you have your system requirements in order, you can give Yocto Project a try.  
+        Now that you have your system requirements in order, you can give the Yocto Project a try.  
         This section presents some steps that let you do the following:
     </para>
 
@@ -403,7 +401,7 @@
              Adding this statement deletes the work directory used for building a package
              once the package is built.
              <literallayout class='monospaced'>
-     INHERIT += rm_work
+     INHERIT += "rm_work"
              </literallayout>
          </para></tip>
 
@@ -412,8 +410,8 @@
                  release tarball from the source repositories using the
                  <filename>wget</filename> command.
                  Alternatively, you can go to the 
-                 <ulink url='&YOCTO_HOME_URL;/download'>Yocto Project website</ulink>
-                 Downloads page to retrieve the tarball.</para></listitem>
+                 <ulink url='&YOCTO_HOME_URL;/download'>Yocto Project website's Downloads page</ulink>
+                 to retrieve the tarball.</para></listitem>
              <listitem><para>The second command extracts the files from the tarball and places 
                  them into a directory named <filename>&YOCTO_POKY;</filename> in the current 
                  directory.</para></listitem>
@@ -632,7 +630,7 @@
                 You must use the <filename>ext3</filename> form when booting an image using the 
                 QEMU emulator.
                 The <filename>tar</filename> form can be flattened out in your host development system
-                and used for Yocto Project build purposes.
+                and used for build purposes with the Yocto Project.
                 <literallayout class='monospaced'>
      core-image-&lt;<emphasis>profile</emphasis>&gt;-qemu&lt;<emphasis>arch</emphasis>&gt;.ext3
      core-image-&lt;<emphasis>profile</emphasis>&gt;-qemu&lt;<emphasis>arch</emphasis>&gt;.tar.bz2
@@ -686,11 +684,13 @@
             <para>
                 Continuing with the example, the following two commands setup the emulation 
                 environment and launch QEMU.
-                This example assumes the root filesystem tarball has been downloaded and expanded, and 
-                that the kernel and filesystem are for a 32-bit target architecture.
+                This example assumes the root filesystem (<filename>.ext3</filename> file) and 
+                the pre-built kernel image file both reside in your home directory. 
+                The kernel and filesystem are for a 32-bit target architecture.
                 <literallayout class='monospaced'>
-     $ source &YOCTO_ADTPATH_DIR;/environment-setup-i686-poky-linux 
-     $ runqemu qemux86 bzImage-qemux86-&DISTRO;.bin \
+     $ cd $HOME
+     $ source &YOCTO_ADTPATH_DIR;/environment-setup-i586-poky-linux 
+     $ runqemu qemux86 bzImage-qemux86.bin \
      core-image-sato-qemux86.ext3
                 </literallayout>
             </para>

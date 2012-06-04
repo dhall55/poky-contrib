@@ -60,6 +60,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.taskhash = {}
         self.taskdeps = {}
         self.runtaskdeps = {}
+        self.file_checksum_values = {}
         self.gendeps = {}
         self.lookupcache = {}
         self.pkgnameextract = re.compile("(?P<fn>.*)\..*")
@@ -107,6 +108,10 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 data = data + dep
                 if dep in lookupcache:
                     var = lookupcache[dep]
+                elif dep[-1] == ']':
+                    vf = dep[:-1].split('[')
+                    var = d.getVarFlag(vf[0], vf[1], False)
+                    lookupcache[dep] = var
                 else:
                     var = d.getVar(dep, False)
                     lookupcache[dep] = var
@@ -152,6 +157,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         k = fn + "." + task
         data = dataCache.basetaskhash[k]
         self.runtaskdeps[k] = []
+        self.file_checksum_values[k] = {}
         recipename = dataCache.pkg_fn[fn]
         for dep in sorted(deps, key=clean_basepath):
             depname = dataCache.pkg_fn[self.pkgnameextract.search(dep).group('fn')]
@@ -161,6 +167,12 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 bb.fatal("%s is not in taskhash, caller isn't calling in dependency order?", dep)
             data = data + self.taskhash[dep]
             self.runtaskdeps[k].append(dep)
+
+        if task in dataCache.file_checksums[fn]:
+            checksums = bb.fetch2.get_file_checksums(dataCache.file_checksums[fn][task], recipename)
+            for (f,cs) in checksums:
+               self.file_checksum_values[k][f] = cs
+               data = data + cs
         h = hashlib.md5(data).hexdigest()
         self.taskhash[k] = h
         #d.setVar("BB_TASKHASH_task-%s" % task, taskhash[task])
@@ -197,12 +209,15 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         if runtime and k in self.taskhash:
             data['runtaskdeps'] = self.runtaskdeps[k]
+            data['file_checksum_values'] = self.file_checksum_values[k]
             data['runtaskhashes'] = {}
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.taskhash[dep]
 
-        p = pickle.Pickler(file(sigfile, "wb"), -1)
-        p.dump(data)
+        with open(sigfile, "wb") as f:
+            p = pickle.Pickler(f, -1)
+            p.dump(data)
+        os.chmod(sigfile, 0664)
 
     def dump_sigs(self, dataCache):
         for fn in self.taskdeps:
@@ -250,9 +265,9 @@ def clean_basepaths(a):
     return b
 
 def compare_sigfiles(a, b):
-    p1 = pickle.Unpickler(file(a, "rb"))
+    p1 = pickle.Unpickler(open(a, "rb"))
     a_data = p1.load()
-    p2 = pickle.Unpickler(file(b, "rb"))
+    p2 = pickle.Unpickler(open(b, "rb"))
     b_data = p2.load()
 
     def dict_diff(a, b, whitelist=set()):
@@ -302,6 +317,18 @@ def compare_sigfiles(a, b):
         for dep in changed:
             print "Variable %s value changed from %s to %s" % (dep, a_data['varvals'][dep], b_data['varvals'][dep])
 
+    changed, added, removed = dict_diff(a_data['file_checksum_values'], b_data['file_checksum_values'])
+    if changed:
+        for f in changed:
+            print "Checksum for file %s changed from %s to %s" % (f, a_data['file_checksum_values'][f], b_data['file_checksum_values'][f])
+    if added:
+        for f in added:
+            print "Dependency on checksum of file %s was added" % (f)
+    if removed:
+        for f in removed:
+            print "Dependency on checksum of file %s was removed" % (f)
+
+
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
         a = clean_basepaths(a_data['runtaskhashes'])
         b = clean_basepaths(b_data['runtaskhashes'])
@@ -331,7 +358,7 @@ def compare_sigfiles(a, b):
                 print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
 
 def dump_sigfile(a):
-    p1 = pickle.Unpickler(file(a, "rb"))
+    p1 = pickle.Unpickler(open(a, "rb"))
     a_data = p1.load()
 
     print "basewhitelist: %s" % (a_data['basewhitelist'])
@@ -350,6 +377,9 @@ def dump_sigfile(a):
 
     if 'runtaskdeps' in a_data:
         print "Tasks this task depends on: %s" % (a_data['runtaskdeps'])
+
+    if 'file_checksum_values' in a_data:
+        print "This task depends on the checksums of files: %s" % (a_data['file_checksum_values'])
 
     if 'runtaskhashes' in a_data:
         for dep in a_data['runtaskhashes']:

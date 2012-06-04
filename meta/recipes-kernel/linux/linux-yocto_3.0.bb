@@ -1,14 +1,21 @@
 inherit kernel
 require recipes-kernel/linux/linux-yocto.inc
 
-KMACHINE = "yocto/standard/base"
-KMACHINE_qemux86  = "yocto/standard/common-pc/base"
-KMACHINE_qemux86-64  = "yocto/standard/common-pc-64/base"
-KMACHINE_qemuppc  = "yocto/standard/qemu-ppc32"
-KMACHINE_qemumips = "yocto/standard/mti-malta32-be"
-KMACHINE_qemuarm  = "yocto/standard/arm-versatile-926ejs"
+KBRANCH = "yocto/standard/base"
+KBRANCH_qemux86  = "yocto/standard/common-pc/base"
+KBRANCH_qemux86-64  = "yocto/standard/common-pc-64/base"
+KBRANCH_qemuppc  = "yocto/standard/qemu-ppc32"
+KBRANCH_qemumips = "yocto/standard/mti-malta32-be"
+KBRANCH_qemuarm  = "yocto/standard/arm-versatile-926ejs"
 
-KBRANCH = "${KMACHINE}"
+# Temporary until 3.0 kernel tree is updated with machine mappings
+KMACHINE_qemux86 = "common-pc"
+KMACHINE_qemux86-64 = "common-pc-64"
+KMACHINE_qemuppc = "qemu-ppc32"
+KMACHINE_qemumips = "mti-malta32-be"
+KMACHINE_qemuarm = "arm-versatile-926ejs"
+
+KMETA = "meta"
 
 LINUX_VERSION ?= "3.0.24"
 
@@ -18,7 +25,7 @@ SRCREV_machine_qemuppc ?= "7528f1d06ef5665eed8c1498f62d5403b82bbbd6"
 SRCREV_machine_qemux86 ?= "f153b0eb8264dc1e69f59d4c9173619feb4d5bd9"
 SRCREV_machine_qemux86-64 ?= "aac580659dc0ce083f250fb05abf82e58d7f4531"
 SRCREV_machine ?= "da7c40006b08916ff3a3db104def82aaf9ac2716"
-SRCREV_meta ?= "a4ac64fe873f08ef718e2849b88914725dc99c1c"
+SRCREV_meta ?= "34e0d2b4b4e9778b31f9ea99ca43f0dc71a7ee23"
 
 PR = "r4"
 PV = "${LINUX_VERSION}+git${SRCPV}"
