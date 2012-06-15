@@ -2,6 +2,6 @@ PV = 3.4.1+git1+3fd089debe624c642d7b4d9363f853021d1675b2_1+780ab7e11f03931295e8f
 PR = r0
 RDEPENDS = kernel-3.4.1-yocto-standard update-modules
 RRECOMMENDS = 
-PKGSIZE = 309600
+PKGSIZE = 309528
 FILES = /lib/modules/3.4.1-yocto-standard/kernel/fs/cifs/cifs.ko /etc/modules-load.d/cifs.conf /etc/modprobe.d/cifs.conf
 FILELIST = /lib/modules/3.4.1-yocto-standard/kernel/fs/cifs/cifs.ko
