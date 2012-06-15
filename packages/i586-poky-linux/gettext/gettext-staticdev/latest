@@ -1,0 +1,7 @@
+PV = 0.18.1.1
+PR = r13
+RDEPENDS = gettext-dev (= 0.18.1.1-r13)
+RRECOMMENDS = 
+PKGSIZE = 1541378
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/gettext/*.a
+FILELIST = /usr/lib/libgettextpo.a

@@ -1,0 +1,4 @@
+PV = 3.0
+PR = r1
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = zip-dbg zip-staticdev zip zip-doc zip-dev zip-locale

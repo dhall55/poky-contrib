@@ -1,0 +1,7 @@
+PV = 4.7.0+svnr186651
+PR = r1
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 129912
+FILES = /usr/lib/i586-poky-linux/4.7.1/libgcov.a
+FILELIST = /usr/lib/i586-poky-linux/4.7.1/libgcov.a

@@ -1,0 +1,7 @@
+PV = 4.7.0+svnr186651
+PR = r1
+RDEPENDS = 
+RRECOMMENDS = libgcc-dev
+PKGSIZE = 0
+FILES = /usr/include/c++/i586-poky-linux/bits/*.gch
+FILELIST = 

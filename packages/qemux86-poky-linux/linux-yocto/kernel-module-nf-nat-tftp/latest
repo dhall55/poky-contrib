@@ -1,0 +1,7 @@
+PV = 3.4.1+git1+3fd089debe624c642d7b4d9363f853021d1675b2_1+780ab7e11f03931295e8f0e29707f2abb688e9ad
+PR = r0
+RDEPENDS = kernel-3.4.1-yocto-standard kernel-module-nf-conntrack kernel-module-nf-conntrack-ipv4 kernel-module-nf-conntrack-tftp kernel-module-nf-defrag-ipv4 kernel-module-nf-nat update-modules
+RRECOMMENDS = 
+PKGSIZE = 3040
+FILES = /lib/modules/3.4.1-yocto-standard/kernel/net/ipv4/netfilter/nf_nat_tftp.ko /etc/modules-load.d/nf_nat_tftp.conf /etc/modprobe.d/nf_nat_tftp.conf
+FILELIST = /lib/modules/3.4.1-yocto-standard/kernel/net/ipv4/netfilter/nf_nat_tftp.ko
