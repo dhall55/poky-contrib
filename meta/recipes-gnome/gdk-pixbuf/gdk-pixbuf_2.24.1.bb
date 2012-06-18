@@ -34,7 +34,7 @@ EXTRA_OECONF = "\
   --disable-introspection \
 "
 X11DEPENDS = "--without-x11"
-X11DEPENDS_linuxstdbase = "${@base_contains('DISTRO_FEATURES', 'x11', '--with-x11', '--without-x11', d)}"
+#X11DEPENDS_linuxstdbase = "${@base_contains('DISTRO_FEATURES', 'x11', '--with-x11', '--without-x11', d)}"
 
 PACKAGES =+ "${PN}-xlib"
 
