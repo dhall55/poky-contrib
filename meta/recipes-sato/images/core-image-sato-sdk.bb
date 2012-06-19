@@ -7,6 +7,8 @@ IMAGE_FEATURES += "apps-console-core ${SATO_IMAGE_FEATURES} dev-pkgs tools-sdk q
 
 SSHSERVER_IMAGE_FEATURES = "ssh-server-openssh"
 
+SSHSERVER_IMAGE_FEATURES = "ssh-server-openssh"
+
 LICENSE = "MIT"
 
 inherit core-image
