@@ -1,0 +1,44 @@
+-e digraph depends {
+    node [shape=plaintext]
+base_passwd -> busybox;
+bash -> busybox;
+bash -> libtinfo5;
+busybox -> busybox;
+busybox -> busybox_syslog [style=dotted];
+busybox -> busybox_udhcpc [style=dotted];
+busybox_syslog -> busybox;
+busybox_udhcpc -> busybox;
+initscripts -> busybox;
+kmod -> busybox;
+kmod -> libkmod2;
+libkmod2 -> busybox;
+libtinfo5 -> busybox;
+libtinfo5 -> ncurses_terminfo_base [style=dotted];
+libusb_0_1_4 -> busybox;
+libusb_0_1_4 -> libusb_1_0_0;
+libusb_1_0_0 -> busybox;
+modutils_initscripts -> busybox;
+netbase -> busybox;
+sysvinit -> busybox;
+sysvinit -> sysvinit_inittab;
+sysvinit -> sysvinit_pidof;
+sysvinit_pidof -> busybox;
+task_core_boot -> base_files;
+task_core_boot -> base_passwd;
+task_core_boot -> busybox;
+task_core_boot -> initscripts;
+task_core_boot -> modutils_initscripts;
+task_core_boot -> netbase;
+task_core_boot -> sysvinit;
+task_core_boot -> tinylogin;
+task_core_boot -> udev;
+task_core_boot -> v86d;
+tinylogin -> busybox;
+udev -> busybox;
+udev -> libusb_0_1_4;
+udev -> pciutils_ids [style=dotted];
+udev -> udev_extraconf [style=dotted];
+udev -> udev_utils [style=dotted];
+udev -> usbutils_ids [style=dotted];
+v86d -> busybox;
+}
