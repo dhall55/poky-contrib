@@ -1,0 +1,7 @@
+PV = 164
+PR = r13
+RDEPENDS = libudev
+RRECOMMENDS = acl-dev eglibc-dev glib-2.0-dev libusb-dev pciutils-dev udev-dev usbutils-dev
+PKGSIZE = 9533
+FILES = /usr/include/libudev.h /usr/lib/libudev.so /usr/lib/libudev.la /usr/lib/libudev.a /usr/lib/pkgconfig/libudev.pc
+FILELIST = /usr/include/libudev.h /usr/lib/libudev.la /usr/lib/libudev.so /usr/lib/pkgconfig/libudev.pc

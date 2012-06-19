@@ -1,0 +1,7 @@
+PV = 7.24.0
+PR = r1
+RDEPENDS = eglibc (>= 2.15) libcrypto (>= 1.0.0i) libssl (>= 1.0.0i) zlib (>= 1.2.7)
+RRECOMMENDS = curl-certs
+PKGSIZE = 367388
+FILES = /usr/lib/lib*.so.*
+FILELIST = /usr/lib/libcurl.so.5 /usr/lib/libcurl.so.5.2.0
