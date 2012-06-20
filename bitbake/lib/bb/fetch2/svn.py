@@ -68,7 +68,7 @@ class Svn(FetchMethod):
     def _buildsvncommand(self, ud, d, command):
         """
         Build up an svn commandline based on ud
-        command is "fetch", "update", "info"
+        command is "checkout", "update", "info"
         """
 
         proto = ud.parm.get('protocol', 'svn')
@@ -95,7 +95,7 @@ class Svn(FetchMethod):
                 options.append("-r %s" % ud.revision)
                 suffix = "@%s" % (ud.revision)
 
-            if command == "fetch":
+            if command == "checkout":
                 svncmd = "%s co %s %s://%s/%s%s %s" % (ud.basecmd, " ".join(options), proto, svnroot, ud.module, suffix, ud.module)
             elif command == "update":
                 svncmd = "%s update %s" % (ud.basecmd, " ".join(options))
@@ -126,7 +126,7 @@ class Svn(FetchMethod):
             bb.fetch2.check_network_access(d, svnupdatecmd, ud.url)
             runfetchcmd(svnupdatecmd, d)
         else:
-            svnfetchcmd = self._buildsvncommand(ud, d, "fetch")
+            svnfetchcmd = self._buildsvncommand(ud, d, "checkout")
             logger.info("Fetch " + loc)
             # check out sources there
             bb.utils.mkdirhier(ud.pkgdir)
