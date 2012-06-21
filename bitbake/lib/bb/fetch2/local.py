@@ -43,7 +43,6 @@ class Local(FetchMethod):
     def urldata_init(self, ud, d):
         # We don't set localfile as for this fetcher the file is already local!
         ud.decodedurl = urllib.unquote(ud.url.split("://")[1].split(";")[0])
-        ud.basename = os.path.basename(ud.decodedurl)
         return
 
     def localpath(self, url, urldata, d):
