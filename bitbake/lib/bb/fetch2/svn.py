@@ -63,7 +63,11 @@ class Svn(FetchMethod):
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']
 
-        ud.localfile = data.expand('%s_%s_%s_%s_.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
+        ud.singlefile = bb.utils.to_boolean(ud.parm.get('singlefile'), False)
+        if ud.singlefile:
+            ud.localfile = data.expand('%s_%s_%s_%s' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
+        else:
+            ud.localfile = data.expand('%s_%s_%s_%s_.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
 
     def _buildsvncommand(self, ud, d, command):
         """
@@ -97,6 +101,8 @@ class Svn(FetchMethod):
 
             if command == "checkout":
                 svncmd = "%s co %s %s://%s/%s%s %s" % (ud.basecmd, " ".join(options), proto, svnroot, ud.module, suffix, ud.module)
+            elif command == "export":
+                svncmd = "%s export %s %s://%s/%s%s %s" % (ud.basecmd, " ".join(options), proto, svnroot, ud.module, suffix, ud.module)
             elif command == "update":
                 svncmd = "%s update %s" % (ud.basecmd, " ".join(options))
             else:
@@ -112,7 +118,15 @@ class Svn(FetchMethod):
 
         logger.debug(2, "Fetch: checking for module directory '" + ud.moddir + "'")
 
-        if os.access(os.path.join(ud.moddir, '.svn'), os.R_OK):
+        if ud.singlefile:
+            svnexportcmd = self._buildsvncommand(ud, d, "export")
+            logger.info("Export " + loc)
+            # export sources there
+            os.chdir(ud.pkgdir)
+            logger.debug(1, "Running %s", svnexportcmd)
+            bb.fetch2.check_network_access(d, svnexportcmd, ud.url)
+            runfetchcmd(svnexportcmd, d)
+        elif os.access(os.path.join(ud.moddir, '.svn'), os.R_OK):
             svnupdatecmd = self._buildsvncommand(ud, d, "update")
             logger.info("Update " + loc)
             # update sources there
@@ -141,9 +155,12 @@ class Svn(FetchMethod):
         else:
             tar_flags = "--exclude '.svn'"
 
+        # Store the fetches files in the cache
         os.chdir(ud.pkgdir)
-        # tar them up to a defined filename
-        runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d, cleanup = [ud.localpath])
+        if ud.singlefile:
+            runfetchcmd("cp %s %s" % (ud.module, ud.localpath), d, cleanup = [ud.localpath])
+        else:
+            runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d, cleanup = [ud.localpath])
 
     def clean(self, ud, d):
         """ Clean SVN specific files and dirs """
