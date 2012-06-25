@@ -176,6 +176,7 @@ drwxr-xr-x root       root             4096 ./etc/init.d
 -rwxr-xr-x root       root              525 ./etc/init.d/rcS  
 -rwxr-xr-x root       root              289 ./etc/init.d/reboot  
 -rwxr-xr-x root       root              585 ./etc/init.d/rmnologin.sh  
+-rwxr-xr-x root       root              609 ./etc/init.d/run-postinsts  
 -rwxr-xr-x root       root              321 ./etc/init.d/save-rtc.sh  
 -rwxr-xr-x root       root              438 ./etc/init.d/sendsigs  
 -rwxr-xr-x root       root              578 ./etc/init.d/single  
@@ -265,14 +266,8 @@ lrwxrwxrwx root       root               21 ./etc/rcS.d/S39hostname.sh -> ../ini
 lrwxrwxrwx root       root               20 ./etc/rcS.d/S40networking -> ../init.d/networking
 lrwxrwxrwx root       root               21 ./etc/rcS.d/S45mountnfs.sh -> ../init.d/mountnfs.sh
 lrwxrwxrwx root       root               21 ./etc/rcS.d/S55bootmisc.sh -> ../init.d/bootmisc.sh
--rwxr-xr-x root       root              194 ./etc/rcS.d/S98run-postinsts  
+lrwxrwxrwx root       root               23 ./etc/rcS.d/S98run-postinsts -> ../init.d/run-postinsts
 -rw-r--r-- root       root              887 ./etc/rpc  
-drwxr-xr-x root       root             4096 ./etc/rpm  
-drwxr-xr-x root       root             4096 ./etc/rpm-postinsts  
--rwxr-xr-x root       root               98 ./etc/rpm-postinsts/100  
--rw-r--r-- root       root              136 ./etc/rpm/platform  
-drwxr-xr-x root       root             4096 ./etc/rpm/sysinfo  
--rw-r--r-- root       root                2 ./etc/rpm/sysinfo/Dirnames  
 -rw-r--r-- root       root            19281 ./etc/services  
 -rw-r--r-- root       root              109 ./etc/shells  
 drwxr-xr-x root       root             4096 ./etc/skel  
@@ -1243,7 +1238,7 @@ drwxr-xr-x root       root             4096 ./usr/include/libusb-1.0
 -rw-r--r-- root       root            41693 ./usr/include/libusb-1.0/libusb.h  
 -rw-r--r-- root       root             4596 ./usr/include/limits.h  
 -rw-r--r-- root       root             7221 ./usr/include/link.h  
-drwxr-xr-x root       root            12288 ./usr/include/linux  
+drwxr-xr-x root       root            16384 ./usr/include/linux  
 -rw-r--r-- root       root                0 ./usr/include/linux/.install  
 -rw-r--r-- root       root             7319 ./usr/include/linux/a.out.h  
 -rw-r--r-- root       root             3490 ./usr/include/linux/acct.h  
@@ -2407,6 +2402,8 @@ drwxr-xr-x root       root             4096 ./usr/share/misc
 drwxr-xr-x root       root             4096 ./usr/share/pkgconfig  
 -rw-r--r-- root       root               61 ./usr/share/pkgconfig/udev.pc  
 -rw-r--r-- root       root               89 ./usr/share/pkgconfig/usbutils.pc  
+drwxr-xr-x root       root             4096 ./usr/share/run-postinsts  
+-rw-r--r-- root       root              582 ./usr/share/run-postinsts/run-postinsts.awk  
 drwxr-xr-x root       root             4096 ./usr/share/tabset  
 -rw-r--r-- root       root              135 ./usr/share/tabset/std  
 -rw-r--r-- root       root               95 ./usr/share/tabset/stdcrt  
@@ -2421,8 +2418,6 @@ drwxr-xr-x root       root             4096 ./var/backups
 lrwxrwxrwx root       root               14 ./var/cache -> volatile/cache
 drwxr-xr-x root       root             4096 ./var/lib  
 drwxr-xr-x root       root             4096 ./var/lib/misc  
-drwxr-xr-x root       root             4096 ./var/lib/wdj  
-drwxr-xr-x root       root             4096 ./var/lib/wdj/l10n  
 drwxr-sr-x root       root             4096 ./var/local  
 lrwxrwxrwx root       root               13 ./var/lock -> volatile/lock
 lrwxrwxrwx root       root               12 ./var/log -> volatile/log

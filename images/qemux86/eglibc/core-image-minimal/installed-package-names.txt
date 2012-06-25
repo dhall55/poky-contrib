@@ -74,6 +74,8 @@ perl
 perl-dev
 pkgconfig
 pkgconfig-dev
+run-postinsts
+run-postinsts-dev
 sysvinit
 sysvinit-dev
 sysvinit-inittab
