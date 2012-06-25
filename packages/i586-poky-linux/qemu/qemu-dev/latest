@@ -1,0 +1,7 @@
+PV = 0.15.1
+PR = r8
+RDEPENDS = qemu (= 0.15.1-r8)
+RRECOMMENDS = alsa-lib-dev bluez4-dev dtc-dev eglibc-dev glib-2.0-dev libaio-dev libasound-dev libattr-dev libpng12-dev ncurses-libncurses-dev ncurses-libtinfo-dev qemu-dev util-linux-libuuid-dev zlib-dev
+PKGSIZE = 0
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/qemu/*.la /lib/*.la
+FILELIST = 

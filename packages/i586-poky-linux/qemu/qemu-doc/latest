@@ -1,0 +1,7 @@
+PV = 0.15.1
+PR = r8
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 388275
+FILES = /usr/share/doc /usr/share/man /usr/share/info /usr/share/gtk-doc /usr/share/gnome/help
+FILELIST = /usr/share/doc/qemu/qemu-doc.html /usr/share/doc/qemu/qemu-tech.html /usr/share/man/man1/qemu-img.1 /usr/share/man/man1/qemu.1 /usr/share/man/man8/qemu-nbd.8

@@ -1,0 +1,4 @@
+PV = 9.03
+PR = r0
+DEPENDS = popt virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = lsbinitscripts-dbg lsbinitscripts-staticdev lsbinitscripts-dev lsbinitscripts-doc lsbinitscripts-locale lsbinitscripts
