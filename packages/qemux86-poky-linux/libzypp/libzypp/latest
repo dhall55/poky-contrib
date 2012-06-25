@@ -1,6 +1,6 @@
 PV = 0.0-git1+15b6c52260bbc52b3d8e585e271b67e10cc7c433
 PR = r23
-RDEPENDS = eglibc (>= 2.15) expat (>= 2.1.0) gnupg gzip libcrypto (>= 1.0.0i) libcurl (>= 7.24.0) libgcc (>= 4.7.1+svnr188658) libstdc++ (>= 4.7.1+svnr188658) libudev (>= 164) libxml2 (>= 2.7.8) rpm-libs rpm-libs (>= 5.4.9) sat-solver zlib (>= 1.2.7)
+RDEPENDS = eglibc (>= 2.15) expat (>= 2.1.0) gnupg gzip libcrypto (>= 1.0.0i) libcurl (>= 7.24.0) libgcc (>= 4.7.1+svnr188658) libstdc++ (>= 4.7.1+svnr188658) libudev (>= 164) libxml2 (>= 2.8.0) rpm-libs rpm-libs (>= 5.4.9) sat-solver zlib (>= 1.2.7)
 RRECOMMENDS = 
 PKGSIZE = 4466241
 FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/libzypp /usr/lib/libzypp/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers /usr/lib/zypp /usr/share/zypp /usr/share/icons

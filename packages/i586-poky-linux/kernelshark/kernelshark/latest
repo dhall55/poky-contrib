@@ -1,6 +1,6 @@
 PV = 1.2+git1+7055ffd37beeb44714e86a4abc703f7e175a0db5
 PR = r1
-RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3) gtk+ (>= 2.24.8) libxml2 (>= 2.7.8) pango (>= 1.28.4) trace-cmd
+RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3) gtk+ (>= 2.24.8) libxml2 (>= 2.8.0) pango (>= 1.28.4) trace-cmd
 RRECOMMENDS = 
 PKGSIZE = 904680
 FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/kernelshark /usr/lib/kernelshark/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers /usr/share/trace-cmd/plugins/*.so

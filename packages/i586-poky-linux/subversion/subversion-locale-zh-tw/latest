@@ -1,0 +1,7 @@
+PV = 1.6.15
+PR = r1
+RDEPENDS = subversion virtual-locale-zh-tw
+RRECOMMENDS = 
+PKGSIZE = 139461
+FILES = /usr/share/locale/zh_TW
+FILELIST = /usr/share/locale/zh_TW/LC_MESSAGES/subversion.mo

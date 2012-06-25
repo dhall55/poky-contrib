@@ -1,5 +1,5 @@
-PV = 4.0.1
-PR = r1
+PV = 4.0.2
+PR = r0
 RDEPENDS = tiffxx
 RRECOMMENDS = eglibc-dev jpeg-dev libgcc-dev liblzma-dev libstdc++-dev tiff-dev xz-dev zlib-dev
 PKGSIZE = 1047

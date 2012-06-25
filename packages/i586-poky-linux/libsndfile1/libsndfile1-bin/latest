@@ -1,6 +1,6 @@
 PV = 1.0.25
 PR = r1
-RDEPENDS = eglibc (>= 2.15) libasound (>= 1.0.25) libsndfile1 (>= 1.0.25) libsqlite3 (>= 3.7.11)
+RDEPENDS = eglibc (>= 2.15) libasound (>= 1.0.25) libsndfile1 (>= 1.0.25) libsqlite3 (>= 3.7.13)
 RRECOMMENDS = 
 PKGSIZE = 131200
 FILES = /usr/bin/* /usr/sbin/*

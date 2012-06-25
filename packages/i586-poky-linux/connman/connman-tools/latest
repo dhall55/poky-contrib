@@ -1,6 +1,6 @@
 PV = 1.0
 PR = r9.0
-RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3) gnutls (>= 2.12.19)
+RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3) gnutls (>= 2.12.20)
 RRECOMMENDS = 
 PKGSIZE = 40204
 FILES = /usr/bin/wispr

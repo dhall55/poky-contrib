@@ -1,6 +1,6 @@
 PV = 1.7+git1+83bd2699d8cff2f2d6b9eaf5ea254e4cb6b33e81
 PR = r5
-RDEPENDS = eglibc (>= 2.15) elfutils (>= 0.148) libgcc (>= 4.7.1+svnr188658) libsqlite3 (>= 3.7.11) libstdc++ (>= 4.7.1+svnr188658)
+RDEPENDS = eglibc (>= 2.15) elfutils (>= 0.148) libgcc (>= 4.7.1+svnr188658) libsqlite3 (>= 3.7.13) libstdc++ (>= 4.7.1+svnr188658)
 RRECOMMENDS = 
 PKGSIZE = 4230670
 FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/systemtap /usr/lib/systemtap/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers

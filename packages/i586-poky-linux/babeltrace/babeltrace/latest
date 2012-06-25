@@ -1,6 +1,6 @@
 PV = 0.8+git1+efc5077568403009493d1d72e94f292838825e51
 PR = r0
-RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3) popt (>= 1.16) util-linux-libuuid (>= 2.21.1)
+RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3) popt (>= 1.16) util-linux-libuuid (>= 2.21.2)
 RRECOMMENDS = 
 PKGSIZE = 259345
 FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/babeltrace /usr/lib/babeltrace/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers

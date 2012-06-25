@@ -1,4 +1,4 @@
-PV = 1.4.2
+PV = 1.4.6
 PR = r1
 RDEPENDS = mx virtual-locale-sk
 RRECOMMENDS = 

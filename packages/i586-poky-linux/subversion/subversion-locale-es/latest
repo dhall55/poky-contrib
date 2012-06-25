@@ -1,0 +1,7 @@
+PV = 1.6.15
+PR = r1
+RDEPENDS = subversion virtual-locale-es
+RRECOMMENDS = 
+PKGSIZE = 237418
+FILES = /usr/share/locale/es
+FILELIST = /usr/share/locale/es/LC_MESSAGES/subversion.mo

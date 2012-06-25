@@ -1,8 +1,8 @@
 PE = 1
-PV = 1.0.3
+PV = 1.2.0
 PR = r0
 RDEPENDS = 
-RRECOMMENDS = eglibc-dbg libx11-trim-dbg pkgconfig-dbg xev (= 1:1.0.3-r0) xev-dbg
-PKGSIZE = 72371
+RRECOMMENDS = eglibc-dbg libx11-trim-dbg libxrandr-dbg pkgconfig-dbg xev (= 1:1.2.0-r0) xev-dbg
+PKGSIZE = 88006
 FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/xev/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
-FILELIST = /usr/bin/.debug/xev /usr/src/debug/xev-1_1.0.3-r0/xev-1.0.3/xev.c
+FILELIST = /usr/bin/.debug/xev /usr/src/debug/xev-1_1.2.0-r0/xev-1.2.0/xev.c

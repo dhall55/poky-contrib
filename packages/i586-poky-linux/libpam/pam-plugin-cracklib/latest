@@ -1,6 +1,6 @@
 PV = 1.1.5
 PR = r3
-RDEPENDS = cracklib (>= 2.8.18) eglibc (>= 2.15) libpam (>= 1.1.5) zlib (>= 1.2.7)
+RDEPENDS = cracklib (>= 2.8.19) eglibc (>= 2.15) libpam (>= 1.1.5) zlib (>= 1.2.7)
 RRECOMMENDS = 
 PKGSIZE = 10832
 FILES = /lib/security/pam_cracklib.so

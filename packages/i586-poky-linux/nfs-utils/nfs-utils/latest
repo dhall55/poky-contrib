@@ -1,6 +1,6 @@
 PV = 1.2.3
 PR = r4
-RDEPENDS = eglibc (>= 2.15) libcap (>= 2.22) libevent (>= 2.0.16) libnfsidmap (>= 0.24) libwrap (>= 7.6) portmap update-rc.d util-linux-libblkid (>= 2.21.1)
+RDEPENDS = eglibc (>= 2.15) libcap (>= 2.22) libevent (>= 2.0.16) libnfsidmap (>= 0.24) libwrap (>= 7.6) portmap update-rc.d util-linux-libblkid (>= 2.21.2)
 RRECOMMENDS = kernel-module-nfsd
 PKGSIZE = 329494
 FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/nfs-utils /usr/lib/nfs-utils/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers
