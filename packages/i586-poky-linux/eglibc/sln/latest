@@ -2,6 +2,6 @@ PV = 2.15
 PR = r12+svnr17386
 RDEPENDS = 
 RRECOMMENDS = 
-PKGSIZE = 564660
+PKGSIZE = 564692
 FILES = /sbin/sln
 FILELIST = /sbin/sln

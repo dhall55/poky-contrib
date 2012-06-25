@@ -3,5 +3,5 @@ PR = r6
 RDEPENDS = modutils-initscripts (= 1.0-r6)
 RRECOMMENDS = modutils-initscripts-dev update-rc.d-dev
 PKGSIZE = 0
-FILES = /usr/include /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/modutils-initscripts/*.la /lib/*.la
 FILELIST = 
