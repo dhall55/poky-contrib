@@ -1,4 +1,4 @@
-1332	KiB libc6
+1336	KiB libc6
 424	KiB bash
 332	KiB busybox
 296	KiB udev

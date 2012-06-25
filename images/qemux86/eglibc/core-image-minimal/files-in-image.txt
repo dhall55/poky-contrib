@@ -316,7 +316,7 @@ lrwxrwxrwx root       root               10 ./lib/ld-linux.so.2 -> ld-2.15.so
 lrwxrwxrwx root       root               23 ./lib/libBrokenLocale.so.1 -> libBrokenLocale-2.15.so
 -rwxr-xr-x root       root            13952 ./lib/libanl-2.15.so  
 lrwxrwxrwx root       root               14 ./lib/libanl.so.1 -> libanl-2.15.so
--rwxr-xr-x root       root          1481904 ./lib/libc-2.15.so  
+-rwxr-xr-x root       root          1481936 ./lib/libc-2.15.so  
 lrwxrwxrwx root       root               12 ./lib/libc.so.6 -> libc-2.15.so
 -rwxr-xr-x root       root            35948 ./lib/libcrypt-2.15.so  
 lrwxrwxrwx root       root               16 ./lib/libcrypt.so.1 -> libcrypt-2.15.so
