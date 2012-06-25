@@ -1,0 +1,7 @@
+PV = 0.3.8
+PR = r0
+RDEPENDS = 
+RRECOMMENDS = eglibc-dbg libxau-dbg libxcb-dbg libxdmcp-dbg pkgconfig-dbg xcb-util-keysyms (= 0.3.8-r0) xcb-util-keysyms-dbg
+PKGSIZE = 32468
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/xcb-util-keysyms/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = /usr/lib/.debug/libxcb-keysyms.so /usr/lib/.debug/libxcb-keysyms.so.1 /usr/lib/.debug/libxcb-keysyms.so.1.0.0 /usr/src/debug/xcb-util-keysyms-0.3.8-r0/xcb-util-keysyms-0.3.8/keysyms/keysyms.c /usr/src/debug/xcb-util-keysyms-0.3.8-r0/xcb-util-keysyms-0.3.8/keysyms/xcb_keysyms.h

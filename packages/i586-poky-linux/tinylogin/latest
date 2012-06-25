@@ -1,0 +1,4 @@
+PV = 1.4
+PR = r8
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = tinylogin-dbg tinylogin-staticdev tinylogin-dev tinylogin-doc tinylogin-locale tinylogin

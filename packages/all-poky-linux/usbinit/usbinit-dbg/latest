@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r2
+RDEPENDS = 
+RRECOMMENDS = update-rc.d-dbg usbinit (= 1.0-r2) usbinit-dbg
+PKGSIZE = 0
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/usbinit/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = 

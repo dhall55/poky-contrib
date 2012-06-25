@@ -1,0 +1,4 @@
+PV = 1.7+git1+83bd2699d8cff2f2d6b9eaf5ea254e4cb6b33e81
+PR = r0
+DEPENDS = gettext-native systemtap virtual/gettext virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/kernel virtual/libc
+PACKAGES = systemtap-uprobes-dbg systemtap-uprobes-staticdev systemtap-uprobes-dev systemtap-uprobes-doc systemtap-uprobes-locale systemtap-uprobes

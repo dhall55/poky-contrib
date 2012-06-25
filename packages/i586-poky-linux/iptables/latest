@@ -1,0 +1,4 @@
+PV = 1.4.13
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = iptables-dbg iptables-staticdev iptables-dev iptables-doc iptables-locale iptables

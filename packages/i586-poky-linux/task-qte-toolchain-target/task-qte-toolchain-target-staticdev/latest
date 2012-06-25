@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r5
+RDEPENDS = task-qte-toolchain-target-dev (= 1.0-r5)
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/task-qte-toolchain-target/*.a
+FILELIST = 

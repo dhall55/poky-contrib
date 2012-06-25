@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r28
+RDEPENDS = contacts dates evolution-data-server gaku tasks
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/task-core-apps-x11-pimlico /usr/lib/task-core-apps-x11-pimlico/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers
+FILELIST = 

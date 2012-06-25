@@ -1,0 +1,7 @@
+PV = 1.99
+PR = r8
+RDEPENDS = grub virtual-locale-vi
+RRECOMMENDS = 
+PKGSIZE = 25875
+FILES = /usr/share/locale/vi
+FILELIST = /usr/share/locale/vi/LC_MESSAGES/grub.mo

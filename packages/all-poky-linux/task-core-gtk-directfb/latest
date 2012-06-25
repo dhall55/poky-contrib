@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r0
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-core-gtk-directfb task-core-gtk-directfb-base task-core-gtk-directfb-dbg task-core-gtk-directfb-dev task-core-gtk-directfb-base-dbg task-core-gtk-directfb-base-dev

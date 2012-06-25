@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = dpkg-dev (= 1.15.8.7-r16.4)
+RRECOMMENDS = 
+PKGSIZE = 623736
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/dpkg/*.a
+FILELIST = /usr/lib/libdpkg.a

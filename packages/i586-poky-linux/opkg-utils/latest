@@ -1,0 +1,4 @@
+PV = 0.1.8+git1+423ecd36b4782327c16f516885d1248249c7724a
+PR = r1
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = opkg-utils-dbg opkg-utils-staticdev opkg-utils-dev opkg-utils-doc opkg-utils-locale opkg-utils

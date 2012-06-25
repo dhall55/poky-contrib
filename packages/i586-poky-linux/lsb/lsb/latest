@@ -1,0 +1,7 @@
+PV = 1.4
+PR = r3
+RDEPENDS = util-linux
+RRECOMMENDS = 
+PKGSIZE = 16575
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/lsb /usr/lib/lsb/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers /lib64 /lib/lsb/*
+FILELIST = /bin/lsb_release /etc/core-lsb/lsb_killproc /etc/core-lsb/lsb_log_message /etc/core-lsb/lsb_pidofproc /etc/core-lsb/lsb_start_daemon /etc/lsb-release /etc/lsb-release.d/desktop-1.4-ia32 /etc/lsb-release.d/desktop-1.4-noarch /etc/lsb-release.d/graphics-1.4-ia32 /etc/lsb-release.d/graphics-1.4-noarch /etc/lsb-release.d/graphics-4.1-ia32 /etc/lsb-release.d/graphics-4.1-noarch /lib/ld-lsb.so.2 /lib/ld-lsb.so.3 /lib/lsb/init-functions

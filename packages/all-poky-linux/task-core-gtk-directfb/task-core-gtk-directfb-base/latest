@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r0
+RDEPENDS = directfb directfb-examples dropbear fontconfig gtk+ gtk-demo pango pango-modules
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = 
+FILELIST = 

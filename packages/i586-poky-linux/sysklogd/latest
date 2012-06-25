@@ -1,0 +1,4 @@
+PV = 1.5
+PR = r6
+DEPENDS = update-rc.d update-rc.d-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = sysklogd-dbg sysklogd-staticdev sysklogd-dev sysklogd-doc sysklogd-locale sysklogd

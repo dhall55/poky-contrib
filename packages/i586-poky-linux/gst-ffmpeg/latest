@@ -1,0 +1,4 @@
+PV = 0.10.13
+PR = r3
+DEPENDS = autoconf-native automake-native gnu-config-native gst-plugins-base gstreamer libtool-cross libtool-native pkgconfig-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc zlib
+PACKAGES = gst-ffmpeg-dbg gst-ffmpeg-staticdev gst-ffmpeg-dev gst-ffmpeg-doc gst-ffmpeg-locale gst-ffmpeg

@@ -1,0 +1,4 @@
+PV = 1.4.8
+PR = r2
+DEPENDS = autoconf-native automake-native base-passwd gnu-config-native libtool-cross libtool-native shadow shadow-native shadow-sysroot update-rc.d-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = cronie-dbg cronie-staticdev cronie-dev cronie-doc cronie-locale cronie

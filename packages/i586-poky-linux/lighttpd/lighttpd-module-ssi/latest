@@ -1,0 +1,7 @@
+PV = 1.4.30
+PR = r1
+RDEPENDS = eglibc (>= 2.15) libpcre (>= 8.30)
+RRECOMMENDS = 
+PKGSIZE = 26708
+FILES = /usr/lib/mod_ssi.so
+FILELIST = /usr/lib/mod_ssi.so

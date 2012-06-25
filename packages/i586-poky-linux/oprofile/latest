@@ -1,0 +1,4 @@
+PV = 0.9.7
+PR = r0.0
+DEPENDS = autoconf-native automake-native binutils gnu-config-native libtool-cross libtool-native popt virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = oprofile-dbg oprofile-staticdev oprofile-dev oprofile-doc oprofile-locale oprofile

@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r29
+DEPENDS = base-passwd shadow shadow-native shadow-sysroot update-rc.d-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = xserver-nodm-init-dbg xserver-nodm-init-staticdev xserver-nodm-init-dev xserver-nodm-init-doc xserver-nodm-init-locale xserver-nodm-init

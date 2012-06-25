@@ -1,0 +1,7 @@
+PV = 1.08
+PR = r1
+RDEPENDS = 
+RRECOMMENDS = eglibc-dbg mingetty (= 1.08-r1) mingetty-dbg
+PKGSIZE = 8475
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/mingetty/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = /sbin/.debug/mingetty

@@ -1,0 +1,7 @@
+PV = 4.8.1
+PR = r46.1
+RDEPENDS = qt4-embedded-dev (= 4.8.1-r46.1)
+RRECOMMENDS = 
+PKGSIZE = 10384286
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/qt4-embedded/*.a
+FILELIST = /usr/lib/libQtUiToolsE.a

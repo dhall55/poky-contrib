@@ -1,0 +1,4 @@
+PV = 018
+PR = r0
+DEPENDS = flex-native sysfsutils virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = pcmciautils-dbg pcmciautils-staticdev pcmciautils-dev pcmciautils-doc pcmciautils-locale pcmciautils

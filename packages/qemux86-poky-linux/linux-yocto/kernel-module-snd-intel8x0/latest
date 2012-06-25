@@ -1,0 +1,7 @@
+PV = 3.4.1+git1+aa226dcc5a1351fae49da40d77b718c4c3a76e7c_1+a8291fa6f723b0182d2b7033b5d59f412ba7cf72
+PR = r0
+RDEPENDS = kernel-3.4.1-yocto-standard kernel-module-ac97-bus kernel-module-snd-ac97-codec update-modules
+RRECOMMENDS = 
+PKGSIZE = 39652
+FILES = /lib/modules/3.4.1-yocto-standard/kernel/sound/pci/snd-intel8x0.ko /etc/modules-load.d/snd-intel8x0.conf /etc/modprobe.d/snd-intel8x0.conf
+FILELIST = /lib/modules/3.4.1-yocto-standard/kernel/sound/pci/snd-intel8x0.ko

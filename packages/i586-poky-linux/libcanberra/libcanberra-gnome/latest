@@ -1,0 +1,7 @@
+PV = 0.28
+PR = r1
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 558
+FILES = /usr/share/gdm/autostart/LoginWindow/libcanberra-ready-sound.desktop /usr/lib/gnome-settings-daemon-3.0/gtk-modules/canberra-gtk-module.desktop
+FILELIST = /usr/lib/gnome-settings-daemon-3.0/gtk-modules/canberra-gtk-module.desktop /usr/share/gdm/autostart/LoginWindow/libcanberra-ready-sound.desktop

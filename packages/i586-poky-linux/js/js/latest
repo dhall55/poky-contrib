@@ -1,0 +1,7 @@
+PV = 1.7.0+1.8.0rc1
+PR = r4
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 865080
+FILES = /usr/lib/lib*.so
+FILELIST = /usr/lib/libjs.so

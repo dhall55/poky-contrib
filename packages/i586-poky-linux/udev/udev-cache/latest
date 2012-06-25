@@ -1,0 +1,7 @@
+PV = 164
+PR = r13
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 687
+FILES = /etc/init.d/udev-cache /etc/default/udev-cache
+FILELIST = /etc/default/udev-cache /etc/init.d/udev-cache

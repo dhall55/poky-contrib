@@ -1,0 +1,4 @@
+PV = 0.8+git1+efc5077568403009493d1d72e94f292838825e51
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native gtk+ libtool-cross libtool-native util-linux virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = babeltrace-dbg babeltrace-staticdev babeltrace-dev babeltrace-doc babeltrace-locale babeltrace

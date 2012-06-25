@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r20
+RDEPENDS = eglibc (>= 2.15) tslib (>= 1.0)
+RRECOMMENDS = 
+PKGSIZE = 48344
+FILES = /usr/bin/ts_harvest /usr/bin/ts_print /usr/bin/ts_print_raw /usr/bin/ts_test
+FILELIST = /usr/bin/ts_harvest /usr/bin/ts_print /usr/bin/ts_print_raw /usr/bin/ts_test

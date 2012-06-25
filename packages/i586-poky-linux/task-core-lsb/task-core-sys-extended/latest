@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r9
+RDEPENDS = binutils binutils-symlinks chkconfig curl dhcp-client diffutils gamin hdparm libaio libxml2 lrzsz lsbinitscripts lzo mc mdadm minicom neon parted pth quota screen setserial sysstat unzip watchdog which xinetd zip
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = 
+FILELIST = 

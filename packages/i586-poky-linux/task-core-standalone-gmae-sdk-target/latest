@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r14
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-core-standalone-gmae-sdk-target task-core-standalone-gmae-sdk-target-dbg

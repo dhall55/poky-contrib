@@ -1,0 +1,7 @@
+PV = 3.4.1+git1+aa226dcc5a1351fae49da40d77b718c4c3a76e7c_1+a8291fa6f723b0182d2b7033b5d59f412ba7cf72
+PR = r0
+RDEPENDS = kernel-3.4.1-yocto-standard update-modules
+RRECOMMENDS = 
+PKGSIZE = 5768
+FILES = /lib/modules/3.4.1-yocto-standard/kernel/fs/nls/nls_iso8859-13.ko /etc/modules-load.d/nls_iso8859-13.conf /etc/modprobe.d/nls_iso8859-13.conf
+FILELIST = /lib/modules/3.4.1-yocto-standard/kernel/fs/nls/nls_iso8859-13.ko

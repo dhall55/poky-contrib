@@ -1,0 +1,4 @@
+PV = 0.6c11
+PR = ml4
+DEPENDS = python python python-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = python-setuptools-dev python-setuptools-dbg python-setuptools-doc python-setuptools

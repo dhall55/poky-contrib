@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = dpkg virtual-locale-km
+RRECOMMENDS = 
+PKGSIZE = 116310
+FILES = /usr/share/locale/km
+FILELIST = /usr/share/locale/km/LC_MESSAGES/dpkg.mo

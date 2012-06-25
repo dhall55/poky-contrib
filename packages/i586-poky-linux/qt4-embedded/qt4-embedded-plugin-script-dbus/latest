@@ -1,0 +1,7 @@
+PV = 4.8.1
+PR = r46.1
+RDEPENDS = eglibc (>= 2.15) libgcc (>= 4.7.1+svnr188658) libqt-embeddedcore4 (>= 4.8.1) libqt-embeddeddbus4 (>= 4.8.1) libqt-embeddedscript4 (>= 4.8.1) libstdc++ (>= 4.7.1+svnr188658)
+RRECOMMENDS = 
+PKGSIZE = 70296
+FILES = /usr/lib/qtopia/plugins/script/libqtscriptdbus.so
+FILELIST = /usr/lib/qtopia/plugins/script/libqtscriptdbus.so

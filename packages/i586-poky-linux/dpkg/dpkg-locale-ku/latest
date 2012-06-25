@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = dpkg virtual-locale-ku
+RRECOMMENDS = 
+PKGSIZE = 9165
+FILES = /usr/share/locale/ku
+FILELIST = /usr/share/locale/ku/LC_MESSAGES/dpkg.mo

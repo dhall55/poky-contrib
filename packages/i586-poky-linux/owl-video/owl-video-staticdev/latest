@@ -1,0 +1,7 @@
+PV = 0.1+git1+f133472318970796fae1ea3e98ac062156768baf
+PR = r1
+RDEPENDS = owl-video-dev (= 0.1+git1+f133472318970796fae1ea3e98ac062156768baf-r1)
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/owl-video/*.a
+FILELIST = 

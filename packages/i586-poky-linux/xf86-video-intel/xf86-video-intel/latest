@@ -1,0 +1,8 @@
+PE = 2
+PV = 2.19.0
+PR = r17.0
+RDEPENDS = eglibc (>= 2.15) libdrm (>= 2.4.34) libdrm-drivers (>= 2.4.34) libpciaccess (>= 0.13.1) libudev (>= 164)
+RRECOMMENDS = 
+PKGSIZE = 317896
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/xf86-video-intel /usr/lib/xf86-video-intel/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers /usr/lib/xorg/modules/drivers/*.so
+FILELIST = /usr/lib/xorg/modules/drivers/intel_drv.so

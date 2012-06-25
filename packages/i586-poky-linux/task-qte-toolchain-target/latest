@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r5
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-qte-toolchain-target-dbg task-qte-toolchain-target-staticdev task-qte-toolchain-target-dev task-qte-toolchain-target-doc task-qte-toolchain-target-locale task-qte-toolchain-target

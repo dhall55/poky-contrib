@@ -1,0 +1,7 @@
+PV = 2.10.01
+PR = r0
+RDEPENDS = nasm-dev (= 2.10.01-r0)
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/nasm/*.a
+FILELIST = 

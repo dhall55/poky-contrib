@@ -1,0 +1,7 @@
+PV = 3.1.13
+PR = r1
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 20253
+FILES = /usr/share/doc /usr/share/man /usr/share/info /usr/share/gtk-doc /usr/share/gnome/help
+FILELIST = /usr/share/doc/ChangeLog /usr/share/doc/Copyright /usr/share/doc/Problems /usr/share/doc/README /usr/share/doc/timespec /usr/share/man/man1/at.1 /usr/share/man/man1/atq.1 /usr/share/man/man1/atrm.1 /usr/share/man/man1/batch.1 /usr/share/man/man5/at.allow.5 /usr/share/man/man5/at.deny.5 /usr/share/man/man8/atd.8 /usr/share/man/man8/atrun.8

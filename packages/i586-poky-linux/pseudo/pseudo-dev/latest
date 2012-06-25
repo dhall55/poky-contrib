@@ -1,0 +1,7 @@
+PV = 1.3
+PR = r10
+RDEPENDS = pseudo (= 1.3-r10)
+RRECOMMENDS = eglibc-dev pseudo-dev sqlite3-dev
+PKGSIZE = 0
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/pseudo/*.la /lib/*.la
+FILELIST = 

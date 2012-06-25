@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r5
+RDEPENDS = task-qte-toolchain-target (= 1.0-r5)
+RRECOMMENDS = expat-dev libqt-embedded3support4-dev libqt-embeddedclucene4-dev libqt-embeddedcore4-dev libqt-embeddeddbus4-dev libqt-embeddeddesigner4-dev libqt-embeddeddesignercomponents4-dev libqt-embeddedgui4-dev libqt-embeddedhelp4-dev libqt-embeddedmultimedia4-dev libqt-embeddednetwork4-dev libqt-embeddedphonon4-dev libqt-embeddedscript4-dev libqt-embeddedscripttools4-dev libqt-embeddedsql4-dev libqt-embeddedsvg4-dev libqt-embeddedtest4-dev libqt-embeddeduitools4-dev libqt-embeddedwebkit4-dev libqt-embeddedxml4-dev libsqlite3-dev qt4-embedded-mkspecs-dev task-core-standalone-sdk-target-dev task-qte-toolchain-target-dev
+PKGSIZE = 0
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/task-qte-toolchain-target/*.la /lib/*.la
+FILELIST = 

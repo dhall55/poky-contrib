@@ -1,0 +1,4 @@
+PV = 2.2.4
+PR = r8
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native pcre virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = slang-dbg slang-staticdev slang-dev slang-doc slang-locale slang

@@ -1,0 +1,7 @@
+PV = 2.21.1
+PR = r1
+RDEPENDS = eglibc (>= 2.15) util-linux-libblkid (>= 2.21.1)
+RRECOMMENDS = 
+PKGSIZE = 56088
+FILES = /sbin/fsck*
+FILELIST = /sbin/fsck.minix.util-linux /sbin/fsck.util-linux

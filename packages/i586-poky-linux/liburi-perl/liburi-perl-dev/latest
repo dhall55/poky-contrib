@@ -1,0 +1,7 @@
+PV = 1.59
+PR = r1
+RDEPENDS = liburi-perl (= 1.59-r1)
+RRECOMMENDS = liburi-perl-dev perl-dev
+PKGSIZE = 0
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/liburi-perl/*.la /lib/*.la
+FILELIST = 

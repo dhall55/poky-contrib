@@ -1,0 +1,7 @@
+PV = 0.1.10
+PR = r4
+RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3)
+RRECOMMENDS = 
+PKGSIZE = 88244
+FILES = /usr/libexec
+FILELIST = /usr/libexec/gam_server

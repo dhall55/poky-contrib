@@ -1,0 +1,4 @@
+PV = 0.4.1
+PR = r3
+DEPENDS = autoconf-native automake-native gnu-config-native icon-naming-utils-native libtool-native pkgconfig-native
+PACKAGES = sato-icon-theme-dbg sato-icon-theme-staticdev sato-icon-theme-dev sato-icon-theme-doc sato-icon-theme-locale sato-icon-theme

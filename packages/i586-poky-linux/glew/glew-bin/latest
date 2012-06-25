@@ -1,0 +1,7 @@
+PV = 1.7.0
+PR = r1
+RDEPENDS = eglibc (>= 2.15) glew (>= 1.7.0) libgl (>= 7.11) libglu (>= 7.11) libx11-trim (>= 1.4.4)
+RRECOMMENDS = 
+PKGSIZE = 330132
+FILES = /usr/bin/* /usr/sbin/*
+FILELIST = /usr/bin/glewinfo /usr/bin/visualinfo

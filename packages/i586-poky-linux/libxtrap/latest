@@ -1,0 +1,5 @@
+PE = 1
+PV = 1.0.0
+PR = r1
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native libxext libxt pkgconfig-native trapproto util-macros virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = libxtrap-dbg libxtrap-staticdev libxtrap-dev libxtrap-doc libxtrap-locale libxtrap

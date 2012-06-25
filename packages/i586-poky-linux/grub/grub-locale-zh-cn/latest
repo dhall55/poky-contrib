@@ -1,0 +1,7 @@
+PV = 1.99
+PR = r8
+RDEPENDS = grub virtual-locale-zh-cn
+RRECOMMENDS = 
+PKGSIZE = 37197
+FILES = /usr/share/locale/zh_CN
+FILELIST = /usr/share/locale/zh_CN/LC_MESSAGES/grub.mo

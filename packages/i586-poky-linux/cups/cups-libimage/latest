@@ -1,0 +1,7 @@
+PV = 1.4.6
+PR = r4
+RDEPENDS = cups-lib (>= 1.4.6) eglibc (>= 2.15) jpeg (>= 8d) libpng12 (>= 1.2.49)
+RRECOMMENDS = 
+PKGSIZE = 84008
+FILES = /usr/lib/libcupsimage.so.*
+FILELIST = /usr/lib/libcupsimage.so.2

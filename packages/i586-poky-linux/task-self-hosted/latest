@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r10
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-self-hosted task-self-hosted-debug task-self-hosted-sdk task-self-hosted-extended task-self-hosted-graphics task-self-hosted-host-tools

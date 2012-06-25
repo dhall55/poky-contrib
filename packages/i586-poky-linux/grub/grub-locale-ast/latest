@@ -1,0 +1,7 @@
+PV = 1.99
+PR = r8
+RDEPENDS = grub virtual-locale-ast
+RRECOMMENDS = 
+PKGSIZE = 23380
+FILES = /usr/share/locale/ast
+FILELIST = /usr/share/locale/ast/LC_MESSAGES/grub.mo

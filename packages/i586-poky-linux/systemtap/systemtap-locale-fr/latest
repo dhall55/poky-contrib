@@ -1,0 +1,7 @@
+PV = 1.7+git1+83bd2699d8cff2f2d6b9eaf5ea254e4cb6b33e81
+PR = r5
+RDEPENDS = systemtap virtual-locale-fr
+RRECOMMENDS = 
+PKGSIZE = 43668
+FILES = /usr/share/locale/fr
+FILELIST = /usr/share/locale/fr/LC_MESSAGES/systemtap.mo

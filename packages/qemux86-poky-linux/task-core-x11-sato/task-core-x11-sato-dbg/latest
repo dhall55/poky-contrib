@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r31
+RDEPENDS = 
+RRECOMMENDS = connman-gnome-dbg gthumb-dbg gtk-sato-engine-dbg libsdl-dbg matchbox-config-gtk-dbg matchbox-desktop-dbg matchbox-keyboard-dbg matchbox-session-sato-dbg matchbox-stroke-dbg sato-icon-theme-dbg settings-daemon-dbg task-core-x11-sato (= 1.0-r31) task-core-x11-sato-dbg x11vnc-dbg xcursor-transparent-theme-dbg
+PKGSIZE = 0
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/task-core-x11-sato/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = 

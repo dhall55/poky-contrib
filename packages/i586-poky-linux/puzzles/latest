@@ -1,0 +1,4 @@
+PV = r9561
+PR = r0
+DEPENDS = gtk+ libxt virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = puzzles-dbg puzzles-staticdev puzzles-dev puzzles-doc puzzles-locale puzzles

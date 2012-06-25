@@ -1,0 +1,7 @@
+PV = 2.21.1
+PR = r1
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 9952
+FILES = /usr/bin/mcookie
+FILELIST = /usr/bin/mcookie

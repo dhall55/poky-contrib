@@ -1,0 +1,4 @@
+PV = 2.11
+PR = r4
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = dosfstools-dbg dosfstools-staticdev dosfstools-dev dosfstools-doc dosfstools-locale dosfstools

@@ -1,0 +1,7 @@
+PV = 1.99
+PR = r8
+RDEPENDS = grub virtual-locale-sv
+RRECOMMENDS = 
+PKGSIZE = 13316
+FILES = /usr/share/locale/sv
+FILELIST = /usr/share/locale/sv/LC_MESSAGES/grub.mo

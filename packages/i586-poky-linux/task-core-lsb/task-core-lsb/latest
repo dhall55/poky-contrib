@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r9
+RDEPENDS = task-core-db task-core-lsb-command-add task-core-lsb-graphic-add task-core-lsb-perl-add task-core-lsb-python-add task-core-lsb-runtime-add task-core-misc task-core-perl task-core-python task-core-sys-extended task-core-tcl
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/task-core-lsb /usr/lib/task-core-lsb/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers
+FILELIST = 

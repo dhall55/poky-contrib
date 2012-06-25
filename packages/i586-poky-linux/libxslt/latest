@@ -1,0 +1,4 @@
+PV = 1.1.26
+PR = r8
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native libxml2 pkgconfig-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = libxslt-dbg libxslt-staticdev libxslt-dev libxslt-doc libxslt-locale libxslt-bin libxslt

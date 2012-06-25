@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = dpkg virtual-locale-tl
+RRECOMMENDS = 
+PKGSIZE = 58820
+FILES = /usr/share/locale/tl
+FILELIST = /usr/share/locale/tl/LC_MESSAGES/dpkg.mo

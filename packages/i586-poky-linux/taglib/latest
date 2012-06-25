@@ -1,0 +1,4 @@
+PV = 1.6.3
+PR = r2
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native pkgconfig-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = taglib-c taglib-dbg taglib-staticdev taglib-dev taglib-doc taglib-locale taglib

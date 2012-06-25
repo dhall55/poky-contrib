@@ -1,0 +1,7 @@
+PV = 0.0+r12
+PR = r5
+RDEPENDS = 
+RRECOMMENDS = eglibc-dbg ubootchart (= 0.0+r12-r5) ubootchart-dbg
+PKGSIZE = 42262
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/ubootchart/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = /sbin/.debug/ubootchartd_bin /usr/src/debug/ubootchart-0.0+r12-r5/trunk/ubootchartd_bin.c

@@ -1,0 +1,7 @@
+PV = 8.30
+PR = r2
+RDEPENDS = libpcre-dev (= 8.30-r2)
+RRECOMMENDS = 
+PKGSIZE = 847038
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/libpcre/*.a
+FILELIST = /usr/lib/libpcre.a /usr/lib/libpcrecpp.a /usr/lib/libpcreposix.a

@@ -1,0 +1,7 @@
+PV = 1.0+git1+7b47f2f8a15ed13b7905bc120bb2586f3e164f7d
+PR = r9
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 2310
+FILES = /etc/cron.daily /etc/default
+FILELIST = /etc/cron.daily/prelink /etc/default/prelink

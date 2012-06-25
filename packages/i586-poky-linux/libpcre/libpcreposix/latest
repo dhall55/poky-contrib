@@ -1,0 +1,7 @@
+PV = 8.30
+PR = r2
+RDEPENDS = eglibc (>= 2.15) libpcre (>= 8.30)
+RRECOMMENDS = 
+PKGSIZE = 6113
+FILES = /usr/lib/libpcreposix.so.0 /usr/lib/libpcreposix.so.0.0.0
+FILELIST = /usr/lib/libpcreposix.so.0 /usr/lib/libpcreposix.so.0.0.0

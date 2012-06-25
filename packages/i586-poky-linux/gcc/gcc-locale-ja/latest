@@ -1,0 +1,7 @@
+PV = 4.7.1+svnr188658
+PR = r2
+RDEPENDS = gcc virtual-locale-ja
+RRECOMMENDS = 
+PKGSIZE = 534635
+FILES = /usr/share/locale/ja
+FILELIST = /usr/share/locale/ja/LC_MESSAGES/cpplib.mo /usr/share/locale/ja/LC_MESSAGES/gcc.mo

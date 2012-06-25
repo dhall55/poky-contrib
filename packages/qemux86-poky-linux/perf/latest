@@ -1,0 +1,4 @@
+PV = 3.4
+PR = r0
+DEPENDS = binutils elfutils virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/kernel virtual/libc virtual/libc
+PACKAGES = perf-dbg perf-staticdev perf-dev perf-doc perf-locale perf

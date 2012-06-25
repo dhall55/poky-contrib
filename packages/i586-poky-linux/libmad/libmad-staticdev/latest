@@ -1,0 +1,7 @@
+PV = 0.15.1b
+PR = r2
+RDEPENDS = libmad-dev (= 0.15.1b-r2)
+RRECOMMENDS = 
+PKGSIZE = 244572
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/libmad/*.a
+FILELIST = /usr/lib/libmad.a

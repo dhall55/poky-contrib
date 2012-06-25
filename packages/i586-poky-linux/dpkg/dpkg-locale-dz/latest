@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = dpkg virtual-locale-dz
+RRECOMMENDS = 
+PKGSIZE = 135708
+FILES = /usr/share/locale/dz
+FILELIST = /usr/share/locale/dz/LC_MESSAGES/dpkg.mo

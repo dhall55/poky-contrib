@@ -1,0 +1,7 @@
+PV = 1.99
+PR = r8
+RDEPENDS = grub virtual-locale-uk
+RRECOMMENDS = 
+PKGSIZE = 61170
+FILES = /usr/share/locale/uk
+FILELIST = /usr/share/locale/uk/LC_MESSAGES/grub.mo

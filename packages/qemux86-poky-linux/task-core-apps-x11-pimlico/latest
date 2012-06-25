@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r28
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-core-apps-x11-pimlico task-core-apps-x11-pimlico-dbg task-core-apps-x11-pimlico-dev

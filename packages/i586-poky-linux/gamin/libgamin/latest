@@ -1,0 +1,7 @@
+PV = 0.1.10
+PR = r4
+RDEPENDS = eglibc (>= 2.15) gamin
+RRECOMMENDS = 
+PKGSIZE = 60995
+FILES = /usr/lib/lib*.so.*
+FILELIST = /usr/lib/libfam.so.0 /usr/lib/libfam.so.0.0.0 /usr/lib/libgamin-1.so.0 /usr/lib/libgamin-1.so.0.1.10

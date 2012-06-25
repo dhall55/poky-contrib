@@ -1,0 +1,7 @@
+PV = 0.1+svnr5394
+PR = r2
+RDEPENDS = eglibc (>= 2.15) libgsmd (>= 0.1+svnr5394)
+RRECOMMENDS = 
+PKGSIZE = 38972
+FILES = /usr/bin/*
+FILELIST = /usr/bin/libgsmd-tool

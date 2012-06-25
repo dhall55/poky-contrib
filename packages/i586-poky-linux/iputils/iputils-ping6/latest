@@ -1,0 +1,7 @@
+PV = s20101006
+PR = r4
+RDEPENDS = eglibc (>= 2.15) libcrypto (>= 1.0.0i)
+RRECOMMENDS = 
+PKGSIZE = 35224
+FILES = /bin/ping6.iputils
+FILELIST = /bin/ping6.iputils

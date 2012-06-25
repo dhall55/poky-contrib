@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r73
+RDEPENDS = qemu-config task-core-boot
+RRECOMMENDS = kernel-module-af-packet
+PKGSIZE = 0
+FILES = 
+FILELIST = 

@@ -1,0 +1,7 @@
+PV = 0.90
+PR = r0
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 11872
+FILES = /usr/lib/libnpth.so.*
+FILELIST = /usr/lib/libnpth.so.0 /usr/lib/libnpth.so.0.0.1

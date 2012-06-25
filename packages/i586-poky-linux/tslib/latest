@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r20
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native pkgconfig-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = tslib-conf tslib-tests tslib-calibrate tslib-dbg tslib-staticdev tslib-dev tslib-doc tslib-locale tslib

@@ -1,0 +1,4 @@
+PV = 2.3.21
+PR = r1
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native pkgconfig-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = libart-lgpl-dbg libart-lgpl-staticdev libart-lgpl-dev libart-lgpl-doc libart-lgpl-locale libart-lgpl

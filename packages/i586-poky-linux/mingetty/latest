@@ -1,0 +1,4 @@
+PV = 1.08
+PR = r1
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = mingetty-dbg mingetty-staticdev mingetty-dev mingetty-doc mingetty-locale mingetty

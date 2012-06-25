@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r4
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-core-clutter-core task-core-clutter-core-dbg task-core-clutter-core-dev task-core-clutter-apps task-core-clutter-apps-dbg task-core-clutter-apps-dev task-core-clutter-tests task-core-clutter-tests-dbg task-core-clutter-tests-dev

@@ -1,0 +1,4 @@
+PV = 1.2+git1+7055ffd37beeb44714e86a4abc703f7e175a0db5
+PR = r2
+DEPENDS = pkgconfig-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = trace-cmd-dbg trace-cmd-staticdev trace-cmd-dev trace-cmd-doc trace-cmd-locale trace-cmd

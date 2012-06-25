@@ -1,0 +1,4 @@
+PV = 0.1+git1+e05374aae945bcfc6d962ed0d7b2774b77987e1d
+PR = r3
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native pkgconfig-native update-rc.d-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = psplash-default psplash-dbg psplash-staticdev psplash-dev psplash-doc psplash-locale psplash

@@ -1,0 +1,4 @@
+PV = 0.15.19
+PR = r4
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = telepathy-python-dbg telepathy-python-staticdev telepathy-python-dev telepathy-python-doc telepathy-python-locale telepathy-python

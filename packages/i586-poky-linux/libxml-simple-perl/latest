@@ -1,0 +1,4 @@
+PV = 2.18
+PR = r5
+DEPENDS = libxml-parser-perl perl perl-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = libxml-simple-perl-dbg libxml-simple-perl-staticdev libxml-simple-perl-dev libxml-simple-perl-doc libxml-simple-perl-locale libxml-simple-perl

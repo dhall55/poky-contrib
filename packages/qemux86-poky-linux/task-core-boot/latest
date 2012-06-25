@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r9
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/kernel virtual/libc
+PACKAGES = task-core-boot task-core-boot-dbg task-core-boot-dev

@@ -1,0 +1,7 @@
+PV = 2.0.3
+PR = r0
+RDEPENDS = eglibc (>= 2.15) liblzma (>= 5.1.1alpha) zlib (>= 1.2.7)
+RRECOMMENDS = 
+PKGSIZE = 159844
+FILES = /usr/sbin/kexec
+FILELIST = /usr/sbin/kexec

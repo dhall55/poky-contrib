@@ -1,0 +1,7 @@
+PV = 1.7.0
+PR = r1
+RDEPENDS = glew-dev (= 1.7.0-r1)
+RRECOMMENDS = 
+PKGSIZE = 1262380
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/glew/*.a
+FILELIST = /usr/lib/libGLEW.a

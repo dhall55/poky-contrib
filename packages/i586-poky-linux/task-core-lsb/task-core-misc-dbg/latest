@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r9
+RDEPENDS = 
+RRECOMMENDS = elfutils-dbg gettext-dbg gettext-runtime-dbg groff-dbg libusb1-dbg lsb-dbg lsbsetup-dbg lsbtest-dbg lsof-dbg man-dbg man-pages-dbg ncurses-dbg strace-dbg usbutils-dbg zlib-dbg
+PKGSIZE = 0
+FILES = 
+FILELIST = 

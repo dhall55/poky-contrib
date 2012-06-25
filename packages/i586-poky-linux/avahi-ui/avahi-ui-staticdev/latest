@@ -1,0 +1,7 @@
+PV = 0.6.31
+PR = r4.0
+RDEPENDS = avahi-ui-dev (= 0.6.31-r4.0)
+RRECOMMENDS = 
+PKGSIZE = 182264
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/avahi-ui/*.a /usr/lib/libavahi-ui.a
+FILELIST = /usr/lib/libavahi-ui.a

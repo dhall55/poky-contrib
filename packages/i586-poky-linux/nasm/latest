@@ -1,0 +1,4 @@
+PV = 2.10.01
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = nasm-dbg nasm-staticdev nasm-dev nasm-doc nasm-locale nasm

@@ -1,0 +1,7 @@
+PV = 0.5.2
+PR = r0
+RDEPENDS = eglibc (>= 2.15) libgcc (>= 4.7.1+svnr188658) libpulse (>= 1.1) libpulse-simple (>= 1.1) libqtcore4 (>= 4.8.1) libqtgui4 (>= 4.8.1) libstdc++ (>= 4.7.1+svnr188658) qmmp qmmp (>= 0.5.2)
+RRECOMMENDS = 
+PKGSIZE = 28136
+FILES = /usr/lib/qmmp/Output/libpulseaudio.so
+FILELIST = /usr/lib/qmmp/Output/libpulseaudio.so

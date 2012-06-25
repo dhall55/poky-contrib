@@ -1,0 +1,7 @@
+PV = 20120115
+PR = r0
+RDEPENDS = 
+RRECOMMENDS = byacc (= 20120115-r0) byacc-dbg eglibc-dbg
+PKGSIZE = 309508
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/byacc/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = /usr/bin/.debug/byacc /usr/src/debug/byacc-20120115-r0/byacc-20120115/closure.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/defs.h /usr/src/debug/byacc-20120115-r0/byacc-20120115/error.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/graph.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/lalr.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/lr0.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/main.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/mkpar.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/output.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/reader.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/skeleton.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/symtab.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/verbose.c /usr/src/debug/byacc-20120115-r0/byacc-20120115/warshall.c

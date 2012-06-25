@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r1
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-qt4e task-qt4e-base task-qt4e-dbg task-qt4e-dev task-qt4e-base-dbg task-qt4e-base-dev

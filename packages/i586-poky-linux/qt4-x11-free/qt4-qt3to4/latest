@@ -1,0 +1,7 @@
+PV = 4.8.1
+PR = r44.1
+RDEPENDS = eglibc (>= 2.15) libgcc (>= 4.7.1+svnr188658) libqtcore4 (>= 4.8.1) libqtxml4 (>= 4.8.1) libstdc++ (>= 4.7.1+svnr188658)
+RRECOMMENDS = 
+PKGSIZE = 1256919
+FILES = /usr/bin/qt3to4 /usr/share/qt4/q3porting.xml
+FILELIST = /usr/bin/qt3to4 /usr/share/qt4/q3porting.xml

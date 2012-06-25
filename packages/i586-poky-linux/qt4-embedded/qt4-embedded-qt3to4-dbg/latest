@@ -1,0 +1,7 @@
+PV = 4.8.1
+PR = r46.1
+RDEPENDS = 
+RRECOMMENDS = eglibc-dbg libgcc-dbg libqt-embeddedcore4-dbg libqt-embeddedxml4-dbg libstdc++-dbg
+PKGSIZE = 6416804
+FILES = /usr/bin/.debug/qt3to4
+FILELIST = /usr/bin/.debug/qt3to4

@@ -1,0 +1,7 @@
+PV = 0.1+svnr5394
+PR = r2
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 3164
+FILES = /usr/lib/gsmd/libgsmd-machine_generic.so.*
+FILELIST = /usr/lib/gsmd/libgsmd-machine_generic.so.0 /usr/lib/gsmd/libgsmd-machine_generic.so.0.0.0

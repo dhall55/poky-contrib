@@ -1,0 +1,7 @@
+PV = 22.16
+PR = r2
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 28628
+FILES = /usr/bin/fuser.psmisc
+FILELIST = /usr/bin/fuser.psmisc

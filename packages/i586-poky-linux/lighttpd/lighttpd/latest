@@ -1,0 +1,7 @@
+PV = 1.4.30
+PR = r1
+RDEPENDS = eglibc (>= 2.15) libpcre (>= 8.30) lighttpd-module-access lighttpd-module-accesslog lighttpd-module-dirlisting lighttpd-module-indexfile lighttpd-module-staticfile update-rc.d
+RRECOMMENDS = 
+PKGSIZE = 185016
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/lighttpd /usr/lib/lighttpd/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers /etc /www
+FILELIST = /etc/init.d/lighttpd /etc/lighttpd.conf /usr/sbin/lighttpd /usr/sbin/lighttpd-angel /www/pages/index.html

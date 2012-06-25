@@ -1,0 +1,4 @@
+PV = 1.2.1
+PR = r2
+DEPENDS = python python-native python-setuptools-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = python-argparse-dev python-argparse-dbg python-argparse-doc python-argparse

@@ -1,0 +1,7 @@
+PV = 1.3
+PR = r10
+RDEPENDS = pseudo-dev (= 1.3-r10)
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/pseudo/*.a
+FILELIST = 

@@ -1,0 +1,4 @@
+PV = 0.1+git1+0f7019acd9db5383c732d0524c7c3a5eaec9be2b
+PR = r0
+DEPENDS = autoconf-native automake-native curl gconf gconf gconf-native glib-2.0 gnu-config-native gtk+ js libglade libowl libtool-cross libtool-native libxml2 pkgconfig-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc webkit-gtk
+PACKAGES = web-webkit-dbg web-webkit-staticdev web-webkit-dev web-webkit-doc web-webkit-locale web-webkit

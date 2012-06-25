@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r9
+RDEPENDS = 
+RRECOMMENDS = binutils-dbg binutils-symlinks-dbg chkconfig-dbg curl-dbg dhcp-client-dbg diffutils-dbg gamin-dbg hdparm-dbg libaio-dbg libxml2-dbg lrzsz-dbg lsbinitscripts-dbg lzo-dbg mc-dbg mdadm-dbg minicom-dbg neon-dbg parted-dbg pth-dbg quota-dbg screen-dbg setserial-dbg sysstat-dbg unzip-dbg watchdog-dbg which-dbg xinetd-dbg zip-dbg
+PKGSIZE = 0
+FILES = 
+FILELIST = 

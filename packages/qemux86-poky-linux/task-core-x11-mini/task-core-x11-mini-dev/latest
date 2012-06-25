@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r0
+RDEPENDS = task-core-x11-mini (= 1.0-r0)
+RRECOMMENDS = dbus-dev liberation-fonts-dev matchbox-terminal-dev matchbox-wm-dev mesa-dri-driver-swrast-dev mini-x-session-dev pointercal-dev qemugl-dev task-core-x11-mini-dev x11-common-dev xauth-dev xf86-input-evdev-dev xf86-input-keyboard-dev xf86-input-vmmouse-dev xf86-video-vmware-dev xhost-dev xrandr-dev xserver-nodm-init-dev xserver-xorg-dev xset-dev
+PKGSIZE = 0
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/task-core-x11-mini/*.la /lib/*.la
+FILELIST = 

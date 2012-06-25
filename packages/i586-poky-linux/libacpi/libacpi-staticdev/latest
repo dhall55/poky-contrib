@@ -1,0 +1,7 @@
+PV = 0.2
+PR = r5
+RDEPENDS = libacpi-dev (= 0.2-r5)
+RRECOMMENDS = 
+PKGSIZE = 44612
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/libacpi/*.a
+FILELIST = /usr/lib/libacpi.a

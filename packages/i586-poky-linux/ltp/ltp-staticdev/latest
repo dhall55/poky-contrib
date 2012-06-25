@@ -1,0 +1,7 @@
+PV = 20120401
+PR = r4
+RDEPENDS = ltp-dev (= 20120401-r4)
+RRECOMMENDS = 
+PKGSIZE = 23110
+FILES = /opt/ltp/lib/*.a /lib/*.a /opt/ltp/lib/ltp/*.a /opt/ltp/lib/libmem.a
+FILELIST = /opt/ltp/lib/libmem.a

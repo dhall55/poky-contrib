@@ -1,0 +1,4 @@
+PV = 0.1+svnr5394
+PR = r2
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native pkgconfig-native update-rc.d-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = libgsmd-tools gsmd-plugins gsmd-plugin-machine-generic gsmd-plugin-machine-telit gsmd-plugin-machine-tihtc gsmd-plugin-machine-gta01 gsmd-plugin-vendor-bcm gsmd-plugin-vendor-qc gsmd-plugin-vendor-ti gsmd-plugin-vendor-telit gsmd-plugin-vendor-tihtc libgsmd-dbg libgsmd-staticdev libgsmd-dev libgsmd-doc libgsmd-locale libgsmd

@@ -1,0 +1,7 @@
+PV = 8d
+PR = r0
+RDEPENDS = jpeg-dev (= 8d-r0)
+RRECOMMENDS = 
+PKGSIZE = 1618196
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/jpeg/*.a
+FILELIST = /usr/lib/libjpeg.a

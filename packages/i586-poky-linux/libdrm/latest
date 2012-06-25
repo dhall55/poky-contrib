@@ -1,0 +1,4 @@
+PV = 2.4.34
+PR = r0
+DEPENDS = autoconf-native automake-native cairo gnu-config-native libpciaccess libpthread-stubs libtool-cross libtool-native pkgconfig-native udev virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc virtual/libx11
+PACKAGES = libdrm-tests libdrm-drivers libdrm-kms libdrm-dbg libdrm-staticdev libdrm-dev libdrm-doc libdrm-locale libdrm

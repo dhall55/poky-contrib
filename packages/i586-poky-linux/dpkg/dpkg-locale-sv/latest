@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = dpkg virtual-locale-sv
+RRECOMMENDS = 
+PKGSIZE = 228548
+FILES = /usr/share/locale/sv
+FILELIST = /usr/share/locale/sv/LC_MESSAGES/dpkg-dev.mo /usr/share/locale/sv/LC_MESSAGES/dpkg.mo

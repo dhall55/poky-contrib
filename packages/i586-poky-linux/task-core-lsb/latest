@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r9
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-core-lsb task-core-sys-extended task-core-sys-extended-dbg task-core-sys-extended-dev task-core-db task-core-db-dbg task-core-db-dev task-core-misc task-core-misc-dbg task-core-misc-dev task-core-perl task-core-perl-dbg task-core-perl-dev task-core-python task-core-python-dbg task-core-python-dev task-core-tcl task-core-tcl-dbg task-core-tcl-dev task-core-lsb-perl-add task-core-lsb-python-add task-core-lsb-graphic-add task-core-lsb-runtime-add task-core-lsb-command-add

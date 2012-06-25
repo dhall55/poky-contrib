@@ -1,0 +1,7 @@
+PV = s20101006
+PR = r4
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 32192
+FILES = /bin/ping.iputils
+FILELIST = /bin/ping.iputils

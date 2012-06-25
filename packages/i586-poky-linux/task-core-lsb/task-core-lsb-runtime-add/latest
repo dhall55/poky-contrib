@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r9
+RDEPENDS = e2fsprogs-mke2fs eglibc-binaries eglibc-charmaps eglibc-extra-nss eglibc-gconvs eglibc-localedata-posix eglibc-localedatas eglibc-pcprofile eglibc-pic eglibc-utils ldd liburi-perl libxml-parser-perl libxml-perl libxml-sax-perl mkfontdir pam-plugin-wheel
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = 
+FILELIST = 

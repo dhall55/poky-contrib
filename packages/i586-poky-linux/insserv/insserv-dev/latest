@@ -1,0 +1,7 @@
+PV = 1.14.0
+PR = r0
+RDEPENDS = insserv (= 1.14.0-r0)
+RRECOMMENDS = eglibc-dev insserv-dev
+PKGSIZE = 0
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/insserv/*.la /lib/*.la
+FILELIST = 

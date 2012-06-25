@@ -1,0 +1,7 @@
+PV = 1.28.4
+PR = r8
+RDEPENDS = eglibc (>= 2.15) expat (>= 2.1.0) fontconfig (>= 2.9.0) freetype (>= 2.4.9) glib-2.0 (>= 2.32.3) libffi (>= 3.0.10) libstdc++ (>= 4.7.1+svnr188658) pango pango (>= 1.28.4)
+RRECOMMENDS = 
+PKGSIZE = 10412
+FILES = /usr/lib/pango/1.6.0/modules/pango-hangul-fc.so
+FILELIST = /usr/lib/pango/1.6.0/modules/pango-hangul-fc.so

@@ -1,0 +1,7 @@
+PV = 2.2.4
+PR = r8
+RDEPENDS = slang (= 2.2.4-r8)
+RRECOMMENDS = eglibc-dev pcre-dev slang-dev
+PKGSIZE = 100023
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/slang/*.la /lib/*.la
+FILELIST = /usr/include/slang.h /usr/include/slcurses.h /usr/lib/libslang.so /usr/lib/pkgconfig/slang.pc

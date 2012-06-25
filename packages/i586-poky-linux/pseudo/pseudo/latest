@@ -1,0 +1,7 @@
+PV = 1.3
+PR = r10
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 2327628
+FILES = /usr/lib/pseudo/lib*/libpseudo.so /usr/bin/* /var/pseudo /usr/var/pseudo
+FILELIST = /usr/bin/pseudo /usr/bin/pseudodb /usr/bin/pseudolog /usr/lib/pseudo/lib/libpseudo.so

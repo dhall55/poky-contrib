@@ -1,0 +1,7 @@
+PV = 0.2
+PR = r5
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 38199
+FILES = /usr/lib/libacpi.so.*
+FILELIST = /usr/lib/libacpi.so.0

@@ -1,0 +1,7 @@
+PV = 3.0.4
+PR = r0
+RDEPENDS = eglibc (>= 2.15) libgcc (>= 4.7.1+svnr188658) libstdc++ (>= 4.7.1+svnr188658)
+RRECOMMENDS = 
+PKGSIZE = 81884
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/gperf /usr/lib/gperf/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers
+FILELIST = /usr/bin/gperf

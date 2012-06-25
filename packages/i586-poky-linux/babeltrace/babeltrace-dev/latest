@@ -1,0 +1,7 @@
+PV = 0.8+git1+efc5077568403009493d1d72e94f292838825e51
+PR = r0
+RDEPENDS = babeltrace (= 0.8+git1+efc5077568403009493d1d72e94f292838825e51-r0)
+RRECOMMENDS = babeltrace-dev eglibc-dev glib-2.0-dev gtk+-dev popt-dev util-linux-dev util-linux-libuuid-dev
+PKGSIZE = 18669
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/babeltrace/*.la /lib/*.la
+FILELIST = /usr/include/babeltrace.h /usr/lib/libbabeltrace.la /usr/lib/libbabeltrace.so /usr/lib/libbabeltrace_registry.la /usr/lib/libbabeltrace_registry.so /usr/lib/libbabeltrace_types.la /usr/lib/libbabeltrace_types.so /usr/lib/libbt-dummy.la /usr/lib/libbt-dummy.so /usr/lib/libctf-ast.la /usr/lib/libctf-ast.so /usr/lib/libctf-parser.la /usr/lib/libctf-parser.so /usr/lib/libctf-text-types.la /usr/lib/libctf-text-types.so /usr/lib/libctf-text.la /usr/lib/libctf-text.so /usr/lib/libctf-types.la /usr/lib/libctf-types.so /usr/lib/libctf.la /usr/lib/libctf.so /usr/lib/libprio_heap.la /usr/lib/libprio_heap.so

@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r29
+RDEPENDS = 
+RRECOMMENDS = base-passwd-dbg shadow-dbg sudo-dbg update-rc.d-dbg xserver-nodm-init (= 1.0-r29) xserver-nodm-init-dbg
+PKGSIZE = 0
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/xserver-nodm-init/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = 

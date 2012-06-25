@@ -1,0 +1,5 @@
+PE = 1
+PV = 6.0
+PR = r3
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = unzip-dbg unzip-staticdev unzip-dev unzip-doc unzip-locale unzip

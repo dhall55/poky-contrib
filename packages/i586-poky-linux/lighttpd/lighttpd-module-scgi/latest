@@ -1,0 +1,7 @@
+PV = 1.4.30
+PR = r1
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 35732
+FILES = /usr/lib/mod_scgi.so
+FILELIST = /usr/lib/mod_scgi.so

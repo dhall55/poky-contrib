@@ -1,0 +1,7 @@
+PV = 0.3.3
+PR = r4
+RDEPENDS = libtelepathy-dev (= 0.3.3-r4)
+RRECOMMENDS = 
+PKGSIZE = 266052
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/libtelepathy/*.a
+FILELIST = /usr/lib/libtelepathy.a

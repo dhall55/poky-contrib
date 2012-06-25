@@ -1,0 +1,7 @@
+PV = 0.10.31
+PR = r1
+RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3) gst-plugins-good gstreamer (>= 0.10.36) libffi (>= 3.0.10) libgcc (>= 4.7.1+svnr188658) libgsttag-0.10 (>= 0.10.36) liblzma (>= 5.1.1alpha) libstdc++ (>= 4.7.1+svnr188658) libxml2 (>= 2.7.8) taglib (>= 1.6.3) zlib (>= 1.2.7)
+RRECOMMENDS = 
+PKGSIZE = 44628
+FILES = /usr/lib/gstreamer-0.10/libgsttaglib.so
+FILELIST = /usr/lib/gstreamer-0.10/libgsttaglib.so

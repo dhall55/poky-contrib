@@ -1,0 +1,7 @@
+PV = 0.7.14
+PR = r13
+RDEPENDS = apt (>= 0.7.14) eglibc (>= 2.15) libgcc (>= 4.7.1+svnr188658) libstdc++ (>= 4.7.1+svnr188658)
+RRECOMMENDS = 
+PKGSIZE = 54188
+FILES = /usr/bin/apt-sortpkgs /usr/bin/apt-extracttemplates
+FILELIST = /usr/bin/apt-extracttemplates /usr/bin/apt-sortpkgs

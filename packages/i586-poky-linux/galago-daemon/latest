@@ -1,0 +1,4 @@
+PV = 0.5.1
+PR = r0
+DEPENDS = autoconf-native automake-native dbus gettext-native glib-2.0 gnu-config-native libgalago libtool-cross libtool-native pkgconfig-native virtual/gettext virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = galago-daemon-dbg galago-daemon-staticdev galago-daemon-dev galago-daemon-doc galago-daemon-locale galago-daemon

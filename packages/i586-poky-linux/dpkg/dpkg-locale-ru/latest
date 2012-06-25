@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = dpkg virtual-locale-ru
+RRECOMMENDS = 
+PKGSIZE = 309655
+FILES = /usr/share/locale/ru
+FILELIST = /usr/share/locale/ru/LC_MESSAGES/dpkg-dev.mo /usr/share/locale/ru/LC_MESSAGES/dpkg.mo

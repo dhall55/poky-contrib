@@ -1,0 +1,7 @@
+PV = 0.3.8
+PR = r0
+RDEPENDS = 
+RRECOMMENDS = eglibc-dbg libxau-dbg libxcb-dbg libxdmcp-dbg pkgconfig-dbg xcb-proto-dbg xcb-util-wm (= 0.3.8-r0) xcb-util-wm-dbg
+PKGSIZE = 374671
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/xcb-util-wm/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = /usr/lib/.debug/libxcb-ewmh.so /usr/lib/.debug/libxcb-ewmh.so.1 /usr/lib/.debug/libxcb-ewmh.so.1.0.0 /usr/lib/.debug/libxcb-icccm.so /usr/lib/.debug/libxcb-icccm.so.4 /usr/lib/.debug/libxcb-icccm.so.4.0.0 /usr/src/debug/xcb-util-wm-0.3.8-r0/xcb-util-wm-0.3.8/ewmh/ewmh.c /usr/src/debug/xcb-util-wm-0.3.8-r0/xcb-util-wm-0.3.8/ewmh/xcb_ewmh.h /usr/src/debug/xcb-util-wm-0.3.8-r0/xcb-util-wm-0.3.8/icccm/icccm.c /usr/src/debug/xcb-util-wm-0.3.8-r0/xcb-util-wm-0.3.8/icccm/xcb_icccm.h

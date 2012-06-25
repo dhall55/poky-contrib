@@ -1,0 +1,7 @@
+PV = 8.0.1
+PR = r2
+RDEPENDS = mesa-demos (= 8.0.1-r2) pkgconfig
+RRECOMMENDS = eglibc-dev glew-dev libgl-dev libx11-trim-dev libxext-dev mesa-demos-dev pkgconfig-dev
+PKGSIZE = 0
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/mesa-demos/*.la /lib/*.la
+FILELIST = 

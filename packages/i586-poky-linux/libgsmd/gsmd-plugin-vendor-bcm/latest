@@ -1,0 +1,7 @@
+PV = 0.1+svnr5394
+PR = r2
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 4579
+FILES = /usr/lib/gsmd/libgsmd-vendor_bcm.so.*
+FILELIST = /usr/lib/gsmd/libgsmd-vendor_bcm.so.0 /usr/lib/gsmd/libgsmd-vendor_bcm.so.0.0.0

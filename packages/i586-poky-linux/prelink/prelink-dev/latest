@@ -1,0 +1,7 @@
+PV = 1.0+git1+7b47f2f8a15ed13b7905bc120bb2586f3e164f7d
+PR = r9
+RDEPENDS = prelink (= 1.0+git1+7b47f2f8a15ed13b7905bc120bb2586f3e164f7d-r9)
+RRECOMMENDS = binutils-dev eglibc-dev elfutils-dev prelink-dev
+PKGSIZE = 0
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/prelink/*.la /lib/*.la
+FILELIST = 

@@ -1,0 +1,7 @@
+PV = 1.7+git1+83bd2699d8cff2f2d6b9eaf5ea254e4cb6b33e81
+PR = r5
+RDEPENDS = systemtap (= 1.7+git1+83bd2699d8cff2f2d6b9eaf5ea254e4cb6b33e81-r5)
+RRECOMMENDS = eglibc-dev elfutils-dev libgcc-dev libsqlite3-dev libstdc++-dev sqlite3-dev systemtap-dev
+PKGSIZE = 17396
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/systemtap/*.la /lib/*.la
+FILELIST = /usr/include/sys/sdt-config.h /usr/include/sys/sdt.h

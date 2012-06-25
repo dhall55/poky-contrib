@@ -1,0 +1,4 @@
+PV = 20120115
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = byacc-dbg byacc-staticdev byacc-dev byacc-doc byacc-locale byacc

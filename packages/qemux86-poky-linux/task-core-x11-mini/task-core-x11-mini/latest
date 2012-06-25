@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r0
+RDEPENDS = dbus liberation-fonts matchbox-terminal matchbox-wm mesa-dri-driver-swrast mini-x-session pointercal qemugl x11-common xauth xf86-input-evdev xf86-input-keyboard xf86-input-vmmouse xf86-video-vmware xhost xrandr xserver-nodm-init xserver-xorg xset
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = /usr/bin/* /usr/sbin/* /usr/libexec/* /usr/lib/lib*.so.* /etc /com /var /bin/* /sbin/* /lib/*.so.* /usr/share/task-core-x11-mini /usr/lib/task-core-x11-mini/* /usr/share/pixmaps /usr/share/applications /usr/share/idl /usr/share/omf /usr/share/sounds /usr/lib/bonobo/servers
+FILELIST = 

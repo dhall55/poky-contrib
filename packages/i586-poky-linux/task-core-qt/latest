@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r3
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-core-qt-demos task-core-qt-demos-dbg task-core-qt-demos-dev

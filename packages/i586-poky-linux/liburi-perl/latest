@@ -1,0 +1,4 @@
+PV = 1.59
+PR = r1
+DEPENDS = perl perl perl-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = liburi-perl-dbg liburi-perl-staticdev liburi-perl-dev liburi-perl-doc liburi-perl-locale liburi-perl

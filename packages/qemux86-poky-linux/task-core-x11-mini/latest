@@ -1,0 +1,4 @@
+PV = 1.0
+PR = r0
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = task-core-x11-mini task-core-x11-mini-dbg task-core-x11-mini-dev

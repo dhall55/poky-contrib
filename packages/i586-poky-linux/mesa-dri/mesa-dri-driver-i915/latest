@@ -1,0 +1,8 @@
+PE = 2
+PV = 7.11
+PR = r14.1
+RDEPENDS = eglibc (>= 2.15) expat (>= 2.1.0) libdrm (>= 2.4.34) libdrm-drivers (>= 2.4.34) libgcc (>= 4.7.1+svnr188658) libstdc++ (>= 4.7.1+svnr188658)
+RRECOMMENDS = 
+PKGSIZE = 3648328
+FILES = /usr/lib/dri/i915_dri.so
+FILELIST = /usr/lib/dri/i915_dri.so

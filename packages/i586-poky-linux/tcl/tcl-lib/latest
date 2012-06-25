@@ -1,0 +1,7 @@
+PV = 8.5.11
+PR = r6
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 1180444
+FILES = /usr/lib/libtcl8.5.so*
+FILELIST = /usr/lib/libtcl8.5.so

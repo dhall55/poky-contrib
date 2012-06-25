@@ -1,0 +1,4 @@
+PV = 0.10.0
+PR = r2
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native libxml2 readline virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = augeas-lenses libaugeas libaugeas-dev libaugeas-staticdev libaugeas-dbg augeas-dbg augeas-staticdev augeas-dev augeas-doc augeas-locale augeas

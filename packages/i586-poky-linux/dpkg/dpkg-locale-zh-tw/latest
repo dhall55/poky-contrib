@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = dpkg virtual-locale-zh-tw
+RRECOMMENDS = 
+PKGSIZE = 87619
+FILES = /usr/share/locale/zh_TW
+FILELIST = /usr/share/locale/zh_TW/LC_MESSAGES/dpkg.mo

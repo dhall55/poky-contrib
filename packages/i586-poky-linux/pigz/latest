@@ -1,0 +1,4 @@
+PV = 2.2.4
+PR = r2
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc zlib
+PACKAGES = pigz-dbg pigz-staticdev pigz-dev pigz-doc pigz-locale pigz

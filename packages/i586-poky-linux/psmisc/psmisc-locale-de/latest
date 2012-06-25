@@ -1,0 +1,7 @@
+PV = 22.16
+PR = r2
+RDEPENDS = psmisc virtual-locale-de
+RRECOMMENDS = 
+PKGSIZE = 12787
+FILES = /usr/share/locale/de
+FILELIST = /usr/share/locale/de/LC_MESSAGES/psmisc.mo

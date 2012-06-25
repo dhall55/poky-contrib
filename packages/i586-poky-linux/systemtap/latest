@@ -1,0 +1,4 @@
+PV = 1.7+git1+83bd2699d8cff2f2d6b9eaf5ea254e4cb6b33e81
+PR = r5
+DEPENDS = autoconf-native automake-native elfutils gettext-native gnu-config-native libtool-cross libtool-native sqlite3 systemtap-native virtual/gettext virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = systemtap-dbg systemtap-staticdev systemtap-dev systemtap-doc systemtap systemtap-locale-en systemtap-locale-fr systemtap-locale-pl

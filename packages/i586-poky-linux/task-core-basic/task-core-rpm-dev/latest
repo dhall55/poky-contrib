@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r4
+RDEPENDS = 
+RRECOMMENDS = beecrypt-dev rpm-dev zypper-dev
+PKGSIZE = 0
+FILES = 
+FILELIST = 

@@ -1,0 +1,7 @@
+PV = 6.0p1
+PR = r2
+RDEPENDS = base-passwd eglibc (>= 2.15) libcrypto (>= 1.0.0i) openssh-keygen shadow update-rc.d zlib (>= 1.2.7)
+RRECOMMENDS = 
+PKGSIZE = 595414
+FILES = /usr/sbin/sshd /etc/init.d/sshd /etc/ssh/moduli /etc/ssh/sshd_config
+FILELIST = /etc/init.d/sshd /etc/ssh/moduli /etc/ssh/sshd_config /usr/sbin/sshd

@@ -1,0 +1,7 @@
+PV = s20101006
+PR = r4
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 8628
+FILES = /bin/tracepath
+FILELIST = /bin/tracepath

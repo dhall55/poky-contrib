@@ -1,0 +1,7 @@
+PV = 0.1+svnr5394
+PR = r2
+RDEPENDS = libgsmd-dev (= 0.1+svnr5394-r2)
+RRECOMMENDS = 
+PKGSIZE = 276290
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/libgsmd/*.a /usr/lib/gsmd/*.a
+FILELIST = /usr/lib/gsmd/libgsmd-machine_generic.a /usr/lib/gsmd/libgsmd-machine_gta01.a /usr/lib/gsmd/libgsmd-machine_telit.a /usr/lib/gsmd/libgsmd-machine_tihtc.a /usr/lib/gsmd/libgsmd-vendor_bcm.a /usr/lib/gsmd/libgsmd-vendor_qc.a /usr/lib/gsmd/libgsmd-vendor_telit.a /usr/lib/gsmd/libgsmd-vendor_ti.a /usr/lib/gsmd/libgsmd-vendor_tihtc.a /usr/lib/libgsmd.a

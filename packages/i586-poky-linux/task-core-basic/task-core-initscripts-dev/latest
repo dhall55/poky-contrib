@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r4
+RDEPENDS = 
+RRECOMMENDS = ethtool-dev initscripts-dev mingetty-dev sysklogd-dev sysvinit-dev
+PKGSIZE = 0
+FILES = 
+FILELIST = 

@@ -1,0 +1,7 @@
+PV = 0.5.2
+PR = r0
+RDEPENDS = alsa-lib curl eglibc (>= 2.15) libgcc (>= 4.7.1+svnr188658) libmad libqtcore4 (>= 4.8.1) libqtgui4 (>= 4.8.1) libqtnetwork4 (>= 4.8.1) libstdc++ (>= 4.7.1+svnr188658) libx11-trim (>= 1.4.4) taglib
+RRECOMMENDS = 
+PKGSIZE = 1998784
+FILES = /usr/bin/qmmp /usr/lib/lib*.so.* /usr/share/icons/* /usr/share/qmmp/images/* /usr/share/applications/*
+FILELIST = /usr/bin/qmmp /usr/lib/libqmmp.so.0 /usr/lib/libqmmp.so.0.5.2 /usr/lib/libqmmpui.so.0 /usr/lib/libqmmpui.so.0.5.2 /usr/share/applications/qmmp.desktop /usr/share/applications/qmmp_cue.desktop /usr/share/applications/qmmp_enqueue.desktop /usr/share/icons/hicolor/16x16/apps/qmmp.png /usr/share/icons/hicolor/32x32/apps/qmmp.png /usr/share/icons/hicolor/48x48/apps/qmmp.png /usr/share/icons/hicolor/scalable/apps/qmmp-simple.svgz /usr/share/icons/hicolor/scalable/apps/qmmp.svgz /usr/share/qmmp/images/app_icon.png /usr/share/qmmp/images/empty_cover.png

@@ -1,0 +1,4 @@
+PV = 0.1+git1+f133472318970796fae1ea3e98ac062156768baf
+PR = r1
+DEPENDS = autoconf-native automake-native gnu-config-native libowl-av libtool-cross libtool-native pkgconfig-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = owl-video-dbg owl-video-staticdev owl-video-dev owl-video-doc owl-video-locale owl-video

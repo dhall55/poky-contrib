@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r7
+RDEPENDS = e2fsprogs-mke2fs grub parted
+RRECOMMENDS = 
+PKGSIZE = 4807
+FILES = /install.sh
+FILELIST = /./install.sh

@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r5
+RDEPENDS = 
+RRECOMMENDS = expat-dbg libqt-embedded3support4-dbg libqt-embeddedclucene4-dbg libqt-embeddedcore4-dbg libqt-embeddeddbus4-dbg libqt-embeddeddesigner4-dbg libqt-embeddeddesignercomponents4-dbg libqt-embeddedgui4-dbg libqt-embeddedhelp4-dbg libqt-embeddedmultimedia4-dbg libqt-embeddednetwork4-dbg libqt-embeddedphonon4-dbg libqt-embeddedscript4-dbg libqt-embeddedscripttools4-dbg libqt-embeddedsql4-dbg libqt-embeddedsvg4-dbg libqt-embeddedtest4-dbg libqt-embeddeduitools4-dbg libqt-embeddedwebkit4-dbg libqt-embeddedxml4-dbg libsqlite3-dbg qt4-embedded-mkspecs-dbg task-core-standalone-sdk-target-dbg task-qte-toolchain-target (= 1.0-r5) task-qte-toolchain-target-dbg
+PKGSIZE = 0
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/task-qte-toolchain-target/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = 

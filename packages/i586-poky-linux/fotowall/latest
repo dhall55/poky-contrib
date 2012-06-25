@@ -1,0 +1,4 @@
+PV = 0.9
+PR = r3
+DEPENDS = pkgconfig-native qt4-tools-native qt4-x11-free virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = fotowall-dbg fotowall-staticdev fotowall-dev fotowall-doc fotowall-locale fotowall

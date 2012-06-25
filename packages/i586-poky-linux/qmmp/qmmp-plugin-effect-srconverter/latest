@@ -1,0 +1,7 @@
+PV = 0.5.2
+PR = r0
+RDEPENDS = eglibc (>= 2.15) libgcc (>= 4.7.1+svnr188658) libqtcore4 (>= 4.8.1) libqtgui4 (>= 4.8.1) libsamplerate0 (>= 0.1.8) libstdc++ (>= 4.7.1+svnr188658) qmmp qmmp (>= 0.5.2)
+RRECOMMENDS = 
+PKGSIZE = 53268
+FILES = /usr/lib/qmmp/Effect/libsrconverter.so
+FILELIST = /usr/lib/qmmp/Effect/libsrconverter.so

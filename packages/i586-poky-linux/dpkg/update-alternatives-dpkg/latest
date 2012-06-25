@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 38756
+FILES = /usr/sbin/update-alternatives /var/lib/dpkg/alternatives /etc/alternatives
+FILELIST = /etc/alternatives/README /usr/sbin/update-alternatives

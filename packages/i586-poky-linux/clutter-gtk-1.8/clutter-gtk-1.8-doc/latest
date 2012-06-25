@@ -1,0 +1,7 @@
+PV = 0.11.4
+PR = r0
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 138529
+FILES = /usr/share/doc /usr/share/man /usr/share/info /usr/share/gtk-doc /usr/share/gnome/help
+FILELIST = /usr/share/gtk-doc/html/clutter-gtk/GtkClutterActor.html /usr/share/gtk-doc/html/clutter-gtk/GtkClutterEmbed.html /usr/share/gtk-doc/html/clutter-gtk/GtkClutterWindow.html /usr/share/gtk-doc/html/clutter-gtk/annotation-glossary.html /usr/share/gtk-doc/html/clutter-gtk/ch01.html /usr/share/gtk-doc/html/clutter-gtk/ch02.html /usr/share/gtk-doc/html/clutter-gtk/ch03.html /usr/share/gtk-doc/html/clutter-gtk/clutter-gtk-Utility-Functions.html /usr/share/gtk-doc/html/clutter-gtk/clutter-gtk.devhelp /usr/share/gtk-doc/html/clutter-gtk/clutter-gtk.devhelp2 /usr/share/gtk-doc/html/clutter-gtk/cluttergtk-glossary.html /usr/share/gtk-doc/html/clutter-gtk/cluttergtk-object-hierarchy.html /usr/share/gtk-doc/html/clutter-gtk/cluttergtk-object-index.html /usr/share/gtk-doc/html/clutter-gtk/cluttergtk-objects.html /usr/share/gtk-doc/html/clutter-gtk/home.png /usr/share/gtk-doc/html/clutter-gtk/index.html /usr/share/gtk-doc/html/clutter-gtk/index.sgml /usr/share/gtk-doc/html/clutter-gtk/ix01.html /usr/share/gtk-doc/html/clutter-gtk/ix02.html /usr/share/gtk-doc/html/clutter-gtk/ix03.html /usr/share/gtk-doc/html/clutter-gtk/ix04.html /usr/share/gtk-doc/html/clutter-gtk/left.png /usr/share/gtk-doc/html/clutter-gtk/license.html /usr/share/gtk-doc/html/clutter-gtk/right.png /usr/share/gtk-doc/html/clutter-gtk/style.css /usr/share/gtk-doc/html/clutter-gtk/up.png

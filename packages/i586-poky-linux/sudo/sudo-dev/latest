@@ -1,0 +1,7 @@
+PV = 1.8.4p4
+PR = r1
+RDEPENDS = sudo (= 1.8.4p4-r1)
+RRECOMMENDS = eglibc-dev sudo-dev zlib-dev
+PKGSIZE = 5091
+FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/sudo/*.la /lib/*.la
+FILELIST = /usr/include/sudo_plugin.h

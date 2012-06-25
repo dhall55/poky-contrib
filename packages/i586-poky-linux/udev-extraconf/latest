@@ -1,0 +1,4 @@
+PV = 0.0
+PR = r2
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = udev-extraconf-dbg udev-extraconf-staticdev udev-extraconf-dev udev-extraconf-doc udev-extraconf-locale udev-extraconf

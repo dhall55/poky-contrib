@@ -1,0 +1,4 @@
+PV = 0.0+r12
+PR = r5
+DEPENDS = virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = ubootchart-dbg ubootchart-staticdev ubootchart-dev ubootchart-doc ubootchart-locale ubootchart

@@ -1,0 +1,7 @@
+PV = 1.24
+PR = r2
+RDEPENDS = libidn-dev (= 1.24-r2)
+RRECOMMENDS = 
+PKGSIZE = 348958
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/libidn/*.a
+FILELIST = /usr/lib/libidn.a

@@ -1,0 +1,7 @@
+PV = 1.49.0
+PR = r4.0
+RDEPENDS = eglibc (>= 2.15) libgcc (>= 4.7.1+svnr188658) libstdc++ (>= 4.7.1+svnr188658)
+RRECOMMENDS = 
+PKGSIZE = 52952
+FILES = /usr/lib/libboost_iostreams*.so.*
+FILELIST = /usr/lib/libboost_iostreams.so.1.49.0

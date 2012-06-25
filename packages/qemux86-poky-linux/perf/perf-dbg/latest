@@ -1,0 +1,7 @@
+PV = 3.4
+PR = r0
+RDEPENDS = 
+RRECOMMENDS = binutils-dbg eglibc-dbg elfutils-dbg perf (= 3.4-r0) perf-dbg perl-dbg python-dbg
+PKGSIZE = 3182730
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/perf/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = /usr/bin/.debug/perf /usr/src/debug/perf-3.4-r0/perf-3.4/common-cmds.h /usr/src/debug/perf-3.4-r0/perf-3.4/util/parse-events-bison.c /usr/src/debug/perf-3.4-r0/perf-3.4/util/parse-events-bison.h /usr/src/debug/perf-3.4-r0/perf-3.4/util/parse-events-flex.c /usr/src/debug/perf-3.4-r0/perf-3.4/util/parse-events-flex.h /usr/src/debug/perf-3.4-r0/perf-3.4/util/pmu-bison.c /usr/src/debug/perf-3.4-r0/perf-3.4/util/pmu-bison.h /usr/src/debug/perf-3.4-r0/perf-3.4/util/pmu-flex.c

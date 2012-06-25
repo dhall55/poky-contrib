@@ -1,0 +1,7 @@
+PV = 1.6.2
+PR = r0
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 57334
+FILES = /usr/lib/libossp-uuid.so.16*
+FILELIST = /usr/lib/libossp-uuid.so.16 /usr/lib/libossp-uuid.so.16.0.22

@@ -1,0 +1,4 @@
+PV = 2.1.0
+PR = r2
+DEPENDS = python python-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = python-scons-dev python-scons-dbg python-scons-doc python-scons

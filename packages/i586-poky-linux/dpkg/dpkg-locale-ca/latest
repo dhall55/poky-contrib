@@ -1,0 +1,7 @@
+PV = 1.15.8.7
+PR = r16.4
+RDEPENDS = dpkg virtual-locale-ca
+RRECOMMENDS = 
+PKGSIZE = 168527
+FILES = /usr/share/locale/ca
+FILELIST = /usr/share/locale/ca/LC_MESSAGES/dpkg-dev.mo /usr/share/locale/ca/LC_MESSAGES/dpkg.mo

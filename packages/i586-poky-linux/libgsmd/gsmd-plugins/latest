@@ -1,0 +1,7 @@
+PV = 0.1+svnr5394
+PR = r2
+RDEPENDS = gsmd-plugin-machine-generic gsmd-plugin-machine-gta01 gsmd-plugin-machine-telit gsmd-plugin-machine-tihtc gsmd-plugin-vendor-bcm gsmd-plugin-vendor-qc gsmd-plugin-vendor-telit gsmd-plugin-vendor-ti gsmd-plugin-vendor-tihtc
+RRECOMMENDS = 
+PKGSIZE = 0
+FILES = 
+FILELIST = 

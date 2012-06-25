@@ -1,0 +1,4 @@
+PV = 7.19.0
+PR = r3
+DEPENDS = curl python python python-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = python-pycurl-dev python-pycurl-dbg python-pycurl-doc python-pycurl

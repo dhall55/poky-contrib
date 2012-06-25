@@ -1,0 +1,7 @@
+PV = 4.8.1
+PR = r46.1
+RDEPENDS = 
+RRECOMMENDS = directfb-dbg eglibc-dbg libgcc-dbg libqt-embeddedcore4-dbg libqt-embeddedgui4-dbg libstdc++-dbg
+PKGSIZE = 2239024
+FILES = /usr/lib/qtopia/plugins/gfxdrivers/.debug/libqdirectfbscreen.so
+FILELIST = /usr/lib/qtopia/plugins/gfxdrivers/.debug/libqdirectfbscreen.so

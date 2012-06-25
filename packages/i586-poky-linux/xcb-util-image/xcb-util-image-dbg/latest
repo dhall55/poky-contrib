@@ -1,0 +1,7 @@
+PV = 0.3.8
+PR = r0
+RDEPENDS = 
+RRECOMMENDS = eglibc-dbg libxau-dbg libxcb-dbg libxcb-shm-dbg libxdmcp-dbg pkgconfig-dbg xcb-util-dbg xcb-util-image (= 0.3.8-r0) xcb-util-image-dbg
+PKGSIZE = 83985
+FILES = /usr/bin/.debug /usr/sbin/.debug /usr/libexec/.debug /usr/lib/.debug /bin/.debug /sbin/.debug /lib/.debug /usr/lib/xcb-util-image/.debug /usr/lib/matchbox-panel/.debug /usr/src/debug
+FILELIST = /usr/lib/.debug/libxcb-image.so /usr/lib/.debug/libxcb-image.so.0 /usr/lib/.debug/libxcb-image.so.0.0.0 /usr/src/debug/xcb-util-image-0.3.8-r0/xcb-util-image-0.3.8/image/xcb_image.c /usr/src/debug/xcb-util-image-0.3.8-r0/xcb-util-image-0.3.8/image/xcb_image.h

@@ -1,0 +1,7 @@
+PV = 4.8.1
+PR = r46.1
+RDEPENDS = eglibc (>= 2.15) freetype (>= 2.4.9) glib-2.0 (>= 2.32.3) libgcc (>= 4.7.1+svnr188658) libpng12 (>= 1.2.49) libqt-embeddedcore4 (>= 4.8.1) libqt-embeddednetwork4 (>= 4.8.1) libstdc++ (>= 4.7.1+svnr188658) zlib (>= 1.2.7)
+RRECOMMENDS = 
+PKGSIZE = 12055580
+FILES = /usr/lib/libQtGuiE.so.*
+FILELIST = /usr/lib/libQtGuiE.so.4 /usr/lib/libQtGuiE.so.4.8 /usr/lib/libQtGuiE.so.4.8.1

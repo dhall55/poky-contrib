@@ -1,0 +1,4 @@
+PV = 1.3
+PR = r10
+DEPENDS = sqlite3 virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
+PACKAGES = pseudo-dbg pseudo-staticdev pseudo-dev pseudo-doc pseudo-locale pseudo
