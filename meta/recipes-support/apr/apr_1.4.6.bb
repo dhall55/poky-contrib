@@ -23,6 +23,8 @@ inherit autotools lib_package binconfig multilib_header
 
 OE_BINCONFIG_EXTRA_MANGLE = " -e 's:location=source:location=installed:'"
 
+EXTRA_OECONF_append_class-target = " ac_cv_sizeof_pid_t=4"
+
 do_configure_prepend() {
 	cd ${S}
 	./buildconf
