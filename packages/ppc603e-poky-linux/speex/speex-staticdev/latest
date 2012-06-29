@@ -1,6 +1,6 @@
 PV = 1.2rc1
-PR = r1
-RDEPENDS = speex-dev (= 1.2rc1-r1)
+PR = r2
+RDEPENDS = speex-dev (= 1.2rc1-r2)
 RRECOMMENDS = 
 PKGSIZE = 954216
 FILES = /usr/lib/*.a /lib/*.a /usr/lib/speex/*.a

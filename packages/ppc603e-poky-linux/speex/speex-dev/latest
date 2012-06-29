@@ -1,6 +1,6 @@
 PV = 1.2rc1
-PR = r1
-RDEPENDS = pkgconfig speex (= 1.2rc1-r1)
+PR = r2
+RDEPENDS = pkgconfig speex (= 1.2rc1-r2)
 RRECOMMENDS = eglibc-dev libogg-dev pkgconfig-dev speex-dev
 PKGSIZE = 82648
 FILES = /usr/include /lib/lib*.so /usr/lib/lib*.so /usr/lib/*.la /usr/lib/*.o /usr/lib/pkgconfig /usr/share/pkgconfig /usr/share/aclocal /lib/*.o /usr/lib/speex/*.la /lib/*.la
