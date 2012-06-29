@@ -57,6 +57,7 @@ do_install () {
 }
 
 FILES_${PN} = "/boot"
+FILESDIR = "${@os.path.dirname(d.getVar('FILE',1))}/u-boot-git/${MACHINE}"
 
 do_deploy () {
     install -d ${DEPLOYDIR}
