@@ -27,3 +27,6 @@ SRC_URI = "git://git.denx.de/u-boot.git;branch=master;protocol=git"
 S = "${WORKDIR}/git"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
+
+# u-boot expects this to indicate what toolchain to use
+EXTRA_OEMAKE = "CROSS_COMPILE=${TARGET_PREFIX}"
