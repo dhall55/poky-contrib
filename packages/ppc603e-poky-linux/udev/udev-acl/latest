@@ -1,0 +1,7 @@
+PV = 164
+PR = r13
+RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3) libacl (>= 2.2.51)
+RRECOMMENDS = 
+PKGSIZE = 41205
+FILES = /lib/udev/udev-acl /lib/udev/rules.d/70-acl.rules
+FILELIST = /lib/udev/rules.d/70-acl.rules /lib/udev/udev-acl

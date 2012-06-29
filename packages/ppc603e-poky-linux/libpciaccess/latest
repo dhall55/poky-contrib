@@ -1,0 +1,4 @@
+PV = 0.13.1
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native pkgconfig-native util-macros virtual/libc virtual/libx11 virtual/powerpc-poky-linux-compilerlibs virtual/powerpc-poky-linux-gcc xproto
+PACKAGES = libpciaccess-dbg libpciaccess-staticdev libpciaccess-dev libpciaccess-doc libpciaccess-locale libpciaccess

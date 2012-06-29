@@ -1,0 +1,4 @@
+PV = 2.22
+PR = r3
+DEPENDS = attr perl-native-runtime virtual/libc virtual/powerpc-poky-linux-compilerlibs virtual/powerpc-poky-linux-gcc
+PACKAGES = libcap-dbg libcap-staticdev libcap-dev libcap-doc libcap-locale libcap-bin libcap

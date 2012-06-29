@@ -1,0 +1,7 @@
+PV = 4.7.1+svnr188658
+PR = r2
+RDEPENDS = libgcc (= 4.7.1+svnr188658-r2)
+RRECOMMENDS = eglibc-dev
+PKGSIZE = 2878794
+FILES = /lib/libgcc*.so /usr/lib/powerpc-poky-linux/4.7.2/*crt* /usr/lib/powerpc-poky-linux/4.7.2/libgcc*
+FILELIST = /lib/libgcc_s.so /usr/lib/powerpc-poky-linux/4.7.2/crtbegin.o /usr/lib/powerpc-poky-linux/4.7.2/crtbeginS.o /usr/lib/powerpc-poky-linux/4.7.2/crtbeginT.o /usr/lib/powerpc-poky-linux/4.7.2/crtend.o /usr/lib/powerpc-poky-linux/4.7.2/crtendS.o /usr/lib/powerpc-poky-linux/4.7.2/ecrti.o /usr/lib/powerpc-poky-linux/4.7.2/ecrtn.o /usr/lib/powerpc-poky-linux/4.7.2/libgcc.a /usr/lib/powerpc-poky-linux/4.7.2/libgcc_eh.a /usr/lib/powerpc-poky-linux/4.7.2/ncrti.o /usr/lib/powerpc-poky-linux/4.7.2/ncrtn.o

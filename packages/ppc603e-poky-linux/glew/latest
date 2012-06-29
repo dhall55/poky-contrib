@@ -1,0 +1,4 @@
+PV = 1.7.0
+PR = r1
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native libxext libxi libxmu virtual/libc virtual/libgl virtual/libx11 virtual/powerpc-poky-linux-compilerlibs virtual/powerpc-poky-linux-gcc
+PACKAGES = glew-dbg glew-staticdev glew-dev glew-doc glew-locale glew-bin glew

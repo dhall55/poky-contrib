@@ -1,0 +1,4 @@
+PV = 164
+PR = r13
+DEPENDS = acl autoconf-native automake-native glib-2.0 gnu-config-native gperf-native libtool-cross libtool-native libusb libxslt-native pciutils pkgconfig-native update-rc.d-native usbutils virtual/libc virtual/powerpc-poky-linux-compilerlibs virtual/powerpc-poky-linux-gcc
+PACKAGES = libgudev libgudev-dev libgudev-dbg udev-cache libudev libudev-dev libudev-dbg udev-acl udev-consolekit udev-utils udev-dbg udev-staticdev udev-dev udev-doc udev-locale udev

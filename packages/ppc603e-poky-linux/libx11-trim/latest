@@ -1,0 +1,5 @@
+PE = 1
+PV = 1.4.4
+PR = r1
+DEPENDS = autoconf-native automake-native gnu-config-native inputproto kbproto libtool-cross libtool-native libxau libxcb pkgconfig-native util-macros virtual/libc virtual/powerpc-poky-linux-compilerlibs virtual/powerpc-poky-linux-gcc xextproto xf86bigfontproto xproto xproto-native xtrans
+PACKAGES = libx11-trim-xcb libx11-trim-dbg libx11-trim-staticdev libx11-trim-dev libx11-trim-doc libx11-trim-locale libx11-trim

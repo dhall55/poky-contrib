@@ -1,0 +1,7 @@
+PV = 164
+PR = r13
+RDEPENDS = eglibc (>= 2.15)
+RRECOMMENDS = 
+PKGSIZE = 117168
+FILES = /usr/bin/udevinfo /usr/bin/udevtest /sbin/udevadm
+FILELIST = /sbin/udevadm

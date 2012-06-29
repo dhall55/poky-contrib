@@ -1,0 +1,4 @@
+PV = 3.0
+PR = r1
+DEPENDS = virtual/libc virtual/powerpc-poky-linux-compilerlibs virtual/powerpc-poky-linux-gcc
+PACKAGES = zip-dbg zip-staticdev zip-dev zip-doc zip-locale zip

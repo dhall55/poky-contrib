@@ -1,0 +1,4 @@
+PV = 1.2
+PR = r10
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native pkgconfig-native virtual/libc virtual/powerpc-poky-linux-compilerlibs virtual/powerpc-poky-linux-gcc
+PACKAGES = libatomics-ops-dbg libatomics-ops-staticdev libatomics-ops-dev libatomics-ops-doc libatomics-ops-locale libatomics-ops

@@ -1,0 +1,4 @@
+PV = 2.13
+PR = r0
+DEPENDS = autoconf-native automake-native gnu-config-native libtool-cross libtool-native virtual/libc virtual/powerpc-poky-linux-compilerlibs virtual/powerpc-poky-linux-gcc
+PACKAGES = libtasn1-dbg libtasn1-staticdev libtasn1-dev libtasn1-doc libtasn1-locale libtasn1-bin libtasn1

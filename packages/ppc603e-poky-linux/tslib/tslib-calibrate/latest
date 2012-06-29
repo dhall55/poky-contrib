@@ -1,0 +1,7 @@
+PV = 1.0
+PR = r20
+RDEPENDS = eglibc (>= 2.15) tslib (>= 1.0)
+RRECOMMENDS = 
+PKGSIZE = 20192
+FILES = /usr/bin/ts_calibrate
+FILELIST = /usr/bin/ts_calibrate

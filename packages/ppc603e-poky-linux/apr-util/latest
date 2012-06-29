@@ -1,0 +1,4 @@
+PV = 1.4.1
+PR = r1
+DEPENDS = apr autoconf-native automake-native expat gdbm gnu-config-native libtool-cross libtool-native virtual/libc virtual/powerpc-poky-linux-compilerlibs virtual/powerpc-poky-linux-gcc
+PACKAGES = apr-util-dbg apr-util-staticdev apr-util-dev apr-util-doc apr-util-locale apr-util-bin apr-util

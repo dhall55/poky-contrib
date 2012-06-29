@@ -1,0 +1,7 @@
+PV = 164
+PR = r13
+RDEPENDS = 
+RRECOMMENDS = eglibc-dbg udev-dbg
+PKGSIZE = 150284
+FILES = /lib/.debug/libudev.so.*
+FILELIST = /lib/.debug/libudev.so.0 /lib/.debug/libudev.so.0.9.3

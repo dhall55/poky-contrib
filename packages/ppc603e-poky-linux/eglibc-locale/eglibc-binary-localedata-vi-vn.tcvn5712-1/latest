@@ -1,0 +1,7 @@
+PV = 2.15
+PR = r21
+RDEPENDS = 
+RRECOMMENDS = 
+PKGSIZE = 252439
+FILES = /usr/lib/locale/vi_VN.TCVN5712-1
+FILELIST = /usr/lib/locale/vi_VN.TCVN5712-1/LC_ADDRESS /usr/lib/locale/vi_VN.TCVN5712-1/LC_COLLATE /usr/lib/locale/vi_VN.TCVN5712-1/LC_CTYPE /usr/lib/locale/vi_VN.TCVN5712-1/LC_IDENTIFICATION /usr/lib/locale/vi_VN.TCVN5712-1/LC_MEASUREMENT /usr/lib/locale/vi_VN.TCVN5712-1/LC_MESSAGES/SYS_LC_MESSAGES /usr/lib/locale/vi_VN.TCVN5712-1/LC_MONETARY /usr/lib/locale/vi_VN.TCVN5712-1/LC_NAME /usr/lib/locale/vi_VN.TCVN5712-1/LC_NUMERIC /usr/lib/locale/vi_VN.TCVN5712-1/LC_PAPER /usr/lib/locale/vi_VN.TCVN5712-1/LC_TELEPHONE /usr/lib/locale/vi_VN.TCVN5712-1/LC_TIME

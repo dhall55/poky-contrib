@@ -1,0 +1,8 @@
+PE = 1
+PV = 1.4.4
+PR = r1
+RDEPENDS = libx11-trim-dev (= 1:1.4.4-r1)
+RRECOMMENDS = 
+PKGSIZE = 20507374
+FILES = /usr/lib/*.a /lib/*.a /usr/lib/libx11-trim/*.a
+FILELIST = /usr/lib/libX11-xcb.a /usr/lib/libX11.a
