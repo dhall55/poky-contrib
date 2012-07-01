@@ -19,7 +19,8 @@ DEPENDS = "virtual/kernel \
            ${MLPREFIX}binutils \
           "
 
-RDEPENDS_${PN} += "elfutils perl perl-modules python"
+SCRIPTING_RDEPENDS = "${@base_contains('MACHINE_FEATURES', 'perf-scripting', 'perl perl-modules python', '',d)}"
+RDEPENDS_${PN} += "elfutils ${SCRIPTING_RDEPENDS}"
 
 PROVIDES = "virtual/perf"
 
@@ -43,6 +44,8 @@ export PERL_ARCHLIB = "${STAGING_LIBDIR}${PERL_OWN_DIR}/perl/${@get_perl_version
 S = "${STAGING_KERNEL_DIR}"
 B = "${WORKDIR}/${BPN}-${PV}"
 
+SCRIPTING_DEFINES = "${@base_contains('MACHINE_FEATURES', 'perf-scripting', '', 'NO_LIBPERL=1 NO_LIBPYTHON=1',d)}"
+
 EXTRA_OEMAKE = \
 		'-C ${S}/tools/perf \
 		O=${B} \
@@ -51,7 +54,7 @@ EXTRA_OEMAKE = \
 		CC="${CC}" \
 		AR="${AR}" \
 		prefix=/usr \
-		NO_GTK2=1 NO_NEWT=1 NO_DWARF=1 \
+		NO_GTK2=1 NO_NEWT=1 NO_DWARF=1 ${SCRIPTING_DEFINES} \
 		'
 
 do_compile() {
@@ -60,7 +63,9 @@ do_compile() {
 
 do_install() {
 	oe_runmake DESTDIR=${D} install
-	oe_runmake DESTDIR=${D} install-python_ext
+	if [ "${@base_contains('MACHINE_FEATURES', 'perf-scripting', 1, 0, d)}" = "1" ]; then
+		oe_runmake DESTDIR=${D} install-python_ext
+	fi
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
