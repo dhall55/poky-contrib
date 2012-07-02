@@ -9,17 +9,21 @@ as well."
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d7810fab7487fb0aad327b76f1be7cd7"
 
-PR = "r1"
+PR = "r2"
 
 BUILDPERF_libc-uclibc = "no"
+
+TUI_DEPENDS = "${@base_contains('MACHINE_FEATURES', 'perf-tui', 'libnewt', '',d)}"
 
 DEPENDS = "virtual/kernel \
            virtual/${MLPREFIX}libc \
            ${MLPREFIX}elfutils \
            ${MLPREFIX}binutils \
+           ${TUI_DEPENDS} \
           "
 
 SCRIPTING_RDEPENDS = "${@base_contains('MACHINE_FEATURES', 'perf-scripting', 'perl perl-modules python', '',d)}"
+TUI_RDEPENDS = "${@base_contains('MACHINE_FEATURES', 'perf-tui', 'libnewt', '',d)}"
 RDEPENDS_${PN} += "elfutils ${SCRIPTING_RDEPENDS}"
 
 PROVIDES = "virtual/perf"
@@ -45,6 +49,7 @@ S = "${STAGING_KERNEL_DIR}"
 B = "${WORKDIR}/${BPN}-${PV}"
 
 SCRIPTING_DEFINES = "${@base_contains('MACHINE_FEATURES', 'perf-scripting', '', 'NO_LIBPERL=1 NO_LIBPYTHON=1',d)}"
+TUI_DEFINES = "${@base_contains('MACHINE_FEATURES', 'perf-tui', '', 'NO_NEWT=1',d)}"
 
 EXTRA_OEMAKE = \
 		'-C ${S}/tools/perf \
@@ -54,7 +59,7 @@ EXTRA_OEMAKE = \
 		CC="${CC}" \
 		AR="${AR}" \
 		prefix=/usr \
-		NO_GTK2=1 NO_NEWT=1 NO_DWARF=1 ${SCRIPTING_DEFINES} \
+		NO_GTK2=1 ${TUI_DEFINES} NO_DWARF=1 ${SCRIPTING_DEFINES} \
 		'
 
 do_compile() {
