@@ -1,0 +1,35 @@
+From af90f2016ad33d66f5e00b4bcdb4c5ee76b1edd9 Mon Sep 17 00:00:00 2001
+From: Alexandru DAMIAN <alexandru.damian@intel.com>
+Date: Wed, 26 Sep 2012 18:06:49 +0300
+Subject: [PATCH] Modify default path for run directory
+
+udev switched to using /run directory for runtime files instead
+of the more classic /var/run. This creates certain problems
+for Yocto Project since /run/ doesn't exist at the first boot,
+being created in the postinstall process.
+
+This patch temporary moves the default directory from /run to
+/var/run. See https://bugzilla.yoctoproject.org/show_bug.cgi?id=3179
+for tracking.
+
+Signed-off-by: Alexandru DAMIAN <alexandru.damian@intel.com>
+---
+ src/libudev.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/libudev.c b/src/libudev.c
+index d954dae..d4c2523 100644
+--- a/src/libudev.c
++++ b/src/libudev.c
+@@ -251,7 +251,7 @@ UDEV_EXPORT struct udev *udev_new(void)
+                         goto err;
+ 
+         if (udev->run_path == NULL)
+-                if (set_value(&udev->run_path, "/run/udev") == NULL)
++                if (set_value(&udev->run_path, "/var/run/udev") == NULL)
+                         goto err;
+ 
+         if (udev->rules_path[0] == NULL) {
+-- 
+1.7.9.5
+

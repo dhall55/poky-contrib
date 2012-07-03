@@ -6,9 +6,10 @@ LICENSE = "GPLv2.0+ & LGPLv2.1+"
 LICENSE_${PN} = "GPLv2.0+"
 LICENSE_libudev = "LGPLv2.1+"
 LICENSE_libgudev = "LGPLv2.1+"
-LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe \
-                    file://libudev/COPYING;md5=a6f89e2100d9b6cdffcea4f398e37343 \
-                    file://extras/gudev/COPYING;md5=a6f89e2100d9b6cdffcea4f398e37343"
+LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
+                    file://src/COPYING;md5=17c4e5fb495e6707ac92a3864926f979 \
+                    file://src/gudev/COPYING;md5=fb494485a7d0505308cb68e4997cc266"
+                    
 
 DEPENDS = "acl glib-2.0 libusb usbutils pciutils gperf-native libxslt-native"
 RPROVIDES_${PN} = "hotplug"
@@ -16,6 +17,8 @@ RRECOMMENDS_${PN} += "udev-extraconf usbutils-ids pciutils-ids"
 RDEPENDS_libudev = "${PN} (= ${EXTENDPKGV})"
 
 SRC_URI = "${KERNELORG_MIRROR}/linux/utils/kernel/hotplug/udev-${PV}.tar.gz \
+           file://0001-Fixing-keyboard_force_release.sh-shell-script-path.patch \
+           file://0001-Modify-default-path-for-run-directory.patch \
            file://run.rules \
            file://udev.rules \
            file://devfs-udev.rules \
@@ -30,7 +33,7 @@ inherit autotools pkgconfig update-rc.d
 
 # udevd/udevadm -> /sbin/, libudev.so.* -> /lib/
 sbindir = "${base_sbindir}"
-libexecdir = "${base_libdir}/udev"
+libexecdir = "${base_libdir}" 
 EXTRA_OECONF = "--disable-introspection --with-rootlibdir=${base_libdir} \
                 --with-pci-ids-path=${datadir}/pci.ids"
 
@@ -48,6 +51,8 @@ FILES_${PN} += "${libexecdir} ${libdir}/ConsoleKit"
 RRECOMMENDS_${PN} += "udev-utils"
 
 FILES_${PN}-dbg += "${libexecdir}/.debug"
+FILES_${PN}-dbg += "${base_libdir}/udev/.debug/"
+FILES_${PN}-dbg += "${base_libdir}/udev/.debug/*"
 FILES_${PN}-dev = "${datadir}/pkgconfig/udev.pc"
 FILES_libudev = "${base_libdir}/libudev.so.*"
 FILES_libudev-dbg = "${base_libdir}/.debug/libudev.so.*"
