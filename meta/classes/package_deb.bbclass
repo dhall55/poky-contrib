@@ -167,10 +167,10 @@ package_install_internal_deb () {
 		fi
 	done
 
-	rm -f ${WORKDIR}/temp/log.do_${task}-attemptonly.${PID}
+	rm -f `dirname ${BB_LOGFILE}`/log.do_${task}-attemptonly.${PID}
 	if [ ! -z "${package_attemptonly}" ]; then
 		for i in ${package_attemptonly}; do
-			apt-get install $i --force-yes --allow-unauthenticated >> ${WORKDIR}/temp/log.do_${task}-attemptonly.${PID} 2>&1 || true
+			apt-get install $i --force-yes --allow-unauthenticated >> `dirname ${BB_LOGFILE}`/log.do_${task}-attemptonly.${PID} 2>&1 || true
 		done
 	fi
 
@@ -187,7 +187,7 @@ deb_log_check() {
 	lf_path="$2"
 
 	lf_txt="`cat $lf_path`"
-	for keyword_die in "E:"
+	for keyword_die in "^E:"
 	do
 		if (echo "$lf_txt" | grep -v log_check | grep "$keyword_die") >/dev/null 2>&1
 		then

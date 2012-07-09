@@ -7,19 +7,18 @@
 <title>Common Tasks</title>
     <para>
         This chapter describes standard tasks such as adding new
-        software packages, extending or customizing images or porting the Yocto Project to
+        software packages, extending or customizing images, and porting work to
         new hardware (adding a new machine). 
-        The chapter also describes ways to modify package source code, combine multiple 
-        versions of library files into a single image, and handle a package name alias.
-        Finally, the chapter contains advice about how to make changes to the 
-        Yocto Project to achieve the best results.
+        The chapter also describes how to combine multiple 
+        versions of library files into a single image, how to handle a package name alias, and
+        gives advice about how to make changes to the Yocto Project to achieve the best results.
     </para>
 
     <section id="understanding-and-creating-layers">
         <title>Understanding and Creating Layers</title>
 
         <para>
-            The Yocto Project build system supports organizing <link linkend='metadata'>metadata</link> 
+            The OpenEmbedded build system supports organizing <link linkend='metadata'>metadata</link> 
             into multiple layers. 
             Layers allow you to isolate different types of customizations from each other.
             You might find it tempting to keep everything in one layer when working on a single project.
@@ -44,13 +43,13 @@
         </para>
 
         <section id='yocto-project-layers'>
-            <title>Yocto Project Layers</title>
+            <title>Layers</title>
 
             <para>
-                The Yocto Project contains several layers right out of the box.
-                You can easily identify a layer in the Yocto Project by the name of its folder.
+                The source directory contains several layers right out of the box.
+                You can easily identify a layer in the source directory by its folder name.
                 Folders that are layers begin with the string <filename>meta</filename>.
-                For example, when you set up the <link linkend='yocto-project-files'>Yocto Project Files</link>
+                For example, when you set up the <link linkend='source-directory'>source directory</link>
                 structure, you will see several layers: <filename>meta</filename>, <filename>meta-demoapps</filename>,
                 <filename>meta-skeleton</filename>, and <filename>meta-yocto</filename>.
                 Each of these folders is a layer.
@@ -70,7 +69,7 @@
             <title>Creating Your Own Layer</title>
 
             <para>
-                It is very easy to create your own layer to use with the Yocto Project.
+                It is very easy to create your own layer to use with the OpenEmbedded build system.
                 Follow these general steps to create your layer:
                 <orderedlist>
                     <listitem><para><emphasis>Check Existing Layers:</emphasis> Before creating a new layer, 
@@ -171,13 +170,14 @@
                         If this is the case, you need to address that deficiency instead of overlaying
                         the include file.
                         For example, consider how Qt 4 database support plugins are configured.
-                        The Yocto Project does not have MySQL or PostgreSQL, however OpenEmbedded's
+                        The source directory does not have 
+                        MySQL or PostgreSQL, however OpenEmbedded's
                         layer <filename>meta-oe</filename> does.
                         Consequently, <filename>meta-oe</filename> uses <filename>.bbappend</filename>
                         files to modify the <filename>QT_SQL_DRIVER_FLAGS</filename> variable to enable 
                         the appropriate plugins. 
                         This variable was added to the <filename>qt4.inc</filename> include file in 
-                        The Yocto Project specifically to allow the <filename>meta-oe</filename> layer
+                        the source directory specifically to allow the <filename>meta-oe</filename> layer
                         to be able to control which plugins are built.</para></listitem>
                 </itemizedlist> 
             </para>
@@ -188,10 +188,10 @@
                     <listitem><para>Store custom layers in a Git repository that uses the 
                         <filename>meta-&lt;layer_name&gt;</filename> format.</para></listitem>
                     <listitem><para>Clone the repository alongside other <filename>meta</filename>
-                        directories in  
-                        <link linkend='yocto-project-files'>Yocto Project Files</link>.</para></listitem>
+                        directories in the 
+                        <link linkend='source-directory'>source directory</link>.</para></listitem>
                  </itemizedlist>
-                 Following these recommendations keeps your Yocto Project files area and 
+                 Following these recommendations keeps your source directory and 
                  its configuration entirely inside the Yocto Project's core base.
             </para>
         </section>
@@ -200,11 +200,11 @@
             <title>Enabling Your Layer</title>
 
             <para>
-                Before the Yocto Project build system can use your new layer, you need to enable it.
+                Before the OpenEmbedded build system can use your new layer, you need to enable it.
                 To enable your layer, simply add your layer's path to the 
                 <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-BBLAYERS'>BBLAYERS</ulink></filename> 
                 variable in your <filename>conf/bblayers.conf</filename> file, which is found in the 
-                <link linkend='yocto-project-build-directory'>Yocto Project Build Directory</link>. 
+                <link linkend='build-directory'>build directory</link>. 
                 The following example shows how to enable a layer named <filename>meta-mylayer</filename>:
                 <literallayout class='monospaced'>
      LCONF_VERSION = "1"
@@ -223,8 +223,8 @@
                 <filename>BBLAYERS</filename> variable within the <filename>conf/bblayers.conf</filename>
                 file.
                 During the processing of each <filename>conf/layer.conf</filename> file, BitBake adds the 
-                recipes, classes and configurations contained within the particular layer to the Yocto 
-                Project.
+                recipes, classes and configurations contained within the particular layer to the source
+                directory.
             </para>
         </section>
 
@@ -268,7 +268,7 @@
             <para>
                 As an example, consider the main formfactor recipe and a corresponding formfactor 
                 append file both from the 
-                <link linkend='yocto-project-files'>Yocto Project Files</link>.
+                <link linkend='source-directory'>source directory</link>.
                 Here is the main formfactor recipe, which is named <filename>formfactor_0.0.bb</filename> and  
                 located in the meta layer at <filename>meta/recipes-bsp/formfactor</filename>:
                 <literallayout class='monospaced'>
@@ -451,7 +451,7 @@
         <title>Customizing Images</title>
 
         <para>
-            You can customize Yocto Project images to satisfy particular requirements. 
+            You can customize images to satisfy particular requirements. 
             This section describes several methods and provides guidelines for each.
         </para>
 
@@ -553,13 +553,11 @@
                 <filename>EXTRA_IMAGE_FEATURES</filename></title>
 
             <para>
-                Ultimately users might want to add extra image features to the set used by 
-                Yocto Project with the 
+                Ultimately users might want to add extra image features to the set by using the 
                 <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-IMAGE_FEATURES'>IMAGE_FEATURES</ulink></filename>
                 variable. 
                 To create these features, the best reference is 
-                <filename>meta/classes/core-image.bbclass</filename>, which shows how the 
-                Yocto Project achieves this. 
+                <filename>meta/classes/core-image.bbclass</filename>, which shows how to achieve this. 
                 In summary, the file looks at the contents of the 
                 <filename>IMAGE_FEATURES</filename>
                 variable and then maps that into a set of tasks or packages. 
@@ -570,8 +568,8 @@
                 with specialized image <filename>.bb</filename> files.
                 You can also add more features by configuring the 
                 <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-EXTRA_IMAGE_FEATURES'>EXTRA_IMAGE_FEATURES</ulink></filename>
-                variable in the <filename>local.conf</filename> file found in the Yocto Project
-                files located in the build directory.
+                variable in the <filename>local.conf</filename> file found in the source directory
+                located in the build directory.
             </para>
 
             <para>
@@ -649,7 +647,7 @@
         <title>Adding a Package</title>
 
         <para>
-            To add a package into the Yocto Project you need to write a recipe for it. 
+            To add a package you need to write a recipe for it. 
             Writing a recipe means creating a <filename>.bb</filename> file that sets some
             variables.
             For information on variables that are useful for recipes and for information about recipe naming
@@ -663,7 +661,7 @@
             whether someone else has written one already. 
             OpenEmbedded is a good place to look as it has a wider scope and range of packages.
             Because the Yocto Project aims to be compatible with OpenEmbedded, most recipes 
-            you find there should work in Yocto Project.
+            you find there should work for you.
         </para>
 
         <para>
@@ -1002,53 +1000,7 @@
     </section>
 
     <section id="platdev-newmachine">
-        <title>Porting the Yocto Project to a New Machine</title>
-
-<!--
-WRITER NOTES:
-
-I had this chat with Richard:
-
-scottrif: Terminology question:  We speak of "New Machines" or "Adding a New Machine" 
-          in YP.  Are "Machines" restricted to architectures? In poky/meta/conf/machine we have .conf 
-          files for the five architectures.  What exactly does the term "Machine" mean?
-
-      RP: no, each architecture has multiple different machines. A "machine" can correspond 
-          to a particular reference board or hardware product
-          we just have one reference machine per architecture
-          We're  a little vague sometimes as "machine" can refer to either an individual platform,
-          or in some cases a set of different platforms with common structure
-          (e.g. netbooks)
-
-scottrif: So our reference machines we supply are the five qemu* machines? 
-
-      RP: in oe-core, plus one "real" target in meta-yocto
-          (per arch)
-
-scottrif: I see four in meta-yocto/conf/machine.  Shouldn't there be five if there is one 
-          "real" target per architecture?
-
-      RP: yes, we don't have one for x86_64 :/
-
-scottrif: I think it is a bit difficult to map our four poky/meta-yocto/conf/machines to one of our 
-          five architectures.  Some have key words in there that identify the architecture but 
-          beagleboard and atom-pc don't.
-          We have a section that describes adding a Machine Configuration file to Yocto and 
-          it states that TARGET_ARCH is one of the most important variables that need to be 
-          set in the .conf file.  The four I am looking at don't have that variable.
-
-      RP: That has changed a little now. You need to include the appropriate tune file
-          which will set it for you
-          People had a tendency not to set all the right pieces so it got abstracted
-
-scottrif: Got it.  I see them in poky/meta/conf/machine/include.
-
-SOME CONCLUSIONS:
-
-I need to define the term machine.  It is confusing.  Then, this section needs to be cleared up
-so that there are some definite steps on how to do this.  I need more detail here.
-
--->
+        <title>Adding a New Machine</title>
 
         <para>
             Adding a new machine to the Yocto Project is a straightforward process. 
@@ -1061,7 +1013,7 @@ so that there are some definite steps on how to do this.  I need more detail her
         </para>
 
         <para>
-            For a complete example that shows how to add a new machine to the Yocto Project, 
+            For a complete example that shows how to add a new machine, 
             see the 
             "<ulink url='&YOCTO_DOCS_DEV_URL;#dev-manual-bsp-appendix'>BSP Development Example</ulink>" 
             in Appendix A.
@@ -1073,7 +1025,8 @@ so that there are some definite steps on how to do this.  I need more detail her
             <para>
                 To add a machine configuration you need to add a <filename>.conf</filename> file
                 with details of the device being added to the <filename>conf/machine/</filename> file.
-                The name of the file determines the name the Yocto Project uses to reference the new machine.
+                The name of the file determines the name the OpenEmbedded build system
+                uses to reference the new machine.
             </para>
 
             <para>
@@ -1111,12 +1064,12 @@ so that there are some definite steps on how to do this.  I need more detail her
             <title>Adding a Kernel for the Machine</title>
 
             <para>
-                The Yocto Project needs to be able to build a kernel for the machine. 
+                The OpenEmbedded build system needs to be able to build a kernel for the machine. 
                 You need to either create a new kernel recipe for this machine, or extend an 
                 existing recipe. 
                 You can find several kernel examples in the 
-                Yocto Project file's <filename>meta/recipes-kernel/linux</filename>
-                directory that you can use as references.
+                source directory at <filename>meta/recipes-kernel/linux</filename>
+                that you can use as references.
             </para>
 
             <para>
@@ -1154,8 +1107,8 @@ so that there are some definite steps on how to do this.  I need more detail her
 
             <para>
                 A formfactor configuration file provides information about the 
-                target hardware for which the Yocto Project is building and information that 
-                the Yocto Project cannot obtain from other sources such as the kernel.  
+                target hardware for which the image is being built and information that 
+                the build system cannot obtain from other sources such as the kernel.  
                 Some examples of information contained in a formfactor configuration file include 
                 framebuffer orientation, whether or not the system has a keyboard, 
                 the positioning of the keyboard in relation to the screen, and 
@@ -1163,9 +1116,9 @@ so that there are some definite steps on how to do this.  I need more detail her
             </para>
 
             <para>
-                The Yocto Project uses reasonable defaults in most cases, but if customization is 
+                The build system uses reasonable defaults in most cases, but if customization is 
                 necessary you need to create a <filename>machconfig</filename> file 
-                in the Yocto Project file's <filename>meta/recipes-bsp/formfactor/files</filename>
+                in the <filename>meta/recipes-bsp/formfactor/files</filename>
                 directory.
                 This directory contains directories for specific machines such as 
                 <filename>qemuarm</filename> and <filename>qemux86</filename>.
@@ -1185,324 +1138,6 @@ so that there are some definite steps on how to do this.  I need more detail her
      DISPLAY_DPI=150
      DISPLAY_SUBPIXEL_ORDER=vrgb
                 </literallayout>
-            </para>
-        </section>
-    </section>
-
-    <section id="modifying-temporary-source-code">
-        <title>Modifying Temporary Source Code</title>
-
-        <para>
-            Although the Yocto Project is typically used to build software, you might
-            find it helpful during development to modify the temporary source code used by recipes
-            to build packages.
-            For example, suppose you are developing a patch and you need to experiment a bit
-            to figure out your solution.
-            After you have initially built the package, you can iteratively tweak the 
-            source code, which is located in the 
-            <link linkend='yocto-project-build-directory'>Yocto Project's Build Directory</link>, and then 
-            you can force a re-compile and quickly test your altered code.
-            Once you settle on a solution, you can then preserve your changes in the form of 
-            patches.
-            You can accomplish these steps all within either a 
-            <ulink url='http://savannah.nongnu.org/projects/quilt'>Quilt</ulink> or 
-            <link linkend='git'>Git</link> workflow.
-        </para>
-
-        <section id='finding-the-temporary-source-code'>
-            <title>Finding the Temporary Source Code</title>
-
-            <para>
-                During a build, the unpacked temporary source code used by recipes 
-                to build packages is available in the Yocto Project Build Directory as 
-                defined by the 
-                <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-S'>S</ulink></filename> variable.
-                Below is the default value for the <filename>S</filename> variable as defined in the 
-                <filename>meta/conf/bitbake.conf</filename> configuration file in the 
-                <link linkend='yocto-project-files'>Yocto Project Files</link>:
-                <literallayout class='monospaced'>
-     S = ${WORKDIR}/${BP}
-                </literallayout>
-                You should be aware that many recipes override the <filename>S</filename> variable.
-                For example, recipes that fetch their source from Git usually set 
-                <filename>S</filename> to <filename>${WORKDIR}/git</filename>.
-                <note>
-                    <filename>BP</filename> represents the "Base Package", which is the base package
-                    name and the package version:
-                    <literallayout class='monospaced'>
-     BP = ${BPN}-${PV}
-                    </literallayout>
-                </note> 
-            </para>
-
-            <para>
-                The path to the work directory for the recipe 
-                (<ulink url='&YOCTO_DOCS_REF_URL;#var-WORKDIR'><filename>WORKDIR</filename></ulink>) depends
-                on the package name and the architecture of the target device.
-                For example, here is the work directory for packages whose targets are not device-dependent:
-                <literallayout class='monospaced'>
-     ${TMPDIR}/work/${PACKAGE_ARCH}-poky-${TARGET_OS}/${PN}-${PV}-${PR}
-                </literallayout>
-                Let's look at an example without variables.
-                Assuming a Yocto Project Files top-level directory named <filename>poky</filename>
-                and a default Yocto Project Build Directory of <filename>poky/build</filename>, 
-                the following is the work directory for the <filename>acl</filename> package:
-                <literallayout class='monospaced'>
-     ~/poky/build/tmp/work/i586-poky-linux/acl-2.2.51-r3
-                </literallayout>
-            </para>
-
-            <para>
-                If your package is dependent on the target device, the work directory varies slightly:
-                <literallayout class='monospaced'>
-     ${TMPDIR}/work/${MACHINE}-poky-${TARGET_OS}/${PN}-${PV}-${PR}
-                </literallayout>
-                Again, assuming a Yocto Project Files top-level directory named <filename>poky</filename>
-                and a default Yocto Project Build Directory of <filename>poky/build</filename>, the 
-                following is the work directory for the <filename>acl</filename> package that is being 
-                built for a MIPS-based device:
-                <literallayout class='monospaced'>
-     ~/poky/build/tmp/work/mips-poky-linux/acl-2.2.51-r2
-                </literallayout>
-            </para>
-
-            <note>
-                To better understand how the Yocto Project build system resolves directories during the 
-                build process, see the glossary entries for the
-                <ulink url='&YOCTO_DOCS_REF_URL;#var-WORKDIR'><filename>WORKDIR</filename></ulink>,
-                <ulink url='&YOCTO_DOCS_REF_URL;#var-TMPDIR'><filename>TMPDIR</filename></ulink>,
-                <ulink url='&YOCTO_DOCS_REF_URL;#var-TOPDIR'><filename>TOPDIR</filename></ulink>,
-                <ulink url='&YOCTO_DOCS_REF_URL;#var-PACKAGE_ARCH'><filename>PACKAGE_ARCH</filename></ulink>,
-                <ulink url='&YOCTO_DOCS_REF_URL;#var-TARGET_OS'><filename>TARGET_OS</filename></ulink>,
-                <ulink url='&YOCTO_DOCS_REF_URL;#var-PN'><filename>PN</filename></ulink>,
-                <ulink url='&YOCTO_DOCS_REF_URL;#var-PV'><filename>PV</filename></ulink>,
-                and
-                <ulink url='&YOCTO_DOCS_REF_URL;#var-PR'><filename>PR</filename></ulink>
-                variables in the Yocto Project Reference Manual.
-            </note>
-
-            <para>
-                Now that you know where to locate the directory that has the temporary source code, you can use a 
-                Quilt or Git workflow to make your edits, test the changes, and preserve the 
-                changes in the form of patches.
-            </para>
-        </section>
-
-        <section id="using-a-quilt-workflow">
-            <title>Using a Quilt Workflow</title>
-            
-            <para>
-                <ulink url='http://savannah.nongnu.org/projects/quilt'>Quilt</ulink>
-                is a powerful tool that allows you to capture source code changes without having 
-                a clean source tree.
-                This section outlines the typical workflow you can use to modify temporary source code, 
-                test changes, and then preserve the changes in the form of a patch all using Quilt.
-            </para>
-
-            <para>
-                Follow these general steps:
-                <orderedlist>
-                    <listitem><para><emphasis>Find the Source Code:</emphasis>
-                        The temporary source code used by the Yocto Project build system is kept in the 
-                        Yocto Project Build Directory.  
-                        See the 
-                        "<link linkend='finding-the-temporary-source-code'>Finding the Temporary Source Code</link>"
-                        section to learn how to locate the directory that has the temporary source code for a 
-                        particular package.</para></listitem>
-                    <listitem><para><emphasis>Change Your Working Directory:</emphasis>
-                        You need to be in the directory that has the temporary source code.
-                        That directory is defined by the 
-                        <ulink url='&YOCTO_DOCS_REF_URL;#var-S'>S</ulink>
-                        variable.</para></listitem>
-                    <listitem><para><emphasis>Create a New Patch:</emphasis>
-                        Before modifying source code, you need to create a new patch.
-                        To create a new patch file, use <filename>quilt new</filename> as below:
-                        <literallayout class='monospaced'>
-     $ quilt new my_changes.patch
-                        </literallayout></para></listitem>
-                    <listitem><para><emphasis>Notify Quilt and Add Files:</emphasis>
-                        After creating the patch, you need to notify Quilt about the files you will 
-                        be changing.
-                        Add the files you will be modifying into the patch you just created:
-                        <literallayout class='monospaced'>
-     $ quilt add file1.c file2.c file3.c
-                        </literallayout></para></listitem>
-                    <listitem><para><emphasis>Edit the Files:</emphasis>
-                        Make the changes to the temporary source code.</para></listitem>
-                    <listitem><para><emphasis>Test Your Changes:</emphasis>
-                        Once you have modified the source code, the easiest way to test your changes 
-                        is by calling the <filename>compile</filename> task as shown in the following example:
-                        <literallayout class='monospaced'>
-     $ bitbake -c compile -f &lt;name_of_package&gt;
-                        </literallayout>
-                        The <filename>-f</filename> or <filename>--force</filename>
-                        option forces re-execution of the specified task.
-                        If you find problems with your code, you can just keep editing and 
-                        re-testing iteratively until things work as expected.
-                        <note>All the modifications you make to the temporary source code
-                        disappear once you <filename>-c clean</filename> or 
-                        <filename>-c cleanall</filename> with BitBake for the package.
-                        Modifications will also disappear if you use the <filename>rm_work</filename>
-                        feature as described in the
-                        "<ulink url='&YOCTO_DOCS_QS_URL;#building-image'>Building an Image</ulink>" 
-                        section of the Yocto Project Quick Start.
-                        </note></para></listitem>
-                    <listitem><para><emphasis>Generate the Patch:</emphasis>
-                        Once your changes work as expected, you need to use Quilt to generate the final patch that 
-                        contains all your modifications.
-                        <literallayout class='monospaced'>
-     $ quilt refresh
-                        </literallayout>
-                        At this point the <filename>my_changes.patch</filename> file has all your edits made 
-                        to the <filename>file1.c</filename>, <filename>file2.c</filename>, and 
-                        <filename>file3.c</filename> files.</para>
-                        <para>You can find the resulting patch file in the <filename>patches/</filename> 
-                        subdirectory of the source (<filename>S</filename>) directory.</para></listitem>
-                    <listitem><para><emphasis>Copy the Patch File:</emphasis> 
-                        For simplicity, copy the patch file into a directory named <filename>files</filename>,
-                        which you can create in the same directory as the recipe.
-                        Placing the patch here guarantees that the Yocto Project build system will find
-                        the patch.
-                        Next, add the patch into the  
-                        <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-SRC_URI'>SRC_URI</ulink></filename> 
-                        of the recipe.  
-                        Here is an example:
-                        <literallayout class='monospaced'>
-     SRC_URI += "file://my_changes.patch"
-                        </literallayout></para></listitem>
-                    <listitem><para><emphasis>Increment the Package Revision Number:</emphasis>
-                        Finally, don't forget to 'bump' the 
-                        <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-PR'>PR</ulink></filename>
-                        value in the same recipe since the resulting packages have changed.</para></listitem>
-                </orderedlist>
-            </para>
-        </section>
-
-        <section id='using-a-git-workflow'>
-            <title>Using a Git Workflow</title>
-            <para>
-                Git is an even more powerful tool that allows you to capture source code changes without having 
-                a clean source tree.
-                This section outlines the typical workflow you can use to modify temporary source code, 
-                test changes, and then preserve the changes in the form of a patch all using Git.
-                For general information on Git as it is used in the Yocto Project, see the 
-                "<link linkend='git'>Git</link>" section.
-            </para>
-
-            <note>
-                This workflow uses Git only for its ability to manage local changes to the source code 
-                and produce patches independent of any version control used on the Yocto Project 
-                Files.
-            </note>
-
-            <para>
-                Follow these general steps:
-                <orderedlist>
-                    <listitem><para><emphasis>Find the Source Code:</emphasis>
-                        The temporary source code used by the Yocto Project build system is kept in the 
-                        Yocto Project Build Directory.  
-                        See the 
-                        "<link linkend='finding-the-temporary-source-code'>Finding the Temporary Source Code</link>"
-                        section to learn how to locate the directory that has the temporary source code for a 
-                        particular package.</para></listitem>
-                    <listitem><para><emphasis>Change Your Working Directory:</emphasis>
-                        You need to be in the directory that has the temporary source code.
-                        That directory is defined by the 
-                        <ulink url='&YOCTO_DOCS_REF_URL;#var-S'>S</ulink>
-                        variable.</para></listitem>
-                    <listitem><para><emphasis>Initialize a Git Repository:</emphasis>
-                        Use the <filename>git init</filename> command to initialize a new local repository
-                        that is based on the work directory:
-                        <literallayout class='monospaced'>
-     $ git init
-                        </literallayout></para></listitem>
-                    <listitem><para><emphasis>Stage all the files:</emphasis>
-                        Use the <filename>git add *</filename> command to stage all the files in the source
-                        code directory so that they can be committed:
-                        <literallayout class='monospaced'>
-     $ git add *
-                        </literallayout></para></listitem>
-                    <listitem><para><emphasis>Commit the Source Files:</emphasis>
-                        Use the <filename>git commit</filename> command to initially commit all the files in 
-                        the work directory:
-                        <literallayout class='monospaced'>
-     $ git commit
-                        </literallayout>
-                        At this point, your Git repository is aware of all the source code files.
-                        Any edits you now make to files will be tracked by Git.</para></listitem>
-                    <listitem><para><emphasis>Edit the Files:</emphasis>
-                        Make the changes to the temporary source code.</para></listitem>
-                    <listitem><para><emphasis>Test Your Changes:</emphasis>
-                        Once you have modified the source code, the easiest way to test your changes 
-                        is by calling the <filename>compile</filename> task as shown in the following example:
-                        <literallayout class='monospaced'>
-     $ bitbake -c compile -f &lt;name_of_package&gt;
-                        </literallayout>
-                        The <filename>-f</filename> or <filename>--force</filename>
-                        option forces re-execution of the specified task.
-                        If you find problems with your code, you can just keep editing and 
-                        re-testing iteratively until things work as expected.
-                        <note>All the modifications you make to the temporary source code
-                        disappear once you <filename>-c clean</filename> or 
-                        <filename>-c cleanall</filename> with BitBake for the package.
-                        Modifications will also disappear if you use the <filename>rm_work</filename>
-                        feature as described in the
-                        "<ulink url='&YOCTO_DOCS_QS_URL;#building-image'>Building an Image</ulink>" 
-                        section of the Yocto Project Quick Start.
-                        </note></para></listitem>
-                    <listitem><para><emphasis>See the List of Files You Changed:</emphasis>
-                        Use the <filename>git status</filename> command to see what files you have actually edited. 
-                        The ability to have Git track the files you have changed is an advantage that this
-                        workflow has over the Quilt workflow.
-                        Here is the Git command to list your changed files:
-                        <literallayout class='monospaced'>
-     $ git status
-                        </literallayout></para></listitem>
-                    <listitem><para><emphasis>Stage the Modified Files:</emphasis>
-                        Use the <filename>git add</filename> command to stage the changed files so they
-                        can be committed as follows:
-                        <literallayout class='monospaced'>
-     $ git add file1.c file2.c file3.c
-                        </literallayout></para></listitem>
-                    <listitem><para><emphasis>Commit the Staged Files and View Your Changes:</emphasis>
-                        Use the <filename>git commit</filename> command to commit the changes to the 
-                        local repository.  
-                        Once you have committed the files, you can use the <filename>git log</filename>
-                        command to see your changes:
-                        <literallayout class='monospaced'>
-     $ git commit
-     $ git log
-                        </literallayout></para></listitem>
-                    <listitem><para><emphasis>Generate the Patch:</emphasis>
-                        Once the changes are committed, use the <filename>git format-patch</filename>
-                        command to generate a patch file:
-                        <literallayout class='monospaced'>
-     $ git format-patch HEAD~1
-                        </literallayout>
-                        The <filename>HEAD~1</filename> part of the command causes Git to generate the 
-                        patch file for the most recent commit.</para>
-                        <para>At this point, the patch file has all your edits made 
-                        to the <filename>file1.c</filename>, <filename>file2.c</filename>, and 
-                        <filename>file3.c</filename> files.
-                        You can find the resulting patch file in the current directory.
-                        The patch file ends with <filename>.patch</filename>.</para></listitem>
-                    <listitem><para><emphasis>Copy the Patch File:</emphasis> 
-                        For simplicity, copy the patch file into a directory named <filename>files</filename>,
-                        which you can create in the same directory as the recipe.
-                        Placing the patch here guarantees that the Yocto Project build system will find
-                        the patch.
-                        Next, add the patch into the  
-                        <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-SRC_URI'>SRC_URI</ulink></filename> 
-                        of the recipe.  
-                        Here is an example:
-                        <literallayout class='monospaced'>
-     SRC_URI += "file://my_changes.patch"
-                        </literallayout></para></listitem>
-                    <listitem><para><emphasis>Increment the Package Revision Number:</emphasis>
-                        Finally, don't forget to 'bump' the 
-                        <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-PR'>PR</ulink></filename>
-                        value in the same recipe since the resulting packages have changed.</para></listitem>
-                </orderedlist>
             </para>
         </section>
     </section>
@@ -1556,7 +1191,7 @@ so that there are some definite steps on how to do this.  I need more detail her
                 extended to support multiple libraries. 
                 Many standard recipes are already extended and support multiple libraries.
                 You can check in the <filename>meta/conf/multilib.conf</filename>
-                configuration file in the Yocto Project files directory to see how this is 
+                configuration file in the source directory to see how this is 
                 done using the <filename>BBCLASSEXTEND</filename> variable.
                 Eventually, all recipes will be covered and this list will be unneeded.
             </para>
@@ -1585,7 +1220,7 @@ so that there are some definite steps on how to do this.  I need more detail her
                 combination of multiple libraries you want to build. 
                 You accomplish this through your <filename>local.conf</filename>
                 configuration file in the 
-                <link linkend='yocto-project-build-directory'>Yocto Project Build Directory</link>. 
+                <link linkend='build-directory'>build directory</link>. 
                 An example configuration would be as follows:
                 <literallayout class='monospaced'>
      MACHINE = "qemux86-64"
@@ -1630,7 +1265,7 @@ so that there are some definite steps on how to do this.  I need more detail her
                     <listitem><para>A unique architecture is defined for the Multilib packages,
                         along with creating a unique deploy folder under 
                         <filename>tmp/deploy/rpm</filename> in the 
-                        <link linkend='yocto-project-build-directory'>Yocto Project Build Directory</link>. 
+                        <link linkend='build-directory'>build directory</link>. 
                         For example, consider <filename>lib32</filename> in a 
                         <filename>qemux86-64</filename> image. 
                         The possible architectures in the system are "all", "qemux86_64",
@@ -1676,7 +1311,7 @@ so that there are some definite steps on how to do this.  I need more detail her
         <title>Configuring the Kernel</title>
 
         <para>
-            Configuring the Linux Yocto kernel consists of making sure the <filename>.config</filename>
+            Configuring the Yocto Project kernel consists of making sure the <filename>.config</filename>
             file has all the right information in it for the image you are building.
             You can use the <filename>menuconfig</filename> tool and configuration fragments to 
             make sure your <filename>.config</filename> file is just how you need it. 
@@ -1705,7 +1340,7 @@ so that there are some definite steps on how to do this.  I need more detail her
                 To use the <filename>menuconfig</filename> tool in the Yocto Project development
                 environment, you must build the tool using BitBake.
                 The following commands build and invoke <filename>menuconfig</filename> assuming the 
-                Yocto Project files top-level directory is <filename>~/poky</filename>:
+                source directory top-level folder is <filename>~/poky</filename>:
                 <literallayout class='monospaced'>
      $ cd ~/poky
      $ source oe-init-build-env
@@ -1718,7 +1353,7 @@ so that there are some definite steps on how to do this.  I need more detail her
             </para>
 
             <para>
-                For an example that shows how to change the <filename>SMP_CONFIG</filename> parameter
+                For an example that shows how to change a specific kernel option
                 using <filename>menuconfig</filename>, see the 
                 "<link linkend='changing-the-config-smp-configuration-using-menuconfig'>Changing
                 the <filename>CONFIG_SMP</filename> Configuration Using <filename>menuconfig</filename></link>" 
@@ -1745,7 +1380,7 @@ so that there are some definite steps on how to do this.  I need more detail her
                 Where do you put your configuration files?
                 You can place these configuration files in the same area pointed to by  
                 <filename>SRC_URI</filename>.
-                The Yocto Project build process will pick up the configuration and add it to the 
+                The OpenEmbedded build system will pick up the configuration and add it to the 
                 kernel's configuration.
                 For example, assume you add the following to your 
                 <filename>linux-yocto_3.0.bbappend</filename> file:
@@ -1769,7 +1404,7 @@ so that there are some definite steps on how to do this.  I need more detail her
             </para>
 
             <para>
-                As part of the Linux Yocto kernel build process, the 
+                As part of the kernel build process, the 
                 <filename>kernel_configcheck</filename> task runs.
                 This task validates the kernel configuration by checking the final 
                 <filename>.config</filename> file against the input files.
@@ -1927,7 +1562,7 @@ so that there are some definite steps on how to do this.  I need more detail her
         <para>
             Sometimes a package name you are using might exist under an alias or as a similarly named
             package in a different distribution.
-            The Yocto Project implements a <filename>distro_check</filename>
+            The OpenEmbedded build system implements a <filename>distro_check</filename>
             task that automatically connects to major distributions
             and checks for these situations. 
             If the package exists under a different name in a different distribution, you get a 
@@ -1950,17 +1585,17 @@ so that there are some definite steps on how to do this.  I need more detail her
         
         <para>
             If you have more than one distribution alias, separate them with a space.
-            Note that the Yocto Project currently automatically checks the 
+            Note that the build system currently automatically checks the 
             Fedora, OpenSuSE, Debian, Ubuntu, 
             and Mandriva distributions for source package recipes without having to specify them 
             using the <filename>DISTRO_PN_ALIAS</filename> variable.
             For example, the following command generates a report that lists the Linux distributions
-            that include the sources for each of the Yocto Project recipes.
+            that include the sources for each of the recipes.
             <literallayout class='monospaced'>
      $ bitbake world -f -c distro_check
             </literallayout>
             The results are stored in the <filename>build/tmp/log/distro_check-${DATETIME}.results</filename> 
-            file found in the Yocto Project files area.
+            file found in the source directory.
         </para>
     </section>
 
@@ -1968,18 +1603,18 @@ so that there are some definite steps on how to do this.  I need more detail her
         <title>Building Software from an External Source</title>
 
         <para>
-            By default, the Yocto Project build system does its work from within the 
-            <link linkend='yocto-project-build-directory'>Yocto Project Build Directory</link>.  
+            By default, the OpenEmbedded build system does its work from within the 
+            <link linkend='build-directory'>build directory</link>.  
             The build process involves fetching the source files, unpacking them, and then patching them
             if necessary before the build takes place.
         </para>
 
         <para>
             Situations exist where you might want to build software from source files that are external to 
-            and thus outside of the <link linkend='yocto-project-files'>Yocto Project Files</link>.
+            and thus outside of the <link linkend='source-directory'>source directory</link>.
             For example, suppose you have a project that includes a new BSP with a heavily customized 
             kernel, a very minimal image, and some new user-space recipes.
-            And, you want to minimize the exposure to the Yocto Project build system to the 
+            And, you want to minimize the exposure to the build system to the 
             development team so that they can focus on their project and maintain everyone's workflow
             as much as possible.
             In this case, you want a kernel source directory on the development machine where the 
@@ -2044,6 +1679,485 @@ so that there are some definite steps on how to do this.  I need more detail her
             in the directory that match the expression are ignored during the build
             process.
         </para>
+    </section>
+
+    <section id="platdev-gdb-remotedebug">
+        <title>Debugging With the GNU Project Debugger (GDB) Remotely</title>
+
+        <para>
+            GDB allows you to examine running programs, which in turn help you to understand and fix problems. 
+            It also allows you to perform post-mortem style analysis of program crashes. 
+            GDB is available as a package within the Yocto Project and by default is 
+            installed in sdk images.
+            See the "<ulink url='&YOCTO_DOCS_REF_URL;#ref-images'>Reference: Images</ulink>" appendix 
+            in the Yocto Project Reference Manual for a description of these images. 
+            You can find information on GDB at <ulink url="http://sourceware.org/gdb/"/>.
+        </para>
+
+        <tip>
+            For best results, install <filename>-dbg</filename> packages for the applications 
+            you are going to debug.
+            Doing so makes available extra debug symbols that give you more meaningful output.
+        </tip>
+
+        <para>
+            Sometimes, due to memory or disk space constraints, it is not possible
+            to use GDB directly on the remote target to debug applications. 
+            These constraints arise because GDB needs to load the debugging information and the 
+            binaries of the process being debugged. 
+            Additionally, GDB needs to perform many computations to locate information such as function 
+            names, variable names and values, stack traces and so forth - even before starting the 
+            debugging process. 
+            These extra computations place more load on the target system and can alter the
+            characteristics of the program being debugged.
+        </para>
+
+        <para>
+            To help get past the previously mentioned constraints, you can use Gdbserver.
+            Gdbserver runs on the remote target and does not load any debugging information 
+            from the debugged process.
+            Instead, a GDB instance processes the debugging information that is run on a 
+            remote computer - the host GDB. 
+            The host GDB then sends control commands to Gdbserver to make it stop or start the debugged 
+            program, as well as read or write memory regions of that debugged program. 
+            All the debugging information loaded and processed as well    
+            as all the heavy debugging is done by the host GDB.
+            Offloading these processes gives the Gdbserver running on the target a chance to remain 
+            small and fast.
+        </para>
+
+        <para>
+            Because the host GDB is responsible for loading the debugging information and 
+            for doing the necessary processing to make actual debugging happen, the 
+            user has to make sure the host can access the unstripped binaries complete
+            with their debugging information and also be sure the target is compiled with no optimizations. 
+            The host GDB must also have local access to all the libraries used by the 
+            debugged program. 
+            Because Gdbserver does not need any local debugging information, the binaries on
+            the remote target can remain stripped. 
+            However, the binaries must also be compiled without optimization 
+            so they match the host's binaries.
+        </para>
+
+        <para>
+            To remain consistent with GDB documentation and terminology, the binary being debugged 
+            on the remote target machine is referred to as the "inferior" binary.
+            For documentation on GDB see the  
+            <ulink url="http://sourceware.org/gdb/documentation/">GDB site</ulink>.
+        </para>
+
+        <section id="platdev-gdb-remotedebug-launch-gdbserver">
+            <title>Launching Gdbserver on the Target</title>
+
+            <para>
+                First, make sure Gdbserver is installed on the target. 
+                If it is not, install the package <filename>gdbserver</filename>, which needs the 
+                <filename>libthread-db1</filename> package.
+            </para>
+
+            <para>
+                As an example, to launch Gdbserver on the target and make it ready to "debug" a 
+                program located at <filename>/path/to/inferior</filename>, connect
+                to the target and launch:
+                <literallayout class='monospaced'>
+     $ gdbserver localhost:2345 /path/to/inferior
+                </literallayout>
+                Gdbserver should now be listening on port 2345 for debugging
+                commands coming from a remote GDB process that is running on the host computer.
+                Communication between Gdbserver and the host GDB are done using TCP. 
+                To use other communication protocols, please refer to the  
+                <ulink url='http://www.gnu.org/software/gdb/'>Gdbserver documentation</ulink>.
+            </para>
+        </section>
+
+        <section id="platdev-gdb-remotedebug-launch-gdb">
+            <title>Launching GDB on the Host Computer</title>
+
+            <para>
+                Running GDB on the host computer takes a number of stages.
+                This section describes those stages.
+            </para>
+
+            <section id="platdev-gdb-remotedebug-launch-gdb-buildcross">
+                <title>Building the Cross-GDB Package</title>
+                <para>
+                    A suitable GDB cross-binary is required that runs on your host computer but
+                    also knows about the the ABI of the remote target. 
+                    You can get this binary from the meta-toolchain.
+                    Here is an example:
+                    <literallayout class='monospaced'> 
+     /usr/local/poky/eabi-glibc/arm/bin/arm-poky-linux-gnueabi-gdb
+                    </literallayout> 
+                    where <filename>arm</filename> is the target architecture and 
+                    <filename>linux-gnueabi</filename> the target ABI.
+                </para>
+
+                <para>
+                    Alternatively, you can use BitBake to build the <filename>gdb-cross</filename> binary. 
+                    Here is an example:
+                    <literallayout class='monospaced'>
+     $ bitbake gdb-cross
+                    </literallayout>
+                    Once the binary is built, you can find it here: 
+                    <literallayout class='monospaced'>
+     tmp/sysroots/&lt;host-arch&gt;/usr/bin/&lt;target-abi&gt;-gdb 
+                    </literallayout>
+                </para>
+            </section>
+
+            <section id="platdev-gdb-remotedebug-launch-gdb-inferiorbins">
+                <title>Making the Inferior Binaries Available</title>
+
+                <para>
+                    The inferior binary (complete with all debugging symbols) as well as any
+                    libraries (and their debugging symbols) on which the inferior binary depends
+                    need to be available.
+                    There are a number of ways you can make these available.
+                </para>
+
+                <para>
+                    Perhaps the easiest way is to have an 'sdk' image that corresponds to the plain
+                    image installed on the device. 
+                    In the case of <filename>core-image-sato</filename>, 
+                    <filename>core-image-sato-sdk</filename> would contain suitable symbols. 
+                    Because the sdk images already have the debugging symbols installed, it is just a 
+                    question of expanding the archive to some location and then informing GDB. 
+                </para>
+
+                <para>
+                    Alternatively, the OpenEmbedded build system can build a custom directory of files 
+                    for a specific 
+                    debugging purpose by reusing its <filename>tmp/rootfs</filename> directory.
+                    This directory contains the contents of the last built image. 
+                    This process assumes two things:
+                    <itemizedlist>
+                        <listitem><para>The image running on the target was the last image to 
+                        be built.</para></listitem>
+                        <listitem><para>The package (<filename>foo</filename> in the following 
+                        example) that contains the inferior binary to be debugged has been built 
+                        without optimization and has debugging information available.</para></listitem>
+                    </itemizedlist>
+                </para>
+
+                <para>
+                    The following steps show how to build the custom directory of files:
+                    <orderedlist>
+                        <listitem><para>Install the package (<filename>foo</filename> in this case) to 
+                            <filename>tmp/rootfs</filename>:
+                            <literallayout class='monospaced'>
+     $ tmp/sysroots/i686-linux/usr/bin/opkg-cl -f \
+     tmp/work/&lt;target-abi&gt;/core-image-sato-1.0-r0/temp/opkg.conf -o \
+     tmp/rootfs/ update
+                            </literallayout></para></listitem>
+                        <listitem><para>Install the debugging information:
+                            <literallayout class='monospaced'>
+     $ tmp/sysroots/i686-linux/usr/bin/opkg-cl -f \
+     tmp/work/&lt;target-abi&gt;/core-image-sato-1.0-r0/temp/opkg.conf \
+     -o tmp/rootfs install foo
+
+     $ tmp/sysroots/i686-linux/usr/bin/opkg-cl -f \
+     tmp/work/&lt;target-abi&gt;/core-image-sato-1.0-r0/temp/opkg.conf \
+     -o tmp/rootfs install foo-dbg
+                            </literallayout></para></listitem>
+                    </orderedlist>
+                </para>
+            </section>
+
+            <section id="platdev-gdb-remotedebug-launch-gdb-launchhost">
+                <title>Launch the Host GDB</title>
+
+                <para>
+                    To launch the host GDB, you run the <filename>cross-gdb</filename> binary and provide 
+                    the inferior binary as part of the command line.  
+                    For example, the following command form continues with the example used in 
+                    the previous section.  
+                    This command form loads the <filename>foo</filename> binary
+                    as well as the debugging information:
+                    <literallayout class='monospaced'>
+     $ &lt;target-abi&gt;-gdb rootfs/usr/bin/foo
+                    </literallayout>
+                    Once the GDB prompt appears, you must instruct GDB to load all the libraries
+                    of the inferior binary from <filename>tmp/rootfs</filename> as follows:
+                    <literallayout class='monospaced'>
+     $ set solib-absolute-prefix /path/to/tmp/rootfs
+                    </literallayout>
+                    The pathname <filename>/path/to/tmp/rootfs</filename> must either be
+                    the absolute path to <filename>tmp/rootfs</filename> or the location at which 
+                    binaries with debugging information reside.
+                </para>
+
+                <para>
+                    At this point you can have GDB connect to the Gdbserver that is running 
+                    on the remote target by using the following command form:
+                    <literallayout class='monospaced'>
+     $ target remote remote-target-ip-address:2345
+                    </literallayout>
+                    The <filename>remote-target-ip-address</filename> is the IP address of the
+                    remote target where the Gdbserver is running. 
+                    Port 2345 is the port on which the GDBSERVER is running.
+                </para>
+            </section>
+
+            <section id="platdev-gdb-remotedebug-launch-gdb-using">
+                <title>Using the Debugger</title>
+
+                <para>
+                    You can now proceed with debugging as normal - as if you were debugging
+                    on the local machine.
+                    For example, to instruct GDB to break in the "main" function and then 
+                    continue with execution of the inferior binary use the following commands
+                    from within GDB:
+                    <literallayout class='monospaced'>
+     (gdb) break main
+     (gdb) continue
+                    </literallayout>
+                </para>
+
+                <para>
+                    For more information about using GDB, see the project's online documentation at 
+                    <ulink url="http://sourceware.org/gdb/download/onlinedocs/"/>.
+                </para>
+            </section>
+        </section>
+    </section>
+
+    <section id="platdev-oprofile">
+        <title>Profiling with OProfile</title>
+
+        <para>
+            <ulink url="http://oprofile.sourceforge.net/">OProfile</ulink> is a 
+            statistical profiler well suited for finding performance 
+            bottlenecks in both userspace software and in the kernel. 
+            This profiler provides answers to questions like "Which functions does my application spend 
+            the most time in when doing X?" 
+            Because the OpenEmbedded build system is well integrated with OProfile, it makes profiling 
+            applications on target hardware straightforward.
+        </para>
+
+        <para>
+            To use OProfile, you need an image that has OProfile installed. 
+            The easiest way to do this is with <filename>tools-profile</filename> in the
+            <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-IMAGE_FEATURES'>IMAGE_FEATURES</ulink></filename> variable. 
+            You also need debugging symbols to be available on the system where the analysis
+            takes place. 
+            You can gain access to the symbols by using <filename>dbg-pkgs</filename> in the
+            <filename>IMAGE_FEATURES</filename> variable or by
+            installing the appropriate <filename>-dbg</filename> packages. 
+        </para>
+
+        <para>
+            For successful call graph analysis, the binaries must preserve the frame 
+            pointer register and should also be compiled with the 
+            <filename>-fno-omit-framepointer</filename> flag. 
+            You can achieve this by setting the 
+            <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-SELECTED_OPTIMIZATION'>SELECTED_OPTIMIZATION</ulink></filename>
+            variable to 
+            <filename>-fexpensive-optimizations -fno-omit-framepointer -frename-registers -O2</filename>. 
+            You can also achieve it by setting the
+            <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-DEBUG_BUILD'>DEBUG_BUILD</ulink></filename> 
+            variable to "1" in the <filename>local.conf</filename> configuration file.
+            If you use the <filename>DEBUG_BUILD</filename> variable you will also add extra debug information 
+            that can make the debug packages large.
+        </para>
+
+        <section id="platdev-oprofile-target">
+            <title>Profiling on the Target</title>
+
+            <para>
+                Using OProfile you can perform all the profiling work on the target device. 
+                A simple OProfile session might look like the following:
+            </para>
+
+            <para>
+                <literallayout class='monospaced'>
+     # opcontrol --reset
+     # opcontrol --start --separate=lib --no-vmlinux -c 5
+              .
+              .
+        [do whatever is being profiled]
+              .
+              .
+     # opcontrol --stop
+     $ opreport -cl
+                </literallayout>
+            </para>
+
+            <para>
+                In this example, the <filename>reset</filename> command clears any previously profiled data.
+                The next command starts OProfile.
+                The options used when starting the profiler separate dynamic library data 
+                within applications, disable kernel profiling, and enable callgraphing up to
+                five levels deep.    
+                <note>
+                    To profile the kernel, you would specify the 
+                    <filename>--vmlinux=/path/to/vmlinux</filename> option.
+                    The <filename>vmlinux</filename> file is usually in the source directory in the 
+                    <filename>/boot/</filename> directory and must match the running kernel.
+                </note>
+            </para>
+
+            <para> 
+                After you perform your profiling tasks, the next command stops the profiler. 
+                After that, you can view results with the <filename>opreport</filename> command with options
+                to see the separate library symbols and callgraph information.
+            </para>
+
+            <para>
+                Callgraphing logs information about time spent in functions and about a function's
+                calling function (parent) and called functions (children).
+                The higher the callgraphing depth, the more accurate the results.  
+                However, higher depths also increase the logging overhead.
+                Consequently, you should take care when setting the callgraphing depth. 
+                <note>
+                    On ARM, binaries need to have the frame pointer enabled for callgraphing to work.
+                    To accomplish this use the <filename>-fno-omit-framepointer</filename> option 
+                    with <filename>gcc</filename>.
+                </note>
+            </para>
+
+            <para>
+                For more information on using OProfile, see the OProfile 
+                online documentation at 
+                <ulink url="http://oprofile.sourceforge.net/docs/"/>.
+            </para>
+        </section>
+
+        <section id="platdev-oprofile-oprofileui">
+            <title>Using OProfileUI</title>
+
+            <para>
+                A graphical user interface for OProfile is also available. 
+                You can download and build this interface from the Yocto Project at
+                <ulink url="&YOCTO_GIT_URL;/cgit.cgi/oprofileui/"></ulink>. 
+                If the "tools-profile" image feature is selected, all necessary binaries
+                are installed onto the target device for OProfileUI interaction.
+            </para>
+
+            <para>
+                Even though the source directory usually includes all needed patches on the target device, you 
+                might find you need other OProfile patches for recent OProfileUI features.
+                If so, see the <ulink url='&YOCTO_GIT_URL;/cgit.cgi/oprofileui/tree/README'>
+                OProfileUI README</ulink> for the most recent information.
+            </para>
+
+            <section id="platdev-oprofile-oprofileui-online">
+                <title>Online Mode</title>
+
+                <para>
+                    Using OProfile in online mode assumes a working network connection with the target 
+                    hardware. 
+                    With this connection, you just need to run "oprofile-server" on the device. 
+                    By default, OProfile listens on port 4224. 
+                    <note>
+                        You can change the port using the <filename>--port</filename> command-line 
+                        option.
+                    </note>
+                </para>
+
+                <para>
+                    The client program is called <filename>oprofile-viewer</filename> and its UI is relatively 
+                    straightforward.
+                    You access key functionality through the buttons on the toolbar, which
+                    are duplicated in the menus.
+                    Here are the buttons:
+                    <itemizedlist>
+                        <listitem><para><emphasis>Connect:</emphasis> Connects to the remote host.
+                            You can also supply the IP address or hostname.</para></listitem>
+                        <listitem><para><emphasis>Disconnect:</emphasis> Disconnects from the target.
+                            </para></listitem>
+                        <listitem><para><emphasis>Start:</emphasis> Starts profiling on the device.
+                            </para></listitem>
+                        <listitem><para><emphasis>Stop:</emphasis> Stops profiling on the device and 
+                            downloads the data to the local host. 
+                            Stopping the profiler generates the profile and displays it in the viewer.
+                            </para></listitem>
+                        <listitem><para><emphasis>Download:</emphasis> Downloads the data from the 
+                            target and generates the profile, which appears in the viewer.</para></listitem>
+                        <listitem><para><emphasis>Reset:</emphasis> Resets the sample data on the device. 
+                            Resetting the data removes sample information collected from previous
+                            sampling runs. 
+                            Be sure you reset the data if you do not want to include old sample information.
+                            </para></listitem>
+                        <listitem><para><emphasis>Save:</emphasis> Saves the data downloaded from the
+                            target to another directory for later examination.</para></listitem>
+                        <listitem><para><emphasis>Open:</emphasis> Loads previously saved data.
+                            </para></listitem>
+                    </itemizedlist>
+                </para>
+
+                <para>
+                    The client downloads the complete 'profile archive' from
+                    the target to the host for processing. 
+                    This archive is a directory that contains the sample data, the object files, 
+                    and the debug information for the object files. 
+                    The archive is then converted using the <filename>oparchconv</filename> script, which is 
+                    included in this distribution.
+                    The script uses <filename>opimport</filename> to convert the archive from
+                    the target to something that can be processed on the host.
+                </para>
+
+                <para>
+                    Downloaded archives reside in the build directory in 
+                    <filename>/tmp</filename> and are cleared up when they are no longer in use.
+                </para>
+
+                <para>
+                    If you wish to perform kernel profiling, you need to be sure 
+                    a <filename>vmlinux</filename> file that matches the running kernel is available. 
+                    In the source directory, that file is usually located in 
+                    <filename>/boot/vmlinux-KERNELVERSION</filename>, where 
+                    <filename>KERNEL-version</filename> is the version of the kernel. 
+                    The OpenEmbedded build system generates separate <filename>vmlinux</filename> 
+                    packages for each kernel it builds.
+                    Thus, it should just be a question of making sure a matching package is 
+                    installed (e.g. <filename>opkg install kernel-vmlinux</filename>. 
+                    The files are automatically installed into development and profiling images 
+                    alongside OProfile. 
+                    A configuration option exists within the OProfileUI settings page that you can use to 
+                    enter the location of the <filename>vmlinux</filename> file. 
+                </para>
+
+                <para>
+                    Waiting for debug symbols to transfer from the device can be slow, and it
+                    is not always necessary to actually have them on the device for OProfile use. 
+                    All that is needed is a copy of the filesystem with the debug symbols present 
+                    on the viewer system. 
+                    The "<link linkend='platdev-gdb-remotedebug-launch-gdb'>Launching GDB on the Host Computer</link>"
+                    section covers how to create such a directory with 
+                    the source directory and how to use the OProfileUI Settings dialog to specify the location.
+                    If you specify the directory, it will be used when the file checksums 
+                    match those on the system you are profiling.
+                </para>
+            </section>
+
+            <section id="platdev-oprofile-oprofileui-offline">
+                <title>Offline Mode</title>
+
+                <para>
+                    If network access to the target is unavailable, you can generate
+                    an archive for processing in <filename>oprofile-viewer</filename> as follows:
+                    <literallayout class='monospaced'>
+     # opcontrol --reset
+     # opcontrol --start --separate=lib --no-vmlinux -c 5
+            .
+            .
+     [do whatever is being profiled]
+            .
+            .
+     # opcontrol --stop
+     # oparchive -o my_archive
+                    </literallayout>
+                </para>
+
+                <para>
+                    In the above example, <filename>my_archive</filename> is the name of the 
+                    archive directory where you would like the profile archive to be kept. 
+                    After the directory is created, you can copy it to another host and load it
+                    using <filename>oprofile-viewer</filename> open functionality.
+                    If necessary, the archive is converted.
+                </para>
+            </section>
+        </section>
     </section>
 </chapter>
 

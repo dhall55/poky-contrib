@@ -59,35 +59,6 @@ fakeroot rootfs_rpm_do_rootfs () {
 	# Setup base system configuration
 	mkdir -p ${INSTALL_ROOTFS_RPM}/etc/rpm/
 
-	mkdir -p ${INSTALL_ROOTFS_RPM}${rpmlibdir}
-	mkdir -p ${INSTALL_ROOTFS_RPM}${rpmlibdir}/log
-	# After change the __db.* cache size, log file will not be generated automatically,
-	# that will raise some warnings, so touch a bare log for rpm write into it.
-	touch ${INSTALL_ROOTFS_RPM}${rpmlibdir}/log/log.0000000001
-	cat > ${INSTALL_ROOTFS_RPM}${rpmlibdir}/DB_CONFIG << EOF
-# ================ Environment
-set_data_dir            .
-set_create_dir          .
-set_lg_dir              ./log
-set_tmp_dir             ./tmp
-
-# -- thread_count must be >= 8
-set_thread_count        64
-
-# ================ Logging
-
-# ================ Memory Pool
-set_mp_mmapsize         268435456
-
-# ================ Locking
-set_lk_max_locks        16384
-set_lk_max_lockers      16384
-set_lk_max_objects      16384
-mutex_set_max           163840
-
-# ================ Replication
-EOF
-
 	# List must be prefered to least preferred order
 	INSTALL_PLATFORM_EXTRA_RPM=""
 	for each_arch in ${MULTILIB_PACKAGE_ARCHS} ${PACKAGE_ARCHS}; do
@@ -154,7 +125,11 @@ EOF
 }
 
 remove_packaging_data_files() {
-	rm -rf ${IMAGE_ROOTFS}${rpmlibdir}
+	# Save the rpmlib for increment rpm image generation
+	t="${T}/saved_rpmlib/var/lib"
+	rm -fr $t
+	mkdir -p $t
+	mv ${IMAGE_ROOTFS}${rpmlibdir} $t
 	rm -rf ${IMAGE_ROOTFS}${opkglibdir}
 }
 

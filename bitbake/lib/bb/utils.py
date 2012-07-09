@@ -26,6 +26,7 @@ import logging
 import bb
 import bb.msg
 import multiprocessing
+import fcntl
 from commands import getstatusoutput
 from contextlib import contextmanager
 
@@ -422,8 +423,6 @@ def preserved_envvars():
         'BB_PRESERVE_ENV',
         'BB_ENV_WHITELIST',
         'BB_ENV_EXTRAWHITE',
-        'LANG',
-        '_',
     ]
     return v + preserved_envvars_exported() + preserved_envvars_exported_interactive()
 
@@ -754,3 +753,7 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
 
 def cpu_count():
     return multiprocessing.cpu_count()
+
+def nonblockingfd(fd):
+    fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+

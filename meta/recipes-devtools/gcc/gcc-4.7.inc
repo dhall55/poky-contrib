@@ -1,14 +1,14 @@
 require gcc-common.inc
 
-PR = "r1"
+PR = "r2"
 
 # Third digit in PV should be incremented after a minor release
-# happens from this branch on gcc e.g. currently its 4.7.0
-# when 4.7.1 is releases and we bump SRCREV beyond the release
-# on branch then PV should be incremented to 4.7.1+svnr${SRCPV}
+# happens from this branch on gcc e.g. currently its 4.7.1
+# when 4.7.2 is releases and we bump SRCREV beyond the release
+# on branch then PV should be incremented to 4.7.2+svnr${SRCPV}
 # to reflect that change
 
-PV = "4.7.0+svnr${SRCPV}"
+PV = "4.7.1+svnr${SRCPV}"
 
 # BINV should be incremented after updating to a revision
 # after a minor gcc release (e.g. 4.7.1 or 4.7.2) has been made
@@ -16,9 +16,9 @@ PV = "4.7.0+svnr${SRCPV}"
 # 4.7.1 then the value below will have 2 which will mean 4.7.2
 # which will be next minor release and so on.
 
-BINV = "4.7.1"
+BINV = "4.7.2"
 
-SRCREV = "186651"
+SRCREV = "188658"
 BRANCH = "gcc-4_7-branch"
 FILESPATH = "${@base_set_filespath([ '${FILE_DIRNAME}/gcc-4.7' ], d)}"
 
@@ -66,6 +66,8 @@ SRC_URI = "svn://gcc.gnu.org/svn/gcc/branches;module=${BRANCH};proto=http \
 	   file://cpp-honor-sysroot.patch \
 	   file://mips64-default-n64.patch \
 	   file://arm-hard-float-loader.patch \
+	   file://gcc-argument-list-too-long.patch \
+	   file://fix-g++-sysroot.patch \
 	  "
 
 S = "${TMPDIR}/work-shared/gcc-${PV}-${PR}/${BRANCH}"

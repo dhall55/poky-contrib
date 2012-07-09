@@ -182,36 +182,57 @@ def encodeurl(decoded):
 
     return url
 
-def uri_replace(ud, uri_find, uri_replace, d):
+def uri_replace(ud, uri_find, uri_replace, replacements, d):
     if not ud.url or not uri_find or not uri_replace:
-        logger.debug(1, "uri_replace: passed an undefined value, not replacing")
+        logger.error("uri_replace: passed an undefined value, not replacing")
+        return None
     uri_decoded = list(decodeurl(ud.url))
     uri_find_decoded = list(decodeurl(uri_find))
     uri_replace_decoded = list(decodeurl(uri_replace))
     logger.debug(2, "For url %s comparing %s to %s" % (uri_decoded, uri_find_decoded, uri_replace_decoded))
     result_decoded = ['', '', '', '', '', {}]
-    for i in uri_find_decoded:
-        loc = uri_find_decoded.index(i)
+    for loc, i in enumerate(uri_find_decoded):
         result_decoded[loc] = uri_decoded[loc]
-        if isinstance(i, basestring):
-            if (re.match(i, uri_decoded[loc])):
-                if not uri_replace_decoded[loc]:
-                    result_decoded[loc] = ""    
-                else:
-                    result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
-                if uri_find_decoded.index(i) == 2:
-                    basename = None
-                    if ud.mirrortarball:
-                        basename = os.path.basename(ud.mirrortarball)
-                    elif ud.localpath:
-                        basename = os.path.basename(ud.localpath)
-                    if basename and result_decoded[loc].endswith("/"):
-                        result_decoded[loc] = os.path.dirname(result_decoded[loc])
-                    if basename and not result_decoded[loc].endswith(basename):
-                        result_decoded[loc] = os.path.join(result_decoded[loc], basename)
+        regexp = i
+        if loc == 0 and regexp and not regexp.endswith("$"):
+            # Leaving the type unanchored can mean "https" matching "file" can become "files"
+            # which is clearly undesirable.
+            regexp += "$"
+        if loc == 5:
+            # Handle URL parameters
+            if i:
+                # Any specified URL parameters must match
+                for k in uri_replace_decoded[loc]:
+                    if uri_decoded[loc][k] != uri_replace_decoded[loc][k]:
+                        return None
+            # Overwrite any specified replacement parameters
+            for k in uri_replace_decoded[loc]:
+                result_decoded[loc][k] = uri_replace_decoded[loc][k]
+        elif (re.match(regexp, uri_decoded[loc])):
+            if not uri_replace_decoded[loc]:
+                result_decoded[loc] = ""    
             else:
-                return ud.url
+                for k in replacements:
+                    uri_replace_decoded[loc] = uri_replace_decoded[loc].replace(k, replacements[k])
+                #bb.note("%s %s %s" % (regexp, uri_replace_decoded[loc], uri_decoded[loc]))
+                result_decoded[loc] = re.sub(regexp, uri_replace_decoded[loc], uri_decoded[loc])
+            if loc == 2:
+                # Handle path manipulations
+                basename = None
+                if uri_decoded[0] != uri_replace_decoded[0] and ud.mirrortarball:
+                    # If the source and destination url types differ, must be a mirrortarball mapping
+                    basename = os.path.basename(ud.mirrortarball)
+                    # Kill parameters, they make no sense for mirror tarballs
+                    uri_decoded[5] = {}
+                elif ud.localpath and ud.method.supports_checksum(ud):
+                    basename = os.path.basename(ud.localpath)
+                if basename and not result_decoded[loc].endswith(basename):
+                    result_decoded[loc] = os.path.join(result_decoded[loc], basename)
+        else:
+            return None
     result = encodeurl(result_decoded)
+    if result == ud.url:
+        return None
     logger.debug(2, "For url %s returning %s" % (ud.url, result))
     return result
 
@@ -437,11 +458,10 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
         success = True
     except bb.process.NotFoundError as e:
         error_message = "Fetch command %s" % (e.command)
+    except bb.process.ExecutionError as e:
+        error_message = "Fetch command %s failed with exit code %s, output:\nSTDOUT: %s\nSTDERR: %s" % (e.command, e.exitcode, e.stdout, e.stderr)
     except bb.process.CmdError as e:
         error_message = "Fetch command %s could not be run:\n%s" % (e.command, e.msg)
-    except bb.process.ExecutionError as e:
-        error_message = "Fetch command %s failed with exit code %s, output:\n%s" % (e.command, e.exitcode, e.stderr)
-
     if not success:
         for f in cleanup:
             try:
@@ -462,6 +482,101 @@ def check_network_access(d, info = "", url = None):
     else:
         logger.debug(1, "Fetcher accessed the network with the command %s" % info)
 
+def build_mirroruris(origud, mirrors, ld):
+    uris = []
+    uds = []
+
+    replacements = {}
+    replacements["TYPE"] = origud.type
+    replacements["HOST"] = origud.host
+    replacements["PATH"] = origud.path
+    replacements["BASENAME"] = origud.path.split("/")[-1]
+    replacements["MIRRORNAME"] = origud.host.replace(':','.') + origud.path.replace('/', '.').replace('*', '.')
+
+    def adduri(uri, ud, uris, uds):
+        for line in mirrors:
+            try:
+                (find, replace) = line
+            except ValueError:
+                continue
+            newuri = uri_replace(ud, find, replace, replacements, ld)
+            if not newuri or newuri in uris or newuri == origud.url:
+                continue
+            try:
+                newud = FetchData(newuri, ld)
+                newud.setup_localpath(ld)
+            except bb.fetch2.BBFetchException as e:
+                logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
+                logger.debug(1, str(e))
+                try:
+                    ud.method.clean(ud, ld)
+                except UnboundLocalError:
+                    pass
+                continue   
+            uris.append(newuri)
+            uds.append(newud)
+
+            adduri(newuri, newud, uris, uds)
+
+    adduri(None, origud, uris, uds)
+
+    return uris, uds
+
+def try_mirror_url(newuri, origud, ud, ld, check = False):
+    # Return of None or a value means we're finished
+    # False means try another url
+    try:
+        if check:
+            found = ud.method.checkstatus(newuri, ud, ld)
+            if found:
+                return found
+            return False
+
+        os.chdir(ld.getVar("DL_DIR", True))
+
+        if not os.path.exists(ud.donestamp) or ud.method.need_update(newuri, ud, ld):
+            ud.method.download(newuri, ud, ld)
+            if hasattr(ud.method,"build_mirror_data"):
+                ud.method.build_mirror_data(newuri, ud, ld)
+
+        if not ud.localpath or not os.path.exists(ud.localpath):
+            return False
+
+        if ud.localpath == origud.localpath:
+            return ud.localpath
+
+        # We may be obtaining a mirror tarball which needs further processing by the real fetcher
+        # If that tarball is a local file:// we need to provide a symlink to it
+        dldir = ld.getVar("DL_DIR", True)
+        if origud.mirrortarball and os.path.basename(ud.localpath) == os.path.basename(origud.mirrortarball) \
+                and os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
+            open(ud.donestamp, 'w').close()
+            dest = os.path.join(dldir, os.path.basename(ud.localpath))
+            if not os.path.exists(dest):
+                os.symlink(ud.localpath, dest)
+            return None
+        # Otherwise the result is a local file:// and we symlink to it
+        if not os.path.exists(origud.localpath):
+             os.symlink(ud.localpath, origud.localpath)
+        update_stamp(newuri, origud, ld)
+        return ud.localpath
+
+    except bb.fetch2.NetworkAccess:
+        raise
+
+    except bb.fetch2.BBFetchException as e:
+        if isinstance(e, ChecksumError):
+            logger.warn("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (newuri, origud.url))
+            logger.warn(str(e))
+        else:
+            logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
+            logger.debug(1, str(e))
+        try:
+            ud.method.clean(ud, ld)
+        except UnboundLocalError:
+            pass
+        return False
+
 def try_mirrors(d, origud, mirrors, check = False):
     """
     Try to use a mirrored version of the sources.
@@ -472,65 +587,13 @@ def try_mirrors(d, origud, mirrors, check = False):
     mirrors is the list of mirrors we're going to try
     """
     ld = d.createCopy()
-    for line in mirrors:
-        try:
-            (find, replace) = line
-        except ValueError:
-            continue
-        newuri = uri_replace(origud, find, replace, ld)
-        if newuri == origud.url:
-            continue
-        try:
-            ud = FetchData(newuri, ld)
-            ud.setup_localpath(ld)
 
-            if check:
-                found = ud.method.checkstatus(newuri, ud, ld)
-                if found:
-                    return found
-                continue
+    uris, uds = build_mirroruris(origud, mirrors, ld)
 
-            if not os.path.exists(ud.donestamp) or ud.method.need_update(newuri, ud, ld):
-                ud.method.download(newuri, ud, ld)
-                if hasattr(ud.method,"build_mirror_data"):
-                    ud.method.build_mirror_data(newuri, ud, ld)
-
-            if not ud.localpath or not os.path.exists(ud.localpath):
-                continue
-
-            if ud.localpath == origud.localpath:
-                return ud.localpath
-
-            # We may be obtaining a mirror tarball which needs further processing by the real fetcher
-            # If that tarball is a local file:// we need to provide a symlink to it
-            dldir = ld.getVar("DL_DIR", True)
-            if os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
-                open(ud.donestamp, 'w').close()
-                dest = os.path.join(dldir, os.path.basename(ud.localpath))
-                if not os.path.exists(dest):
-                    os.symlink(ud.localpath, dest)
-                return None
-            # Otherwise the result is a local file:// and we symlink to it
-            if not os.path.exists(origud.localpath):
-                 os.symlink(ud.localpath, origud.localpath)
-            update_stamp(newuri, origud, ld)
-            return ud.localpath
-
-        except bb.fetch2.NetworkAccess:
-            raise
-
-        except bb.fetch2.BBFetchException as e:
-            if isinstance(e, ChecksumError):
-                logger.warn("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (newuri, origud.url))
-                logger.warn(str(e))
-            else:
-                logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
-                logger.debug(1, str(e))
-            try:
-                ud.method.clean(ud, ld)
-            except UnboundLocalError:
-                pass
-            continue
+    for index, uri in enumerate(uris):
+        ret = try_mirror_url(uri, origud, uds[index], ld, check)
+        if ret != False:
+            return ret
     return None
 
 def srcrev_internal_helper(ud, d, name):
@@ -1026,7 +1089,7 @@ class Fetch(object):
         self.ud = {}
 
         fn = d.getVar('FILE', True)
-        if cache and fn in urldata_cache:
+        if cache and fn and fn in urldata_cache:
             self.ud = urldata_cache[fn]
 
         for url in urls:
@@ -1038,7 +1101,7 @@ class Fetch(object):
                         self.ud[url] = None
                         pass
 
-        if cache:
+        if fn and cache:
             urldata_cache[fn] = self.ud
 
     def localpath(self, url):
@@ -1091,6 +1154,8 @@ class Fetch(object):
 
                 if premirroronly:
                     self.d.setVar("BB_NO_NETWORK", "1")
+
+                os.chdir(self.d.getVar("DL_DIR", True))
 
                 firsterr = None
                 if not localpath and ((not os.path.exists(ud.donestamp)) or m.need_update(u, ud, self.d)):
@@ -1153,7 +1218,7 @@ class Fetch(object):
                 except:
                     # Finally, try checking uri, u, from MIRRORS
                     mirrors = mirror_from_string(self.d.getVar('MIRRORS', True))
-                    ret = try_mirrors (self.d, ud, mirrors, True)
+                    ret = try_mirrors(self.d, ud, mirrors, True)
 
             if not ret:
                 raise FetchError("URL %s doesn't work" % u, u)

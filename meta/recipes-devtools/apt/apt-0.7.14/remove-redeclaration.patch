@@ -1,16 +1,20 @@
-Fix build errors
+Fix build errors on gcc 4.7:
 
 deb/deblistparser.cc: In member function 'virtual short unsigned int debListParser::VersionHash()':
 deb/deblistparser.cc:212:13: error: redeclaration of 'char* I'
 deb/deblistparser.cc:202:22: error: 'const char** I' previously declared here
 
 Upstream-Status: Backport
-Signed-off-by: Khem Raj <raj.khem@gmail.com>
-Index: apt-0.7.14/apt-pkg/deb/deblistparser.cc
-===================================================================
---- apt-0.7.14.orig/apt-pkg/deb/deblistparser.cc	2012-03-30 11:17:09.112456632 -0700
-+++ apt-0.7.14/apt-pkg/deb/deblistparser.cc	2012-03-30 11:25:40.484481643 -0700
-@@ -209,18 +209,18 @@
+Signed-off-by: Robert Yang <liezhi.yang@windriver.com>
+---
+ apt-pkg/deb/deblistparser.cc |   10 +++++-----
+ cmdline/apt-get.cc           |    8 ++++----
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/apt-pkg/deb/deblistparser.cc b/apt-pkg/deb/deblistparser.cc
+--- a/apt-pkg/deb/deblistparser.cc
++++ b/apt-pkg/deb/deblistparser.cc
+@@ -209,18 +209,18 @@ unsigned short debListParser::VersionHash()
        /* Strip out any spaces from the text, this undoes dpkgs reformatting
           of certain fields. dpkg also has the rather interesting notion of
           reformatting depends operators < -> <= */
@@ -34,11 +38,10 @@ Index: apt-0.7.14/apt-pkg/deb/deblistparser.cc
     }
     
     return Result;
-Index: apt-0.7.14/cmdline/apt-get.cc
-===================================================================
---- apt-0.7.14.orig/cmdline/apt-get.cc	2012-03-30 11:28:56.048490824 -0700
-+++ apt-0.7.14/cmdline/apt-get.cc	2012-03-30 11:32:00.248499740 -0700
-@@ -1752,12 +1752,12 @@
+diff --git a/cmdline/apt-get.cc b/cmdline/apt-get.cc
+--- a/cmdline/apt-get.cc
++++ b/cmdline/apt-get.cc
+@@ -1752,12 +1752,12 @@ bool DoInstall(CommandLine &CmdL)
  	 if ((*Cache)[I].Install() == false)
  	    continue;
  
@@ -46,7 +49,7 @@ Index: apt-0.7.14/cmdline/apt-get.cc
 -	 for (J = CmdL.FileList + 1; *J != 0; J++)
 -	    if (strcmp(*J,I.Name()) == 0)
 +	 const char **K;
-+	 for (K = CmdL.FileList + 1; *K != 0; J++)
++	 for (K = CmdL.FileList + 1; *K != 0; K++)
 +	    if (strcmp(*K,I.Name()) == 0)
  		break;
  	 
@@ -55,3 +58,6 @@ Index: apt-0.7.14/cmdline/apt-get.cc
  	    List += string(I.Name()) + " ";
  	    VersionsList += string(Cache[I].CandVersion) + "\n";
  	 }
+-- 
+1.7.1
+

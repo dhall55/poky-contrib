@@ -988,9 +988,13 @@ python populate_packages () {
 				unshipped.append(path)
 
 	if unshipped != []:
-		bb.warn("For recipe %s, the following files/directories were installed but not shipped in any package:" % pn)
-		for f in unshipped:
-			bb.warn("  " + f)
+		msg = pn + ": Files/directories were installed but not shipped"
+		if "installed_vs_shipped" in (d.getVar('INSANE_SKIP_' + pn, True) or "").split():
+			bb.note("Package %s skipping QA tests: installed_vs_shipped" % pn)
+		else:
+			for f in unshipped:
+				msg = msg + "\n  " + f	
+			package_qa_handle_error("installed_vs_shipped", msg, d)
 
 	bb.build.exec_func("package_name_hook", d)
 
@@ -1153,6 +1157,9 @@ RPMDEPS = "${STAGING_LIBDIR_NATIVE}/rpm/bin/rpmdeps-oecore --macros ${STAGING_LI
 
 python package_do_filedeps() {
 	import re
+
+	if d.getVar('SKIP_FILEDEPS', True) == '1':
+		return
 
 	pkgdest = d.getVar('PKGDEST', True)
 	packages = d.getVar('PACKAGES', True)
@@ -1701,7 +1708,7 @@ python package_depchains() {
 
 # Since bitbake can't determine which variables are accessed during package 
 # iteration, we need to list them here:
-PACKAGEVARS = "FILES RDEPENDS RRECOMMENDS SUMMARY DESCRIPTION RSUGGESTS RPROVIDES RCONFLICTS PKG ALLOW_EMPTY pkg_postinst pkg_postrm INITSCRIPT_NAME INITSCRIPT_PARAMS DEBIAN_NOAUTONAME"
+PACKAGEVARS = "FILES RDEPENDS RRECOMMENDS SUMMARY DESCRIPTION RSUGGESTS RPROVIDES RCONFLICTS PKG ALLOW_EMPTY pkg_postinst pkg_postrm INITSCRIPT_NAME INITSCRIPT_PARAMS DEBIAN_NOAUTONAME ALTERNATIVE PKGE PKGV PKGR"
 
 def gen_packagevar(d):
     ret = []

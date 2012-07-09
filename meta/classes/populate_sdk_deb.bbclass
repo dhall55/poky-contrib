@@ -6,6 +6,8 @@ DEB_SDK_ARCH = "${@[d.getVar('SDK_ARCH', True), "i386"]\
                 [d.getVar('SDK_ARCH', True) in \
                 ["x86", "i486", "i586", "i686", "pentium"]]}"
 
+do_populate_sdk[lockfiles] += "${WORKDIR}/deb.lock"
+
 populate_sdk_post_deb () {
 
 	local target_rootfs=$1
@@ -28,7 +30,7 @@ populate_sdk_deb () {
 	export INSTALL_BASEARCH_DEB="${DPKG_ARCH}"
 	export INSTALL_ARCHS_DEB="${PACKAGE_ARCHS}"
 	export INSTALL_PACKAGES_DEB="${TOOLCHAIN_TARGET_TASK}"
-	export INSTALL_PACKAGES_ATTEMPTONLY_DEB=""
+	export INSTALL_PACKAGES_ATTEMPTONLY_DEB="${TOOLCHAIN_TARGET_TASK_ATTEMPTONLY}"
 	export PACKAGES_LINGUAS_DEB=""
 	export INSTALL_TASK_DEB="populate_sdk-target"
 
@@ -44,7 +46,7 @@ populate_sdk_deb () {
 	export INSTALL_BASEARCH_DEB="${DEB_SDK_ARCH}"
 	export INSTALL_ARCHS_DEB="${SDK_PACKAGE_ARCHS}"
 	export INSTALL_PACKAGES_DEB="${TOOLCHAIN_HOST_TASK}"
-	export INSTALL_PACKAGES_ATTEMPTONLY_DEB=""
+	export INSTALL_PACKAGES_ATTEMPTONLY_DEB="${TOOLCHAIN_HOST_TASK_ATTEMPTONLY}"
 	export PACKAGES_LINGUAS_DEB=""
 	export INSTALL_TASK_DEB="populate_sdk-nativesdk"
 

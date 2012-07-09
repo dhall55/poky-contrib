@@ -375,9 +375,8 @@ class RunQueueData:
         """
 
         runq_build = []
-        recursive_tdepends = {}
-        runq_recrdepends = []
-        tdepends_fnid = {}
+        recursivetasks = {}
+        recursivetasksselfref = set()
 
         taskData = self.taskData
 
@@ -406,11 +405,10 @@ class RunQueueData:
                 depdata = taskData.build_targets[depid][0]
                 if depdata is None:
                     continue
-                dep = taskData.fn_index[depdata]
                 for taskname in tasknames:
-                    taskid = taskData.gettask_id(dep, taskname, False)
+                    taskid = taskData.gettask_id_fromfnid(depdata, taskname)
                     if taskid is not None:
-                        depends.append(taskid)
+                        depends.add(taskid)
 
         def add_runtime_dependencies(depids, tasknames, depends):
             for depid in depids:
@@ -419,15 +417,20 @@ class RunQueueData:
                 depdata = taskData.run_targets[depid][0]
                 if depdata is None:
                     continue
-                dep = taskData.fn_index[depdata]
                 for taskname in tasknames:
-                    taskid = taskData.gettask_id(dep, taskname, False)
+                    taskid = taskData.gettask_id_fromfnid(depdata, taskname)
                     if taskid is not None:
-                        depends.append(taskid)
+                        depends.add(taskid)
+
+        def add_resolved_dependencies(depids, tasknames, depends):
+            for depid in depids:
+                for taskname in tasknames:
+                    taskid = taskData.gettask_id_fromfnid(depid, taskname)
+                    if taskid is not None:
+                        depends.add(taskid)
 
         for task in xrange(len(taskData.tasks_name)):
-            depends = []
-            recrdepends = []
+            depends = set()
             fnid = taskData.tasks_fnid[task]
             fn = taskData.fn_index[fnid]
             task_deps = self.dataCache.task_deps[fn]
@@ -439,7 +442,7 @@ class RunQueueData:
                 # Resolve task internal dependencies
                 #
                 # e.g. addtask before X after Y
-                depends = taskData.tasks_tdepends[task]
+                depends = set(taskData.tasks_tdepends[task])
 
                 # Resolve 'deptask' dependencies
                 #
@@ -454,99 +457,91 @@ class RunQueueData:
                 # e.g. do_sometask[rdeptask] = "do_someothertask"
                 # (makes sure sometask runs after someothertask of all RDEPENDS)
                 if 'rdeptask' in task_deps and taskData.tasks_name[task] in task_deps['rdeptask']:
-                    taskname = task_deps['rdeptask'][taskData.tasks_name[task]]
-                    add_runtime_dependencies(taskData.rdepids[fnid], [taskname], depends)
+                    tasknames = task_deps['rdeptask'][taskData.tasks_name[task]].split()
+                    add_runtime_dependencies(taskData.rdepids[fnid], tasknames, depends)
 
                 # Resolve inter-task dependencies
                 #
                 # e.g. do_sometask[depends] = "targetname:do_someothertask"
                 # (makes sure sometask runs after targetname's someothertask)
-                if fnid not in tdepends_fnid:
-                    tdepends_fnid[fnid] = set()
                 idepends = taskData.tasks_idepends[task]
                 for (depid, idependtask) in idepends:
                     if depid in taskData.build_targets:
                         # Won't be in build_targets if ASSUME_PROVIDED
                         depdata = taskData.build_targets[depid][0]
                         if depdata is not None:
-                            dep = taskData.fn_index[depdata]
-                            taskid = taskData.gettask_id(dep, idependtask, False)
+                            taskid = taskData.gettask_id_fromfnid(depdata, idependtask)
                             if taskid is None:
                                 bb.msg.fatal("RunQueue", "Task %s in %s depends upon non-existent task %s in %s" % (taskData.tasks_name[task], fn, idependtask, dep))
-                            depends.append(taskid)
-                            if depdata != fnid:
-                                tdepends_fnid[fnid].add(taskid)
+                            depends.add(taskid)
+                irdepends = taskData.tasks_irdepends[task]
+                for (depid, idependtask) in irdepends:
+                    if depid in taskData.run_targets:
+                        # Won't be in run_targets if ASSUME_PROVIDED
+                        depdata = taskData.run_targets[depid][0]
+                        if depdata is not None:
+                            taskid = taskData.gettask_id_fromfnid(depdata, idependtask)
+                            if taskid is None:
+                                bb.msg.fatal("RunQueue", "Task %s in %s rdepends upon non-existent task %s in %s" % (taskData.tasks_name[task], fn, idependtask, dep))
+                            depends.add(taskid)
 
-
-                # Resolve recursive 'recrdeptask' dependencies (A)
+                # Resolve recursive 'recrdeptask' dependencies (Part A)
                 #
                 # e.g. do_sometask[recrdeptask] = "do_someothertask"
                 # (makes sure sometask runs after someothertask of all DEPENDS, RDEPENDS and intertask dependencies, recursively)
                 # We cover the recursive part of the dependencies below
                 if 'recrdeptask' in task_deps and taskData.tasks_name[task] in task_deps['recrdeptask']:
-                    for taskname in task_deps['recrdeptask'][taskData.tasks_name[task]].split():
-                        recrdepends.append(taskname)
-                        add_build_dependencies(taskData.depids[fnid], [taskname], depends)
-                        add_runtime_dependencies(taskData.rdepids[fnid], [taskname], depends)
-
-                # Rmove all self references
-                if task in depends:
-                    newdep = []
-                    logger.debug(2, "Task %s (%s %s) contains self reference! %s", task, taskData.fn_index[taskData.tasks_fnid[task]], taskData.tasks_name[task], depends)
-                    for dep in depends:
-                        if task != dep:
-                            newdep.append(dep)
-                    depends = newdep
+                    tasknames = task_deps['recrdeptask'][taskData.tasks_name[task]].split()
+                    recursivetasks[task] = tasknames
+                    add_build_dependencies(taskData.depids[fnid], tasknames, depends)
+                    add_runtime_dependencies(taskData.rdepids[fnid], tasknames, depends)
+                    if taskData.tasks_name[task] in tasknames:
+                        recursivetasksselfref.add(task)
 
             self.runq_fnid.append(taskData.tasks_fnid[task])
             self.runq_task.append(taskData.tasks_name[task])
-            self.runq_depends.append(set(depends))
+            self.runq_depends.append(depends)
             self.runq_revdeps.append(set())
             self.runq_hash.append("")
 
             runq_build.append(0)
-            runq_recrdepends.append(recrdepends)
 
-        #
-        # Build a list of recursive cumulative dependencies for each fnid
-        # We do this by fnid, since if A depends on some task in B
-        # we're interested in later tasks B's fnid might have but B itself
-        # doesn't depend on
-        #
-        # Algorithm is O(tasks) + O(tasks)*O(fnids)
-        #
-        reccumdepends = {}
-        for task in xrange(len(self.runq_fnid)):
-            fnid = self.runq_fnid[task]
-            if fnid not in reccumdepends:
-                if fnid in tdepends_fnid:
-                    reccumdepends[fnid] = tdepends_fnid[fnid]
-                else:
-                    reccumdepends[fnid] = set()
-            reccumdepends[fnid].update(self.runq_depends[task])
-        for task in xrange(len(self.runq_fnid)):
-            taskfnid = self.runq_fnid[task]
-            for fnid in reccumdepends:
-                if task in reccumdepends[fnid]:
-                    reccumdepends[fnid].add(task)
-                    if taskfnid in reccumdepends:
-                        reccumdepends[fnid].update(reccumdepends[taskfnid])
-
-
-        # Resolve recursive 'recrdeptask' dependencies (B)
+        # Resolve recursive 'recrdeptask' dependencies (Part B)
         #
         # e.g. do_sometask[recrdeptask] = "do_someothertask"
         # (makes sure sometask runs after someothertask of all DEPENDS, RDEPENDS and intertask dependencies, recursively)
-        for task in xrange(len(self.runq_fnid)):
-            if len(runq_recrdepends[task]) > 0:
-                taskfnid = self.runq_fnid[task]
-                for dep in reccumdepends[taskfnid]:
-                    # Ignore self references
-                    if dep == task:
-                        continue
-                    for taskname in runq_recrdepends[task]:
-                        if taskData.tasks_name[dep] == taskname:
-                            self.runq_depends[task].add(dep)
+        # We need to do this separately since we need all of self.runq_depends to be complete before this is processed
+        extradeps = {}
+        for task in recursivetasks:
+            extradeps[task] = set(self.runq_depends[task])
+            tasknames = recursivetasks[task]
+            seendeps = set()
+            seenfnid = []
+
+            def generate_recdeps(t):
+                newdeps = set()
+                add_resolved_dependencies([taskData.tasks_fnid[t]], tasknames, newdeps)
+                extradeps[task].update(newdeps)
+                seendeps.add(t)
+                newdeps.add(t)
+                for i in newdeps:
+                    for n in self.runq_depends[i]:
+                        if n not in seendeps:
+                            generate_recdeps(n)
+            generate_recdeps(task)
+
+        # Remove circular references so that do_a[recrdeptask] = "do_a do_b" can work
+        for task in recursivetasks:
+            extradeps[task].difference_update(recursivetasksselfref)
+
+        for task in xrange(len(taskData.tasks_name)):
+            # Add in extra dependencies
+            if task in extradeps:
+                 self.runq_depends[task] = extradeps[task]
+            # Remove all self references
+            if task in self.runq_depends[task]:
+                logger.debug(2, "Task %s (%s %s) contains self reference! %s", task, taskData.fn_index[taskData.tasks_fnid[task]], taskData.tasks_name[task], self.runq_depends[task])
+                self.runq_depends[task].remove(task)
 
         # Step B - Mark all active tasks
         #
@@ -705,6 +700,28 @@ class RunQueueData:
                 continue
             self.runq_setscene.append(task)
 
+        def invalidate_task(fn, taskname, error_nostamp):
+            taskdep = self.dataCache.task_deps[fn]
+            if 'nostamp' in taskdep and taskname in taskdep['nostamp']:
+                if error_nostamp:
+                    bb.fatal("Task %s is marked nostamp, cannot invalidate this task" % taskname)
+                else:
+                    bb.debug(1, "Task %s is marked nostamp, cannot invalidate this task" % taskname)
+            else:
+                logger.verbose("Invalidate task %s, %s", taskname, fn)
+                bb.parse.siggen.invalidate_task(taskname, self.dataCache, fn)
+
+        # Invalidate task if force mode active
+        if self.cooker.configuration.force:
+            for (fn, target) in self.target_pairs:
+                invalidate_task(fn, target, False)
+
+        # Invalidate task if invalidate mode active
+        if self.cooker.configuration.invalidate_stamp:
+            for (fn, target) in self.target_pairs:
+                for st in self.cooker.configuration.invalidate_stamp.split(','):
+                    invalidate_task(fn, "do_%s" % st, True)
+
         # Interate over the task list and call into the siggen code
         dealtwith = set()
         todeal = set(range(len(self.runq_fnid)))
@@ -730,12 +747,6 @@ class RunQueueData:
                                            self.runq_task[dep])
                 deps.append(depidentifier)
             self.hash_deps[identifier] = deps
-
-        # Remove stamps for targets if force mode active
-        if self.cooker.configuration.force:
-            for (fn, target) in self.target_pairs:
-                logger.verbose("Remove stamp %s, %s", target, fn)
-                bb.build.del_stamp(target, self.dataCache, fn)
 
         return len(self.runq_fnid)
 
@@ -1708,7 +1719,7 @@ class runQueuePipe():
     def __init__(self, pipein, pipeout, d):
         self.input = pipein
         pipeout.close()
-        fcntl.fcntl(self.input, fcntl.F_SETFL, fcntl.fcntl(self.input, fcntl.F_GETFL) | os.O_NONBLOCK)
+        bb.utils.nonblockingfd(self.input)
         self.queue = ""
         self.d = d
 

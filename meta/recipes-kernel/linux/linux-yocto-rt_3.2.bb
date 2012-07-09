@@ -1,26 +1,18 @@
-inherit kernel
 require recipes-kernel/linux/linux-yocto.inc
-
-KMACHINE = "common-pc"
-KMACHINE_qemux86  = "common-pc"
-KMACHINE_qemux86-64  = "common-pc-64"
-KMACHINE_qemuarm  = "arm-versatile-926ejs"
-KMACHINE_qemuppc  = "qemu-ppc32"
-KMACHINE_qemumips = "mti-malta32-be"
 
 KBRANCH = "standard/preempt-rt/base"
 KBRANCH_qemuppc = "standard/preempt-rt/qemu-ppc32"
 
-LINUX_VERSION ?= "3.2.11"
+LINUX_VERSION ?= "3.2.18"
 LINUX_KERNEL_TYPE = "preempt-rt"
 
 KMETA = "meta"
 
-SRCREV_machine ?= "3ebf4d172cf4a41d2abf09e4036f0850e08064e7"
-SRCREV_machine_qemuppc ?= "7cebfe717987f4ffa9ae90558c28f45049847c1c"
-SRCREV_meta ?= "49f931bc294d5b6be60502bbd448cff5aa766235"
+SRCREV_machine ?= "c413f23eafb3e91ff98653e578e771532fd71be9"
+SRCREV_machine_qemuppc ?= "d7020ba154df03cba5351011ff664f5e3e1ce678"
+SRCREV_meta ?= "ee78519365bdb25287703bbc31c06b193263c654"
 
-PR = "r1"
+PR = "${INC_PR}.0"
 PV = "${LINUX_VERSION}+git${SRCPV}"
 
 SRC_URI = "git://git.yoctoproject.org/linux-yocto-3.2.git;protocol=git;bareclone=1;branch=${KBRANCH},meta;name=machine,meta"
@@ -35,5 +27,3 @@ KERNEL_FEATURES = "features/netfilter"
 KERNEL_FEATURES_append = " features/taskstats"
 KERNEL_FEATURES_append_qemux86 = " cfg/sound"
 KERNEL_FEATURES_append_qemux86-64 = " cfg/sound"
-
-require recipes-kernel/linux/linux-tools.inc

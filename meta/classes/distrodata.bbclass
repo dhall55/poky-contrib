@@ -1,4 +1,3 @@
-require conf/distro/include/distro_tracking_fields.inc
 
 addhandler distro_eventhandler
 python distro_eventhandler() {
@@ -8,7 +7,7 @@ python distro_eventhandler() {
 	logfile = dc.create_log_file(e.data, "distrodata.csv")
 	lf = bb.utils.lockfile("%s.lock" % logfile)
 	f = open(logfile, "a")
-	f.write("Package,Description,Owner,License,ChkSum,Status,VerMatch,Version,Upsteam,Non-Update,Reason,Recipe Status,Distro 1,Distro 2,Distro 3\n")
+	f.write("Package,Description,Owner,License,VerMatch,Version,Upsteam,Reason,Recipe Status,Distro 1,Distro 2,Distro 3\n")
         f.close()
         bb.utils.unlockfile(lf)
 
@@ -68,21 +67,12 @@ python do_distrodata_np() {
 
 	pgrp = localdata.getVar('SECTION', True)
 	plicense = localdata.getVar('LICENSE', True).replace(',','_')
-	if localdata.getVar('LIC_FILES_CHKSUM', True):
-		pchksum="1"
-	else:
-		pchksum="0"
 
-	if localdata.getVar('RECIPE_STATUS', True):
-		hasrstatus="1"
-	else:
-		hasrstatus="0"
-
-	rstatus = localdata.getVar('RECIPE_STATUS', True)
+	rstatus = localdata.getVar('RECIPE_COLOR', True)
         if rstatus is not None:
                 rstatus = rstatus.replace(',','')
 		
-	pupver = localdata.getVar('RECIPE_LATEST_VERSION', True)
+	pupver = localdata.getVar('RECIPE_UPSTREAM_VERSION', True)
 	if pcurver == pupver:
 		vermatch="1"
 	else:
@@ -94,16 +84,12 @@ python do_distrodata_np() {
 		noupdate="1"
                 noupdate_reason = noupdate_reason.replace(',','')
 
-	ris = localdata.getVar('RECIPE_INTEL_SECTION', True)
 	maintainer = localdata.getVar('RECIPE_MAINTAINER', True)
-	rttr = localdata.getVar('RECIPE_TIME_BETWEEN_LAST_TWO_RELEASES', True)
-	rlrd = localdata.getVar('RECIPE_LATEST_RELEASE_DATE', True)
-	dc = localdata.getVar('DEPENDENCY_CHECK', True)
-	rc = localdata.getVar('RECIPE_COMMENTS', True)
+	rlrd = localdata.getVar('RECIPE_UPSTREAM_DATE', True)
         result = dist_check.compare_in_distro_packages_list(distro_check_dir, localdata)
 
-	bb.note("DISTRO: %s,%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, %s\n" % \
-		  (pname, pdesc, maintainer, plicense, pchksum, hasrstatus, vermatch, pcurver, pupver, noupdate, noupdate_reason, rstatus))
+	bb.note("DISTRO: %s,%s,%s,%s,%s,%s,%s,%s,%s\n" % \
+		  (pname, pdesc, maintainer, plicense, vermatch, pcurver, pupver, noupdate_reason, rstatus))
         line = pn
         for i in result:
             line = line + "," + i
@@ -155,21 +141,12 @@ python do_distrodata() {
 
 	pgrp = localdata.getVar('SECTION', True)
 	plicense = localdata.getVar('LICENSE', True).replace(',','_')
-	if localdata.getVar('LIC_FILES_CHKSUM', True):
-		pchksum="1"
-	else:
-		pchksum="0"
 
-	if localdata.getVar('RECIPE_STATUS', True):
-		hasrstatus="1"
-	else:
-		hasrstatus="0"
-
-	rstatus = localdata.getVar('RECIPE_STATUS', True)
+	rstatus = localdata.getVar('RECIPE_COLOR', True)
         if rstatus is not None:
                 rstatus = rstatus.replace(',','')
 		
-	pupver = localdata.getVar('RECIPE_LATEST_VERSION', True)
+	pupver = localdata.getVar('RECIPE_UPSTREAM_VERSION', True)
 	if pcurver == pupver:
 		vermatch="1"
 	else:
@@ -182,19 +159,15 @@ python do_distrodata() {
 		noupdate="1"
                 noupdate_reason = noupdate_reason.replace(',','')
 
-	ris = localdata.getVar('RECIPE_INTEL_SECTION', True)
 	maintainer = localdata.getVar('RECIPE_MAINTAINER', True)
-	rttr = localdata.getVar('RECIPE_TIME_BETWEEN_LAST_TWO_RELEASES', True)
-	rlrd = localdata.getVar('RECIPE_LATEST_RELEASE_DATE', True)
-	dc = localdata.getVar('DEPENDENCY_CHECK', True)
-	rc = localdata.getVar('RECIPE_COMMENTS', True)
+	rlrd = localdata.getVar('RECIPE_UPSTREAM_DATE', True)
         # do the comparison
         result = dist_check.compare_in_distro_packages_list(distro_check_dir, localdata)
 
 	lf = bb.utils.lockfile("%s.lock" % logfile)
 	f = open(logfile, "a")
-	f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % \
-		  (pname, pdesc, maintainer, plicense, pchksum, hasrstatus, vermatch, pcurver, pupver, noupdate, noupdate_reason, rstatus))
+	f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s" % \
+		  (pname, pdesc, maintainer, plicense, vermatch, pcurver, pupver, noupdate_reason, rstatus))
         line = ""
         for i in result:
             line = line + "," + i
@@ -204,7 +177,7 @@ python do_distrodata() {
 }
 
 addtask distrodataall after do_distrodata
-do_distrodataall[recrdeptask] = "do_distrodata"
+do_distrodataall[recrdeptask] = "do_distrodataall do_distrodata"
 do_distrodataall[nostamp] = "1"
 do_distrodataall() {
 	:
@@ -218,7 +191,7 @@ python checkpkg_eventhandler() {
 
 	lf = bb.utils.lockfile("%s.lock" % logfile)
 	f = open(logfile, "a")
-	f.write("Package\tVersion\tUpver\tLicense\tSection\tHome\tRelease\tPriority\tDepends\tBugTracker\tPE\tDescription\tStatus\tTracking\tURI\tMAINTAINER\n")
+	f.write("Package\tVersion\tUpver\tLicense\tSection\tHome\tRelease\tDepends\tBugTracker\tPE\tDescription\tStatus\tTracking\tURI\tMAINTAINER\n")
         f.close()
         bb.utils.unlockfile(lf)
     return
@@ -475,7 +448,6 @@ python do_checkpkg() {
 	psection = localdata.getVar('SECTION', True)
 	phome = localdata.getVar('HOMEPAGE', True)
 	prelease = localdata.getVar('PR', True)
-	ppriority = localdata.getVar('PRIORITY', True)
 	pdepends = localdata.getVar('DEPENDS', True)
 	pbugtracker = localdata.getVar('BUGTRACKER', True)
 	ppe = localdata.getVar('PE', True)
@@ -640,7 +612,7 @@ python do_checkpkg() {
 		pstatus += ":%s%s" % (host, path)
 
 	"""Read from manual distro tracking fields as alternative"""
-	pmver = d.getVar("RECIPE_LATEST_VERSION", True)
+	pmver = d.getVar("RECIPE_UPSTREAM_VERSION", True)
 	if not pmver:
 		pmver = "N/A"
 		pmstatus = "ErrNoRecipeData"
@@ -655,14 +627,14 @@ python do_checkpkg() {
 	pdesc = "".join(pdesc.split("\t"))
 	lf = bb.utils.lockfile("%s.lock" % logfile)
 	f = open(logfile, "a")
-	f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % \
-		  (pname,pversion,pupver,plicense,psection, phome,prelease, ppriority,pdepends,pbugtracker,ppe,pdesc,pstatus,pmver,psrcuri,maintainer))
+	f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % \
+		  (pname,pversion,pupver,plicense,psection, phome,prelease, pdepends,pbugtracker,ppe,pdesc,pstatus,pmver,psrcuri,maintainer))
 	f.close()
 	bb.utils.unlockfile(lf)
 }
 
 addtask checkpkgall after do_checkpkg
-do_checkpkgall[recrdeptask] = "do_checkpkg"
+do_checkpkgall[recrdeptask] = "do_checkpkgall do_checkpkg"
 do_checkpkgall[nostamp] = "1"
 do_checkpkgall() {
 	:
@@ -705,7 +677,7 @@ python do_distro_check() {
 }
 
 addtask distro_checkall after do_distro_check
-do_distro_checkall[recrdeptask] = "do_distro_check"
+do_distro_checkall[recrdeptask] = "do_distro_checkall do_distro_check"
 do_distro_checkall[nostamp] = "1"
 do_distro_checkall() {
 	:
@@ -755,7 +727,7 @@ python do_checklicense() {
 }
 
 addtask checklicenseall after do_checklicense
-do_checklicenseall[recrdeptask] = "do_checklicense"
+do_checklicenseall[recrdeptask] = "do_checklicenseall do_checklicense"
 do_checklicenseall[nostamp] = "1"
 do_checklicenseall() {
 	:

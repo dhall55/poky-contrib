@@ -529,14 +529,14 @@ class HobNotebook(gtk.Notebook):
         self.reset_entry(search)
 
     def set_search_entry_clear_cb(self, search, icon_pos, event):
-        self.reset_entry(search)
+        if search.get_editable() == True:
+            search.set_text("")
 
     def set_page(self, title):
-        for child in self.tabbar.children:
-            if child["title"] == title:
-                self.tabbar.current_child = child
-                self.tabbar.grab_focus()
-                self.notebook.set_current_page(child["toggled_page"])
+        for child in self.pages:
+            if child.lbl.get_label() == title:
+                child.grab_focus()
+                self.set_current_page(self.page_num(child))
 
 class HobWarpCellRendererText(gtk.CellRendererText):
     def __init__(self, col_number):

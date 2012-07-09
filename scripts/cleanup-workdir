@@ -19,10 +19,10 @@ import os
 import sys
 import optparse
 import re
-import commands
+import subprocess
 import shutil
 
-versions = {}
+pkg_cur_dirs = []
 obsolete_dirs = []
 parser = None
 
@@ -39,26 +39,41 @@ def parse_version(verstr):
     else:
         return epoch + '_' + elems[1]
 
-def parse_dir(match, pkgabsdir):
-    pkg_name = match.group(1)
-    pkg_version = match.group(2)
-    if pkg_name in versions:
-        if pkg_version != versions[pkg_name]:
-            obsolete_dirs.append(pkgabsdir)
-        return True
-    return False
+def run_command(cmd):
+    pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    output = pipe.communicate()[0]
+    if pipe.returncode != 0:
+        print "Execute command '%s' failed." % cmd
+        sys.exit(1)
+    return output
+
+def get_cur_arch_dirs(workdir, arch_dirs):
+    pattern = workdir + '/(.*?)/'
+
+    # select thest 5 packages to get the dirs of current arch
+    pkgs = ['hicolor-icon-theme', 'base-files', 'acl-native', 'binutils-crosssdk', 'autoconf-nativesdk']
+
+    for pkg in pkgs:
+        cmd = "bitbake -e " + pkg + " | grep ^IMAGE_ROOTFS="
+        output = run_command(cmd)
+        output = output.split('"')[1]
+        m = re.match(pattern, output)
+        arch_dirs.append(m.group(1))
 
 def main():
     global parser
     parser = optparse.OptionParser(
         usage = """%prog
 
-Remove the obsolete packages' build directories in WORKDIR.
-This script must be ran under BUILDDIR after source file \"oe-init-build-env\".""")
+%prog removes the obsolete packages' build directories in WORKDIR.
+This script must be ran under BUILDDIR after source file \"oe-init-build-env\".
+
+Any file or directory under WORKDIR which is not created by Yocto
+will be deleted. Be CAUTIOUS.""")
 
     options, args = parser.parse_args(sys.argv)
 
-    builddir = commands.getoutput('echo $BUILDDIR')
+    builddir = run_command('echo $BUILDDIR').strip()
     if len(builddir) == 0:
         err_quit("Please source file \"oe-init-build-env\" first.\n")
 
@@ -67,10 +82,7 @@ This script must be ran under BUILDDIR after source file \"oe-init-build-env\"."
 
     print 'Updating bitbake caches...'
     cmd = "bitbake -s"
-    (ret, output) = commands.getstatusoutput(cmd)
-    if ret != 0:
-        print "Execute 'bitbake -s' failed. Can't get packages' versions."
-        return 1
+    output = run_command(cmd)
 
     output = output.split('\n')
     index = 0
@@ -89,45 +101,69 @@ This script must be ran under BUILDDIR after source file \"oe-init-build-env\"."
             version = parse_version(elems[1])
         else:
             version = parse_version(elems[2])
-        versions[elems[0]] = version
+        pkg_cur_dirs.append(elems[0] + '-' + version)
 
-    cmd = "bitbake -e | grep ^TMPDIR"
-    (ret, output) = commands.getstatusoutput(cmd)
-    if ret != 0:
-        print "Execute 'bitbke -e' failed. Can't get TMPDIR."
+    cmd = "bitbake -e"
+    output = run_command(cmd)
+
+    tmpdir = None
+    image_rootfs = None
+    output = output.split('\n')
+    for line in output:
+        if tmpdir and image_rootfs:
+            break
+
+        if not tmpdir:
+            m = re.match('TMPDIR="(.*)"', line)
+            if m:
+                tmpdir = m.group(1)
+
+        if not image_rootfs:
+            m = re.match('IMAGE_ROOTFS="(.*)"', line)
+            if m:
+                image_rootfs = m.group(1)
+
+    # won't fail just in case
+    if not tmpdir or not image_rootfs:
+        print "Can't get TMPDIR or IMAGE_ROOTFS."
         return 1
 
-    tmpdir = output.split('"')[1]
-    workdir = os.path.join(tmpdir, 'work')
-    if not os.path.exists(workdir):
-        print "WORKDIR %s does NOT exist. Quit." % workdir
+    pattern = tmpdir + '/(.*?)/(.*?)/'
+    m = re.match(pattern, image_rootfs)
+    if not m:
+        print "Can't get WORKDIR."
         return 1
 
-    for archdir in os.listdir(workdir):
-        archdir = os.path.join(workdir, archdir)
-        if not os.path.isdir(archdir):
-            pass
+    workdir = os.path.join(tmpdir, m.group(1))
 
-        for pkgdir in sorted(os.listdir(archdir)):
-            pkgabsdir = os.path.join(archdir, pkgdir)
-            if not os.path.isdir(pkgabsdir):
-                pass
+    # we only deal the dirs of current arch, total numbers of dirs are 6
+    cur_arch_dirs = [m.group(2)]
+    get_cur_arch_dirs(workdir, cur_arch_dirs)
 
-            # parse the package directory names
-            # parse native/nativesdk packages first
-            match = re.match('(.*?-native.*?)-(.*)', pkgdir)
-            if match and parse_dir(match, pkgabsdir):
+    for workroot, dirs, files in os.walk(workdir):
+        # For the files, they should NOT exist in WORKDIR. Romve them.
+        for f in files:
+            obsolete_dirs.append(os.path.join(workroot, f))
+
+        for d in dirs:
+            if d not in cur_arch_dirs:
                 continue
 
-            # parse package names which ends with numbers such as 'glib-2.0'
-            match = re.match('(.*?-[\.\d]+)-(\d.*)', pkgdir)
-            if match and parse_dir(match, pkgabsdir):
-                continue
+            for pkgroot, pkgdirs, filenames in os.walk(os.path.join(workroot, d)):
+                for f in filenames:
+                    obsolete_dirs.append(os.path.join(pkgroot, f))
 
-            # other packages
-            match = re.match('(.*?)-(\d.*)', pkgdir)
-            if match and parse_dir(match, pkgabsdir):
-                continue
+                for pkgdir in sorted(pkgdirs):
+                    if pkgdir not in pkg_cur_dirs:
+                        obsolete_dirs.append(os.path.join(pkgroot, pkgdir))
+
+                # just process the top dir of every package under tmp/work/*/,
+                # then jump out of the above os.walk()
+                break
+
+        # it is convenient to use os.walk() to get dirs and files at same time
+        # both of them have been dealed in the loop, so jump out
+        break
 
     for d in obsolete_dirs:
         print "Deleleting %s" % d

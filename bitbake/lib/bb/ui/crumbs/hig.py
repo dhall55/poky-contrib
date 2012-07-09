@@ -20,12 +20,15 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import glob
 import gtk
 import gobject
 import hashlib
 import os
 import re
 import shlex
+import subprocess
+import tempfile
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
 from bb.ui.crumbs.progressbar import HobProgressBar
@@ -63,7 +66,7 @@ class CrumbsMessageDialog(CrumbsDialog):
     """
     def __init__(self, parent=None, label="", icon=gtk.STOCK_INFO):
         super(CrumbsMessageDialog, self).__init__("", parent, gtk.DIALOG_DESTROY_WITH_PARENT)
-        
+
         self.set_border_width(6)
         self.vbox.set_property("spacing", 12)
         self.action_area.set_property("spacing", 12)
@@ -207,7 +210,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         hbox.pack_start(port_entry, expand=False, fill=False)
 
         details_button = HobAltButton("Details")
-        details_button.connect("clicked", self.details_cb, parent, protocol) 
+        details_button.connect("clicked", self.details_cb, parent, protocol)
         hbox.pack_start(details_button, expand=False, fill=False)
 
         hbox.show_all()
@@ -748,20 +751,27 @@ class DeployImageDialog (CrumbsDialog):
 
     __dummy_usb__ = "--select a usb drive--"
 
-    def __init__(self, title, image_path, parent, flags, buttons=None):
+    def __init__(self, title, image_path, parent, flags, buttons=None, standalone=False):
         super(DeployImageDialog, self).__init__(title, parent, flags, buttons)
 
         self.image_path = image_path
+        self.standalone = standalone
 
         self.create_visual_elements()
         self.connect("response", self.response_cb)
 
     def create_visual_elements(self):
+        self.set_size_request(600, 400)
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
         markup = "<span font_desc='12'>The image to be written into usb drive:</span>"
         label.set_markup(markup)
         self.vbox.pack_start(label, expand=False, fill=False, padding=2)
+
+        table = gtk.Table(2, 10, False)
+        table.set_col_spacings(5)
+        table.set_row_spacings(5)
+        self.vbox.pack_start(table, expand=True, fill=True)
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -770,11 +780,31 @@ class DeployImageDialog (CrumbsDialog):
         tv.set_editable(False)
         tv.set_wrap_mode(gtk.WRAP_WORD)
         tv.set_cursor_visible(False)
-        buf = gtk.TextBuffer()
-        buf.set_text(self.image_path)
-        tv.set_buffer(buf)
+        self.buf = gtk.TextBuffer()
+        self.buf.set_text(self.image_path)
+        tv.set_buffer(self.buf)
         scroll.add(tv)
-        self.vbox.pack_start(scroll, expand=True, fill=True)
+        table.attach(scroll, 0, 10, 0, 1)
+
+        # There are 2 ways to use DeployImageDialog
+        # One way is that called by HOB when the 'Deploy Image' button is clicked
+        # The other way is that called by a standalone script.
+        # Following block of codes handles the latter way. It adds a 'Select Image' button and
+        # emit a signal when the button is clicked.
+        if self.standalone:
+                gobject.signal_new("select_image_clicked", self, gobject.SIGNAL_RUN_FIRST,
+                                   gobject.TYPE_NONE, ())
+                icon = gtk.Image()
+                pix_buffer = gtk.gdk.pixbuf_new_from_file(hic.ICON_IMAGES_DISPLAY_FILE)
+                icon.set_from_pixbuf(pix_buffer)
+                button = gtk.Button("Select Image")
+                button.set_image(icon)
+                button.set_size_request(140, 50)
+                table.attach(button, 9, 10, 1, 2, gtk.FILL, 0, 0, 0)
+                button.connect("clicked", self.select_image_button_clicked_cb)
+
+        separator = gtk.HSeparator()
+        self.vbox.pack_start(separator, expand=False, fill=False, padding=10)
 
         self.usb_desc = gtk.Label()
         self.usb_desc.set_alignment(0.0, 0.5)
@@ -789,7 +819,7 @@ class DeployImageDialog (CrumbsDialog):
         for usb in self.find_all_usb_devices():
             self.usb_combo.append_text("/dev/" + usb)
         self.usb_combo.set_active(0)
-        self.vbox.pack_start(self.usb_combo, expand=True, fill=True)
+        self.vbox.pack_start(self.usb_combo, expand=False, fill=False)
         self.vbox.pack_start(self.usb_desc, expand=False, fill=False, padding=2)
 
         self.progress_bar = HobProgressBar()
@@ -800,13 +830,19 @@ class DeployImageDialog (CrumbsDialog):
         self.vbox.show_all()
         self.progress_bar.hide()
 
+    def set_image_text_buffer(self, image_path):
+        self.buf.set_text(image_path)
+
+    def set_image_path(self, image_path):
+        self.image_path = image_path
+
     def popen_read(self, cmd):
         tmpout, errors = bb.process.run("%s" % cmd)
         return tmpout.strip()
 
     def find_all_usb_devices(self):
         usb_devs = [ os.readlink(u)
-            for u in self.popen_read('ls /dev/disk/by-id/usb*').split()
+            for u in glob.glob('/dev/disk/by-id/usb*')
             if not re.search(r'part\d+', u) ]
         return [ '%s' % u[u.rfind('/')+1:] for u in usb_devs ]
 
@@ -814,6 +850,9 @@ class DeployImageDialog (CrumbsDialog):
         return "%s %s" % \
             (self.popen_read('cat /sys/class/block/%s/device/vendor' % dev),
             self.popen_read('cat /sys/class/block/%s/device/model' % dev))
+
+    def select_image_button_clicked_cb(self, button):
+            self.emit('select_image_clicked')
 
     def usb_combo_changed_cb(self, usb_combo):
         combo_item = self.usb_combo.get_active_text()
@@ -826,12 +865,32 @@ class DeployImageDialog (CrumbsDialog):
 
     def response_cb(self, dialog, response_id):
         if response_id == gtk.RESPONSE_YES:
+            lbl = ''
             combo_item = self.usb_combo.get_active_text()
-            if combo_item and combo_item != self.__dummy_usb__:
+            if combo_item and combo_item != self.__dummy_usb__ and self.image_path:
                 cmdline = bb.ui.crumbs.utils.which_terminal()
                 if cmdline:
-                    cmdline += "\"sudo dd if=" + self.image_path + " of=" + combo_item + "\""
-                    bb.process.Popen(shlex.split(cmdline))
+                    tmpfile = tempfile.NamedTemporaryFile()
+                    cmdline += "\"sudo dd if=" + self.image_path + \
+                                " of=" + combo_item + "; echo $? > " + tmpfile.name + "\""
+                    subprocess.call(shlex.split(cmdline))
+
+                    if int(tmpfile.readline().strip()) == 0:
+                        lbl = "<b>Deploy image successfully.</b>"
+                    else:
+                        lbl = "<b>Failed to deploy image.</b>\nPlease check image <b>%s</b> exists and USB device <b>%s</b> is writable." % (self.image_path, combo_item)
+                    tmpfile.close()
+            else:
+                if not self.image_path:
+                    lbl = "<b>No selection made.</b>\nYou have not selected an image to deploy."
+                else:
+                    lbl = "<b>No selection made.</b>\nYou have not selected a USB device."
+            if len(lbl):
+                crumbs_dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+                button = crumbs_dialog.add_button("Close", gtk.RESPONSE_OK)
+                HobButton.style_button(button)
+                crumbs_dialog.run()
+                crumbs_dialog.destroy()
 
     def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)
@@ -1035,7 +1094,7 @@ class LayerSelectionDialog (CrumbsDialog):
         # create visual elements on the dialog
         self.create_visual_elements()
         self.connect("response", self.response_cb)
-                
+
     def create_visual_elements(self):
         layer_widget, self.layer_store = self.gen_layer_widget(self.layers, self.all_layers, self, None)
         layer_widget.set_size_request(450, 250)
@@ -1210,7 +1269,7 @@ class ImageSelectionDialog (CrumbsDialog):
                         if f.endswith('.' + real_image_type):
                             imageset.add(f.rsplit('.' + real_image_type)[0].rsplit('.rootfs')[0])
                             self.image_list.append(f)
-        
+
         for image in imageset:
             self.image_store.set(self.image_store.append(), 0, image, 1, False)
 
@@ -1226,7 +1285,7 @@ class ImageSelectionDialog (CrumbsDialog):
                     for f in self.image_list:
                         if f.startswith(self.image_store[path][0] + '.'):
                             self.image_names.append(f)
-                    break            
+                    break
                 iter = self.image_store.iter_next(iter)
 
 class ProxyDetailsDialog (CrumbsDialog):

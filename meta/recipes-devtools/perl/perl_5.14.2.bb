@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://Copying;md5=2b4c6ffbcfcbdee469f02565f253d81a \
 # We need gnugrep (for -I)
 DEPENDS = "virtual/db grep-native"
 DEPENDS += "gdbm zlib"
-PR = "r6"
+PR = "r8"
 
 # 5.10.1 has Module::Build built-in
 PROVIDES += "libmodule-build-perl"
@@ -65,6 +65,7 @@ SRC_URI = "http://www.cpan.org/src/5.0/perl-${PV}.tar.gz \
         file://perl-enable-gdbm.patch \
         file://cross-generate_uudmap.patch \
 	file://fix_bad_rpath.patch \
+	file://perl-build-in-t-dir.patch \
 	\
         file://config.sh \
         file://config.sh-32 \
@@ -146,6 +147,7 @@ do_configure() {
         sed -i -e 's,@DESTDIR@,${prefix},g' \
                -e 's,@ARCH@-thread-multi,,g' \
                -e 's,@ARCH@,${TARGET_ARCH}-${TARGET_OS},g' \
+               -e 's,@STAGINGDIR@,${STAGING_DIR_HOST},g' \
                -e "s%/usr/include%${STAGING_INCDIR}%g" \
 	       -e 's,/usr/lib/,${libdir}/,g' \
 	       -e 's,/usr/,${exec_prefix}/,g' \
@@ -199,6 +201,7 @@ do_install() {
         # Fix up shared library
         mv ${D}/${libdir}/perl/${PV}/CORE/libperl.so ${D}/${libdir}/libperl.so.${PV}
         ln -sf libperl.so.${PV} ${D}/${libdir}/libperl.so.5
+        ln -sf ../../../libperl.so.${PV} ${D}/${libdir}/perl/${PV}/CORE/libperl.so
 
         # target config, used by cpan.bbclass to extract version information
         install config.sh ${D}${libdir}/perl

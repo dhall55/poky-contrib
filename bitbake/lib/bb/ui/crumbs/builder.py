@@ -40,6 +40,8 @@ from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
 from bb.ui.crumbs.persistenttooltip import PersistentTooltip
 import bb.ui.crumbs.utils
 
+hobVer = 20120530
+
 class Configuration:
     '''Represents the data structure of configuration.'''
 
@@ -222,6 +224,7 @@ class Configuration:
         self.split_proxy("cvs", template.getVar("CVS_PROXY_HOST") + ":" + template.getVar("CVS_PROXY_PORT"))
 
     def save(self, template, defaults=False):
+        template.setVar("VERSION", "%s" % hobVer)
         # bblayers.conf
         template.setVar("BBLAYERS", " ".join(self.layers))
         # local.conf
@@ -300,6 +303,7 @@ class Parameters:
         self.tmpdir = params["tmpdir"]
         self.image_white_pattern = params["image_white_pattern"]
         self.image_black_pattern = params["image_black_pattern"]
+        self.kernel_image_type = params["kernel_image_type"]
         # for build log to show
         self.bb_version = params["bb_version"]
         self.target_arch = params["target_arch"]
@@ -370,6 +374,15 @@ class Builder(gtk.Window):
         MY_IMAGE_OPENED       : IMAGE_DETAILS,
         END_NOOP              : None,
     }
+
+    @classmethod
+    def interpret_markup(cls, msg):
+        msg = msg.replace('&', '&amp;')
+        msg = msg.replace('<', '&lt;')
+        msg = msg.replace('>', '&gt;')
+        msg = msg.replace('"', '&quot;')
+        msg = msg.replace("'", "&acute;")
+        return msg
 
     def __init__(self, hobHandler, recipe_model, package_model):
         super(Builder, self).__init__()
@@ -468,7 +481,7 @@ class Builder(gtk.Window):
 
     def initiate_new_build_async(self):
         self.switch_page(self.MACHINE_SELECTION)
-        if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == None:
+        if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == False:
             self.handler.init_cooker()
             self.handler.set_extra_inherit("image_types")
             self.handler.generate_configuration()
@@ -537,9 +550,16 @@ class Builder(gtk.Window):
 
     def load_template(self, path):
         if not os.path.isfile(path):
-            return None
+            return False
 
         self.template = TemplateMgr()
+        # check compatibility
+        tempVer = self.template.getVersion(path)
+        if not tempVer or int(tempVer) < hobVer:
+            self.template.destroy()
+            self.template = None
+            return False
+
         try:
             self.template.load(path)
             self.configuration.load(self.template)
@@ -719,7 +739,7 @@ class Builder(gtk.Window):
 
     def show_error_dialog(self, msg):
         lbl = "<b>Error</b>\n"
-        lbl = lbl + "%s\n\n" % msg
+        lbl = lbl + "%s\n\n" % Builder.interpret_markup(msg)
         dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
         button = dialog.add_button("Close", gtk.RESPONSE_OK)
         HobButton.style_button(button)
@@ -738,7 +758,9 @@ class Builder(gtk.Window):
 
     def window_sensitive(self, sensitive):
         self.image_configuration_page.machine_combo.set_sensitive(sensitive)
+        self.image_configuration_page.machine_combo.child.set_sensitive(sensitive)
         self.image_configuration_page.image_combo.set_sensitive(sensitive)
+        self.image_configuration_page.image_combo.child.set_sensitive(sensitive)
         self.image_configuration_page.layer_button.set_sensitive(sensitive)
         self.image_configuration_page.layer_info_icon.set_sensitive(sensitive)
         self.image_configuration_page.toolbar.set_sensitive(sensitive)
@@ -899,7 +921,7 @@ class Builder(gtk.Window):
         self.build_failed()
 
     def handler_no_provider_cb(self, running_build, msg):
-        dialog = CrumbsMessageDialog(self, msg, gtk.STOCK_DIALOG_INFO)
+        dialog = CrumbsMessageDialog(self, Builder.interpret_markup(msg), gtk.STOCK_DIALOG_INFO)
         button = dialog.add_button("Close", gtk.RESPONSE_OK)
         HobButton.style_button(button)
         dialog.run()
@@ -1141,24 +1163,32 @@ class Builder(gtk.Window):
         response = dialog.run()
         dialog.destroy()
 
-    def get_kernel_file_name(self, image_path):
-        name_list = []
-        kernel_name = ""
-        if image_path:
-            files = [f for f in os.listdir(image_path) if f[0] <> '.']
-            for check_file in files:
-                if check_file.endswith(".bin"):
-                    name_splits = check_file.split(".")[0]
-                    if self.configuration.curr_mach in name_splits.split("-"):
-                        kernel_name = check_file
-                    if not os.path.islink(os.path.join(image_path, check_file)):
-                        name_list.append(check_file)
+    def show_load_kernel_dialog(self):
+        dialog = gtk.FileChooserDialog("Load Kernel Files", self,
+                                       gtk.FILE_CHOOSER_ACTION_SAVE)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
+        filter = gtk.FileFilter()
+        filter.set_name("Kernel Files")
+        filter.add_pattern("*.bin")
+        dialog.add_filter(filter)
 
-        return kernel_name, len(name_list)
+        dialog.set_current_folder(self.parameters.image_addr)
 
-    def runqemu_image(self, image_name):
-        if not image_name:
-            lbl = "<b>Please select an image to launch in QEMU.</b>"
+        response = dialog.run()
+        kernel_path = ""
+        if response == gtk.RESPONSE_YES:
+            kernel_path = dialog.get_filename()
+
+        dialog.destroy()
+
+        return kernel_path
+
+    def runqemu_image(self, image_name, kernel_name):
+        if not image_name or not kernel_name:
+            lbl = "<b>Please select an %s to launch in QEMU.</b>" % ("kernel" if image_name else "image")
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
             button = dialog.add_button("Close", gtk.RESPONSE_OK)
             HobButton.style_button(button)
@@ -1166,56 +1196,32 @@ class Builder(gtk.Window):
             dialog.destroy()
             return
 
-        kernel_name, kernels_number = self.get_kernel_file_name(self.parameters.image_addr)
-        if not kernel_name or kernels_number > 1:
-            dialog = gtk.FileChooserDialog("Load Kernel Files", self,
-                                           gtk.FILE_CHOOSER_ACTION_SAVE)
-            button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
-            HobAltButton.style_button(button)
-            button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        kernel_path = os.path.join(self.parameters.image_addr, kernel_name)
+        image_path = os.path.join(self.parameters.image_addr, image_name)
+
+        source_env_path = os.path.join(self.parameters.core_base, "oe-init-build-env")
+        tmp_path = self.parameters.tmpdir
+        cmdline = bb.ui.crumbs.utils.which_terminal()
+        if os.path.exists(image_path) and os.path.exists(kernel_path) \
+           and os.path.exists(source_env_path) and os.path.exists(tmp_path) \
+           and cmdline:
+            cmdline += "\' bash -c \"export OE_TMPDIR=" + tmp_path + "; "
+            cmdline += "source " + source_env_path + " " + os.getcwd() + "; "
+            cmdline += "runqemu " + kernel_path + " " + image_path + "\"\'"
+            subprocess.Popen(shlex.split(cmdline))
+        else:
+            lbl = "<b>Path error</b>\nOne of your paths is wrong,"
+            lbl = lbl + " please make sure the following paths exist:\n"
+            lbl = lbl + "image path:" + image_path + "\n"
+            lbl = lbl + "kernel path:" + kernel_path + "\n"
+            lbl = lbl + "source environment path:" + source_env_path + "\n"
+            lbl = lbl + "tmp path: " + tmp_path + "."
+            lbl = lbl + "You may be missing either xterm or vte for terminal services."
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
+            button = dialog.add_button("Close", gtk.RESPONSE_OK)
             HobButton.style_button(button)
-            filter = gtk.FileFilter()
-            filter.set_name("Kernel Files")
-            filter.add_pattern("*.bin")
-            dialog.add_filter(filter)
-
-            dialog.set_current_folder(self.parameters.image_addr)
-
-            response = dialog.run()
-            if response == gtk.RESPONSE_YES:
-                kernel_path = dialog.get_filename()
-                image_path = os.path.join(self.parameters.image_addr, image_name)
+            dialog.run()
             dialog.destroy()
-
-        elif kernel_name:
-            kernel_path = os.path.join(self.parameters.image_addr, kernel_name)
-            image_path = os.path.join(self.parameters.image_addr, image_name)
-            response = gtk.RESPONSE_YES
-
-        if response == gtk.RESPONSE_YES:
-            source_env_path = os.path.join(self.parameters.core_base, "oe-init-build-env")
-            tmp_path = self.parameters.tmpdir
-            cmdline = bb.ui.crumbs.utils.which_terminal()
-            if os.path.exists(image_path) and os.path.exists(kernel_path) \
-               and os.path.exists(source_env_path) and os.path.exists(tmp_path) \
-               and cmdline:
-                cmdline += "\' bash -c \"export OE_TMPDIR=" + tmp_path + "; "
-                cmdline += "source " + source_env_path + " " + os.getcwd() + "; "
-                cmdline += "runqemu " + kernel_path + " " + image_path + "\"\'"
-                subprocess.Popen(shlex.split(cmdline))
-            else:
-                lbl = "<b>Path error</b>\nOne of your paths is wrong,"
-                lbl = lbl + " please make sure the following paths exist:\n"
-                lbl = lbl + "image path:" + image_path + "\n"
-                lbl = lbl + "kernel path:" + kernel_path + "\n"
-                lbl = lbl + "source environment path:" + source_env_path + "\n"
-                lbl = lbl + "tmp path: " + tmp_path + "."
-                lbl = lbl + "You may be missing either xterm or vte for terminal services."
-                dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
-                button = dialog.add_button("Close", gtk.RESPONSE_OK)
-                HobButton.style_button(button)
-                dialog.run()
-                dialog.destroy()
 
     def show_packages(self, ask=True):
         _, selected_recipes = self.recipe_model.get_selected_recipes()

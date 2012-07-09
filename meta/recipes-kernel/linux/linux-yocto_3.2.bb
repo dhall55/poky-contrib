@@ -1,12 +1,4 @@
-inherit kernel
 require recipes-kernel/linux/linux-yocto.inc
-
-KMACHINE = "common-pc"
-KMACHINE_qemux86  = "common-pc"
-KMACHINE_qemux86-64  = "common-pc-64"
-KMACHINE_qemuppc  = "qemu-ppc32"
-KMACHINE_qemumips = "mti-malta32-be"
-KMACHINE_qemuarm  = "arm-versatile-926ejs"
 
 KBRANCH = "standard/default/base"
 KBRANCH_qemux86  = "standard/default/common-pc/base"
@@ -15,17 +7,17 @@ KBRANCH_qemuppc  = "standard/default/qemu-ppc32"
 KBRANCH_qemumips = "standard/default/mti-malta32-be"
 KBRANCH_qemuarm  = "standard/default/arm-versatile-926ejs"
 
-LINUX_VERSION ?= "3.2.11"
+LINUX_VERSION ?= "3.2.18"
 
-SRCREV_machine_qemuarm ?= "ba47a1cc9bb6ad576b2ac7adb3036bcfa569fe2e"
-SRCREV_machine_qemumips ?= "3b2fd654392a2f33aed12748548c04e9b169591b"
-SRCREV_machine_qemuppc ?= "cf3e188cf2a18c48a0e6f9ca54c36e6ac39512ec"
-SRCREV_machine_qemux86 ?= "46f1007ad22b6790224c66a8dc4e80fdbd21eea1"
-SRCREV_machine_qemux86-64 ?= "00e5ec2393bada6723bd9a07ded3d001c02fa727"
-SRCREV_machine ?= "f4f8ba730e7783e09413872414d0a17c142c816d"
-SRCREV_meta ?= "49f931bc294d5b6be60502bbd448cff5aa766235"
+SRCREV_machine_qemuarm ?= "ebb5e65d02a352e3e8601096e1674ffc261345f2"
+SRCREV_machine_qemumips ?= "62aeb307e9a731c4bba05ce4d57b9cece41a2a01"
+SRCREV_machine_qemuppc ?= "1396a8f7b62f8926dc1fa474c7d94ae920d81852"
+SRCREV_machine_qemux86 ?= "9d32bb075e349cc69c7af42b60f6715c5d8c972e"
+SRCREV_machine_qemux86-64 ?= "dd488f551fa0f8e3bf1aadd78083b8547bba8bdf"
+SRCREV_machine ?= "76133a1cadf0de417c29ed15d6fbb12c41c0802b"
+SRCREV_meta ?= "ee78519365bdb25287703bbc31c06b193263c654"
 
-PR = "r1"
+PR = "${INC_PR}.0"
 PV = "${LINUX_VERSION}+git${SRCPV}"
 
 KMETA = "meta"
@@ -39,5 +31,3 @@ KERNEL_FEATURES="features/netfilter"
 KERNEL_FEATURES_append=" features/taskstats"
 KERNEL_FEATURES_append_qemux86=" cfg/sound"
 KERNEL_FEATURES_append_qemux86-64=" cfg/sound"
-
-require linux-tools.inc
