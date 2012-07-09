@@ -10,7 +10,7 @@ do_rootfs[recrdeptask] += "do_package_write_deb"
 
 do_rootfs[lockfiles] += "${WORKDIR}/deb.lock"
 
-DEB_POSTPROCESS_COMMANDS = "rootfs_install_all_locales; "
+DEB_POSTPROCESS_COMMANDS = ""
 
 opkglibdir = "${localstatedir}/lib/opkg"
 
@@ -41,6 +41,8 @@ fakeroot rootfs_deb_do_rootfs () {
 
 	package_install_internal_deb
 	${DEB_POSTPROCESS_COMMANDS}
+
+	rootfs_install_complementary
 
 	export D=${IMAGE_ROOTFS}
 	export OFFLINE_ROOT=${IMAGE_ROOTFS}
@@ -87,7 +89,8 @@ remove_packaging_data_files() {
 	rm -rf ${IMAGE_ROOTFS}/usr/dpkg/
 }
 
-DPKG_QUERY_COMMAND = "${STAGING_BINDIR_NATIVE}/dpkg --admindir=${IMAGE_ROOTFS}/var/lib/dpkg"
+# This will of course only work after rootfs_deb_do_rootfs has been called
+DPKG_QUERY_COMMAND = "${STAGING_BINDIR_NATIVE}/dpkg --admindir=$INSTALL_ROOTFS_DEB/var/lib/dpkg"
 
 list_installed_packages() {
 	${DPKG_QUERY_COMMAND} -l | grep ^ii | awk '{ print $2 }'
@@ -119,7 +122,6 @@ rootfs_check_package_exists() {
 rootfs_install_packages() {
 	${STAGING_BINDIR_NATIVE}/apt-get install $@ --force-yes --allow-unauthenticated
 
-	for pkg in $@ ; do
-		deb_package_setflag installed $pkg
-	done
+	# Mark all packages installed
+	sed -i -e "s/Status: install ok unpacked/Status: install ok installed/;" $INSTALL_ROOTFS_DEB/var/lib/dpkg/status
 }

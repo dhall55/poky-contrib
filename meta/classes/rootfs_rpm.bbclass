@@ -21,7 +21,7 @@ do_rootfs[depends] += "opkg-native:do_populate_sysroot"
 do_rootfs[recrdeptask] += "do_package_write_rpm"
 
 RPM_PREPROCESS_COMMANDS = "package_update_index_rpm; package_generate_rpm_conf; "
-RPM_POSTPROCESS_COMMANDS = "rootfs_install_all_locales; "
+RPM_POSTPROCESS_COMMANDS = ""
 
 # 
 # Allow distributions to alter when [postponed] package install scripts are run
@@ -55,6 +55,7 @@ fakeroot rootfs_rpm_do_rootfs () {
 	export INSTALL_PACKAGES_LINGUAS_RPM="${LINGUAS_INSTALL}"
 	export INSTALL_PROVIDENAME_RPM=""
 	export INSTALL_TASK_RPM="rootfs_rpm_do_rootfs"
+	export INSTALL_COMPLEMENTARY_RPM=""
 
 	# Setup base system configuration
 	mkdir -p ${INSTALL_ROOTFS_RPM}/etc/rpm/
@@ -67,6 +68,8 @@ fakeroot rootfs_rpm_do_rootfs () {
 	export INSTALL_PLATFORM_RPM
 
 	package_install_internal_rpm
+
+	rootfs_install_complementary
 
 	export D=${IMAGE_ROOTFS}
 	export OFFLINE_ROOT=${IMAGE_ROOTFS}
@@ -133,7 +136,7 @@ remove_packaging_data_files() {
 	rm -rf ${IMAGE_ROOTFS}${opkglibdir}
 }
 
-RPM_QUERY_CMD = '${RPM} --root ${IMAGE_ROOTFS} -D "_dbpath ${rpmlibdir}" \
+RPM_QUERY_CMD = '${RPM} --root $INSTALL_ROOTFS_RPM -D "_dbpath ${rpmlibdir}" \
 		-D "__dbi_txn create nofsync private"'
 
 list_installed_packages() {
@@ -172,20 +175,20 @@ list_package_recommends() {
 }
 
 rootfs_check_package_exists() {
-	resolve_package_rpm ${RPMCONF_TARGET_BASE}-base_archs.conf $1
+	# package_install_internal_rpm takes care of this for rootfs_install_packages
+	# now, so we don't need to do the check here as well
+	echo $1
 }
 
 rootfs_install_packages() {
-    # The pkg to be installed here is not controlled by the
-    # package_install_internal_rpm, so it may have already been
-    # installed(e.g, installed in the first time when generate the
-    # rootfs), use '--replacepkgs' to always install them
-	for pkg in $@; do
-		${RPM} --root ${IMAGE_ROOTFS} -D "_dbpath ${rpmlibdir}" \
-			-D "__dbi_txn create nofsync private" \
-			--noscripts --notriggers --noparentdirs --nolinktos \
-			--replacepkgs -Uhv $pkg || true
-	done
+	# Note - we expect the variables not set here to already have been set
+	export INSTALL_PACKAGES_RPM=""
+	export INSTALL_PACKAGES_ATTEMPTONLY_RPM="$@"
+	export INSTALL_PROVIDENAME_RPM=""
+	export INSTALL_TASK_RPM="rootfs_install_packages"
+	export INSTALL_COMPLEMENTARY_RPM="1"
+
+	package_install_internal_rpm
 }
 
 python () {
