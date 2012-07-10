@@ -19,7 +19,7 @@ SRCREV_FORMAT = "source"
 
 SRCREV = "101488"
 PV = "1.7.2+svnr${SRCPV}"
-PR = "r5"
+PR = "r6"
 
 SRC_URI = "\
   svn://svn.webkit.org/repository/webkit/trunk/;module=Source;proto=http;name=source \
@@ -33,6 +33,7 @@ SRC_URI = "\
   file://gtk-doc.make \
   file://nodolt.patch \
   file://function-scope.patch \
+  file://webgit-gtk_fix_build_with_automake_1.12.patch \
  "
 
 S = "${WORKDIR}/"
