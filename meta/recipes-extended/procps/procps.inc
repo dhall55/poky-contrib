@@ -17,4 +17,3 @@ inherit autotools
 
 FILES_${PN} += "${libdir}/*-${PV}.so ${base_libdir}/*-${PV}.so"
 FILES_SOLIBSDEV = ""
-FILES_${PN} += ""

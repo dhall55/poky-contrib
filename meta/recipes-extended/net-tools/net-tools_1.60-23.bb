@@ -5,7 +5,7 @@ BUGTRACKER = "http://bugs.debian.org/net-tools"
 LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=8ca43cbc842c2336e835926c2166c28b \
                     file://ifconfig.c;startline=11;endline=15;md5=da4c7bb79a5d0798faa99ef869721f4a"
-PR = "r1"
+PR = "r2"
 
 SRC_URI = "${DEBIAN_MIRROR}/main/n/net-tools/net-tools_1.60.orig.tar.gz;name=tarball \
            ${DEBIAN_MIRROR}/main/n/net-tools/${BPN}_${PV}.diff.gz;apply=no;name=patch \
@@ -67,16 +67,28 @@ do_compile() {
 	oe_runmake
 }
 
-inherit update-alternatives
-
-base_sbindir_progs = "arp ifconfig ipmaddr iptunnel mii-tool nameif plipconfig rarp route slattach"
-ALTERNATIVE_LINKS += "${base_sbindir}/${@' ${base_sbindir}/'.join((d.getVar('base_sbindir_progs', True)).split())}"
-
-base_bindir_progs  = "dnsdomainname domainname hostname netstat nisdomainname ypdomainname"
-ALTERNATIVE_LINKS += "${base_bindir}/${@' ${base_bindir}/'.join((d.getVar('base_bindir_progs', True)).split())}"
-
-ALTERNATIVE_PRIORITY = "100"
-
 do_install() {
 	oe_runmake 'BASEDIR=${D}' install
 }
+
+inherit update-alternatives
+
+ALTERNATIVE_${PN} = "arp ifconfig ipmaddr iptunnel mii-tool nameif plipconfig rarp route slattach dnsdomainname domainname hostname netstat nisdomainname ypdomainname"
+ALTERNATIVE_LINK_NAME[arp] = "${base_sbindir}/arp"
+ALTERNATIVE_LINK_NAME[ifconfig] = "${base_sbindir}/ifconfig"
+ALTERNATIVE_LINK_NAME[ipmaddr] = "${base_sbindir}/ipmaddr"
+ALTERNATIVE_LINK_NAME[iptunnel] = "${base_sbindir}/iptunnel"
+ALTERNATIVE_LINK_NAME[mii-tool] = "${base_sbindir}/mii-tool"
+ALTERNATIVE_LINK_NAME[nameif] = "${base_sbindir}/nameif"
+ALTERNATIVE_LINK_NAME[plipconfig] = "${base_sbindir}/plipconfig"
+ALTERNATIVE_LINK_NAME[rarp] = "${base_sbindir}/rarp"
+ALTERNATIVE_LINK_NAME[route] = "${base_sbindir}/route"
+ALTERNATIVE_LINK_NAME[slattach] = "${base_sbindir}/slattach"
+ALTERNATIVE_LINK_NAME[netstat] = "${base_bindir}/netstat"
+ALTERNATIVE_LINK_NAME[hostname] = "${base_bindir}/hostname"
+ALTERNATIVE_LINK_NAME[domainname] = "${base_bindir}/domainname"
+ALTERNATIVE_LINK_NAME[dnsdomainname] = "${base_bindir}/dnsdomainname"
+ALTERNATIVE_LINK_NAME[nisdomainname] = "${base_bindir}/nisdomainname"
+ALTERNATIVE_LINK_NAME[ypdomainname] = "${base_bindir}/ypdomainname"
+ALTERNATIVE_PRIORITY = "100"
+

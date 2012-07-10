@@ -1,12 +1,13 @@
 require procps.inc
 
-PR = "r8"
+PR = "r9"
 
 inherit update-alternatives
 
-ALTERNATIVE_LINKS = "${bindir}/top ${bindir}/uptime ${bindir}/free ${bindir}/pkill ${bindir}/pmap \
-                     ${base_bindir}/kill ${base_sbindir}/sysctl ${base_bindir}/ps \
-                     ${bindir}/pgrep ${bindir}/pwdx ${bindir}/watch"
+ALTERNATIVE_${PN} = "top uptime free pkill pmap kill sysctl ps pgrep pwdx watch"
+ALTERNATIVE_LINK_NAME[kill] = "${base_bindir}/kill"
+ALTERNATIVE_LINK_NAME[sysctl] = "${base_sbindir}/sysctl"
+ALTERNATIVE_LINK_NAME[ps] = "${base_bindir}/ps"
 ALTERNATIVE_PRIORITY = "110"
 
 SRC_URI += "file://procmodule.patch \

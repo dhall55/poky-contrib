@@ -5,7 +5,7 @@ SECTION = "base"
 LICENSE = "GPLv3+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d32239bcb673463ab874e80d47fae504"
 
-PR = "r0"
+PR = "r1"
 
 SRC_URI = "${GNU_MIRROR}/diffutils/diffutils-${PV}.tar.gz"
 
@@ -18,7 +18,7 @@ inherit autotools update-alternatives gettext
 # see diffutils.mk in buildroot)
 EXTRA_OECONF_libc-uclibc = "--without-included-regex"
 
-ALTERNATIVE_LINKS = "${bindir}/diff ${bindir}/cmp"
+ALTERNATIVE_${PN} = "diff cmp"
 ALTERNATIVE_PRIORITY = "100"
 
 SRC_URI[md5sum] = "22e4deef5d8949a727b159d6bc65c1cc"

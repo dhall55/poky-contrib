@@ -17,9 +17,8 @@ S = "${WORKDIR}/trunk"
 
 inherit update-alternatives
 
-ALTERNATIVE_NAME = "init"
-ALTERNATIVE_LINK = "${base_sbindir}/init"
-ALTERNATIVE_PATH = "${base_sbindir}/ubootchartd"
+ALTERNATIVE_${PN} = "init"
+ALTERNATIVE_LINK_NAME[init] = "${base_sbindir}/ubootchartd"
 ALTERNATIVE_PRIORITY = "70"
 
 do_compile() {

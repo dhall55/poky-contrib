@@ -26,11 +26,7 @@ do_configure_prepend() {
 	NEW="-I ${STAGING_DIR_NATIVE}/${datadir}/cwautomacros/m4"
 	sed -i "s#${OLD}#${NEW}#g" `grep -rl ${OLD} ${S}`
 }
-do_install_append() {
-	mv ${D}/${bindir}/which ${D}/${bindir}/which.${BPN}
-}
 
-ALTERNATIVE_NAME = "which"
-ALTERNATIVE_PATH = "which.${BPN}"
+ALTERNATIVE_${PN} = "which"
 ALTERNATIVE_PRIORITY = "100"
 

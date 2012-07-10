@@ -29,9 +29,8 @@ FILES_gawk-common += "${datadir}/awk/* ${libexecdir}/awk/*"
 FILES_pgawk = "${bindir}/pgawk*"
 FILES_${PN}-dbg += "${libexecdir}/awk/.debug"
 
-ALTERNATIVE_NAME = "awk"
-ALTERNATIVE_PATH = "gawk"
-ALTERNATIVE_LINK = "${bindir}/awk"
+ALTERNATIVE_${PN} = "gawk"
+ALTERNATIVE_LINK_NAME[gawk] = "${bindir}/awk"
 ALTERNATIVE_PRIORITY = "100"
 
 CFLAGS += "-D PROTOTYPES"

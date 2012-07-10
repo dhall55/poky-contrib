@@ -17,7 +17,6 @@ EXTRA_OEMAKE = "CC='${CC}' KERNEL_INCLUDE=${STAGING_KERNEL_DIR}/include DOCDIR=$
 
 do_install () {
     oe_runmake DESTDIR=${D} install
-    mv ${D}${base_sbindir}/ip ${D}${base_sbindir}/ip.iproute2
     install -d ${D}${datadir}
     mv ${D}/share/* ${D}${datadir}/ || true
     rm ${D}/share -rf || true
@@ -29,9 +28,10 @@ INSANE_SKIP_${PN} = "dev-so"
 FILES_${PN} += "${base_libdir}/tc"
 FILES_${PN}-dbg += "${base_libdir}/tc/.debug"
 
-ALTERNATIVE_NAME = "ip"
-ALTERNATIVE_PATH = "${base_sbindir}/ip.iproute2"
-ALTERNATIVE_LINK = "${base_bindir}/ip"
+ALTERNATIVE_${PN} = "bin_ip ip"
+ALTERNATIVE_LINK_NAME[ip] = "${base_sbindir}/ip"
+ALTERNATIVE_TARGET[bin_ip] = "${base_sbindir}/ip.${BPN}"
+ALTERNATIVE_LINK_NAME[bin_ip] = "${base_bindir}/ip"
 ALTERNATIVE_PRIORITY = "100"
 
 PARALLEL_MAKE = ""

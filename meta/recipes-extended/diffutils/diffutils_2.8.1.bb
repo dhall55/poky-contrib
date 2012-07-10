@@ -24,5 +24,5 @@ inherit autotools update-alternatives gettext
 # see diffutils.mk in buildroot)
 EXTRA_OECONF_libc-uclibc = "--without-included-regex"
 
-ALTERNATIVE_LINKS = "${bindir}/diff ${bindir}/cmp"
+ALTERNATIVE_${PN} = "diff cmp"
 ALTERNATIVE_PRIORITY = "100"

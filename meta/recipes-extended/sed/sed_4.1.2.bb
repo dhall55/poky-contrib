@@ -17,13 +17,12 @@ inherit autotools update-alternatives gettext
 do_install () {
 	autotools_do_install
 	install -d ${D}${base_bindir}
-	mv ${D}${bindir}/sed ${D}${base_bindir}/sed.${BPN}
+	mv ${D}${bindir}/sed ${D}${base_bindir}/sed
 	rmdir ${D}${bindir}/
 }
 
-ALTERNATIVE_NAME = "sed"
-ALTERNATIVE_PATH = "sed.${BPN}"
-ALTERNATIVE_LINK = "${base_bindir}/sed"
+ALTERNATIVE_${PN} = "sed"
+ALTERNATIVE_LINK_NAME[sed] = "${base_bindir}/sed"
 ALTERNATIVE_PRIORITY = "100"
 
 BBCLASSEXTEND = "native"

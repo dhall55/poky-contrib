@@ -38,11 +38,6 @@ do_install () {
 	done
 }
 
-do_install_append () {
-        mv ${D}${base_sbindir}/getty ${D}${base_sbindir}/getty.${BPN}
-}
-
-ALTERNATIVE_NAME = "getty"
-ALTERNATIVE_LINK = "${base_sbindir}/getty"
-ALTERNATIVE_PATH = "${base_sbindir}/getty.${BPN}"
+ALTERNATIVE_${PN} = "getty"
+ALTERNATIVE_LINK_NAME[getty] = "${base_sbindir}/getty"
 ALTERNATIVE_PRIORITY = "80"

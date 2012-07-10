@@ -20,9 +20,8 @@ inherit autotools pkgconfig update-alternatives
 # Change this to x-session-manager->matchbox-session and put in
 # matchbox-session, then change this to x-window-manager to
 # matchbox-window-manager-2.
-ALTERNATIVE_NAME = "x-window-manager"
-ALTERNATIVE_LINK = "${bindir}/x-window-manager"
-ALTERNATIVE_PATH = "${bindir}/matchbox-window-manager"
+ALTERNATIVE_${PN} = "x-window-manager"
+ALTERNATIVE_LINK_NAME[x-window-manager] = "${bindir}/matchbox-window-manager"
 ALTERNATIVE_PRIORITY = "10"
 
 PACKAGES =+ "libmatchbox2"

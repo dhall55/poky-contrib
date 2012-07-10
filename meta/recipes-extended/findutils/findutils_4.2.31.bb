@@ -20,7 +20,7 @@ SRC_URI[sha256sum] = "e0d34b8faca0b3cca0703f6c6b498afbe72f0ba16c35980c10ec9ef772
 
 inherit autotools gettext update-alternatives
 
-ALTERNATIVE_LINKS = "${bindir}/find ${bindir}/xargs"
+ALTERNATIVE_${PN} = "find xargs"
 ALTERNATIVE_PRIORITY = "100"
 
 # diffutils assumes non-glibc compilation with uclibc and

@@ -30,7 +30,10 @@ do_install_append () {
 
 inherit update-alternatives
 
-ALTERNATIVE_LINKS = "${base_bindir}/gunzip ${base_bindir}/gzip ${base_bindir}/zcat"
+ALTERNATIVE_${PN} = "gzip gunzip zcat"
+ALTERNATIVE_LINK_NAME[gzip] = "${base_bindir}/gzip"
+ALTERNATIVE_LINK_NAME[gunzip] = "${base_bindir}/gunzip"
+ALTERNATIVE_LINK_NAME[zcat] = "${base_bindir}/zcat"
 ALTERNATIVE_PRIORITY = "100"
 
 BBCLASSEXTEND = "native"

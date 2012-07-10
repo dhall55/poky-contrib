@@ -11,13 +11,12 @@ RCONFLICTS_${PN} = "matchbox-common"
 SRC_URI = "file://matchbox-session"
 S = "${WORKDIR}"
 
-PR = "r2"
+PR = "r3"
 
 inherit update-alternatives
 
-ALTERNATIVE_NAME = "x-session-manager"
-ALTERNATIVE_LINK = "${bindir}/x-session-manager"
-ALTERNATIVE_PATH = "${bindir}/matchbox-session"
+ALTERNATIVE_${PN} = "matchbox-session"
+ALTERNATIVE_LINK_NAME[matchbox-session] = "${bindir}/x-session-manager"
 ALTERNATIVE_PRIORITY = "10"
 
 do_install() {

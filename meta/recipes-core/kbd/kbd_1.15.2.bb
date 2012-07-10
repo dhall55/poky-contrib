@@ -25,7 +25,6 @@ FILES_${PN}-unimaps = "${datadir}/unimaps"
 
 inherit update-alternatives
 
-ALTERNATIVE_PRIORITY = "100"
 
-bindir_progs = "chvt deallocvt fgconsole openvt"
-ALTERNATIVE_LINKS = "${bindir}/${@' ${bindir}/'.join((d.getVar('bindir_progs', True)).split())}"
+ALTERNATIVE_${PN} = "chvt deallocvt fgconsole openvt"
+ALTERNATIVE_PRIORITY = "100"

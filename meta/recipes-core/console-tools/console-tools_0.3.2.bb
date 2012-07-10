@@ -35,6 +35,10 @@ inherit autotools gettext update-alternatives
 ALTERNATIVE_PRIORITY = "100"
 
 bindir_progs = "chvt deallocvt fgconsole openvt"
-ALTERNATIVE_LINKS = "${bindir}/${@' ${bindir}/'.join((d.getVar('bindir_progs', True)).split())}"
+ALTERNATIVE_${PN} = "${bindir_progs}"
+python __anonymous() {
+	for prog in d.getVar('bindir_progs', True).split():
+		d.setVarFlag('ALTERNATIVE_LINK_NAME', prog, '%s/%s' % (d.getVar('base_bindir', True), prog))
+}
 
 RDEPENDS_${PN} = "bash"

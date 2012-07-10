@@ -1,6 +1,6 @@
 require findutils.inc
 
-PR = "r4"
+PR = "r5"
 
 SRC_URI += "file://01-27017.patch \
             file://02-28824.patch \
