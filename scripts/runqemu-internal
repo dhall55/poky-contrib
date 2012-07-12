@@ -377,7 +377,11 @@ if [ "$MACHINE" = "spitz" ]; then
 fi
 
 if [ "$MACHINE" = "qemumips" -o "$MACHINE" = "qemumipsel" -o "$MACHINE" = "qemumips64" ]; then
-    QEMU=${MACHINE/qemu/qemu-system-}
+    case "$MACHINE" in
+       qemumips)   QEMU=qemu-system-mips ;;
+       qemumipsel) QEMU=qemu-system-mipsel ;;
+       qemumips64) QEMU=qemu-system-mips64 ;;
+    esac
     MACHINE_SUBTYPE=malta
     QEMU_UI_OPTIONS="-vga cirrus $QEMU_UI_OPTIONS"
     if [ "$FSTYPE" = "ext3" -o "$FSTYPE" = "btrfs" ]; then
