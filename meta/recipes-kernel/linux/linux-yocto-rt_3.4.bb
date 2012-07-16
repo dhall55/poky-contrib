@@ -8,9 +8,9 @@ LINUX_KERNEL_TYPE = "preempt-rt"
 
 KMETA = "meta"
 
-SRCREV_machine ?= "684f3c1886618c919b54e8b362e72da3d128c532"
-SRCREV_machine_qemuppc ?= "fb15c26f9deae3912ca7e2aaf8c818127ef27d82"
-SRCREV_meta ?= "62cdf67899a36efeab3ac20dcb27f1ebc238d3af"
+SRCREV_machine ?= "b25f7c9730e3bd3be1bf7b7982251b7459ad6579"
+SRCREV_machine_qemuppc ?= "2777125ab6f92b624ecaf11d6b1ab604e64497a8"
+SRCREV_meta ?= "a8cf77018b0faa0d29f1483ff4e5a2034dc8edd5"
 
 PR = "${INC_PR}.0"
 PV = "${LINUX_VERSION}+git${SRCPV}"
