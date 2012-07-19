@@ -1,5 +1,5 @@
 /*
- *  pslash - a lightweight framebuffer splashscreen for embedded devices.
+ *  psplash - a lightweight framebuffer splashscreen for embedded devices.
  *
  *  Copyright (c) 2012 sleep(5) ltd
  *  Author: Tomas Frydrych <tomas@sleepfive.com>

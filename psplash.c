@@ -1,5 +1,5 @@
 /* 
- *  pslash - a lightweight framebuffer splashscreen for embedded devices. 
+ *  psplash - a lightweight framebuffer splashscreen for embedded devices. 
  *
  *  Copyright (c) 2006 Matthew Allum <mallum@o-hand.com>
  *
@@ -263,7 +263,7 @@ main (int argc, char** argv)
 	  goto fb_fail;
   }
 
-  /* Clear the background with #ecece1 */
+  /* Clear screen with background color */
   psplash_fb_draw_rect (fb, 0, 0, fb->width, fb->height,
                         PSPLASH_BACKGROUND_COLOR);
 
