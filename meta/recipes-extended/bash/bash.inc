@@ -9,9 +9,6 @@ DEPENDS = "ncurses bison-native"
 
 inherit autotools gettext update-alternatives
 
-bindir = "/bin"
-sbindir = "/sbin"
-
 EXTRA_OECONF = "--enable-job-control"
 export CC_FOR_BUILD = "${BUILD_CC}"
 
@@ -25,6 +22,14 @@ export AUTOHEADER = "true"
 do_configure_prepend () {
 	if [ ! -e acinclude.m4 ]; then
 		cat aclocal.m4 > acinclude.m4
+	fi
+}
+
+do_install_append () {
+	# Move /usr/bin/bash to /bin/bash, if need
+	if [ "${base_bindir}" != "${bindir}" ]; then
+		mkdir -p ${D}${base_bindir}
+		mv ${D}${bindir}/bash ${D}${base_bindir}
 	fi
 }
 
