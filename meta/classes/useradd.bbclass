@@ -14,119 +14,75 @@ USERADDDEPENDS_virtclass-nativesdk = ""
 # c) As the preinst script in the target package at do_rootfs time
 # d) As the preinst script in the target package on device as a package upgrade
 #
-useradd_preinst () {
-OPT=""
-SYSROOT=""
+def useradd_preinst(d):
+	import re
+	import commands
+	import os
 
-if test "x$D" != "x"; then
-	# Installing into a sysroot
-	SYSROOT="$D"
-	OPT="--root $D"
+	sysroot = ""
+	opt = ""
 
-	# Add groups and users defined for all recipe packages
-	GROUPADD_PARAM="${@get_all_cmd_params(d, 'group')}"
-	USERADD_PARAM="${@get_all_cmd_params(d, 'user')}"
-else
-	# Installing onto a target
-	# Add groups and users defined only for this package
-	GROUPADD_PARAM="${GROUPADD_PARAM}"
-	USERADD_PARAM="${USERADD_PARAM}"
-fi
+	dir = d.getVar('STAGING_DIR_TARGET', True)
+	if dir:
+		# Installing into a sysroot
+		sysroot = dir
+		opt = "--root %s" % dir
 
-# Perform group additions first, since user additions may depend
-# on these groups existing
-if test "x$GROUPADD_PARAM" != "x"; then
-	echo "Running groupadd commands..."
-	# Invoke multiple instances of groupadd for parameter lists
-	# separated by ';'
-	opts=`echo "$GROUPADD_PARAM" | cut -d ';' -f 1`
-	remaining=`echo "$GROUPADD_PARAM" | cut -d ';' -f 2-`
-	while test "x$opts" != "x"; do
-		groupname=`echo "$opts" | awk '{ print $NF }'`
-		group_exists=`grep "^$groupname:" $SYSROOT/etc/group || true`
-		if test "x$group_exists" = "x"; then
-			count=1
-			while true; do
-				eval $PSEUDO groupadd $OPT $opts || true
-				group_exists=`grep "^$groupname:" $SYSROOT/etc/group || true`
-				if test "x$group_exists" = "x"; then
-					# File locking issues can require us to retry the command
-					echo "WARNING: groupadd command did not succeed. Retrying..."
-					sleep 1
-				else
-					break
-				fi
-				count=`expr $count + 1`
-				if test $count = 11; then
-					echo "ERROR: tried running groupadd command 10 times without success, giving up"
-					exit 1
-				fi
-			done		
-		else
-			echo "Note: group $groupname already exists, not re-creating it"
-		fi
+		# Add groups and users defined for all recipe packages
+		groupadd_param = get_all_cmd_params(d, 'group')
+		useradd_param = get_all_cmd_params(d, 'user')
+	else:
+		# Installing onto a target
+		# Add groups and users defined only for this package
+		groupadd_param = d.getVar('GROUPADD_PARAM', True)
+		useradd_param = d.getVar('GROUPADD_PARAM', True)
 
-		if test "x$opts" = "x$remaining"; then
-			break
-		fi
-		opts=`echo "$remaining" | cut -d ';' -f 1`
-		remaining=`echo "$remaining" | cut -d ';' -f 2-`
-	done
-fi 
+	group_file = '%s/etc/group' % sysroot
+	user_file = '%s/etc/passwd' % sysroot
 
-if test "x$USERADD_PARAM" != "x"; then
-	echo "Running useradd commands..."
-	# Invoke multiple instances of useradd for parameter lists
-	# separated by ';'
-	opts=`echo "$USERADD_PARAM" | cut -d ';' -f 1`
-	remaining=`echo "$USERADD_PARAM" | cut -d ';' -f 2-`
-	while test "x$opts" != "x"; do
-		# useradd does not have a -f option, so we have to check if the
-		# username already exists manually
-		username=`echo "$opts" | awk '{ print $NF }'`
-		user_exists=`grep "^$username:" $SYSROOT/etc/passwd || true`
-		if test "x$user_exists" = "x"; then
-			count=1
-			while true; do
-				eval $PSEUDO useradd $OPT $opts || true
-				user_exists=`grep "^$username:" $SYSROOT/etc/passwd || true`
-				if test "x$user_exists" = "x"; then
-					# File locking issues can require us to retry the command
-					echo "WARNING: useradd command did not succeed. Retrying..."
-					sleep 1
-				else
-					break
-				fi
-				count=`expr $count + 1`
-				if test $count = 11; then
-					echo "ERROR: tried running useradd command 10 times without success, giving up"
-					exit 1
-				fi
-			done
-		else
-			echo "Note: username $username already exists, not re-creating it"
-		fi
+	# Use the locking of bb to the group/passwd file to avoid the
+	# locking issue of groupadd/useradd
+	group_lock = '%s.locked' % group_file
+	user_lock = '%s.locked' % user_file
+	lockfiles = [group_lock, user_lock]
 
-		if test "x$opts" = "x$remaining"; then
-			break
-		fi
-		opts=`echo "$remaining" | cut -d ';' -f 1`
-		remaining=`echo "$remaining" | cut -d ';' -f 2-`
-	done
-fi
+	with bb.utils.fileslocked(lockfiles):
+		# Perform group additions first, since user additions may depend
+		# on these groups existing
+		if groupadd_param and sysroot:
+			# Invoke multiple instances of groupadd for parameter lists
+			# separated by ';'
+			param_list = groupadd_param.split(';')
+			for opts in param_list:
+				groupname = opts.split()[-1]
+				with open(group_file, 'r') as f:
+					passwd_lines = f.read()
+				group_re = re.compile('\n%s' % groupname)
+				if group_re.search(passwd_lines):
+					bb.note("Note: groupname %s already exists, not re-creating it" % groupname)
+				else:
+					ret, result = commands.getstatusoutput('set -x; eval groupadd %s %s; set +x' % (opt, opts))
+
+		if useradd_param:
+			# Invoke multiple instances of useradd for parameter lists
+			# separated by ';'
+			param_list = useradd_param.split(';')
+			for opts in param_list:
+				# useradd does not have a -f option, so we have to check if the
+				# username already exists manually
+				username = opts.split()[-1]
+				with open(user_file, 'r') as f:
+					passwd_lines = f.read()
+				user_re = re.compile('\n%s' % username)
+				if user_re.search(passwd_lines):
+					bb.note("Note: username %s already exists, not re-creating it" % username)
+				else:
+					ret, result = commands.getstatusoutput('set -x; eval useradd %s %s; set +x' % ( opt, opts))
+
+fakeroot python useradd_sysroot () {
+	useradd_preinst(d)
 }
 
-useradd_sysroot () {
-	# Pseudo may (do_install) or may not (do_populate_sysroot_setscene) be running 
-	# at this point so we're explicit about the environment so pseudo can load if 
-	# not already present.
-	export PSEUDO="${FAKEROOTENV} PSEUDO_LOCALSTATEDIR=${STAGING_DIR_TARGET}${localstatedir}/pseudo ${STAGING_DIR_NATIVE}${bindir}/pseudo"
-
-	# Explicitly set $D since it isn't set to anything
-	# before do_install
-	D=${STAGING_DIR_TARGET}
-	useradd_preinst
-}
 
 useradd_sysroot_sstate () {
 	if [ "${BB_CURRENTTASK}" = "package_setscene" ]
