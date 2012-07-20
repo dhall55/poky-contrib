@@ -9,8 +9,6 @@ DEPENDS = "ncurses bison-native"
 
 inherit autotools gettext update-alternatives
 
-PARALLEL_MAKE = ""
-
 bindir = "/bin"
 sbindir = "/sbin"
 
