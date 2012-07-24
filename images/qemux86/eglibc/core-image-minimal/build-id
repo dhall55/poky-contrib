@@ -1,5 +1,5 @@
-qemux86: core-image-minimal configured for poky 1.2+snapshot-20120625
+qemux86: core-image-minimal configured for poky 1.2+snapshot-20120724
 Configured metadata layers:
 meta              
-meta-yocto        = "master:b876f42821383bf0069ee49b607ba06614417fba"
+meta-yocto        = "master:0ffb02eec2beaea27ff0ec9d3d31b0a09e675a4c"
 

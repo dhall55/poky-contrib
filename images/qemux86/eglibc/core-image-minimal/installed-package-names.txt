@@ -20,7 +20,7 @@ eglibc-extra-nss
 initscripts
 initscripts-dbg
 initscripts-dev
-kernel-3.4.1-yocto-standard
+kernel-3.4.4-yocto-standard
 kernel-module-cfbcopyarea
 kernel-module-cfbfillrect
 kernel-module-cfbimgblt

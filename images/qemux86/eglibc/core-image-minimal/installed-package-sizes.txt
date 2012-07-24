@@ -1,6 +1,6 @@
-9224	KiB libc6-dbg
+9228	KiB libc6-dbg
 8468	KiB perl-dbg
-4960	KiB libglib-2.0-dbg
+4964	KiB libglib-2.0-dbg
 1760	KiB busybox-dbg
 1716	KiB bash-dbg
 1328	KiB libc6
@@ -114,7 +114,7 @@
 4	KiB kernel-module-cfbimgblt
 4	KiB kernel-module-cfbfillrect
 4	KiB kernel-module-cfbcopyarea
-4	KiB kernel-3.4.1-yocto-standard
+4	KiB kernel-3.4.4-yocto-standard
 4	KiB initscripts-dev
 4	KiB initscripts-dbg
 4	KiB busybox-udhcpc

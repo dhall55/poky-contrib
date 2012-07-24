@@ -212,6 +212,7 @@ perl_dbg -> perl_module_utf8_dbg [style=dotted];
 perl_dbg -> perl_module_warnings_dbg [style=dotted];
 perl_dbg -> perl_module_xsloader_dbg [style=dotted];
 perl_dev -> libgdbm_dev [style=dotted];
+perl_dev -> libperl5;
 perl_dev -> libz_dev [style=dotted];
 perl_dev -> perl;
 perl_dev -> perl_dev [style=dotted];
