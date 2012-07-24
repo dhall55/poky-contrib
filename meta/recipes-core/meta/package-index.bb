@@ -1,6 +1,8 @@
 DESCRIPTION = "Rebuild the package index"
 LICENSE = "MIT"
 
+inherit pythonnative
+
 INHIBIT_DEFAULT_DEPS = "1"
 ALLOW_EMPTY = "1"
 PACKAGES = ""
