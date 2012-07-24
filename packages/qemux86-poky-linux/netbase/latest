@@ -1,4 +1,4 @@
-PV = 4.47
-PR = r3
+PV = 5.0
+PR = r0
 DEPENDS = update-rc.d-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
 PACKAGES = netbase-dbg netbase-staticdev netbase-dev netbase-doc netbase-locale netbase

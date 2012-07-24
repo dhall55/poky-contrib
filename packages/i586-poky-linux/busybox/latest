@@ -1,4 +1,4 @@
 PV = 1.19.4
-PR = r7
+PR = r10
 DEPENDS = update-rc.d-native virtual/i586-poky-linux-compilerlibs virtual/i586-poky-linux-gcc virtual/libc
 PACKAGES = busybox-httpd busybox-udhcpd busybox-udhcpc busybox-syslog busybox-mdev busybox-dbg busybox-staticdev busybox-dev busybox-doc busybox-locale busybox

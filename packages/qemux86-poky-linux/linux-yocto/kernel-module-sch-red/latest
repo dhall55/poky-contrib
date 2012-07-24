@@ -1,0 +1,7 @@
+PV = 3.4.4+git4+949fddda61053cc15e46c015e8f7db17e7b33360_3+6297e4c1d57e1063bfce297c2e12392348598559
+PR = r4.0
+RDEPENDS = kernel-3.4.4-yocto-standard update-modules
+RRECOMMENDS = 
+PKGSIZE = 8860
+FILES = /lib/modules/3.4.4-yocto-standard/kernel/net/sched/sch_red.ko /etc/modules-load.d/sch_red.conf /etc/modprobe.d/sch_red.conf
+FILELIST = /lib/modules/3.4.4-yocto-standard/kernel/net/sched/sch_red.ko

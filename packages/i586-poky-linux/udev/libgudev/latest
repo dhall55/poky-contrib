@@ -1,6 +1,6 @@
 PV = 164
-PR = r13
-RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.3) libffi (>= 3.0.10) libudev (>= 164)
+PR = r15
+RDEPENDS = eglibc (>= 2.15) glib-2.0 (>= 2.32.4) libffi (>= 3.0.10) libudev (>= 164)
 RRECOMMENDS = 
 PKGSIZE = 26665
 FILES = /lib/libgudev*.so.* /usr/lib/libgudev*.so.*
