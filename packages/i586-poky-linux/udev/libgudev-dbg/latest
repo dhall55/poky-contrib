@@ -1,7 +1,7 @@
 PV = 164
 PR = r15
 RDEPENDS = 
-RRECOMMENDS = eglibc-dbg glib-2.0-dbg libffi-dbg libudev-dbg
+RRECOMMENDS = eglibc-dbg glib-2.0-dbg libacl-dbg libffi-dbg libudev-dbg libusb-compat-dbg
 PKGSIZE = 70984
 FILES = /lib/.debug/libgudev*.so.* /usr/lib/.debug/libgudev*.so.*
 FILELIST = /lib/.debug/libgudev-1.0.so.0 /lib/.debug/libgudev-1.0.so.0.0.1
