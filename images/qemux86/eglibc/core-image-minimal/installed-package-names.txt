@@ -25,6 +25,8 @@ kernel-module-cfbfillrect
 kernel-module-cfbimgblt
 kernel-module-uvesafb
 kmod
+kmod-dbg
+kmod-dev
 libacl-dev
 libacl1
 libattr-dev
@@ -82,6 +84,7 @@ netbase
 netbase-dbg
 netbase-dev
 pciutils
+pciutils-dbg
 pciutils-dev
 pciutils-ids
 perl
@@ -95,6 +98,7 @@ sysvinit
 sysvinit-dbg
 sysvinit-dev
 sysvinit-inittab
+sysvinit-inittab-dbg
 sysvinit-inittab-dev
 sysvinit-pidof
 task-core-boot
@@ -107,12 +111,18 @@ udev
 udev-dbg
 udev-dev
 udev-extraconf
+udev-extraconf-dbg
+udev-extraconf-dev
 udev-utils
 update-alternatives-cworth
 update-modules
+update-modules-dbg
+update-modules-dev
 update-rc.d
+update-rc.d-dbg
 update-rc.d-dev
 usbutils
+usbutils-dbg
 usbutils-dev
 usbutils-ids
 v86d

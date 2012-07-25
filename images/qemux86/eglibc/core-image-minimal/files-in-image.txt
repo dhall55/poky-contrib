@@ -2,6 +2,8 @@ drwxr-xr-x root       root             4096 .
 drwxr-xr-x root       root             4096 ./bin  
 drwxr-xr-x root       root             4096 ./bin/.debug  
 -rwxr-xr-x root       root          2276425 ./bin/.debug/busybox  
+-rwxr-xr-x root       root           189058 ./bin/.debug/kmod  
+lrwxrwxrwx root       root               21 ./bin/.debug/lsmod.kmod -> ../../bin/.debug/kmod
 -rwxr-xr-x root       root            12614 ./bin/.debug/mountpoint.sysvinit  
 lrwxrwxrwx root       root                7 ./bin/.debug/sh -> busybox
 -rwxr-xr-x root       root           176824 ./bin/.debug/tinylogin  
@@ -60,7 +62,7 @@ lrwxrwxrwx root       root                7 ./bin/pwd -> busybox
 lrwxrwxrwx root       root                7 ./bin/rm -> busybox
 lrwxrwxrwx root       root                7 ./bin/rmdir -> busybox
 lrwxrwxrwx root       root                7 ./bin/sed -> busybox
-lrwxrwxrwx root       root                4 ./bin/sh -> bash
+lrwxrwxrwx root       root                7 ./bin/sh -> busybox
 lrwxrwxrwx root       root                7 ./bin/sleep -> busybox
 lrwxrwxrwx root       root                7 ./bin/stty -> busybox
 lrwxrwxrwx root       root               14 ./bin/su -> /bin/tinylogin
@@ -194,7 +196,7 @@ lrwxrwxrwx root       root               14 ./etc/init.d/syslog -> syslog.busybo
 -rw-r--r-- root       root             1633 ./etc/inputrc  
 -rw-r--r-- root       root               54 ./etc/issue  
 -rw-r--r-- root       root               52 ./etc/issue.net  
--rw-r--r-- root       root             5504 ./etc/ld.so.cache  
+-rw-r--r-- root       root             5559 ./etc/ld.so.cache  
 -rw-r--r-- root       root                0 ./etc/ld.so.conf  
 drwxr-xr-x root       root             4096 ./etc/modprobe.d  
 -rw-r--r-- root       root                0 ./etc/motd  
@@ -593,13 +595,18 @@ drwxr-xr-x root       root             4096 ./proc
 drwxr-xr-x root       root             4096 ./sbin  
 drwxr-xr-x root       root             4096 ./sbin/.debug  
 -rwxr-xr-x root       root            28201 ./sbin/.debug/bootlogd  
+lrwxrwxrwx root       root               21 ./sbin/.debug/depmod.kmod -> ../../bin/.debug/kmod
 -rwxr-xr-x root       root             9863 ./sbin/.debug/fstab-decode  
 -rwxr-xr-x root       root            33540 ./sbin/.debug/halt.sysvinit  
 -rwxr-xr-x root       root            68062 ./sbin/.debug/init.sysvinit  
+lrwxrwxrwx root       root               21 ./sbin/.debug/insmod.kmod -> ../../bin/.debug/kmod
 -rwxr-xr-x root       root            36522 ./sbin/.debug/killall5  
 -rwxr-xr-x root       root          2814515 ./sbin/.debug/ldconfig  
+lrwxrwxrwx root       root               21 ./sbin/.debug/modinfo.kmod -> ../../bin/.debug/kmod
+lrwxrwxrwx root       root               21 ./sbin/.debug/modprobe.kmod -> ../../bin/.debug/kmod
 lrwxrwxrwx root       root               13 ./sbin/.debug/poweroff.sysvinit -> halt.sysvinit
 lrwxrwxrwx root       root               13 ./sbin/.debug/reboot.sysvinit -> halt.sysvinit
+lrwxrwxrwx root       root               21 ./sbin/.debug/rmmod.kmod -> ../../bin/.debug/kmod
 -rwxr-xr-x root       root             9583 ./sbin/.debug/runlevel.sysvinit  
 -rwxr-xr-x root       root            43680 ./sbin/.debug/shutdown.sysvinit  
 -rwxr-xr-x root       root          2251051 ./sbin/.debug/sln  
@@ -685,12 +692,15 @@ drwxr-xr-x root       root             4096 ./usr/bin/.debug
 -rwxr-xr-x root       root            28231 ./usr/bin/.debug/last.sysvinit  
 -rwxr-xr-x root       root            14448 ./usr/bin/.debug/lddlibc4  
 -rwxr-xr-x root       root            83590 ./usr/bin/.debug/locale  
+lrwxrwxrwx root       root               23 ./usr/bin/.debug/lspci -> ../../sbin/.debug/lspci
+lrwxrwxrwx root       root               23 ./usr/bin/.debug/lsusb -> ../../sbin/.debug/lsusb
 -rwxr-xr-x root       root            37894 ./usr/bin/.debug/makedb  
 -rwxr-xr-x root       root            12067 ./usr/bin/.debug/mesg.sysvinit  
 -rwxr-xr-x root       root            17510 ./usr/bin/.debug/pcprofiledump  
 -rwxr-xr-x root       root            33666 ./usr/bin/.debug/pldd  
 -rwxr-xr-x root       root           182872 ./usr/bin/.debug/rpcgen  
 -rwxr-xr-x root       root            48955 ./usr/bin/.debug/sprof  
+-rwxr-xr-x root       root            40553 ./usr/bin/.debug/usbhid-dump  
 -rwxr-xr-x root       root            17899 ./usr/bin/.debug/utmpdump  
 -rwxr-xr-x root       root            22407 ./usr/bin/.debug/wall.sysvinit  
 lrwxrwxrwx root       root               17 ./usr/bin/[ -> ../../bin/busybox
@@ -1353,6 +1363,7 @@ drwxr-xr-x root       root             4096 ./usr/include/gnu
 -rw-r--r-- root       root             1465 ./usr/include/libgen.h  
 -rw-r--r-- root       root             4702 ./usr/include/libintl.h  
 -rw-r--r-- root       root            17857 ./usr/include/libio.h  
+-rw-r--r-- root       root             9366 ./usr/include/libkmod.h  
 drwxr-xr-x root       root             4096 ./usr/include/libusb-1.0  
 -rw-r--r-- root       root            41693 ./usr/include/libusb-1.0/libusb.h  
 -rw-r--r-- root       root             4596 ./usr/include/limits.h  
@@ -2296,6 +2307,9 @@ lrwxrwxrwx root       root               26 ./usr/lib/.debug/libgthread-2.0.so -
 lrwxrwxrwx root       root               26 ./usr/lib/.debug/libgthread-2.0.so.0 -> libgthread-2.0.so.0.3200.4
 -rwxr-xr-x root       root             4846 ./usr/lib/.debug/libgthread-2.0.so.0.3200.4  
 lrwxrwxrwx root       root               41 ./usr/lib/.debug/libgudev-1.0.so -> ../../../lib/.debug/libgudev-1.0.so.0.0.1
+lrwxrwxrwx root       root               16 ./usr/lib/.debug/libkmod.so -> libkmod.so.2.1.2
+lrwxrwxrwx root       root               16 ./usr/lib/.debug/libkmod.so.2 -> libkmod.so.2.1.2
+-rwxr-xr-x root       root           271251 ./usr/lib/.debug/libkmod.so.2.1.2  
 lrwxrwxrwx root       root               36 ./usr/lib/.debug/libudev.so -> ../../../lib/.debug/libudev.so.0.9.3
 lrwxrwxrwx root       root               13 ./usr/lib/.debug/libz.so -> libz.so.1.2.7
 lrwxrwxrwx root       root               13 ./usr/lib/.debug/libz.so.1 -> libz.so.1.2.7
@@ -2366,6 +2380,8 @@ lrwxrwxrwx root       root               26 ./usr/lib/libgobject-2.0.so.0 -> lib
 lrwxrwxrwx root       root               26 ./usr/lib/libgthread-2.0.so -> libgthread-2.0.so.0.3200.4
 lrwxrwxrwx root       root               26 ./usr/lib/libgthread-2.0.so.0 -> libgthread-2.0.so.0.3200.4
 -rwxr-xr-x root       root             3400 ./usr/lib/libgthread-2.0.so.0.3200.4  
+-rwxr-xr-x root       root              902 ./usr/lib/libkmod.la  
+lrwxrwxrwx root       root               16 ./usr/lib/libkmod.so -> libkmod.so.2.1.2
 lrwxrwxrwx root       root               16 ./usr/lib/libkmod.so.2 -> libkmod.so.2.1.2
 -rwxr-xr-x root       root            94548 ./usr/lib/libkmod.so.2.1.2  
 lrwxrwxrwx root       root               19 ./usr/lib/libm.so -> ../../lib/libm.so.6
@@ -2500,6 +2516,7 @@ drwxr-xr-x root       root             4096 ./usr/lib/pkgconfig
 -rw-r--r-- root       root              242 ./usr/lib/pkgconfig/gobject-2.0.pc  
 -rw-r--r-- root       root              219 ./usr/lib/pkgconfig/gthread-2.0.pc  
 -rw-r--r-- root       root              226 ./usr/lib/pkgconfig/libffi.pc  
+-rw-r--r-- root       root              209 ./usr/lib/pkgconfig/libkmod.pc  
 -rw-r--r-- root       root              182 ./usr/lib/pkgconfig/libpci.pc  
 -rw-r--r-- root       root              224 ./usr/lib/pkgconfig/libusb-1.0.pc  
 -rw-r--r-- root       root              239 ./usr/lib/pkgconfig/libusb.pc  
@@ -2523,7 +2540,11 @@ drwxr-xr-x root       root             4096 ./usr/libexec/.debug
 drwxr-xr-x root       root             4096 ./usr/sbin  
 drwxr-xr-x root       root             4096 ./usr/sbin/.debug  
 -rwxr-xr-x root       root            56807 ./usr/sbin/.debug/iconvconfig  
+-rwxr-xr-x root       root           126739 ./usr/sbin/.debug/lspci  
+-rwxr-xr-x root       root           148269 ./usr/sbin/.debug/lsusb  
 -rwxr-xr-x root       root           480249 ./usr/sbin/.debug/nscd  
+-rwxr-xr-x root       root            23193 ./usr/sbin/.debug/pcimodules  
+-rwxr-xr-x root       root            35879 ./usr/sbin/.debug/setpci  
 -rwxr-xr-x root       root            38558 ./usr/sbin/.debug/update-passwd  
 -rwxr-xr-x root       root            25647 ./usr/sbin/.debug/zdump  
 -rwxr-xr-x root       root            92199 ./usr/sbin/.debug/zic  
@@ -6207,6 +6228,34 @@ drwxr-xr-x root       root             4096 ./usr/src/debug/glib-2.0-1_2.32.4-r3
 -rw-r--r-- root       root             8886 ./usr/src/debug/glib-2.0-1_2.32.4-r3/glib-2.32.4/gobject/gvaluetypes.h  
 drwxr-xr-x root       root             4096 ./usr/src/debug/glib-2.0-1_2.32.4-r3/glib-2.32.4/gthread  
 -rw-r--r-- root       root             1576 ./usr/src/debug/glib-2.0-1_2.32.4-r3/glib-2.32.4/gthread/gthread-impl.c  
+drwxr-xr-x root       root             4096 ./usr/src/debug/kmod-8-r1.3  
+drwxr-xr-x root       root             4096 ./usr/src/debug/kmod-8-r1.3/git  
+drwxr-xr-x root       root             4096 ./usr/src/debug/kmod-8-r1.3/git/libkmod  
+-rw-r--r-- root       root             2989 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-array.c  
+-rw-r--r-- root       root              677 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-array.h  
+-rw-r--r-- root       root            28214 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-config.c  
+-rw-r--r-- root       root            27395 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-elf.c  
+-rw-r--r-- root       root             7332 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-file.c  
+-rw-r--r-- root       root             8138 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-hash.c  
+-rw-r--r-- root       root              770 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-hash.h  
+-rw-r--r-- root       root            22745 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-index.c  
+-rw-r--r-- root       root             4294 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-index.h  
+-rw-r--r-- root       root             7334 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-list.c  
+-rw-r--r-- root       root            64842 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-module.c  
+-rw-r--r-- root       root             9192 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-private.h  
+-rw-r--r-- root       root             6250 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-util.c  
+-rw-r--r-- root       root             1456 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod-util.h  
+-rw-r--r-- root       root            21931 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod.c  
+-rw-r--r-- root       root             9366 ./usr/src/debug/kmod-8-r1.3/git/libkmod/libkmod.h  
+drwxr-xr-x root       root             4096 ./usr/src/debug/kmod-8-r1.3/git/tools  
+-rw-r--r-- root       root            64631 ./usr/src/debug/kmod-8-r1.3/git/tools/kmod-depmod.c  
+-rw-r--r-- root       root             3812 ./usr/src/debug/kmod-8-r1.3/git/tools/kmod-insmod.c  
+-rw-r--r-- root       root             2648 ./usr/src/debug/kmod-8-r1.3/git/tools/kmod-lsmod.c  
+-rw-r--r-- root       root            10865 ./usr/src/debug/kmod-8-r1.3/git/tools/kmod-modinfo.c  
+-rw-r--r-- root       root            24059 ./usr/src/debug/kmod-8-r1.3/git/tools/kmod-modprobe.c  
+-rw-r--r-- root       root             5851 ./usr/src/debug/kmod-8-r1.3/git/tools/kmod-rmmod.c  
+-rw-r--r-- root       root             3761 ./usr/src/debug/kmod-8-r1.3/git/tools/kmod.c  
+-rw-r--r-- root       root             1286 ./usr/src/debug/kmod-8-r1.3/git/tools/kmod.h  
 drwxr-xr-x root       root             4096 ./usr/src/debug/libffi-3.0.10-r0  
 drwxr-xr-x root       root             4096 ./usr/src/debug/libffi-3.0.10-r0/libffi-3.0.10  
 drwxr-xr-x root       root             4096 ./usr/src/debug/libffi-3.0.10-r0/libffi-3.0.10/include  
@@ -6242,6 +6291,24 @@ drwxr-xr-x root       root             4096 ./usr/src/debug/libusb1-1.0.8-r4/lib
 -rw-r--r-- root       root            60302 ./usr/src/debug/libusb1-1.0.8-r4/libusb-1.0.8/libusb/os/linux_usbfs.c  
 -rw-r--r-- root       root             4124 ./usr/src/debug/libusb1-1.0.8-r4/libusb-1.0.8/libusb/os/linux_usbfs.h  
 -rw-r--r-- root       root            11208 ./usr/src/debug/libusb1-1.0.8-r4/libusb-1.0.8/libusb/sync.c  
+drwxr-xr-x root       root             4096 ./usr/src/debug/pciutils-3.1.9-r0  
+drwxr-xr-x root       root             4096 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9  
+-rw-r--r-- root       root             2699 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/common.c  
+drwxr-xr-x root       root             4096 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/lib  
+-rw-r--r-- root       root             8999 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/lib/pci.h  
+-rw-r--r-- root       root             1657 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/lib/sysdep.h  
+-rw-r--r-- root       root             1443 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/lib/types.h  
+-rw-r--r-- root       root            40558 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/ls-caps.c  
+-rw-r--r-- root       root            15865 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/ls-ecaps.c  
+-rw-r--r-- root       root             3969 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/ls-kernel.c  
+-rw-r--r-- root       root             4264 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/ls-map.c  
+-rw-r--r-- root       root             6004 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/ls-tree.c  
+-rw-r--r-- root       root             4585 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/ls-vpd.c  
+-rw-r--r-- root       root            28052 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/lspci.c  
+-rw-r--r-- root       root             2140 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/lspci.h  
+-rw-r--r-- root       root             4954 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/pcimodules.c  
+-rw-r--r-- root       root             1335 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/pciutils.h  
+-rw-r--r-- root       root            16809 ./usr/src/debug/pciutils-3.1.9-r0/pciutils-3.1.9/setpci.c  
 drwxr-xr-x root       root             4096 ./usr/src/debug/sysvinit-2.88dsf-r7  
 drwxr-xr-x root       root             4096 ./usr/src/debug/sysvinit-2.88dsf-r7/sysvinit-2.88dsf  
 drwxr-xr-x root       root             4096 ./usr/src/debug/sysvinit-2.88dsf-r7/sysvinit-2.88dsf/src  
@@ -6396,6 +6463,29 @@ drwxr-xr-x root       root             4096 ./usr/src/debug/udev-164-r15/udev-16
 -rw-r--r-- root       root             6822 ./usr/src/debug/udev-164-r15/udev-164/udev/udevadm-trigger.c  
 -rw-r--r-- root       root             4108 ./usr/src/debug/udev-164-r15/udev-164/udev/udevadm.c  
 -rw-r--r-- root       root            34179 ./usr/src/debug/udev-164-r15/udev-164/udev/udevd.c  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91  
+-rw-r--r-- root       root             8954 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/devtree.c  
+-rw-r--r-- root       root             2827 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/devtree.h  
+-rw-r--r-- root       root             2331 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/list.h  
+-rw-r--r-- root       root            16844 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/lsusb-t.c  
+-rw-r--r-- root       root           120452 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/lsusb.c  
+-rw-r--r-- root       root            23650 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/names.c  
+-rw-r--r-- root       root             2233 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/names.h  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include/usbhid_dump  
+-rw-r--r-- root       root             6915 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include/usbhid_dump/iface.h  
+-rw-r--r-- root       root             1560 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include/usbhid_dump/libusb.h  
+-rw-r--r-- root       root             1181 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include/usbhid_dump/str.h  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/lib  
+-rw-r--r-- root       root            10517 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/lib/iface.c  
+-rw-r--r-- root       root             3766 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/lib/libusb.c  
+-rw-r--r-- root       root             1124 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/lib/str.c  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/src  
+-rw-r--r-- root       root            21997 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/src/usbhid-dump.c  
+-rw-r--r-- root       root             3648 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbmisc.c  
+-rw-r--r-- root       root             1337 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbmisc.h  
 drwxr-xr-x root       root             4096 ./usr/src/debug/v86d-0.1.10-r1  
 drwxr-xr-x root       root             4096 ./usr/src/debug/v86d-0.1.10-r1/v86d-0.1.10  
 drwxr-xr-x root       root             4096 ./usr/src/debug/v86d-0.1.10-r1/v86d-0.1.10/libs  
