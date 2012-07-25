@@ -74,6 +74,12 @@ def do_split_packages(d, root, file_regex, output_pattern, description, postinst
     given package, usually plugins or modules.
     """
 
+    dvar = d.getVar('PKGD', True)
+
+    # If the root doesn't exist, return early
+    if not os.path.exists(dvar + root):
+        return
+
     ml = d.getVar("MLPREFIX", True)
     if ml:
         if not output_pattern.startswith(ml):
@@ -87,8 +93,6 @@ def do_split_packages(d, root, file_regex, output_pattern, description, postinst
                 newdeps.append(ml + dep)
         if newdeps:
             extra_depends = " ".join(newdeps)
-
-    dvar = d.getVar('PKGD', True)
 
     packages = d.getVar('PACKAGES', True).split()
 
