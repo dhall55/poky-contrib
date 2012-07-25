@@ -28,6 +28,11 @@ inherit autotools pkgconfig
 
 S = "${WORKDIR}/gtk+-${PV}"
 
+do_configure_prepend() {
+    # Do this because the configure script is running ./libtool directly
+    ln -s ${TARGET_PREFIX}libtool libtool || true
+}
+
 # Make it parallel installable with gtk+ 2.x
 # The helper apps like gtk-update-iconcache won't get built here
 EXTRA_OECONF += " \
@@ -36,11 +41,6 @@ EXTRA_OECONF += " \
                  --enable-modules \
                  --disable-cups \
 "
-
-# Make a symlink to our libtool
-do_configure_prepend() {
-	ln -s ${TARGET_PREFIX}libtool libtool || true
-}
 
 PACKAGES =+ "${PN}-demo"
 LIBV = "3.0.0"
