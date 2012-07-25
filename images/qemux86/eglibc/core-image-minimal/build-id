@@ -1,5 +1,5 @@
 qemux86: core-image-minimal configured for poky 1.2+snapshot-20120725
 Configured metadata layers:
 meta              
-meta-yocto        = "paule/dbgdeps:d426136bd44199800368203a4fec0326ec5e6a9f"
+meta-yocto        = "paule/dbgdeps:9aecc7b6f9341ee30158e2c4f6926b84431ec7d9"
 
