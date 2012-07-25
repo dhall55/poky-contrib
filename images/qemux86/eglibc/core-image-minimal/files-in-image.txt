@@ -201,7 +201,7 @@ drwxr-xr-x root       root             4096 ./etc/network/if-up.d
 -rw-r--r-- root       root              132 ./etc/network/interfaces  
 -rw-r--r-- root       root                0 ./etc/network/nm-disabled-eth0  
 -rw-r--r-- root       root              465 ./etc/nsswitch.conf  
--rw-r--r-- root       root              720 ./etc/passwd  
+-rw-r--r-- root       root              719 ./etc/passwd  
 -rw-r--r-- root       root              847 ./etc/profile  
 -rw-r--r-- root       root             2933 ./etc/protocols  
 drwxr-xr-x root       root             4096 ./etc/rc0.d  
