@@ -2,7 +2,6 @@
     node [shape=plaintext]
 base_files_dbg -> base_files [style=dotted];
 base_passwd_dbg -> base_passwd [style=dotted];
-bash -> libtinfo5;
 busybox -> busybox_syslog [style=dotted];
 busybox -> busybox_udhcpc [style=dotted];
 busybox_dbg -> busybox [style=dotted];
@@ -22,7 +21,6 @@ libgudev_1_0_dbg -> libglib_2_0_dbg [style=dotted];
 libgudev_1_0_dbg -> libudev_dbg [style=dotted];
 libgudev_1_0_dbg -> libusb_0_1_dbg [style=dotted];
 libpci3 -> libz1;
-libtinfo5 -> ncurses_terminfo_base [style=dotted];
 libudev_dbg -> libacl_dbg [style=dotted];
 libudev_dbg -> libffi_dbg [style=dotted];
 libudev_dbg -> libglib_2_0_dbg [style=dotted];
@@ -81,7 +79,6 @@ udev_dbg -> libudev_dbg;
 udev_dbg -> libusb_0_1_dbg [style=dotted];
 udev_dbg -> udev [style=dotted];
 udev_extraconf_dbg -> udev_extraconf [style=dotted];
-usbutils -> bash;
 usbutils -> libusb_0_1_4;
 usbutils -> libusb_1_0_0;
 usbutils -> libz1;

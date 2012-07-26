@@ -10,8 +10,6 @@ lrwxrwxrwx root       root                7 ./bin/.debug/sh -> busybox
 lrwxrwxrwx root       root               14 ./bin/addgroup -> /bin/tinylogin
 lrwxrwxrwx root       root               14 ./bin/adduser -> /bin/tinylogin
 lrwxrwxrwx root       root                7 ./bin/ash -> busybox
--rwxr-xr-x root       root           918176 ./bin/bash  
--r-xr-xr-x root       root             6937 ./bin/bashbug  
 -rwsr-xr-x root       root           561796 ./bin/busybox  
 lrwxrwxrwx root       root                7 ./bin/cat -> busybox
 lrwxrwxrwx root       root                7 ./bin/chattr -> busybox
@@ -196,7 +194,7 @@ lrwxrwxrwx root       root               14 ./etc/init.d/syslog -> syslog.busybo
 -rw-r--r-- root       root             1633 ./etc/inputrc  
 -rw-r--r-- root       root               54 ./etc/issue  
 -rw-r--r-- root       root               52 ./etc/issue.net  
--rw-r--r-- root       root             1663 ./etc/ld.so.cache  
+-rw-r--r-- root       root             1606 ./etc/ld.so.cache  
 -rw-r--r-- root       root                0 ./etc/ld.so.conf  
 drwxr-xr-x root       root             4096 ./etc/modprobe.d  
 -rw-r--r-- root       root                0 ./etc/motd  
@@ -279,22 +277,6 @@ drwxr-xr-x root       root             4096 ./etc/skel
 -rwxr-xr-x root       root              152 ./etc/skel/.profile  
 lrwxrwxrwx root       root               27 ./etc/syslog-startup.conf -> syslog-startup.conf.busybox
 -rw-r--r-- root       root              651 ./etc/syslog-startup.conf.busybox  
-drwxr-xr-x root       root             4096 ./etc/terminfo  
-drwxr-xr-x root       root             4096 ./etc/terminfo/a  
--rw-r--r-- root       root             1481 ./etc/terminfo/a/ansi  
-drwxr-xr-x root       root             4096 ./etc/terminfo/d  
--rw-r--r-- root       root              308 ./etc/terminfo/d/dumb  
-drwxr-xr-x root       root             4096 ./etc/terminfo/l  
--rw-r--r-- root       root             1737 ./etc/terminfo/l/linux  
-drwxr-xr-x root       root             4096 ./etc/terminfo/r  
--rw-r--r-- root       root             2278 ./etc/terminfo/r/rxvt  
-drwxr-xr-x root       root             4096 ./etc/terminfo/s  
--rw-r--r-- root       root             1532 ./etc/terminfo/s/screen  
--rw-r--r-- root       root              997 ./etc/terminfo/s/sun  
-drwxr-xr-x root       root             4096 ./etc/terminfo/x  
-lrwxrwxrwx root       root               11 ./etc/terminfo/x/xterm -> xterm-color
--rw-r--r-- root       root             1551 ./etc/terminfo/x/xterm-color  
--rw-r--r-- root       root             2235 ./etc/terminfo/x/xterm-xfree86  
 -rw-r--r-- root       root               13 ./etc/timestamp  
 drwxr-xr-x root       root             4096 ./etc/udev  
 -rw-r--r-- root       root                0 ./etc/udev/cache.data  
@@ -379,7 +361,7 @@ lrwxrwxrwx root       root               14 ./lib/libanl.so.1 -> libanl-2.15.so
 lrwxrwxrwx root       root               12 ./lib/libc.so.6 -> libc-2.15.so
 -rwxr-xr-x root       root            35948 ./lib/libcrypt-2.15.so  
 lrwxrwxrwx root       root               16 ./lib/libcrypt.so.1 -> libcrypt-2.15.so
--rwxr-xr-x root       root            15564 ./lib/libdl-2.15.so  
+-rwxr-xr-x root       root            13828 ./lib/libdl-2.15.so  
 lrwxrwxrwx root       root               13 ./lib/libdl.so.2 -> libdl-2.15.so
 -rwxr-xr-x root       root           173508 ./lib/libm-2.15.so  
 lrwxrwxrwx root       root               12 ./lib/libm.so.6 -> libm-2.15.so
@@ -397,8 +379,6 @@ lrwxrwxrwx root       root               18 ./lib/libpthread.so.0 -> libpthread-
 lrwxrwxrwx root       root               17 ./lib/libresolv.so.2 -> libresolv-2.15.so
 -rwxr-xr-x root       root            32476 ./lib/librt-2.15.so  
 lrwxrwxrwx root       root               13 ./lib/librt.so.1 -> librt-2.15.so
-lrwxrwxrwx root       root               15 ./lib/libtinfo.so.5 -> libtinfo.so.5.9
--rwxr-xr-x root       root           129100 ./lib/libtinfo.so.5.9  
 lrwxrwxrwx root       root               19 ./lib/libusb-0.1.so.4 -> libusb-0.1.so.4.4.4
 -rwxr-xr-x root       root            17780 ./lib/libusb-0.1.so.4.4.4  
 lrwxrwxrwx root       root               19 ./lib/libusb-1.0.so.0 -> libusb-1.0.so.0.0.0
@@ -746,7 +726,7 @@ lrwxrwxrwx root       root               17 ./usr/bin/uniq -> ../../bin/busybox
 lrwxrwxrwx root       root               17 ./usr/bin/unzip -> ../../bin/busybox
 -rwxr-xr-x root       root             4524 ./usr/bin/update-alternatives  
 lrwxrwxrwx root       root               17 ./usr/bin/uptime -> ../../bin/busybox
--rwxr-xr-x root       root             4202 ./usr/bin/usb-devices  
+-rwxr-xr-x root       root             4200 ./usr/bin/usb-devices  
 -rwxr-xr-x root       root            19760 ./usr/bin/usbhid-dump  
 lrwxrwxrwx root       root               17 ./usr/bin/users -> ../../bin/busybox
 -rwxr-xr-x root       root            10276 ./usr/bin/utmpdump  
@@ -4728,29 +4708,29 @@ drwxr-xr-x root       root             4096 ./usr/src/debug/udev-164-r15/udev-16
 -rw-r--r-- root       root             6822 ./usr/src/debug/udev-164-r15/udev-164/udev/udevadm-trigger.c  
 -rw-r--r-- root       root             4108 ./usr/src/debug/udev-164-r15/udev-164/udev/udevadm.c  
 -rw-r--r-- root       root            34179 ./usr/src/debug/udev-164-r15/udev-164/udev/udevd.c  
-drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3  
-drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91  
--rw-r--r-- root       root             8954 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/devtree.c  
--rw-r--r-- root       root             2827 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/devtree.h  
--rw-r--r-- root       root             2331 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/list.h  
--rw-r--r-- root       root            16844 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/lsusb-t.c  
--rw-r--r-- root       root           120452 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/lsusb.c  
--rw-r--r-- root       root            23650 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/names.c  
--rw-r--r-- root       root             2233 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/names.h  
-drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump  
-drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include  
-drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include/usbhid_dump  
--rw-r--r-- root       root             6915 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include/usbhid_dump/iface.h  
--rw-r--r-- root       root             1560 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include/usbhid_dump/libusb.h  
--rw-r--r-- root       root             1181 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/include/usbhid_dump/str.h  
-drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/lib  
--rw-r--r-- root       root            10517 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/lib/iface.c  
--rw-r--r-- root       root             3766 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/lib/libusb.c  
--rw-r--r-- root       root             1124 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/lib/str.c  
-drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/src  
--rw-r--r-- root       root            21997 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbhid-dump/src/usbhid-dump.c  
--rw-r--r-- root       root             3648 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbmisc.c  
--rw-r--r-- root       root             1337 ./usr/src/debug/usbutils-0.91-r3/usbutils-0.91/usbmisc.h  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r4  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91  
+-rw-r--r-- root       root             8954 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/devtree.c  
+-rw-r--r-- root       root             2827 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/devtree.h  
+-rw-r--r-- root       root             2331 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/list.h  
+-rw-r--r-- root       root            16844 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/lsusb-t.c  
+-rw-r--r-- root       root           120452 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/lsusb.c  
+-rw-r--r-- root       root            23650 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/names.c  
+-rw-r--r-- root       root             2233 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/names.h  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/include  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/include/usbhid_dump  
+-rw-r--r-- root       root             6915 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/include/usbhid_dump/iface.h  
+-rw-r--r-- root       root             1560 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/include/usbhid_dump/libusb.h  
+-rw-r--r-- root       root             1181 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/include/usbhid_dump/str.h  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/lib  
+-rw-r--r-- root       root            10517 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/lib/iface.c  
+-rw-r--r-- root       root             3766 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/lib/libusb.c  
+-rw-r--r-- root       root             1124 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/lib/str.c  
+drwxr-xr-x root       root             4096 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/src  
+-rw-r--r-- root       root            21997 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbhid-dump/src/usbhid-dump.c  
+-rw-r--r-- root       root             3648 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbmisc.c  
+-rw-r--r-- root       root             1337 ./usr/src/debug/usbutils-0.91-r4/usbutils-0.91/usbmisc.h  
 drwxr-xr-x root       root             4096 ./usr/src/debug/v86d-0.1.10-r1  
 drwxr-xr-x root       root             4096 ./usr/src/debug/v86d-0.1.10-r1/v86d-0.1.10  
 drwxr-xr-x root       root             4096 ./usr/src/debug/v86d-0.1.10-r1/v86d-0.1.10/libs  
@@ -4816,7 +4796,7 @@ lrwxrwxrwx root       root               12 ./var/tmp -> volatile/tmp
 drwxr-xr-x root       root             4096 ./var/volatile  
 drwxr-xr-x root       root             4096 ./var/volatile/cache  
 drwx------ root       root             4096 ./var/volatile/cache/ldconfig  
--rw------- root       root             1727 ./var/volatile/cache/ldconfig/aux-cache  
+-rw------- root       root             1665 ./var/volatile/cache/ldconfig/aux-cache  
 drwxrwxrwt root       root             4096 ./var/volatile/lock  
 drwxr-xr-x root       root             4096 ./var/volatile/lock/subsys  
 drwxr-xr-x root       root             4096 ./var/volatile/log  

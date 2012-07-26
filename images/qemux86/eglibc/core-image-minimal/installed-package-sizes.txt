@@ -2,7 +2,6 @@
 1760	KiB busybox-dbg
 1328	KiB libc6
 980	KiB udev-dbg
-424	KiB bash
 308	KiB busybox
 288	KiB udev
 260	KiB kmod-dbg
@@ -20,7 +19,6 @@
 60	KiB udev-utils
 60	KiB libudev-dbg
 56	KiB sysvinit
-56	KiB libtinfo5
 52	KiB usbutils
 52	KiB libz1
 44	KiB v86d
@@ -36,7 +34,6 @@
 12	KiB sysvinit-pidof
 12	KiB netbase
 12	KiB initscripts
-8	KiB ncurses-terminfo-base
 8	KiB base-files
 4	KiB update-rc.d-dbg
 4	KiB update-rc.d

@@ -2,7 +2,6 @@ base-files
 base-files-dbg
 base-passwd
 base-passwd-dbg
-bash
 busybox
 busybox-dbg
 busybox-syslog
@@ -25,7 +24,6 @@ libglib-2.0-dbg
 libgudev-1.0-dbg
 libkmod2
 libpci3
-libtinfo5
 libudev-dbg
 libusb-0.1-4
 libusb-0.1-dbg
@@ -35,7 +33,6 @@ libz-dbg
 libz1
 modutils-initscripts
 modutils-initscripts-dbg
-ncurses-terminfo-base
 netbase
 netbase-dbg
 pciutils
