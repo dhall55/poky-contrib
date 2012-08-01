@@ -1,5 +1,6 @@
 PV = 1.2.7
 PR = r0
+PKG = libz-dbg
 RDEPENDS = 
 RRECOMMENDS = eglibc-dbg zlib (= 1.2.7-r0)
 PKGSIZE = 639353

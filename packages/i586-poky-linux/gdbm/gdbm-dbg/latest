@@ -1,5 +1,6 @@
 PV = 1.10
 PR = r3
+PKG = libgdbm-dbg
 RDEPENDS = 
 RRECOMMENDS = eglibc-dbg gdbm (= 1.10-r3)
 PKGSIZE = 418724

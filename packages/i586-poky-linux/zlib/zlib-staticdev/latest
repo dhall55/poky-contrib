@@ -1,5 +1,6 @@
 PV = 1.2.7
 PR = r0
+PKG = libz-staticdev
 RDEPENDS = zlib-dev (= 1.2.7-r0)
 RRECOMMENDS = 
 PKGSIZE = 290358
