@@ -1,5 +1,6 @@
 PV = 2.16
 PR = r4+svnr19383
+PKG = libc6-dev
 RDEPENDS = eglibc (= 2.16-r4+svnr19383) eglibc-extra-nss eglibc-thread-db libcidn
 RRECOMMENDS = bash-dev eglibc-extra-nss-dev eglibc-thread-db-dev libcidn-dev libsegfault-dev linux-libc-headers-dev perl-dev
 PKGSIZE = 2406524

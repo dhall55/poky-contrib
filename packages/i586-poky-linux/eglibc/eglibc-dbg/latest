@@ -1,5 +1,6 @@
 PV = 2.16
 PR = r4+svnr19383
+PKG = libc6-dbg
 RDEPENDS = 
 RRECOMMENDS = eglibc (= 2.16-r4+svnr19383)
 PKGSIZE = 31651186

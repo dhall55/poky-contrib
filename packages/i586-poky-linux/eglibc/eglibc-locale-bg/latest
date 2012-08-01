@@ -1,7 +1,0 @@
-PV = 2.15
-PR = r12+svnr17386
-RDEPENDS = eglibc virtual-locale-bg
-RRECOMMENDS = 
-PKGSIZE = 187948
-FILES = /usr/share/locale/bg
-FILELIST = /usr/share/locale/bg/LC_MESSAGES/libc.mo
