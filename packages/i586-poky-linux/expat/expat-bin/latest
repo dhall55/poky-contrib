@@ -1,6 +1,6 @@
 PV = 2.1.0
 PR = r0
-RDEPENDS = eglibc (>= 2.15) expat (>= 2.1.0)
+RDEPENDS = eglibc (>= 2.16) expat (>= 2.1.0)
 RRECOMMENDS = 
 PKGSIZE = 19576
 FILES = /usr/bin/* /usr/sbin/*
