@@ -1,5 +1,6 @@
 PV = 2.1.0
 PR = r0
+PKG = libexpat-dbg
 RDEPENDS = 
 RRECOMMENDS = eglibc-dbg expat (= 2.1.0-r0)
 PKGSIZE = 769053

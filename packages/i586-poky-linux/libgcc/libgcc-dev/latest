@@ -1,5 +1,6 @@
 PV = 4.7.1.0+git1+d07e24f4ab59f264d68d21838795349faab5dede
 PR = r8
+PKG = libgcc-s-dev
 RDEPENDS = libgcc (= 4.7.1.0+git1+d07e24f4ab59f264d68d21838795349faab5dede-r8)
 RRECOMMENDS = eglibc-dev
 PKGSIZE = 5197957
