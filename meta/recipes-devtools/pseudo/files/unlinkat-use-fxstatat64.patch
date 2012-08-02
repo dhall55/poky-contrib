@@ -1,0 +1,30 @@
+pseudo: Use fxstatat64 in unlinkat
+
+This is done to avoid "Value too large for defined data type" error while trying to
+remove a file > 2GB.
+
+Signed-off-by: Andrei Gherzan <andrei@gherzan.ro>
+Upstream-Status: Pending
+
+Index: pseudo-1.4/ports/unix/guts/unlinkat.c
+===================================================================
+--- pseudo-1.4.orig/ports/unix/guts/unlinkat.c	2012-07-27 23:30:37.000000000 +0300
++++ pseudo-1.4/ports/unix/guts/unlinkat.c	2012-08-02 22:43:26.826645748 +0300
+@@ -8,7 +8,7 @@
+  */
+ 	pseudo_msg_t *msg;
+ 	int save_errno;
+-	struct stat buf;
++	struct stat64 buf;
+ 	int old_db_entry;
+ 
+ #ifdef PSEUDO_NO_REAL_AT_FUNCTIONS
+@@ -31,7 +31,7 @@
+ #ifdef PSEUDO_NO_REAL_AT_FUNCTIONS
+ 	rc = real_lstat(path, &buf);
+ #else
+-	rc = real___fxstatat(_STAT_VER, dirfd, path, &buf, AT_SYMLINK_NOFOLLOW);
++	rc = real___fxstatat64(_STAT_VER, dirfd, path, &buf, AT_SYMLINK_NOFOLLOW);
+ #endif
+ 	if (rc == -1) {
+ 		return rc;
