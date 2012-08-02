@@ -55,13 +55,9 @@ FILES_${PN}-dbg += " \
 "
 
 postinst_pixbufloader () {
-if [ "x$D" != "x" ]; then
-    exit 1
-fi
-
 GDK_PIXBUF_MODULEDIR=${libdir}/gdk-pixbuf-2.0/${LIBV}/loaders gdk-pixbuf-query-loaders --update-cache
 
-test -x ${bindir}/gtk-update-icon-cache && gtk-update-icon-cache  -q ${datadir}/icons/hicolor
+test -x $D/${bindir}/gtk-update-icon-cache && gtk-update-icon-cache  -q $D/${datadir}/icons/hicolor
 }
 
 PACKAGES_DYNAMIC += "gdk-pixbuf-loader-*"
