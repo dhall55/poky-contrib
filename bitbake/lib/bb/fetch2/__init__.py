@@ -70,6 +70,9 @@ class FetchError(BBFetchException):
 class ChecksumError(FetchError):
     """Exception when mismatched checksum encountered"""
 
+class NoChecksumError(FetchError):
+    """Exception when no checksum is specified, but BB_STRICT_CHECKSUM is set"""
+
 class UnpackError(BBFetchException):
     """General fetcher exception when something happens incorrectly when unpacking"""
     def __init__(self, message, url):
@@ -314,7 +317,7 @@ def verify_checksum(u, ud, d):
         # If strict checking enabled and neither sum defined, raise error
         strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
         if (strict and ud.md5_expected == None and ud.sha256_expected == None):
-            raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
+            raise NoChecksumError('No checksum specified for %s, please add at least one to the recipe:\n'
                              'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
                              (ud.localpath, ud.md5_name, md5data,
                               ud.sha256_name, sha256data), u)
@@ -342,11 +345,17 @@ def verify_checksum(u, ud, d):
     # We want to alert the user if a checksum is defined in the recipe but
     # it does not match.
     msg = ""
+    mismatch = False
     if md5mismatch and ud.md5_expected:
         msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'md5', md5data, ud.md5_expected)
+        mismatch = True;
 
     if sha256mismatch and ud.sha256_expected:
         msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'sha256', sha256data, ud.sha256_expected)
+        mismatch = True;
+
+    if mismatch:
+        msg = msg + '\nYour checksums:\nSRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' % (ud.md5_name, md5data, ud.sha256_name, sha256data)
 
     if len(msg):
         raise ChecksumError('Checksum mismatch!%s' % msg, u)
@@ -557,7 +566,11 @@ def try_mirror_url(newuri, origud, ud, ld, check = False):
             return None
         # Otherwise the result is a local file:// and we symlink to it
         if not os.path.exists(origud.localpath):
-             os.symlink(ud.localpath, origud.localpath)
+            if os.path.islink(origud.localpath):
+                # Broken symbolic link
+                os.unlink(origud.localpath)
+
+            os.symlink(ud.localpath, origud.localpath)
         update_stamp(newuri, origud, ld)
         return ud.localpath
 
@@ -568,6 +581,8 @@ def try_mirror_url(newuri, origud, ud, ld, check = False):
         if isinstance(e, ChecksumError):
             logger.warn("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (newuri, origud.url))
             logger.warn(str(e))
+        elif isinstance(e, NoChecksumError):
+            raise
         else:
             logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
             logger.debug(1, str(e))
@@ -1179,6 +1194,8 @@ class Fetch(object):
                     except BBFetchException as e:
                         if isinstance(e, ChecksumError):
                             logger.warn("Checksum error encountered with download (will attempt other sources): %s" % str(e))
+                        if isinstance(e, NoChecksumError):
+                            raise
                         else:
                             logger.warn('Failed to fetch URL %s, attempting MIRRORS if available' % u)
                             logger.debug(1, str(e))
@@ -1195,6 +1212,11 @@ class Fetch(object):
                     raise FetchError("Unable to fetch URL from any source.", u)
 
                 update_stamp(u, ud, self.d)
+
+            except BBFetchException as e:
+                if isinstance(e, NoChecksumError):
+                    logger.error("%s" % str(e))
+                raise
 
             finally:
                 bb.utils.unlockfile(lf)
