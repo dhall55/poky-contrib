@@ -1129,6 +1129,11 @@ class BBCooker:
         universe = ('universe' in targets)
         targets = self.checkPackages(targets)
 
+        # Explicitly disignore things that have been requested.
+        for target in targets:
+            if target in self.status.ignored_dependencies:
+                self.status.ignored_dependencies.remove(target)
+
         def buildTargetsIdle(server, rq, abort):
             if abort or self.state == state.stop:
                 rq.finish_runqueue(True)
