@@ -51,12 +51,19 @@ python buildhistory_emit_pkghistory() {
             self.pe = "0"
             self.pv = "0"
             self.pr = "r0"
+            # pkg/pkge/pkgv/pkgr should be empty because we want to be able to default them
+            self.pkg = ""
+            self.pkge = ""
+            self.pkgv = ""
+            self.pkgr = ""
             self.size = 0
             self.depends = ""
             self.rdepends = ""
             self.rrecommends = ""
             self.files = ""
             self.filelist = ""
+            # Variables that need to be written to their own separate file
+            self.filevars = dict.fromkeys(['pkg_preinst', 'pkg_postinst', 'pkg_prerm', 'pkg_postrm'])
 
     # Should check PACKAGES here to see if anything removed
 
@@ -68,32 +75,9 @@ python buildhistory_emit_pkghistory() {
 
         return val
 
-    def readRecipeInfo(pn, histfile):
-        rcpinfo = RecipeInfo(pn)
-        f = open(histfile, "r")
-        try:
-            for line in f:
-                lns = line.split('=')
-                name = lns[0].strip()
-                value = lns[1].strip(" \t\r\n").strip('"')
-                if name == "PE":
-                    rcpinfo.pe = value
-                elif name == "PV":
-                    rcpinfo.pv = value
-                elif name == "PR":
-                    rcpinfo.pr = value
-                elif name == "DEPENDS":
-                    rcpinfo.depends = value
-                elif name == "PACKAGES":
-                    rcpinfo.packages = value
-        finally:
-            f.close()
-        return rcpinfo
-
     def readPackageInfo(pkg, histfile):
         pkginfo = PackageInfo(pkg)
-        f = open(histfile, "r")
-        try:
+        with open(histfile, "r") as f:
             for line in f:
                 lns = line.split('=')
                 name = lns[0].strip()
@@ -104,6 +88,14 @@ python buildhistory_emit_pkghistory() {
                     pkginfo.pv = value
                 elif name == "PR":
                     pkginfo.pr = value
+                elif name == "PKG":
+                    pkginfo.pkg = value
+                elif name == "PKGE":
+                    pkginfo.pkge = value
+                elif name == "PKGV":
+                    pkginfo.pkgv = value
+                elif name == "PKGR":
+                    pkginfo.pkgr = value
                 elif name == "RDEPENDS":
                     pkginfo.rdepends = value
                 elif name == "RRECOMMENDS":
@@ -114,16 +106,16 @@ python buildhistory_emit_pkghistory() {
                     pkginfo.files = value
                 elif name == "FILELIST":
                     pkginfo.filelist = value
-        finally:
-            f.close()
+        # Apply defaults
+        if not pkginfo.pkg:
+            pkginfo.pkg = pkginfo.name
+        if not pkginfo.pkge:
+            pkginfo.pkge = pkginfo.pe
+        if not pkginfo.pkgv:
+            pkginfo.pkgv = pkginfo.pv
+        if not pkginfo.pkgr:
+            pkginfo.pkgr = pkginfo.pr
         return pkginfo
-
-    def getlastrecipeversion(pn):
-        try:
-            histfile = os.path.join(pkghistdir, "latest")
-            return readRecipeInfo(pn, histfile)
-        except EnvironmentError:
-            return None
 
     def getlastpkgversion(pkg):
         try:
@@ -149,6 +141,19 @@ python buildhistory_emit_pkghistory() {
     pr = d.getVar('PR', True)
     packages = squashspaces(d.getVar('PACKAGES', True))
 
+    packagelist = packages.split()
+    if not os.path.exists(pkghistdir):
+        os.makedirs(pkghistdir)
+    else:
+        # Remove files for packages that no longer exist
+        for item in os.listdir(pkghistdir):
+            if item != "latest":
+                if item not in packagelist:
+                    subdir = os.path.join(pkghistdir, item)
+                    for subfile in os.listdir(subdir):
+                        os.unlink(os.path.join(subdir, subfile))
+                    os.rmdir(subdir)
+
     rcpinfo = RecipeInfo(pn)
     rcpinfo.pe = pe
     rcpinfo.pv = pv
@@ -156,34 +161,39 @@ python buildhistory_emit_pkghistory() {
     rcpinfo.depends = sortlist(squashspaces(d.getVar('DEPENDS', True) or ""))
     rcpinfo.packages = packages
     write_recipehistory(rcpinfo, d)
-    write_latestlink(None, pe, pv, pr, d)
 
-    # Apparently the version can be different on a per-package basis (see Python)
     pkgdest = d.getVar('PKGDEST', True)
-    for pkg in packages.split():
-        pe = getpkgvar(pkg, 'PE') or "0"
-        pv = getpkgvar(pkg, 'PV')
-        pr = getpkgvar(pkg, 'PR')
+    for pkg in packagelist:
+        pkge = getpkgvar(pkg, 'PKGE') or "0"
+        pkgv = getpkgvar(pkg, 'PKGV')
+        pkgr = getpkgvar(pkg, 'PKGR')
         #
         # Find out what the last version was
         # Make sure the version did not decrease
         #
         lastversion = getlastpkgversion(pkg)
         if lastversion:
-            last_pe = lastversion.pe
-            last_pv = lastversion.pv
-            last_pr = lastversion.pr
-            r = bb.utils.vercmp((pe, pv, pr), (last_pe, last_pv, last_pr))
+            last_pkge = lastversion.pkge
+            last_pkgv = lastversion.pkgv
+            last_pkgr = lastversion.pkgr
+            r = bb.utils.vercmp((pkge, pkgv, pkgr), (last_pkge, last_pkgv, last_pkgr))
             if r < 0:
-                bb.error("Package version for package %s went backwards which would break package feeds from (%s:%s-%s to %s:%s-%s)" % (pkg, last_pe, last_pv, last_pr, pe, pv, pr))
+                bb.error("Package version for package %s went backwards which would break package feeds from (%s:%s-%s to %s:%s-%s)" % (pkg, last_pkge, last_pkgv, last_pkgr, pkge, pkgv, pkgr))
 
         pkginfo = PackageInfo(pkg)
-        pkginfo.pe = pe
-        pkginfo.pv = pv
-        pkginfo.pr = pr
+        # Apparently the version can be different on a per-package basis (see Python)
+        pkginfo.pe = getpkgvar(pkg, 'PE') or "0"
+        pkginfo.pv = getpkgvar(pkg, 'PV')
+        pkginfo.pr = getpkgvar(pkg, 'PR')
+        pkginfo.pkg = getpkgvar(pkg, 'PKG') or pkg
+        pkginfo.pkge = pkge
+        pkginfo.pkgv = pkgv
+        pkginfo.pkgr = pkgr
         pkginfo.rdepends = sortpkglist(squashspaces(getpkgvar(pkg, 'RDEPENDS') or ""))
         pkginfo.rrecommends = sortpkglist(squashspaces(getpkgvar(pkg, 'RRECOMMENDS') or ""))
         pkginfo.files = squashspaces(getpkgvar(pkg, 'FILES') or "")
+        for filevar in pkginfo.filevars:
+            pkginfo.filevars[filevar] = getpkgvar(pkg, filevar)
 
         # Gather information about packaged files
         pkgdestpkg = os.path.join(pkgdest, pkg)
@@ -199,8 +209,6 @@ python buildhistory_emit_pkghistory() {
         pkginfo.filelist = " ".join(filelist)
 
         write_pkghistory(pkginfo, d)
-
-        write_latestlink(pkg, pe, pv, pr, d)
 }
 
 
@@ -209,69 +217,57 @@ def write_recipehistory(rcpinfo, d):
 
     pkghistdir = d.getVar('BUILDHISTORY_DIR_PACKAGE', True)
 
-    if not os.path.exists(pkghistdir):
-        os.makedirs(pkghistdir)
-
-    verfile = os.path.join(pkghistdir, "%s:%s-%s" % (rcpinfo.pe, rcpinfo.pv, rcpinfo.pr))
-    f = open(verfile, "w")
-    try:
+    infofile = os.path.join(pkghistdir, "latest")
+    with open(infofile, "w") as f:
         if rcpinfo.pe != "0":
             f.write("PE = %s\n" %  rcpinfo.pe)
         f.write("PV = %s\n" %  rcpinfo.pv)
         f.write("PR = %s\n" %  rcpinfo.pr)
         f.write("DEPENDS = %s\n" %  rcpinfo.depends)
         f.write("PACKAGES = %s\n" %  rcpinfo.packages)
-    finally:
-        f.close()
 
 
 def write_pkghistory(pkginfo, d):
-    bb.debug(2, "Writing package history")
+    bb.debug(2, "Writing package history for package %s" % pkginfo.name)
 
     pkghistdir = d.getVar('BUILDHISTORY_DIR_PACKAGE', True)
 
-    verpath = os.path.join(pkghistdir, pkginfo.name)
-    if not os.path.exists(verpath):
-        os.makedirs(verpath)
+    pkgpath = os.path.join(pkghistdir, pkginfo.name)
+    if not os.path.exists(pkgpath):
+        os.makedirs(pkgpath)
 
-    verfile = os.path.join(verpath, "%s:%s-%s" % (pkginfo.pe, pkginfo.pv, pkginfo.pr))
-    f = open(verfile, "w")
-    try:
+    infofile = os.path.join(pkgpath, "latest")
+    with open(infofile, "w") as f:
         if pkginfo.pe != "0":
             f.write("PE = %s\n" %  pkginfo.pe)
         f.write("PV = %s\n" %  pkginfo.pv)
         f.write("PR = %s\n" %  pkginfo.pr)
+
+        pkgvars = {}
+        pkgvars['PKG'] = pkginfo.pkg if pkginfo.pkg != pkginfo.name else ''
+        pkgvars['PKGE'] = pkginfo.pkge if pkginfo.pkge != pkginfo.pe else ''
+        pkgvars['PKGV'] = pkginfo.pkgv if pkginfo.pkgv != pkginfo.pv else ''
+        pkgvars['PKGR'] = pkginfo.pkgr if pkginfo.pkgr != pkginfo.pr else ''
+        for pkgvar in pkgvars:
+            val = pkgvars[pkgvar]
+            if val:
+                f.write("%s = %s\n" % (pkgvar, val))
+
         f.write("RDEPENDS = %s\n" %  pkginfo.rdepends)
         f.write("RRECOMMENDS = %s\n" %  pkginfo.rrecommends)
         f.write("PKGSIZE = %d\n" %  pkginfo.size)
         f.write("FILES = %s\n" %  pkginfo.files)
         f.write("FILELIST = %s\n" %  pkginfo.filelist)
-    finally:
-        f.close()
 
-
-def write_latestlink(pkg, pe, pv, pr, d):
-    import shutil
-
-    pkghistdir = d.getVar('BUILDHISTORY_DIR_PACKAGE', True)
-
-    def rm_link(path):
-        try:
-            os.unlink(path)
-        except OSError:
-            return
-
-    if pkg:
-        filedir = os.path.join(pkghistdir, pkg)
-    else:
-        filedir = pkghistdir
-    latest_file = os.path.join(filedir, "latest")
-    ver_file = os.path.join(filedir, "%s:%s-%s" % (pe, pv, pr))
-    rm_link(latest_file)
-    if d.getVar('BUILDHISTORY_KEEP_VERSIONS', True) == '1':
-        shutil.copy(ver_file, latest_file)
-    else:
-        shutil.move(ver_file, latest_file)
+    for filevar in pkginfo.filevars:
+        filevarpath = os.path.join(pkgpath, "latest.%s" % filevar)
+        val = pkginfo.filevars[filevar]
+        if val:
+            with open(filevarpath, "w") as f:
+                f.write(val)
+        else:
+            if os.path.exists(filevarpath):
+                os.unlink(filevarpath)
 
 
 buildhistory_get_image_installed() {
@@ -358,6 +354,15 @@ def buildhistory_get_layers(d):
     layertext = "Configured metadata layers:\n%s\n" % '\n'.join(get_layers_branch_rev(d))
     return layertext
 
+def buildhistory_get_metadata_revs(d):
+    # We want an easily machine-readable format here, so get_layers_branch_rev isn't quite what we want
+    layers = (d.getVar("BBLAYERS", True) or "").split()
+    medadata_revs = ["%-17s = %s:%s" % (os.path.basename(i), \
+        base_get_metadata_git_branch(i, None).strip(), \
+        base_get_metadata_git_revision(i, None)) \
+            for i in layers]
+    return '\n'.join(medadata_revs)
+
 
 def squashspaces(string):
     import re
@@ -386,19 +391,25 @@ buildhistory_commit() {
 		return
 	fi
 
+	# Create a machine-readable list of metadata revisions for each layer
+	cat > ${BUILDHISTORY_DIR}/metadata-revs <<END
+${@buildhistory_get_metadata_revs(d)}
+END
+
 	( cd ${BUILDHISTORY_DIR}/
 		# Initialise the repo if necessary
 		if [ ! -d .git ] ; then
 			git init -q
 		fi
-		# Ensure there are new/changed files to commit
-		repostatus=`git status --porcelain`
+		# Check if there are new/changed files to commit (other than metadata-revs)
+		repostatus=`git status --porcelain | grep -v " metadata-revs$"`
 		if [ "$repostatus" != "" ] ; then
-			git add ${BUILDHISTORY_DIR}/*
+			git add .
 			HOSTNAME=`hostname 2>/dev/null || echo unknown`
 			# porcelain output looks like "?? packages/foo/bar"
+			# Ensure we commit metadata-revs with the first commit
 			for entry in `echo "$repostatus" | awk '{print $2}' | awk -F/ '{print $1}' | sort | uniq` ; do
-				git commit ${BUILDHISTORY_DIR}/$entry -m "$entry: Build ${BUILDNAME} of ${DISTRO} ${DISTRO_VERSION} for machine ${MACHINE} on $HOSTNAME" --author "${BUILDHISTORY_COMMIT_AUTHOR}" > /dev/null
+				git commit $entry metadata-revs -m "$entry: Build ${BUILDNAME} of ${DISTRO} ${DISTRO_VERSION} for machine ${MACHINE} on $HOSTNAME" --author "${BUILDHISTORY_COMMIT_AUTHOR}" > /dev/null
 			done
 			if [ "${BUILDHISTORY_PUSH_REPO}" != "" ] ; then
 				git push -q ${BUILDHISTORY_PUSH_REPO}

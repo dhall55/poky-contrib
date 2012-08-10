@@ -9,7 +9,7 @@ SECTION = "base"
 LICENSE = "GPLv2+ | BSD"
 LIC_FILES_CHKSUM = "file://COPYING;md5=ca0395de9a86191a078b8b79302e3083"
 
-PR = "r4"
+PR = "r6"
 
 SRC_URI = "https://fedorahosted.org/releases/l/i/linux-pam/Linux-PAM-${PV}.tar.bz2 \
            file://99_pam \
@@ -28,6 +28,7 @@ DEPENDS = "bison flex flex-native cracklib"
 EXTRA_OECONF = "--with-db-uniquename=_pam \
                 --includedir=${includedir}/security \
                 --libdir=${base_libdir} \
+                --disable-nis \
                 --disable-regenerate-docu"
 
 CFLAGS_append = " -fPIC "
@@ -79,9 +80,9 @@ do_install() {
 	autotools_do_install
 
 	# don't install /var/run when populating rootfs. Do it through volatile
-	rm -rf ${D}/var
+	rm -rf ${D}${localstatedir}
 	install -d ${D}${sysconfdir}/default/volatiles
-	install -m 0644 ${WORKDIR}/99_pam ${D}/etc/default/volatiles
+	install -m 0644 ${WORKDIR}/99_pam ${D}${sysconfdir}/default/volatiles
 
 	install -d ${D}${sysconfdir}/pam.d/     
 	install -m 0644 ${WORKDIR}/pam.d/* ${D}${sysconfdir}/pam.d/

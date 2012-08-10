@@ -19,11 +19,12 @@ import bb.utils
 # How to display fields
 list_fields = ['DEPENDS', 'RDEPENDS', 'RRECOMMENDS', 'FILES', 'FILELIST', 'USER_CLASSES', 'IMAGE_CLASSES', 'IMAGE_FEATURES', 'IMAGE_LINGUAS', 'IMAGE_INSTALL', 'BAD_RECOMMENDATIONS']
 list_order_fields = ['PACKAGES']
+defaultval_fields = ['PKG', 'PKGE', 'PKGV', 'PKGR']
 numeric_fields = ['PKGSIZE', 'IMAGESIZE']
 # Fields to monitor
-monitor_fields = ['RDEPENDS', 'RRECOMMENDS', 'PACKAGES', 'FILELIST', 'PKGSIZE', 'IMAGESIZE']
+monitor_fields = ['RDEPENDS', 'RRECOMMENDS', 'PACKAGES', 'FILELIST', 'PKGSIZE', 'IMAGESIZE', 'PKG', 'PKGE', 'PKGV', 'PKGR']
 # Percentage change to alert for numeric fields
-monitor_numeric_threshold = 20
+monitor_numeric_threshold = 10
 # Image files to monitor (note that image-info.txt is handled separately)
 img_monitor_files = ['installed-package-names.txt', 'files-in-image.txt']
 # Related context fields for reporting (note: PE, PV & PR are always reported for monitored package fields)
@@ -90,6 +91,22 @@ class ChangeRecord:
             else:
                 percentchg = 100
             out = '%s changed from %s to %s (%s%d%%)' % (self.fieldname, self.oldvalue or "''", self.newvalue or "''", '+' if percentchg > 0 else '', percentchg)
+        elif self.fieldname in defaultval_fields:
+            out = '%s changed from %s to %s' % (self.fieldname, self.oldvalue, self.newvalue)
+            if self.fieldname == 'PKG' and '[default]' in self.newvalue:
+                out += ' - may indicate debian renaming failure'
+        elif self.fieldname in ['pkg_preinst', 'pkg_postinst', 'pkg_prerm', 'pkg_postrm']:
+            if self.oldvalue and self.newvalue:
+                out = '%s changed:\n  ' % self.fieldname
+            elif self.newvalue:
+                out = '%s added:\n  ' % self.fieldname
+            elif self.oldvalue:
+                out = '%s cleared:\n  ' % self.fieldname
+            alines = self.oldvalue.splitlines()
+            blines = self.newvalue.splitlines()
+            diff = difflib.unified_diff(alines, blines, self.fieldname, self.fieldname, lineterm='')
+            out += '\n  '.join(list(diff)[2:])
+            out += '\n  --'
         elif self.fieldname in img_monitor_files:
             if outer:
                 prefix = 'Changes to %s ' % self.path
@@ -244,24 +261,6 @@ def compare_lists(alines, blines):
     return filechanges
 
 
-def split_version(s):
-    """Split a version string into its constituent parts (PE, PV, PR)
-    FIXME: this is a duplicate of a new function in bitbake/lib/bb/utils -
-    we should switch to that once we can bump the minimum bitbake version
-    """
-    s = s.strip(" <>=")
-    e = 0
-    if s.count(':'):
-        e = int(s.split(":")[0])
-        s = s.split(":")[1]
-    r = ""
-    if s.count('-'):
-        r = s.rsplit("-", 1)[1]
-        s = s.rsplit("-", 1)[0]
-    v = s
-    return (e, v, r)
-
-
 def compare_pkg_lists(astr, bstr):
     depvera = bb.utils.explode_dep_versions(astr)
     depverb = bb.utils.explode_dep_versions(bstr)
@@ -273,7 +272,7 @@ def compare_pkg_lists(astr, bstr):
             dva = depvera[k]
             dvb = depverb[k]
             if dva and dvb and dva != dvb:
-                if bb.utils.vercmp(split_version(dva), split_version(dvb)) < 0:
+                if bb.utils.vercmp(bb.utils.split_version(dva), bb.utils.split_version(dvb)) < 0:
                     remove.append(k)
 
     for k in remove:
@@ -286,6 +285,15 @@ def compare_pkg_lists(astr, bstr):
 def compare_dict_blobs(path, ablob, bblob, report_all):
     adict = blob_to_dict(ablob)
     bdict = blob_to_dict(bblob)
+
+    pkgname = os.path.basename(path)
+    defaultvals = {}
+    defaultvals['PKG'] = pkgname
+    defaultvals['PKGE'] = adict.get('PE', '0')
+    defaultvals['PKGV'] = adict.get('PV', '')
+    defaultvals['PKGR'] = adict.get('PR', '')
+    for key in defaultvals:
+        defaultvals[key] = '%s [default]' % defaultvals[key]
 
     changes = []
     keys = list(set(adict.keys()) | set(bdict.keys()))
@@ -300,7 +308,7 @@ def compare_dict_blobs(path, ablob, bblob, report_all):
                     percentchg = ((bval - aval) / float(aval)) * 100
                 else:
                     percentchg = 100
-                if percentchg < monitor_numeric_threshold:
+                if abs(percentchg) < monitor_numeric_threshold:
                     continue
             elif (not report_all) and key in list_fields:
                 if key == "FILELIST" and path.endswith("-dbg") and bstr.strip() != '':
@@ -313,8 +321,18 @@ def compare_dict_blobs(path, ablob, bblob, report_all):
                 alist.sort()
                 blist = bstr.split()
                 blist.sort()
+                # We don't care about the removal of self-dependencies
+                if pkgname in alist and not pkgname in blist:
+                    alist.remove(pkgname)
                 if ' '.join(alist) == ' '.join(blist):
                     continue
+
+            if key in defaultval_fields:
+                if not astr:
+                    astr = defaultvals[key]
+                elif not bstr:
+                    bstr = defaultvals[key]
+
             chg = ChangeRecord(path, key, astr, bstr, key in monitor_fields)
             changes.append(chg)
     return changes
@@ -330,7 +348,12 @@ def process_changes(repopath, revision1, revision2 = 'HEAD', report_all = False)
     for d in diff.iter_change_type('M'):
         path = os.path.dirname(d.a_blob.path)
         if path.startswith('packages/'):
-            changes.extend(compare_dict_blobs(path, d.a_blob, d.b_blob, report_all))
+            filename = os.path.basename(d.a_blob.path)
+            if filename == 'latest':
+                changes.extend(compare_dict_blobs(path, d.a_blob, d.b_blob, report_all))
+            elif filename.startswith('latest.'):
+                chg = ChangeRecord(path, filename, d.a_blob.data_stream.read(), d.b_blob.data_stream.read(), True)
+                changes.append(chg)
         elif path.startswith('images/'):
             filename = os.path.basename(d.a_blob.path)
             if filename in img_monitor_files:
@@ -355,6 +378,37 @@ def process_changes(repopath, revision1, revision2 = 'HEAD', report_all = False)
                     changes.append(chg)
             elif filename == 'image-info.txt':
                 changes.extend(compare_dict_blobs(path, d.a_blob, d.b_blob, report_all))
+
+    # Look for added preinst/postinst/prerm/postrm
+    # (without reporting newly added recipes)
+    addedpkgs = []
+    addedchanges = []
+    for d in diff.iter_change_type('A'):
+        path = os.path.dirname(d.b_blob.path)
+        if path.startswith('packages/'):
+            filename = os.path.basename(d.b_blob.path)
+            if filename == 'latest':
+                addedpkgs.append(path)
+            elif filename.startswith('latest.'):
+                chg = ChangeRecord(path, filename[7:], '', d.b_blob.data_stream.read(), True)
+                addedchanges.append(chg)
+    for chg in addedchanges:
+        found = False
+        for pkg in addedpkgs:
+            if chg.path.startswith(pkg):
+                found = True
+                break
+        if not found:
+            changes.append(chg)
+
+    # Look for cleared preinst/postinst/prerm/postrm
+    for d in diff.iter_change_type('D'):
+        path = os.path.dirname(d.a_blob.path)
+        if path.startswith('packages/'):
+            filename = os.path.basename(d.a_blob.path)
+            if filename != 'latest' and filename.startswith('latest.'):
+                chg = ChangeRecord(path, filename[7:], d.a_blob.data_stream.read(), '', True)
+                changes.append(chg)
 
     # Link related changes
     for chg in changes:
