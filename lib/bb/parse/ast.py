@@ -113,6 +113,12 @@ class DataNode(AstNode):
             val = "%s %s" % (groupd["value"], (self.getFunc(key, data) or ""))
             op = 'prepend'
             details = groupd["value"]
+        elif (("preminus" in groupd and groupd["preminus"] != None) or
+              ("postminus" in groupd and groupd["postminus"] != None)):
+            # There's no correct value to set in this case; it has to
+            # convert into a flag.
+            key = key + "_remove"
+            val = "%s" % groupd["value"]
         elif "postdot" in groupd and groupd["postdot"] != None:
             val = "%s%s" % ((self.getFunc(key, data) or ""), groupd["value"])
             op = 'postdot'

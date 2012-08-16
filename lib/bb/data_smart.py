@@ -40,8 +40,8 @@ from bb.COW  import COWDictBase
 
 logger = logging.getLogger("BitBake.Data")
 
-__setvar_keyword__ = ["_append", "_prepend"]
-__setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend)(_(?P<add>.*))?$')
+__setvar_keyword__ = ["_append", "_prepend", "_remove"]
+__setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend|_remove)(_(?P<add>.*))?$')
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
@@ -219,7 +219,10 @@ class DataSmart(MutableMapping):
 
         #
         # First we apply all overrides
-        # Then  we will handle _append and _prepend
+        # Then we will handle _append and _prepend and store the _remove
+        # information for later. (_remove has to be processed during
+        # expansion, but there's no reason to duplicate the override-checking
+        # logic.)
         #
 
         for o in overrides:
@@ -243,12 +246,16 @@ class DataSmart(MutableMapping):
                 except Exception, e:
                     logger.info("Untracked delVar %s: %s" % (var, e))
 
-        # now on to the appends and prepends
+        # now on to the appends and prepends, and stashing the removes
+        # for processing during expansion
         for op in __setvar_keyword__:
             if op in self._special_values:
                 appends = self._special_values[op] or []
                 for append in appends:
                     keep = []
+                    # Anything we already have tagged for removal should be
+                    # added to.
+                    remove_later = self.getVarFlag(append, '_remove_later') or []
                     for (a, o) in self.getVarFlag(append, op) or []:
                         match = True
                         if o:
@@ -266,6 +273,19 @@ class DataSmart(MutableMapping):
                         elif op == "_prepend":
                             sval = a + (self.getVar(append, False) or "")
                             self.setVar(append, sval, 'Ignore')
+                        elif op == "_remove":
+                            # stash for later processing
+                            remove_later.append(a)
+
+                    if remove_later:
+                        # We build a list of applicable _remove values,
+                        # which can then be used after expansion.
+                        self.setVarFlag(append, '_remove_later', remove_later, 'Ignore')
+                        try:
+                            self._special_values['_remove_later'].add(append)
+                        except KeyError:
+                            self._special_values['_remove_later'] = set()
+                            self._special_values['_remove_later'].add(append)
 
                     # We save overrides that may be applied at some later stage
                     # ... but we don't need to report on this.
@@ -356,10 +376,23 @@ class DataSmart(MutableMapping):
 
     def getVar(self, var, expand=False, noweakdefault=False):
         value = self.getVarFlag(var, "content", False, noweakdefault)
+        removes = None
+        try:
+            # See whether any _remove values made it through overrides
+            if var in self._special_values['_remove_later']:
+                removes = self.getVarFlag(var, '_remove_later', True)
+        except KeyError:
+            pass
 
         # Call expand() separately to make use of the expand cache
         if expand and value:
-            return self.expand(value, var)
+            value = self.expand(value, var)
+        if removes:
+            list = value.split(' ')
+            for r in removes:
+                if r in list:
+                    list.remove(r)
+            value = " ".join(list)
         return value
 
     def renameVar(self, key, newkey, filename = None, lineno = None):
@@ -371,7 +404,7 @@ class DataSmart(MutableMapping):
         if val is not None:
             self.setVar(newkey, val, filename, lineno, 'rename-create')
 
-        for i in ('_append', '_prepend'):
+        for i in (__setvar_keyword__):
             src = self.getVarFlag(key, i)
             if src is None:
                 continue
