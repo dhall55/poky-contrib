@@ -11,6 +11,10 @@ python multilib_virtclass_handler () {
     if bb.data.inherits_class('kernel', e.data) or bb.data.inherits_class('module-base', e.data):
         raise bb.parse.SkipPackage("We shouldn't have multilib variants for the kernel")
 
+    for v in e.data.getVar("MULTILIB_VARIANTS", True).split():
+        if e.data.getVar("TARGET_VENDOR_virtclass-multilib-" + v, False) is None:
+	    e.data.setVar("TARGET_VENDOR_virtclass-multilib-" + v, e.data.getVar("TARGET_VENDOR", False) + "ml" + v)
+
     if bb.data.inherits_class('image', e.data):
         e.data.setVar("PN", variant + "-" + e.data.getVar("PN", False))
         return
@@ -32,8 +36,6 @@ python multilib_virtclass_handler () {
     e.data.setVar("MLPREFIX", variant + "-")
     e.data.setVar("PN", variant + "-" + e.data.getVar("PN", False))
     e.data.setVar("SHLIBSDIR_virtclass-multilib-" + variant ,e.data.getVar("SHLIBSDIR", False) + "/" + variant)
-    if e.data.getVar("TARGET_VENDOR_virtclass-multilib-" + variant, False) is None:
-	    e.data.setVar("TARGET_VENDOR_virtclass-multilib-" + variant, e.data.getVar("TARGET_VENDOR", False) + "ml" + variant)
     e.data.setVar("OVERRIDES", e.data.getVar("OVERRIDES", False) + override)
 }
 
