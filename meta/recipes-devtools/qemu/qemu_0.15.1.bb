@@ -3,7 +3,7 @@ require qemu.inc
 LIC_FILES_CHKSUM = "file://COPYING;md5=441c28d2cf86e15a37fa47e15a72fbac \
                     file://COPYING.LIB;endline=24;md5=c04def7ae38850e7d3ef548588159913"
 
-PR = "r10"
+PR = "r11"
 
 FILESPATH = "${FILE_DIRNAME}/qemu-${PV}"
 FILESDIR = "${WORKDIR}"
@@ -22,6 +22,7 @@ SRC_URI = "\
     file://dummy-gl-config.patch \
     file://0001-ppc64-Fix-linker-script.patch \
     file://ppc-s500-set-invalid-mask.patch \
+    file://hw-pl031-Actually-raise-interrupt-on-timer-expiry.patch \
     "
 
 # Only use the GL passthrough patches for native/nativesdk versions

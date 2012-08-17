@@ -3,11 +3,11 @@ DESCRIPTION = "A set of documentation tools: man, apropos and whatis"
 SECTION = "console/utils"
 HOMEPAGE = "http://primates.ximian.com/~flucifredi/man"
 LICENSE = "GPLv2"
-PR = "r3"
+LIC_FILES_CHKSUM = "file://COPYING;md5=8ca43cbc842c2336e835926c2166c28b"
+
+PR = "r5"
 
 DEPENDS = "groff less"
-
-LIC_FILES_CHKSUM = "file://COPYING;md5=8ca43cbc842c2336e835926c2166c28b"
 
 SRC_URI = "http://primates.ximian.com/~flucifredi/${BPN}/${BPN}-${PV}.tar.gz \
            file://man-1.5k-confpath.patch;striplevel=0 \
@@ -54,11 +54,12 @@ do_install_append(){
 	mkdir -p  ${D}${sysconfdir}
         mkdir -p ${D}${datadir}/man/man5
         mkdir -p ${D}${datadir}/man/man7
-	cp ${S}/src/man.conf ${D}${sysconfdir}
+	cp ${WORKDIR}/man.conf ${D}${sysconfdir}/man.config
         cp ${WORKDIR}/man.1.gz ${D}${datadir}/man/man1/
         cp ${WORKDIR}/man.7.gz ${D}${datadir}/man/man7/
         cp ${WORKDIR}/manpath.5.gz ${D}${datadir}/man/man5/
 }
 
 
-FILES_${PN} += "${datadir}/locale ${sysconfdir}/man.conf"
+RDEPENDS_${PN} = "less groff"
+FILES_${PN} += "${datadir}/locale ${sysconfdir}/man.config"

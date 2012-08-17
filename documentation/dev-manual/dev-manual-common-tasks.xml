@@ -99,7 +99,7 @@
      # We have a conf and classes directory, add to BBPATH
      BBPATH := "${LAYERDIR}:${BBPATH}"
 
-     # We have a packages directory, add to BBFILES
+     # We have recipes-* directories, add to BBFILES
      BBFILES := "${BBFILES} ${LAYERDIR}/recipes-*/*/*.bb \
                  ${LAYERDIR}/recipes-*/*/*.bbappend"
 
@@ -580,6 +580,7 @@
                 By default, the <filename>core-image-sato</filename> image is configured to use Dropbear.
                 The <filename>core-image-basic</filename> and <filename>core-image-lsb</filename>
                 images both include OpenSSH.
+                The <filename>core-image-minimal</filename> image does not contain an SSH server.
                 To change these defaults, edit the <filename>IMAGE_FEATURES</filename> variable
                 so that it sets the image you are working with to include 
                 <filename>ssh-server-dropbear</filename> or <filename>ssh-server-openssh</filename>.
