@@ -2,6 +2,10 @@ python multilib_virtclass_handler () {
     if not isinstance(e, bb.event.RecipePreFinalise):
         return
 
+    for v in e.data.getVar("MULTILIB_VARIANTS", True).split():
+        if e.data.getVar("TARGET_VENDOR_virtclass-multilib-" + v, False) is None:
+	    e.data.setVar("TARGET_VENDOR_virtclass-multilib-" + v, e.data.getVar("TARGET_VENDOR", False) + "ml" + v)
+
     cls = e.data.getVar("BBEXTENDCURR", True)
     variant = e.data.getVar("BBEXTENDVARIANT", True)
     if cls != "multilib" or not variant:
@@ -10,10 +14,6 @@ python multilib_virtclass_handler () {
     # There should only be one kernel in multilib configs
     if bb.data.inherits_class('kernel', e.data) or bb.data.inherits_class('module-base', e.data):
         raise bb.parse.SkipPackage("We shouldn't have multilib variants for the kernel")
-
-    for v in e.data.getVar("MULTILIB_VARIANTS", True).split():
-        if e.data.getVar("TARGET_VENDOR_virtclass-multilib-" + v, False) is None:
-	    e.data.setVar("TARGET_VENDOR_virtclass-multilib-" + v, e.data.getVar("TARGET_VENDOR", False) + "ml" + v)
 
     if bb.data.inherits_class('image', e.data):
         e.data.setVar("PN", variant + "-" + e.data.getVar("PN", False))
