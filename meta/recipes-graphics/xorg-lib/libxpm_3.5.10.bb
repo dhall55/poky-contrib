@@ -1,5 +1,8 @@
 require xorg-lib-common.inc
 
+# libxpm requires xgettext to build
+inherit gettext
+
 SUMMARY = "Xpm: X Pixmap extension library"
 
 DESCRIPTION = "libXpm provides support and common operation for the XPM \
@@ -10,7 +13,7 @@ protocol."
 LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://COPYING;md5=3e07763d16963c3af12db271a31abaa5"
 DEPENDS += "libxext libsm libxt"
-PR = "r0"
+PR = "r1"
 PE = "1"
 
 XORG_PN = "libXpm"
