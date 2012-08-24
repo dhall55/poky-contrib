@@ -73,6 +73,9 @@ if not BUILD_PUBLISH_DIR:
     BUILD_PUBLISH_DIR = "/tmp"
 BUILD_HISTORY_COLLECT = os.environ.get("BUILD_HISTORY_COLLECT")
 BUILD_HISTORY_REPO = os.environ.get("BUILD_HISTORY_REPO")
+PERSISTDB_DIR = os.environ.get("PERSISTDB_DIR")
+MAINTAIN_PERSISTDB = os.environ.get("MAINTAIN_PERSISTDB")
+ 
 # Very useful way of grabbing nightly-arch names
 nightly_arch = []
 nightly_arch.append("x86")
@@ -102,6 +105,8 @@ defaultenv['BUILD_HISTORY_DIR'] = BUILD_HISTORY_DIR
 defaultenv['BUILD_HISTORY_REPO'] = BUILD_HISTORY_REPO
 defaultenv['EMGD_DRIVER_DIR'] = EMGD_DRIVER_DIR
 defaultenv['SLAVEBASEDIR'] = SLAVEBASEDIR
+defaultenv['PERSISTDB_DIR'] = PERSISTDB_DIR
+defaultenv['MAINTAIN_PERSISTDB'] = MAINTAIN_PERSISTDB
 defaultenv['ABBASE'] = ABBASE
 defaultenv['MIGPL'] = "False"
 
@@ -425,11 +430,11 @@ def getDest(step):
     return True
 
 def runArchPostamble(factory, target):
-    factory.addStep(ShellCommand(doStepIf=doNightlyArchTest,
-        description="Syncing bb_persist_data.sqlite3 to buildhistory repo",
-        workdir="build/build/tmp/cache",
-        command=["cp", "-R", "bb_persist_data.sqlite3", WithProperties(defaultenv['BUILD_HISTORY_DIR'] +"/%s/poky-buildhistory/persistdb/" + target + "/bb_persist_data.sqlite3", "buildername")],
-        timeout=2000))
+        factory.addStep(ShellCommand(doStepIf=doNightlyArchTest,
+                        description="Syncing bb_persist_data.sqlite3 to main persistdb area",
+                        workdir="build/build/tmp/cache",
+                        command=["cp", "-R", "bb_persist_data.sqlite3", WithProperties(defaultenv['PERSISTDB_DIR'] + "/%s/%s/"+defaultenv['DISTRO']+"/bb_persist_data.sqlite3", "buildername", "otherbranch")],
+                        timeout=2000))
 
 def runPreamble(factory, target):
     factory.addStep(SetPropertiesFromEnv(variables=["SLAVEBASEDIR"]))
@@ -461,20 +466,21 @@ def runPreamble(factory, target):
                     workdir=defaultenv['BUILD_HISTORY_DIR'] + "/" + defaultenv['ABTARGET'] + "/poky-buildhistory",
                     command=["git", "pull", "origin", target],
                     timeout=2000))
-    factory.addStep(ShellCommand(doStepIf=doNightlyArchTest,
-                    description="Creating directory structure to link to bb_persist_data.sqlite3 in buildhistory repo",
-                    workdir="build/build/",
-                    command="mkdir -p tmp/cache",
-                    timeout=2000))
-    factory.addStep(ShellCommand(doStepIf=doNightlyArchTest, warnOnFailure=False,
-                    description="Ensuring arch specific bb_persist_data.sqlite3 buildhistory directory exists",
-                    command=["mkdir", "-p", WithProperties(defaultenv['BUILD_HISTORY_DIR'] +"/%s/poky-buildhistory/persistdb/" + defaultenv['ABTARGET'], "buildername")],
-                    timeout=2000))
-    factory.addStep(ShellCommand(doStepIf=doNightlyArchTest,
-                    description="Copying bb_persist_data.sqlite3 from buildhistory repo",
-                    workdir="build/build/tmp/cache",
-                    command=["cp", "-R", WithProperties(defaultenv['BUILD_HISTORY_DIR'] +"/%s/poky-buildhistory/persistdb/" + defaultenv['ABTARGET'] +"/bb_persist_data.sqlite3", "buildername"), "bb_persist_data.sqlite3"],
-                    timeout=2000))
+    if MAINTAIN_PERSISTDB == "True":
+        factory.addStep(ShellCommand(doStepIf=doNightlyArchTest,
+                        description="Creating directory structure to link to bb_persist_data.sqlite3",
+                        workdir="build/build/",
+                        command="mkdir -p tmp/cache",
+                        timeout=2000))
+        factory.addStep(ShellCommand(flunkOnFailure=False, warnOnFailure=True,
+                        description="Ensuring arch specific bb_persist_data.sqlite3 directory exists",
+                        command=["mkdir", "-p", WithProperties(defaultenv['PERSISTDB_DIR'] + "/%s/%s/"+defaultenv['DISTRO']+"", "buildername", "otherbranch")],
+                        timeout=2000))
+        factory.addStep(ShellCommand(
+                        description="Copying bb_persist_data.sqlite3",
+                        workdir="build/build/tmp/cache",
+                        command=["cp", "-R", WithProperties(defaultenv['PERSISTDB_DIR'] +"/%s/%s/"+defaultenv['DISTRO']+"/bb_persist_data.sqlite3", "buildername", "otherbranch"), "bb_persist_data.sqlite3"],
+                        timeout=2000))
 
 def getRepo(step):
     gittype = step.getProperty("repository")
@@ -719,7 +725,6 @@ def runPostamble(factory):
         #factory.addStep(ShellCommand, description="Creating tarball",
         #                command=["sh", "-c", WithProperties("git archive %s --remote=contrib --format=tar | bzip2 >yocto.tar.gz", "otherbranch")],
         #                timeout=2600)
-    
         # Sometimes, if you're building for a master under test branch, the actual revision for 
         # the git archive goes MIA. In which case, we'll fail quietly here. Other than that single 
         # use case (which for us, is quite often), this should function fine.
@@ -745,7 +750,7 @@ def buildBSPLayer(factory, distrotype, btarget, provider):
         publishArtifacts(factory, "rpm", "build/build/tmp")
         publishArtifacts(factory, "deb", "build/build/tmp")
     defaultenv['DISTRO'] = 'poky'
-    
+
 def publishArtifacts(factory, artifact, tmpdir):
     factory.addStep(ShellCommand(description=["Setting destination"],
                     command=["sh", "-c", WithProperties('echo "%s" > ./deploy-dir', "DEST")],
@@ -817,16 +822,15 @@ def publishArtifacts(factory, artifact, tmpdir):
                                 workdir=tmpdir + "/deploy/images",
                                 env=copy.copy(defaultenv),
                                 timeout=14400))
-
         elif artifact.startswith("mpc8315e"):
             factory.addStep(ShellCommand(
                             description=["Making " + artifact + " deploy dir"],
-                            command=["mkdir", "-p", WithProperties("%s/machines/qemu/%s", "DEST", "ARTIFACT")],
+                            command=["mkdir", "-p", WithProperties("%s/machines/%s", "DEST", "ARTIFACT")],
                             env=copy.copy(defaultenv),
                             timeout=14400))
             factory.addStep(ShellCommand(
                             description=["Copying " + artifact + " artifacts"],
-                            command=["sh", "-c", WithProperties("cp -Rd *mpc8315*rdb* %s/machines/qemu/%s", 'DEST', 'ARTIFACT')],
+                            command=["sh", "-c", WithProperties("cp -Rd *mpc8315*rdb* %s/machines/%s", 'DEST', 'ARTIFACT')],
                             workdir=tmpdir + "/deploy/images",
                             env=copy.copy(defaultenv),
                             timeout=14400))
@@ -1330,9 +1334,6 @@ b70 = {'name': "nightly-arm-lsb",
       }
 yocto_builders.append(b70)
 
-
-
-
 ################################################################################
 #
 # Nightly mips
@@ -1360,7 +1361,9 @@ publishArtifacts(f71, "ipk", "build/build/tmp")
 runArchPostamble(f71, defaultenv['ABTARGET'])
 f71.addStep(NoOp(name="nightly"))
 b71 = {'name': "nightly-mips",
+
       'slavenames': ["builder1"],
+
       'builddir': "nightly-mips",
       'factory': f71,
       }
@@ -2235,8 +2238,6 @@ if PUBLISH_BUILDS == "True":
                 workdir="build/eclipse-plugin/scripts",
                 env=copy.copy(defaultenv),
                 timeout=14400)
-
-
 b62 = {'name': "eclipse-plugin-helios",
       'slavenames': ["builder1"],
       'builddir': "eclipse-plugin-helios",
@@ -2276,7 +2277,5 @@ b340 = {'name': "p1022ds",
         'builddir': "p1022ds",
         'factory': f340}
 yocto_builders.append(b340)
-
-
 
 
