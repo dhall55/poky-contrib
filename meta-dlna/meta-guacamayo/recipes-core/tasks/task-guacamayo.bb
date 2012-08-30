@@ -99,7 +99,6 @@ python __anonymous () {
 GUACA_NETWORKING = "connman-initd \
                     connman-plugin-ethernet \
                     connman-plugin-loopback \
-                    connman-plugin-wifi \
                    "
 
 GUACA_PA_CORE = "pulseaudio \
