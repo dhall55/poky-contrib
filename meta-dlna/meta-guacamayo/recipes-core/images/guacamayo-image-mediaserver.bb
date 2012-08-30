@@ -13,6 +13,7 @@ GUACAMAYO_FEATURES =+ "\
 
 inherit guacamayo-image
 
+RDEPENDS_${PN} = "guacamayo-session-mediaserver"
 PACKAGE_INSTALL += "guacamayo-session-mediaserver"
 
 GUACA_DEMOS_FEATURE = "${@base_contains("IMAGE_FEATURES", "guacamayo-demos", "task-guacamayo-demos-audio task-guacamayo-demos-video task-guacamayo-demos-pictures", "", d)}"
