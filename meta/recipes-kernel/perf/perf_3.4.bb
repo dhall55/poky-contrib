@@ -9,7 +9,7 @@ as well."
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d7810fab7487fb0aad327b76f1be7cd7"
 
-PR = "r4"
+PR = "r5"
 
 require perf.inc
 
@@ -24,6 +24,7 @@ DEPENDS = "virtual/kernel \
            ${MLPREFIX}binutils \
            ${TUI_DEPENDS} \
            ${SCRIPTING_DEPENDS} \
+           bison flex \
           "
 
 SCRIPTING_RDEPENDS = "${@perf_feature_enabled('perf-scripting', 'perl perl-modules python', '',d)}"
@@ -54,6 +55,7 @@ B = "${WORKDIR}/${BPN}-${PV}"
 SCRIPTING_DEFINES = "${@perf_feature_enabled('perf-scripting', '', 'NO_LIBPERL=1 NO_LIBPYTHON=1',d)}"
 TUI_DEFINES = "${@perf_feature_enabled('perf-tui', '', 'NO_NEWT=1',d)}"
 
+export LDFLAGS = "-ldl -lutil"
 EXTRA_OEMAKE = \
 		'-C ${S}/tools/perf \
 		O=${B} \
@@ -71,7 +73,8 @@ do_compile() {
 
 do_install() {
 	oe_runmake DESTDIR=${D} install
-	if [ "${@perf_feature_enabled('perf-scripting', 1, 0, d)}" = "1" ]; then
+	# we are checking for this make target to be compatible with older perf versions
+	if [ "${@perf_feature_enabled('perf-scripting', 1, 0, d)}" = "1" -a $(grep install-python_ext ${S}/tools/perf/Makefile) = "0"]; then
 		oe_runmake DESTDIR=${D} install-python_ext
 	fi
 }

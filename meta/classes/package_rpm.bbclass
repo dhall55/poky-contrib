@@ -101,23 +101,23 @@ package_generate_rpm_conf_common() {
 }
 
 rpm_log_check() {
-       target="$1"
-       lf_path="$2"
+	target="$1"
+	lf_path="$2"
 
-       lf_txt="`cat $lf_path`"
-       for keyword_die in "Cannot find package" "exit 1" ERR Fail
-       do
-               if (echo "$lf_txt" | grep -v log_check | grep "$keyword_die") >/dev/null 2>&1
-               then
-                       echo "log_check: There were error messages in the logfile"
-                       echo -e "log_check: Matched keyword: [$keyword_die]\n"
-                       echo "$lf_txt" | grep -v log_check | grep -C 5 -i "$keyword_die"
-                       echo ""
-                       do_exit=1
-               fi
-       done
-       test "$do_exit" = 1 && exit 1
-       true
+	lf_txt="`cat $lf_path`"
+	for keyword_die in "Cannot find package" "exit 1" ERR Fail
+	do
+		if (echo "$lf_txt" | grep -v log_check | grep "$keyword_die") >/dev/null 2>&1
+		then
+			echo "log_check: There were error messages in the logfile"
+			echo -e "log_check: Matched keyword: [$keyword_die]\n"
+			echo "$lf_txt" | grep -v log_check | grep -C 5 -i "$keyword_die"
+			echo ""
+			do_exit=1
+		fi
+	done
+	test "$do_exit" = 1 && exit 1
+	true
 }
 
 
@@ -158,38 +158,41 @@ rpm_common_comand () {
 rpm_update_pkg () {
 
     manifest=$1
-    btmanifest=$manifest.bt.manifest
-    pre_btmanifest=${T}/${btmanifest##/*/}
+    # The manifest filename, e.g. total_solution.manifest
+    m_name=${manifest##/*/}
     local target_rootfs="${INSTALL_ROOTFS_RPM}"
+    installdir=$target_rootfs/install
+    pre_btmanifest=$installdir/pre_bt.manifest
+    cur_btmanifest=$installdir/cur_bt.manifest
 
-    # Save the rpm's build time for incremental image generation, and the file
-    # would be moved to ${T}
-    for i in `cat $manifest`; do
-        # Use "rpm" rather than "${RPM}" here, since we don't need the
-        # '--dbpath' option
-        echo "$i `rpm -qp --qf '%{BUILDTIME}\n' $i`"
-    done | sort -u > $btmanifest
-
-    # Only install the different pkgs if incremental image generation is set
-    if [ "${INC_RPM_IMAGE_GEN}" = "1" -a -f "$pre_btmanifest" -a \
-        "${IMAGE_PKGTYPE}" = "rpm" ]; then
-        comm -1 -3 $btmanifest $pre_btmanifest | sed 's#.*/\(.*\)\.rpm .*#\1#' > \
-            ${target_rootfs}/install/remove.manifest
-        comm -2 -3 $btmanifest $pre_btmanifest | awk '{print $1}' > \
-            ${target_rootfs}/install/incremental.manifest
+    # Install/remove the different pkgs when total_solution.manifest is
+    # comming and incremental image generation is enabled.
+    if [ "${INC_RPM_IMAGE_GEN}" = "1" -a -d "${target_rootfs}${rpmlibdir}" \
+        -a "$m_name" = "total_solution.manifest" \
+        -a "${INSTALL_COMPLEMENTARY_RPM}" != "1" ]; then
+        # Get the previous installed list
+        rpm --root $target_rootfs --dbpath ${rpmlibdir} \
+            -qa --qf '%{PACKAGEORIGIN} %{BUILDTIME}\n' | sort -u -o $pre_btmanifest
+        # Get the current installed list (based on install/var/lib/rpm)
+        rpm --root $installdir -D "_dbpath $installdir" \
+            -qa --qf '%{PACKAGEORIGIN} %{BUILDTIME}\n' | sort -u -o $cur_btmanifest
+        comm -1 -3 $cur_btmanifest $pre_btmanifest | sed 's#.*/\(.*\)\.rpm .*#\1#' > \
+            $installdir/remove.manifest
+        comm -2 -3 $cur_btmanifest $pre_btmanifest | awk '{print $1}' > \
+            $installdir/incremental.manifest
 
         # Attempt to remove unwanted pkgs, the scripts(pre, post, etc.) has not
         # been run by now, so don't have to run them(preun, postun, etc.) when
         # erase the pkg
-        if [ -s ${target_rootfs}/install/remove.manifest ]; then
+        if [ -s $installdir/remove.manifest ]; then
             rpm_common_comand --noscripts --nodeps \
-                -e `cat ${target_rootfs}/install/remove.manifest`
+                -e `cat $installdir/remove.manifest`
         fi
 
         # Attempt to install the incremental pkgs
-        if [ -s ${target_rootfs}/install/incremental.manifest ]; then
+        if [ -s $installdir/incremental.manifest ]; then
             rpm_common_comand --nodeps --replacefiles --replacepkgs \
-               -Uvh ${target_rootfs}/install/incremental.manifest
+               -Uvh $installdir/incremental.manifest
         fi
     else
         # Attempt to install
@@ -242,7 +245,22 @@ process_pkg_list_rpm() {
 }
 
 #
-# install a bunch of packages using rpm
+# Install a bunch of packages using rpm.
+# There are 3 solutions in an image's FRESH generation:
+# 1) initial_solution
+# 2) total_solution
+# 3) COMPLEMENTARY solution
+#
+# It is different when incremental image generation is enabled in the
+# SECOND generation:
+# 1) The initial_solution is skipped.
+# 2) The incremental image generation takes action during the total_solution
+#    installation, the previous installed COMPLEMENTARY pkgs usually would be
+#    removed here, the new COMPLEMENTARY ones would be installed in the next
+#    step.
+# 3) The COMPLEMENTARY would always be installed since it is
+#    generated based on the second step's image.
+#
 # the following shell variables needs to be set before calling this func:
 # INSTALL_ROOTFS_RPM - install root dir
 # INSTALL_PLATFORM_RPM - main platform
@@ -340,7 +358,7 @@ package_install_internal_rpm () {
 				-D "_dbpath ${target_rootfs}/install" -D "`cat ${confbase}.macro`" \
 				-D "__dbi_txn create nofsync private" \
 				-U --justdb --replacepkgs --noscripts --notriggers --noparentdirs --nolinktos --ignoresize \
-			$pkg_name >> "`dirname ${BB_LOGFILE}`/log.do_${task}_attemptonly.${PID}" || true
+			$pkg_name >> "`dirname ${BB_LOGFILE}`/log.do_${task}_attemptonly.${PID}" 2>&1 || true
 		done
 	fi
 
@@ -496,10 +514,10 @@ EOF
 		sort ${target_rootfs}/install/original_solution.manifest > ${target_rootfs}/install/original_solution_sorted.manifest
 		sort ${target_rootfs}/install/total_solution.manifest > ${target_rootfs}/install/total_solution_sorted.manifest
 		comm -2 -3 ${target_rootfs}/install/total_solution_sorted.manifest \
-			${target_rootfs}/install/original_solution_sorted.manifest | awk '{print $1}' > \
+			${target_rootfs}/install/original_solution_sorted.manifest > \
 			${target_rootfs}/install/diff.manifest
 		mv ${target_rootfs}/install/diff.manifest ${target_rootfs}/install/total_solution.manifest
-	elif [ "${INC_RPM_IMAGE_GEN}" = "1" -a -f "$pre_btmanifest" ]; then
+	elif [ "${INC_RPM_IMAGE_GEN}" = "1" -a -d "${target_rootfs}${rpmlibdir}" ]; then
 		echo "Skipping pre install due to existing image"
 	else
 		# RPM is special. It can't handle dependencies and preinstall scripts correctly. Its
@@ -552,28 +570,24 @@ python write_specfile () {
 
     # append information for logs and patches to %prep
     def add_prep(d,spec_files_bottom):
-        if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) and d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True).upper() == 'SRPM':
+        if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) == 'srpm':
             spec_files_bottom.append('%%prep -n %s' % d.getVar('PN', True) )
             spec_files_bottom.append('%s' % "echo \"include logs and patches, Please check them in SOURCES\"")
             spec_files_bottom.append('')
 
-    # get the name of tarball for sources, patches and logs
-    def get_tarballs(d):
-        if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) and d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True).upper() == 'SRPM':
-            return get_package(d)
-    
     # append the name of tarball to key word 'SOURCE' in xxx.spec.
-    def tail_source(d,source_list=[],patch_list=None):
-        if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) and d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True).upper() == 'SRPM':
+    def tail_source(d):
+        if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) == 'srpm':
+            source_list = get_package(d)
             source_number = 0
-            patch_number = 0
+            workdir = d.getVar('WORKDIR', True)
             for source in source_list:
+                # The rpmbuild doesn't need the root permission, but it needs
+                # to know the file's user and group name, the only user and
+                # group in fakeroot is "root" when working in fakeroot.
+                os.chown("%s/%s" % (workdir, source), 0, 0)
                 spec_preamble_top.append('Source' + str(source_number) + ': %s' % source)
                 source_number += 1
-            if patch_list:
-                for patch in patch_list:
-                    print_deps(patch, "Patch" + str(patch_number), spec_preamble_top, d)
-                    patch_number += 1
     # We need a simple way to remove the MLPREFIX from the package name,
     # and dependency information...
     def strip_multilib(name, d):
@@ -891,8 +905,7 @@ python write_specfile () {
     spec_preamble_top.append('Group: %s' % srcsection)
     spec_preamble_top.append('Packager: %s' % srcmaintainer)
     spec_preamble_top.append('URL: %s' % srchomepage)
-    source_list = get_tarballs(d)
-    tail_source(d,source_list,None)
+    tail_source(d)
 
     # Replaces == Obsoletes && Provides
     if srcrreplaces and srcrreplaces.strip() != "":
@@ -996,7 +1009,7 @@ python write_specfile () {
 
 python do_package_rpm () {
     def creat_srpm_dir(d):
-        if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) and d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True).upper() == 'SRPM':
+        if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) == 'srpm':
             clean_licenses = get_licenses(d)
             pkgwritesrpmdir = bb.data.expand('${PKGWRITEDIRSRPM}/${PACKAGE_ARCH_EXTEND}', d)
             pkgwritesrpmdir = pkgwritesrpmdir + '/' + clean_licenses
@@ -1101,7 +1114,7 @@ python do_package_rpm () {
     targetsys = d.getVar('TARGET_SYS', True)
     targetvendor = d.getVar('TARGET_VENDOR', True)
     package_arch = d.getVar('PACKAGE_ARCH', True) or ""
-    if package_arch not in "all any noarch".split():
+    if package_arch not in "all any noarch".split() and not package_arch.endswith("-nativesdk"):
         ml_prefix = (d.getVar('MLPREFIX', True) or "").replace("-", "_")
         d.setVar('PACKAGE_ARCH_EXTEND', ml_prefix + package_arch)
     else:
@@ -1123,17 +1136,17 @@ python do_package_rpm () {
     cmd = cmd + " --define 'debug_package %{nil}'"
     cmd = cmd + " --define '_rpmfc_magic_path " + magicfile + "'"
     cmd = cmd + " --define '_tmppath " + workdir + "'"
-    if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) and d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True).upper() == 'SRPM':
-        cmdsrpm = cmd + " --define '_sourcedir " + workdir + "' --define '_srcrpmdir " + creat_srpm_dir(d) + "'"
-        cmdsrpm = 'fakeroot ' + cmdsrpm + " -bs " + outspecfile
-    cmd = cmd + " -bb " + outspecfile
-
-    # Build the source rpm package !
-    if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) and d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True).upper() == 'SRPM':
+    if d.getVar('SOURCE_ARCHIVE_PACKAGE_TYPE', True) == 'srpm':
+        cmd = cmd + " --define '_sourcedir " + workdir + "'"
+        cmdsrpm = cmd + " --define '_srcrpmdir " + creat_srpm_dir(d) + "'"
+        cmdsrpm = cmdsrpm + " -bs " + outspecfile
+        # Build the .src.rpm
         d.setVar('SBUILDSPEC', cmdsrpm + "\n")
         d.setVarFlag('SBUILDSPEC', 'func', '1')
         bb.build.exec_func('SBUILDSPEC', d)
-
+        # Remove the source (SOURCE0, SOURCE1 ...)
+        cmd = cmd + " --rmsource "
+    cmd = cmd + " -bb " + outspecfile
 
     # Build the rpm package!
     d.setVar('BUILDSPEC', cmd + "\n")

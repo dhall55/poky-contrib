@@ -94,7 +94,7 @@ class InteractConsoleLogFilter(logging.Filter):
         self.format = format
 
     def filter(self, record):
-        if record.levelno == self.format.NOTE and (record.msg.startswith("Running") or record.msg.startswith("package ")):
+        if record.levelno == self.format.NOTE and (record.msg.startswith("Running") or record.msg.startswith("recipe ")):
             return False
         self.tf.clearFooter()
         return True
@@ -141,7 +141,11 @@ class TerminalFilter(object):
         if not self.interactive:
             return
 
-        import curses
+        try:
+            import curses
+        except ImportError:
+            sys.exit("FATAL: The knotty ui could not load the required curses python module.")
+	
         import termios
         self.curses = curses
         self.termios = termios

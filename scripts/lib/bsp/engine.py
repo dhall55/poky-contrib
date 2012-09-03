@@ -449,6 +449,16 @@ def boolean(input_str, name):
         return name
 
 
+def strip_base(input_str):
+    """
+    strip '/base' off the end of input_str, so we can use 'base' in
+    the branch names we present to the user.
+    """
+    if input_str and input_str.endswith("/base"):
+        return input_str[:-len("/base")]
+    return input_str.strip()
+
+
 deferred_choices = {}
 
 def gen_choices_defer(input_line, context, checklist = False):
@@ -462,6 +472,11 @@ def gen_choices_defer(input_line, context, checklist = False):
         nameappend = input_line.props["nameappend"]
     except KeyError:
         nameappend = ""
+
+    try:
+        branches_base = input_line.props["branches_base"]
+    except KeyError:
+        branches_base = ""
 
     filename = input_line.props["filename"]
 
@@ -478,6 +493,8 @@ def gen_choices_defer(input_line, context, checklist = False):
     captured_context["filename"] = filename
     context["nameappend"] = nameappend
     captured_context["nameappend"] = nameappend
+    context["branches_base"] = branches_base
+    captured_context["branches_base"] = branches_base
 
     deferred_choice = (input_line, captured_context, checklist)
     key = name + "_" + filename + "_" + nameappend
@@ -651,7 +668,7 @@ class SubstrateBase(object):
         """
         Expand all tags in a line.
         """
-        expanded_line = AssignmentLine(line.strip())
+        expanded_line = AssignmentLine(line.rstrip())
 
         while start != -1:
             end = line.find(CLOSE_TAG, start)
@@ -1228,10 +1245,10 @@ def yocto_bsp_create(machine, arch, scripts_path, bsp_output_dir, codedump, prop
 
     gen_program_header_lines(program_lines)
 
+    gen_initial_property_vals(input_lines, program_lines)
+
     if properties:
         gen_supplied_property_vals(properties, program_lines)
-    else:
-        gen_initial_property_vals(input_lines, program_lines)
 
     gen_program_machine_lines(machine, program_lines)
 
@@ -1486,3 +1503,24 @@ def yocto_bsp_list(args, scripts_path, properties_file):
             return False
 
     return True
+
+
+def map_standard_kbranch(need_new_kbranch, new_kbranch, existing_kbranch):
+    """
+    Return the linux-yocto bsp branch to use with the specified
+    kbranch.  This handles the -standard variants for 3.2 and 3.4; the
+    other variants don't need mappings.
+    """
+    if need_new_kbranch == "y":
+        kbranch = new_kbranch
+    else:
+        kbranch = existing_kbranch
+
+    if (kbranch.startswith("standard/default/common-pc-64") or
+        kbranch.startswith("standard/common-pc-64")):
+        return "bsp/common-pc-64/common-pc-64-standard"
+    if (kbranch.startswith("standard/default/common-pc") or
+        kbranch.startswith("standard/common-pc")):
+        return "bsp/common-pc/common-pc-standard"
+    else:
+        return "ktypes/standard"

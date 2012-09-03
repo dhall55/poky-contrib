@@ -48,8 +48,9 @@ def process_dir (directory, d):
             rpaths = curr_rpath.split(":")
             new_rpaths = []
             for rpath in rpaths:
-                # If rpath is already dynamic continue
+                # If rpath is already dynamic copy it to new_rpath and continue
                 if rpath.find("$ORIGIN") != -1:
+                    new_rpaths.append(rpath.strip())
                     continue
                 # If the rpath shares a root with base_prefix determine a new dynamic rpath from the
                 # base_prefix shared root
@@ -60,10 +61,12 @@ def process_dir (directory, d):
                 # NOTE: This will not work reliably for cross packages, particularly in the case
                 # where your TMPDIR is a short path (i.e. /usr/poky) as chrpath cannot insert an
                 # rpath longer than that which is already set.
-                else:
+                elif rpath.find(tmpdir) != -1:
                     depth = fpath.rpartition(tmpdir)[2].count('/')
                     libpath = rpath.partition(tmpdir)[2].strip()
-
+                else:
+                    new_rpaths.append(rpath.strip())
+                    continue
                 base = "$ORIGIN"
                 while depth > 1:
                     base += "/.."
@@ -74,9 +77,11 @@ def process_dir (directory, d):
             if len(new_rpaths):
                 args = ":".join(new_rpaths)
                 #bb.note("Setting rpath for %s to %s" %(fpath, args))
-                ret = sub.call([cmd, '-r', args, fpath])
-                if ret != 0:
-                    bb.error("chrpath command failed with exit code %d" % ret)
+                p = sub.Popen([cmd, '-r', args, fpath],stdout=sub.PIPE,stderr=sub.PIPE)
+                out, err = p.communicate()
+                if p.returncode != 0:
+                    bb.error("%s: chrpath command failed with exit code %d:\n%s%s" % (d.getVar('PN', True), p.returncode, out, err))
+                    raise bb.build.FuncFailed
 
             if perms:
                 os.chmod(fpath, perms)

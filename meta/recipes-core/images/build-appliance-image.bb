@@ -19,8 +19,11 @@ IMAGE_FSTYPES = "vmdk"
 
 inherit core-image
 
-SRCREV = "3ab5d73f0c49df9fefa2a46031d33436bbd7d7d8"
-SRC_URI = "git://git.yoctoproject.org/poky;protocol=git"
+SRCREV = "86a6410fcbfb43e74aa1c9c995a21129d8434f75"
+SRC_URI = "git://git.yoctoproject.org/poky;protocol=git \
+           file://Yocto_Build_Appliance.vmx \
+           file://Yocto_Build_Appliance.vmxf \
+          "
 
 IMAGE_CMD_ext3_append () {
 	# We don't need to reserve much space for root, 0.5% is more than enough
@@ -68,3 +71,19 @@ python do_get_poky_src () {
     bb.build.exec_func('base_do_unpack', d)
 }
 addtask do_get_poky_src before do_rootfs
+
+create_bundle_files () {
+	cd ${WORKDIR}
+	mkdir -p Yocto_Build_Appliance
+	cp *.vmx* Yocto_Build_Appliance
+	ln -sf ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.vmdk Yocto_Build_Appliance/Yocto_Build_Appliance.vmdk
+	zip -r ${DEPLOY_DIR_IMAGE}/Yocto_Build_Appliance-${DATETIME}.zip Yocto_Build_Appliance
+	ln -sf ${DEPLOY_DIR_IMAGE}/Yocto_Build_Appliance-${DATETIME}.zip ${DEPLOY_DIR_IMAGE}/Yocto_Build_Appliance.zip 
+}
+
+python do_bundle_files() {
+    bb.build.exec_func('create_bundle_files', d)
+}
+
+addtask bundle_files after do_vmdkimg before do_build
+do_bundle_files[nostamp] = "1"

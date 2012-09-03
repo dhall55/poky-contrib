@@ -1,6 +1,6 @@
 require gcc-common.inc
 
-PR = "r9"
+PR = "r11"
 
 # Third digit in PV should be incremented after a minor release
 # happens from this branch on gcc e.g. currently its 4.7.1
@@ -52,7 +52,6 @@ SRC_URI = "git://github.com/mirrors/gcc.git;branch=${BRANCH};protocol=git \
            file://306-libstdc++-namespace.patch  \
            file://740-sh-pr24836.patch  \
            file://800-arm-bigendian.patch  \
-           file://arm-nolibfloat.patch  \
            file://gcc-poison-system-directories.patch \
            file://gcc-poison-dir-extend.patch \
            file://gcc-4.3.3-SYSROOT_CFLAGS_FOR_TARGET.patch \
@@ -75,6 +74,7 @@ SRC_URI = "git://github.com/mirrors/gcc.git;branch=${BRANCH};protocol=git \
 	   file://gcc-argument-list-too-long.patch \
 	   file://fix-g++-sysroot.patch \
 	   file://disablesdt.patch \
+	   file://libtool.patch \
 	  "
 
 S = "${TMPDIR}/work-shared/gcc-${PV}-${PR}/git"

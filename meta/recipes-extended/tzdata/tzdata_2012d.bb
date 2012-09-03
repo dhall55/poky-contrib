@@ -5,7 +5,9 @@ LICENSE = "PD"
 LIC_FILES_CHKSUM = "file://asia;beginline=2;endline=3;md5=06468c0e84ef4d4c97045a4a29b08234"
 DEPENDS = "tzcode-native"
 
-PR = "r0"
+PR = "r2"
+
+inherit allarch
 
 RCONFLICTS_${PN} = "timezones timezone-africa timezone-america timezone-antarctica \
              timezone-arctic timezone-asia timezone-atlantic \
@@ -47,6 +49,7 @@ do_install () {
         # Install default timezone
         install -d ${D}${sysconfdir}
         echo ${DEFAULT_TIMEZONE} > ${D}${sysconfdir}/timezone
+        ln -s ${datadir}/zoneinfo/${DEFAULT_TIMEZONE} ${D}${sysconfdir}/localtime
 
         chown -R root:root ${D}
 }

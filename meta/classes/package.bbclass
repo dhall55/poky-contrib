@@ -73,6 +73,47 @@ def do_split_packages(d, root, file_regex, output_pattern, description, postinst
     """
     Used in .bb files to split up dynamically generated subpackages of a
     given package, usually plugins or modules.
+
+    Arguments:
+    root           -- the path in which to search
+    file_regex     -- regular expression to match searched files. Use
+                      parentheses () to mark the part of this expression
+                      that should be used to derive the module name (to be
+                      substituted where %s is used in other function
+                      arguments as noted below)
+    output_pattern -- pattern to use for the package names. Must include %s.
+    description    -- description to set for each package. Must include %s.
+    postinst       -- postinstall script to use for all packages (as a
+                      string)
+    recursive      -- True to perform a recursive search - default False
+    hook           -- a hook function to be called for every match. The
+                      function will be called with the following arguments
+                      (in the order listed):
+                        f: full path to the file/directory match
+                        pkg: the package name
+                        file_regex: as above
+                        output_pattern: as above
+                        modulename: the module name derived using file_regex
+    extra_depends  -- extra runtime dependencies (RDEPENDS) to be set for
+                      all packages. The default value of None causes a
+                      dependency on the main package (${PN}) - if you do
+                      not want this, pass '' for this parameter.
+    aux_files_pattern -- extra item(s) to be added to FILES for each
+                      package. Can be a single string item or a list of
+                      strings for multiple items.  Must include %s.
+    postrm         -- postrm script to use for all packages (as a string)
+    allow_dirs     -- True allow directories to be matched - default False
+    prepend        -- if True, prepend created packages to PACKAGES instead
+                      of the default False which appends them
+    match_path     -- match file_regex on the whole relative path to the
+                      root rather than just the file name
+    aux_files_pattern_verbatim -- extra item(s) to be added to FILES for
+                      each package, using the actual derived module name
+                      rather than converting it to something legal for a
+                      package name. Can be a single string item or a list
+                      of strings for multiple items. Must include %s.
+    allow_links    -- True to allow symlinks to be matched - default False
+
     """
 
     ml = d.getVar("MLPREFIX", True)
@@ -230,42 +271,42 @@ def splitfile2(debugsrcdir, d):
 
     sourcefile = d.expand("${WORKDIR}/debugsources.list")
     if debugsrcdir and os.path.isfile(sourcefile):
-       dvar = d.getVar('PKGD', True)
-       pathprefix = "export PATH=%s; " % d.getVar('PATH', True)
-       strip = d.getVar("STRIP", True)
-       objcopy = d.getVar("OBJCOPY", True)
-       debugedit = d.expand("${STAGING_LIBDIR_NATIVE}/rpm/bin/debugedit")
-       workdir = d.getVar("WORKDIR", True)
-       workparentdir = os.path.dirname(workdir)
-       workbasedir = os.path.basename(workdir)
+        dvar = d.getVar('PKGD', True)
+        pathprefix = "export PATH=%s; " % d.getVar('PATH', True)
+        strip = d.getVar("STRIP", True)
+        objcopy = d.getVar("OBJCOPY", True)
+        debugedit = d.expand("${STAGING_LIBDIR_NATIVE}/rpm/bin/debugedit")
+        workdir = d.getVar("WORKDIR", True)
+        workparentdir = os.path.dirname(workdir)
+        workbasedir = os.path.basename(workdir)
 
-       nosuchdir = []
-       basepath = dvar
-       for p in debugsrcdir.split("/"):
-           basepath = basepath + "/" + p
-           if not os.path.exists(basepath):
-               nosuchdir.append(basepath)
-       bb.mkdirhier(basepath)
+        nosuchdir = []
+        basepath = dvar
+        for p in debugsrcdir.split("/"):
+            basepath = basepath + "/" + p
+            if not os.path.exists(basepath):
+                nosuchdir.append(basepath)
+        bb.mkdirhier(basepath)
 
-       processdebugsrc =  "LC_ALL=C ; sort -z -u '%s' | egrep -v -z '(<internal>|<built-in>)$' | "
-       # We need to ignore files that are not actually ours
-       # we do this by only paying attention to items from this package
-       processdebugsrc += "fgrep -z '%s' | "
-       processdebugsrc += "(cd '%s' ; cpio -pd0mL --no-preserve-owner '%s%s' 2>/dev/null)"
+        processdebugsrc =  "LC_ALL=C ; sort -z -u '%s' | egrep -v -z '(<internal>|<built-in>)$' | "
+        # We need to ignore files that are not actually ours
+        # we do this by only paying attention to items from this package
+        processdebugsrc += "fgrep -z '%s' | "
+        processdebugsrc += "(cd '%s' ; cpio -pd0mL --no-preserve-owner '%s%s' 2>/dev/null)"
 
-       subprocess.call(processdebugsrc % (sourcefile, workbasedir, workparentdir, dvar, debugsrcdir), shell=True)
+        subprocess.call(processdebugsrc % (sourcefile, workbasedir, workparentdir, dvar, debugsrcdir), shell=True)
 
-       # The copy by cpio may have resulted in some empty directories!  Remove these
-       for root, dirs, files in os.walk("%s%s" % (dvar, debugsrcdir)):
-          for d in dirs:
-              dir = os.path.join(root, d)
-              #bb.note("rmdir -p %s" % dir)
-              subprocess.call("rmdir -p %s 2>/dev/null" % dir, shell=True)
+        # The copy by cpio may have resulted in some empty directories!  Remove these
+        for root, dirs, files in os.walk("%s%s" % (dvar, debugsrcdir)):
+            for d in dirs:
+                dir = os.path.join(root, d)
+                #bb.note("rmdir -p %s" % dir)
+                subprocess.call("rmdir -p %s 2>/dev/null" % dir, shell=True)
 
-       # Also remove debugsrcdir if its empty
-       for p in nosuchdir[::-1]:
-           if os.path.exists(p) and not os.listdir(p):
-               os.rmdir(p)
+        # Also remove debugsrcdir if its empty
+        for p in nosuchdir[::-1]:
+            if os.path.exists(p) and not os.listdir(p):
+                os.rmdir(p)
 
 def runstrip(file, elftype, d):
     # Function to strip a single file, called from split_and_strip_files below
@@ -448,7 +489,7 @@ python perform_packagecopy () {
     subprocess.call('tar -cf - -C %s -ps . | tar -xf - -C %s' % (dest, dvar), shell=True)
 
     # replace RPATHs for the nativesdk binaries, to make them relocatable
-    if bb.data.inherits_class('nativesdk', d):
+    if bb.data.inherits_class('nativesdk', d) or bb.data.inherits_class('cross-canadian', d):
         rpath_replace (dvar, d)
 }
 
@@ -735,7 +776,7 @@ python split_and_strip_files () {
     file_list = {}
     file_links = {}
     if (d.getVar('INHIBIT_PACKAGE_DEBUG_SPLIT', True) != '1') and \
-       (d.getVar('INHIBIT_PACKAGE_STRIP', True) != '1'):
+            (d.getVar('INHIBIT_PACKAGE_STRIP', True) != '1'):
         for root, dirs, files in os.walk(dvar):
             for f in files:
                 file = os.path.join(root, f)
@@ -876,7 +917,7 @@ python split_and_strip_files () {
             for f in files:
                 if not f.endswith(".ko"):
                     continue
-                runstrip(os.path.join(root, f), None, d)
+                runstrip(os.path.join(root, f), 0, d)
     #
     # End of strip
     #

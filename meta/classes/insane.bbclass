@@ -109,7 +109,7 @@ def package_qa_get_machine_dict():
             "linux-gnux32" :       {
                         "x86_64":     (62,     0,    0,          True,          32),
                       },
-       }
+        }
 
 
 # Currently not being used by default "desktop"
@@ -166,6 +166,9 @@ def package_qa_check_useless_rpaths(file, name, d, elf, messages):
     """
     Check for RPATHs that are useless but not dangerous
     """
+    def rpath_eq(a, b):
+        return os.path.normpath(a) == os.path.normpath(b)
+
     if not elf:
         return
 
@@ -181,7 +184,7 @@ def package_qa_check_useless_rpaths(file, name, d, elf, messages):
     	m = rpath_re.match(line)
 	if m:
 	   rpath = m.group(1)
-	   if rpath == libdir or rpath == base_libdir:
+	   if rpath_eq(rpath, libdir) or rpath_eq(rpath, base_libdir):
 	      # The dynamic linker searches both these places anyway.  There is no point in
 	      # looking there again.
 	      messages.append("%s: %s contains probably-redundant RPATH %s" % (name, package_qa_clean_path(file, d), rpath))
@@ -192,7 +195,7 @@ def package_qa_check_dev(path, name, d, elf, messages):
     Check for ".so" library symlinks in non-dev packages
     """
 
-    if not name.endswith("-dev") and not name.endswith("-dbg") and not name.endswith("-nativesdk") and path.endswith(".so") and os.path.islink(path):
+    if not name.endswith("-dev") and not name.endswith("-dbg") and not name.startswith("nativesdk-") and path.endswith(".so") and os.path.islink(path):
         messages.append("non -dev/-dbg/-nativesdk package contains symlink .so: %s path '%s'" % \
                  (name, package_qa_clean_path(path,d)))
 
@@ -719,19 +722,19 @@ Rerun configure task after fixing this. The path was '%s'""" % root)
 
     cnf = d.getVar('EXTRA_OECONF', True) or ""
     if "gettext" not in d.getVar('P', True) and "gcc-runtime" not in d.getVar('P', True) and "--disable-nls" not in cnf:
-       ml = d.getVar("MLPREFIX", True) or ""
-       if bb.data.inherits_class('native', d) or bb.data.inherits_class('cross', d) or bb.data.inherits_class('crosssdk', d) or bb.data.inherits_class('nativesdk', d):
-          gt = "gettext-native"
-       elif bb.data.inherits_class('cross-canadian', d):
-          gt = "gettext-nativesdk"
-       else:
-          gt = "virtual/" + ml + "gettext"
-       deps = bb.utils.explode_deps(d.getVar('DEPENDS', True) or "")
-       if gt not in deps:
-          for config in configs:
-              gnu = "grep \"^[[:space:]]*AM_GNU_GETTEXT\" %s >/dev/null" % config
-              if subprocess.call(gnu, shell=True) == 0:
-                 bb.fatal("""%s required but not in DEPENDS for file %s.
+        ml = d.getVar("MLPREFIX", True) or ""
+        if bb.data.inherits_class('native', d) or bb.data.inherits_class('cross', d) or bb.data.inherits_class('crosssdk', d) or bb.data.inherits_class('nativesdk', d):
+            gt = "gettext-native"
+        elif bb.data.inherits_class('cross-canadian', d):
+            gt = "nativesdk-gettext"
+        else:
+            gt = "virtual/" + ml + "gettext"
+        deps = bb.utils.explode_deps(d.getVar('DEPENDS', True) or "")
+        if gt not in deps:
+            for config in configs:
+                gnu = "grep \"^[[:space:]]*AM_GNU_GETTEXT\" %s >/dev/null" % config
+                if subprocess.call(gnu, shell=True) == 0:
+                    bb.fatal("""%s required but not in DEPENDS for file %s.
 Missing inherit gettext?""" % (gt, config))
 
     if not package_qa_check_license(workdir, d):

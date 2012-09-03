@@ -15,7 +15,7 @@ SECTION = "libs"
 
 DEPENDS = "glib-2.0-native zip virtual/libiconv"
 DEPENDS_virtclass-native = "pkgconfig-native gettext-native"
-DEPENDS_virtclass-nativesdk = "libtool-nativesdk"
+DEPENDS_virtclass-nativesdk = "nativesdk-libtool"
 PACKAGES =+ "${PN}-utils ${PN}-bash-completion ${PN}-codegen"
 
 LEAD_SONAME = "libglib-2.0.*"
@@ -27,7 +27,7 @@ S = "${WORKDIR}/glib-${PV}"
 
 CORECONF = "--disable-dtrace --disable-fam --disable-libelf --disable-systemtap"
 
-EXTRA_OECONF = "--disable-debug --enable-included-printf=no ${CORECONF}"
+EXTRA_OECONF = "--enable-included-printf=no ${CORECONF}"
 EXTRA_OECONF_virtclass-native = "${CORECONF}"
 EXTRA_OECONF_linuxstdbase = "--enable-included-printf=no ${CORECONF}"
 

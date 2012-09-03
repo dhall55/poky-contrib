@@ -219,6 +219,12 @@ class BBCooker:
             nice = int(nice) - curnice
             buildlog.verbose("Renice to %s " % os.nice(nice))
 
+        if self.status:
+            del self.status
+        self.status = bb.cache.CacheData(self.caches_array)
+
+        self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
+
     def parseCommandLine(self):
         # Parse any commandline into actions
         self.commandlineAction = {'action':None, 'msg':None}
@@ -298,8 +304,6 @@ class BBCooker:
             # Parse the configuration here. We need to do it explicitly here since
             # this showEnvironment() code path doesn't use the cache
             self.parseConfiguration()
-            self.status = bb.cache.CacheData(self.caches_array)
-            self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
 
             fn, cls = bb.cache.Cache.virtualfn2realfn(buildfile)
             fn = self.matchFile(fn)
@@ -1035,8 +1039,6 @@ class BBCooker:
         # Parse the configuration here. We need to do it explicitly here since
         # buildFile() doesn't use the cache
         self.parseConfiguration()
-        self.status = bb.cache.CacheData(self.caches_array)
-        self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
 
         # If we are told to do the None task then query the default task
         if (task == None):
@@ -1058,6 +1060,10 @@ class BBCooker:
             info_array = infos[fn]
         except KeyError:
             bb.fatal("%s does not exist" % fn)
+
+        if info_array[0].skipped:
+            bb.fatal("%s was skipped: %s" % (fn, info_array[0].skipreason))
+
         self.status.add_from_recipeinfo(fn, info_array)
 
         # Tweak some variables
@@ -1186,17 +1192,11 @@ class BBCooker:
         if self.state != state.parsing:
             self.parseConfiguration ()
 
-            if self.status:
-                del self.status
-            self.status = bb.cache.CacheData(self.caches_array)
-
             ignore = self.configuration.data.getVar("ASSUME_PROVIDED", True) or ""
             self.status.ignored_dependencies = set(ignore.split())
 
             for dep in self.configuration.extra_assume_provided:
                 self.status.ignored_dependencies.add(dep)
-
-            self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
 
             (filelist, masked) = self.collect_bbfiles()
             self.configuration.data.renameVar("__depends", "__base_depends")
@@ -1206,9 +1206,10 @@ class BBCooker:
 
         if not self.parser.parse_next():
             collectlog.debug(1, "parsing complete")
-            if not self.parser.error:
-                self.show_appends_with_no_recipes()
-                self.buildDepgraph()
+            if self.parser.error:
+                sys.exit(1)
+            self.show_appends_with_no_recipes()
+            self.buildDepgraph()
             self.state = state.running
             return None
 
@@ -1660,30 +1661,40 @@ class CookerParser(object):
         except StopIteration:
             self.shutdown()
             return False
+        except bb.BBHandledException as exc:
+            self.error += 1
+            logger.error('Failed to parse recipe: %s' % exc.recipe)
+            self.shutdown(clean=False)
+            return False
         except ParsingFailure as exc:
             self.error += 1
             logger.error('Unable to parse %s: %s' %
                      (exc.recipe, bb.exceptions.to_string(exc.realexception)))
             self.shutdown(clean=False)
+            return False
         except bb.parse.ParseError as exc:
             self.error += 1
             logger.error(str(exc))
             self.shutdown(clean=False)
+            return False
         except bb.data_smart.ExpansionError as exc:
             self.error += 1
             _, value, _ = sys.exc_info()
             logger.error('ExpansionError during parsing %s: %s', value.recipe, str(exc))
             self.shutdown(clean=False)
+            return False
         except SyntaxError as exc:
             self.error += 1
             logger.error('Unable to parse %s', exc.recipe)
             self.shutdown(clean=False)
+            return False
         except Exception as exc:
             self.error += 1
             etype, value, tb = sys.exc_info()
             logger.error('Unable to parse %s', value.recipe,
                          exc_info=(etype, value, exc.traceback))
             self.shutdown(clean=False)
+            return False
 
         self.current += 1
         self.virtuals += len(result)

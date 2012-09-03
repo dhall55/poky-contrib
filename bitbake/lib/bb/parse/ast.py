@@ -31,7 +31,6 @@ import itertools
 from bb import methodpool
 from bb.parse import logger
 
-__parsed_methods__ = bb.methodpool.get_parsed_dict()
 _bbversions_re = re.compile(r"\[(?P<from>[0-9]+)-(?P<to>[0-9]+)\]")
 
 class StatementGroup(list):
@@ -126,23 +125,25 @@ class MethodNode(AstNode):
         self.body = body
 
     def eval(self, data):
+        text = '\n'.join(self.body)
         if self.func_name == "__anonymous":
             funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(string.maketrans('/.+-', '____'))))
             if not funcname in bb.methodpool._parsed_fns:
-                text = "def %s(d):\n" % (funcname) + '\n'.join(self.body)
+                text = "def %s(d):\n" % (funcname) + text
                 bb.methodpool.insert_method(funcname, text, self.filename)
             anonfuncs = data.getVar('__BBANONFUNCS') or []
             anonfuncs.append(funcname)
             data.setVar('__BBANONFUNCS', anonfuncs)
+            data.setVar(funcname, text)
         else:
             data.setVarFlag(self.func_name, "func", 1)
-            data.setVar(self.func_name, '\n'.join(self.body))
+            data.setVar(self.func_name, text)
 
 class PythonMethodNode(AstNode):
-    def __init__(self, filename, lineno, function, define, body):
+    def __init__(self, filename, lineno, function, modulename, body):
         AstNode.__init__(self, filename, lineno)
         self.function = function
-        self.define = define
+        self.modulename = modulename
         self.body = body
 
     def eval(self, data):
@@ -150,8 +151,8 @@ class PythonMethodNode(AstNode):
         # 'this' file. This means we will not parse methods from
         # bb classes twice
         text = '\n'.join(self.body)
-        if not bb.methodpool.parsed_module(self.define):
-            bb.methodpool.insert_method(self.define, text, self.filename)
+        if not bb.methodpool.parsed_module(self.modulename):
+            bb.methodpool.insert_method(self.modulename, text, self.filename)
         data.setVarFlag(self.function, "func", 1)
         data.setVarFlag(self.function, "python", 1)
         data.setVar(self.function, text)
@@ -281,8 +282,8 @@ def handleData(statements, filename, lineno, groupd):
 def handleMethod(statements, filename, lineno, func_name, body):
     statements.append(MethodNode(filename, lineno, func_name, body))
 
-def handlePythonMethod(statements, filename, lineno, funcname, root, body):
-    statements.append(PythonMethodNode(filename, lineno, funcname, root, body))
+def handlePythonMethod(statements, filename, lineno, funcname, modulename, body):
+    statements.append(PythonMethodNode(filename, lineno, funcname, modulename, body))
 
 def handleMethodFlags(statements, filename, lineno, key, m):
     statements.append(MethodFlagsNode(filename, lineno, key, m))
@@ -320,7 +321,7 @@ def finalize(fn, d, variant = None):
     code = []
     for funcname in d.getVar("__BBANONFUNCS") or []:
         code.append("%s(d)" % funcname)
-    bb.utils.simple_exec("\n".join(code), {"d": d})
+    bb.utils.better_exec("\n".join(code), {"d": d})
     bb.data.update_data(d)
 
     tasklist = d.getVar('__BBTASKS') or []

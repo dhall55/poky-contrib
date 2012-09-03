@@ -1,35 +1,26 @@
 require recipes-kernel/linux/linux-yocto.inc
 
-KBRANCH = "standard/base"
-KBRANCH_qemux86  = "standard/common-pc/base"
-KBRANCH_qemux86-64  = "standard/common-pc-64/base"
-KBRANCH_qemuppc  = "standard/qemuppc"
-KBRANCH_qemumips = "standard/mti-malta32"
-KBRANCH_qemumipsel = "standard/mti-malta32"
-KBRANCH_qemumips64 = "standard/mti-malta64"
-KBRANCH_qemumips64el = "standard/mti-malta64"
-KBRANCH_qemuarm  = "standard/arm-versatile-926ejs"
+KBRANCH_DEFAULT = "standard/base"
+KBRANCH = "${KBRANCH_DEFAULT}"
 
-SRCREV_machine_qemuarm ?= "b57548a29e44655e27cfbdf3a0642d682401b835"
-SRCREV_machine_qemumips  ?= "633d487b0f6e5d328400b47f0d69d9dac7354c84"
-SRCREV_machine_qemuppc ?= "6229fc0f62283e0dc9f8b5d2be01b048a92867f3"
-SRCREV_machine_qemux86 ?= "19f7e43b54aef08d58135ed2a897d77b624b320a"
-SRCREV_machine_qemux86-64 ?= "19f7e43b54aef08d58135ed2a897d77b624b320a"
-SRCREV_machine ?= "19f7e43b54aef08d58135ed2a897d77b624b320a"
-SRCREV_meta ?= "7ff48aa47c50b6455d60ca93bc81260ce8fe1a1b"
+SRCREV_machine_qemuarm ?= "6db2c606429fa8671e76eb312cdd92f9451cf8e8"
+SRCREV_machine_qemumips  ?= "a9f79fc1bde4f5adb7cb015d2f2b5a04bd5597a1"
+SRCREV_machine_qemuppc ?= "492560e2f9a6864c5b4bbb24a35631c182fa35a5"
+SRCREV_machine_qemux86 ?= "c77666c1d4c4be4be4b2046c3ff25bf1db34eb21"
+SRCREV_machine_qemux86-64 ?= "c77666c1d4c4be4be4b2046c3ff25bf1db34eb21"
+SRCREV_machine ?= "c77666c1d4c4be4be4b2046c3ff25bf1db34eb21"
+SRCREV_meta ?= "28bcd46af1d592dab39bd8a0891c872454fde8bc"
 
 SRC_URI = "git://git.yoctoproject.org/linux-yocto-3.4.git;protocol=git;nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
 
-SRC_URI += "file://noslang.patch"
+LINUX_VERSION ?= "3.4.7"
 
-LINUX_VERSION ?= "3.4.6"
-
-PR = "${INC_PR}.0"
+PR = "${INC_PR}.1"
 PV = "${LINUX_VERSION}+git${SRCPV}"
 
 KMETA = "meta"
 
-COMPATIBLE_MACHINE = "(qemuarm|qemux86|qemuppc|qemumips|qemux86-64)"
+COMPATIBLE_MACHINE = "qemuarm|qemux86|qemuppc|qemumips|qemux86-64"
 
 # Functionality flags
 KERNEL_REVISION_CHECKING=""

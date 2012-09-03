@@ -191,7 +191,7 @@ def preferred_ml_updates(d):
     for v in versions:
         val = d.getVar(v, False)
         pkg = v.replace("PREFERRED_VERSION_", "")
-        if pkg.endswith("-native") or pkg.endswith("-nativesdk"):
+        if pkg.endswith("-native") or pkg.startswith("nativesdk-"):
             continue
         for p in prefixes:
             newname = "PREFERRED_VERSION_" + p + "-" + pkg
@@ -201,12 +201,12 @@ def preferred_ml_updates(d):
     for prov in providers:
         val = d.getVar(prov, False)
         pkg = prov.replace("PREFERRED_PROVIDER_", "")
-        if pkg.endswith("-native") or pkg.endswith("-nativesdk"):
+        if pkg.endswith("-native") or pkg.startswith("nativesdk-"):
             continue
         virt = ""
         if pkg.startswith("virtual/"):
-             pkg = pkg.replace("virtual/", "")
-             virt = "virtual/"
+            pkg = pkg.replace("virtual/", "")
+            virt = "virtual/"
         for p in prefixes:
             newname = "PREFERRED_PROVIDER_" + virt + p + "-" + pkg
             if pkg != "kernel":
@@ -218,7 +218,7 @@ def preferred_ml_updates(d):
     mp = (d.getVar("MULTI_PROVIDER_WHITELIST", True) or "").split()
     extramp = []
     for p in mp:
-        if p.endswith("-native") or p.endswith("-nativesdk"):
+        if p.endswith("-native") or p.startswith("nativesdk-"):
             continue
         virt = ""
         if p.startswith("virtual/"):
@@ -353,21 +353,24 @@ python () {
             appends = bb.utils.explode_deps(d.expand(" ".join(appends)))
             newappends = []
             for a in appends:
-               if a.endswith("-native") or a.endswith("-cross"):
-                   newappends.append(a)
-               elif a.startswith("virtual/"):
-                   subs = a.split("/", 1)[1]
-                   newappends.append("virtual/" + prefix + subs + extension)
-               else:
-                   newappends.append(prefix + a + extension)
+                if a.endswith("-native") or a.endswith("-cross"):
+                    newappends.append(a)
+                elif a.startswith("virtual/"):
+                    subs = a.split("/", 1)[1]
+                    newappends.append("virtual/" + prefix + subs + extension)
+                else:
+                    if a.startswith(prefix):
+                        newappends.append(a + extension)
+                    else:
+                        newappends.append(prefix + a + extension)
             return newappends
 
         def appendVar(varname, appends):
             if not appends:
                 return
             if varname.find("DEPENDS") != -1:
-                if pn.endswith("-nativesdk"):
-                    appends = expandFilter(appends, "-nativesdk", "")
+                if pn.startswith("nativesdk-"):
+                    appends = expandFilter(appends, "", "nativesdk-")
                 if pn.endswith("-native"):
                     appends = expandFilter(appends, "-native", "")
                 if mlprefix:
@@ -382,20 +385,19 @@ python () {
             if flag == "defaultval":
                 continue
             items = flagval.split(",")
-            if len(items) == 3:
-                enable, disable, depend = items
-                rdepend = ""
-            elif len(items) == 4:
-                enable, disable, depend, rdepend = items
+            num = len(items)
+            if num > 4:
+                bb.error("Only enable,disable,depend,rdepend can be specified!")
+
             if flag in pkgconfig:
-                if depend:
-                    extradeps.append(depend)
-                if rdepend:
-                    extrardeps.append(rdepend)
-                if enable:
-                    extraconf.append(enable)
-            elif disable:
-                    extraconf.append(disable)
+                if num >= 3 and items[2]:
+                    extradeps.append(items[2])
+                if num >= 4 and items[3]:
+                    extrardeps.append(items[3])
+                if num >= 1 and items[0]:
+                    extraconf.append(items[0])
+            elif num >= 2 and items[1]:
+                    extraconf.append(items[1])
         appendVar('DEPENDS', extradeps)
         appendVar('RDEPENDS_${PN}', extrardeps)
         appendVar('EXTRA_OECONF', extraconf)
@@ -457,7 +459,7 @@ python () {
 
         dont_want_license = d.getVar('INCOMPATIBLE_LICENSE', True)
 
-        if dont_want_license and not pn.endswith("-native") and not pn.endswith("-cross") and not pn.endswith("-cross-initial") and not pn.endswith("-cross-intermediate") and not pn.endswith("-crosssdk-intermediate") and not pn.endswith("-crosssdk") and not pn.endswith("-crosssdk-initial") and not pn.endswith("-cross-canadian-%s" % d.getVar('TRANSLATED_TARGET_ARCH', True)) and not pn.endswith("-nativesdk"):
+        if dont_want_license and not pn.endswith("-native") and not pn.endswith("-cross") and not pn.endswith("-cross-initial") and not pn.endswith("-cross-intermediate") and not pn.endswith("-crosssdk-intermediate") and not pn.endswith("-crosssdk") and not pn.endswith("-crosssdk-initial") and not pn.endswith("-cross-canadian-%s" % d.getVar('TRANSLATED_TARGET_ARCH', True)) and not pn.startswith("nativesdk-"):
         # Internally, we'll use the license mapping. This way INCOMPATIBLE_LICENSE = "GPLv2" and
         # INCOMPATIBLE_LICENSE = "GPLv2.0" will pick up all variations of GPL-2.0
             spdx_license = return_spdx(d, dont_want_license)

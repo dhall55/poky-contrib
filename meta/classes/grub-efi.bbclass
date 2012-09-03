@@ -14,7 +14,7 @@
 # ${GRUB_OPTS} - additional options to add to the config, ';' delimited # (optional)
 # ${GRUB_TIMEOUT} - timeout before executing the deault label (optional)
 
-do_bootimg[depends] += "grub-efi-${TARGET_ARCH}-native:do_deploy"
+do_bootimg[depends] += "grub-efi-${TRANSLATED_TARGET_ARCH}-native:do_deploy"
 
 GRUBCFG = "${S}/grub.cfg"
 GRUB_TIMEOUT ?= "10"
@@ -54,12 +54,12 @@ python build_grub_cfg() {
     if not workdir:
         bb.error("WORKDIR not defined, unable to package")
         return
-       
+
     labels = d.getVar('LABELS', True)
     if not labels:
         bb.debug(1, "LABELS not defined, nothing to do")
         return
-   
+
     if labels == []:
         bb.debug(1, "No labels, nothing to do")
         return
@@ -109,7 +109,7 @@ python build_grub_cfg() {
         if append:
             cfgfile.write('%s' % (append))
         cfgfile.write('\n')
-   
+
         if initrd:
             cfgfile.write('initrd /initrd')
         cfgfile.write('\n}\n')
