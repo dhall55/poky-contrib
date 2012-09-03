@@ -623,3 +623,39 @@ def sstate_checkhashes(sq_fn, sq_task, sq_hash, sq_hashfn, d):
 
     return ret
 
+BB_SETSCENE_DEPVALID = "setscene_depvalid"
+
+def setscene_depvalid(task, taskdeps, d):
+    def isNative(x):
+        return x.endswith("-native")
+    def isSafeDep(x):
+        if x.startswith(("quilt-", "autoconf-", "automake-", "gnu-config-native", "libtool-", "pkgconfig-")):
+            return True
+        return False
+
+    # We can skip these tasks since the aren't runtime dependencies, just build time
+    if isNative(taskdeps[task][0]) and isSafeDep(taskdeps[task][0]):# and taskdeps[task][1] == "do_populate_sysroot":
+        return True
+
+    if not isNative(taskdeps[task][0]):
+        return True
+
+    ok = True
+    for dep in taskdeps:
+        if task == dep:
+            continue
+        if not isNative(taskdeps[dep][0]) or taskdeps[task][0] != taskdeps[dep][0]:
+            ok = False
+            break
+    if ok:
+        return True
+
+    for dep in taskdeps:
+        if task == dep:
+            continue
+        deppn = taskdeps[dep][0]
+
+        if not isNative(deppn) or not isSafeDep(deppn):# or taskdeps[dep][1] != "do_populate_sysroot":
+            return False
+    return True
+
