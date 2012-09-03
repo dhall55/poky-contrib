@@ -1,0 +1,180 @@
+diff --git a/src/keys.c b/src/keys.c
+index bc83bd4..da83bd5 100644
+--- a/src/keys.c
++++ b/src/keys.c
+@@ -418,70 +418,109 @@ keys_load_config(Wm *w)
+ void
+ keys_get_modifiers(Wm *w)
+ {
+-  int mod_idx, mod_key, col, kpm;
+-  XModifierKeymap *mod_map = XGetModifierMapping(w->dpy);
+-
++  //int mod_idx, mod_key, col, kpm;
++  XModifierKeymap *modmap = XGetModifierMapping(w->dpy);
++  int map_size, i;
+   MBConfigKbd *kbd =  w->config->kb;
+-
++  KeySym *keymap;
++  int min_keycode, max_keycode, keysyms_per_keycode;
++
++  XDisplayKeycodes(w->dpy, &min_keycode, &max_keycode);
++  keymap = XGetKeyboardMapping (w->dpy,
++                                min_keycode,
++                                max_keycode - min_keycode + 1,
++                                &keysyms_per_keycode);
+   kbd->MetaMask = 0;
+   kbd->HyperMask = 0;
+   kbd->SuperMask = 0;
+   kbd->AltMask = 0;
+-  kbd->ModeMask = 0; 
++  kbd->ModeMask = 0;
+   kbd->NumLockMask = 0;
+   kbd->ScrollLockMask = 0;
+ 
+-  kpm = mod_map->max_keypermod;
+-  for (mod_idx = 0; mod_idx < 8; mod_idx++)
+-    for (mod_key = 0; mod_key < kpm; mod_key++) 
+-      {
+-	KeySym last_sym = 0;
+-	for (col = 0; col < 4; col += 2) 
+-	  {
+-	    KeyCode code = mod_map->modifiermap[mod_idx * kpm + mod_key];
+-	    KeySym sym = (code ? XKeycodeToKeysym(w->dpy, code, col) : 0);
+-
+-	    if (sym == last_sym) continue;
+-	    last_sym = sym;
+-
+-	    switch (sym) 
+-	      {
+-	      case XK_Mode_switch:
+-		/* XXX store_modifier("Mode_switch", mode_bit); */
+-		break;
+-	      case XK_Meta_L:
+-	      case XK_Meta_R:
+-		kbd->MetaMask |= (1 << mod_idx); 
+-		break;
+-	      case XK_Super_L:
+-	      case XK_Super_R:
+-		kbd->SuperMask |= (1 << mod_idx);
+-		break;
+-	      case XK_Hyper_L:
+-	      case XK_Hyper_R:
+-		kbd->HyperMask |= (1 << mod_idx);
+-		break;
+-	      case XK_Alt_L:
+-	      case XK_Alt_R:
+-		kbd->AltMask |= (1 << mod_idx);
+-		break;
+-	      case XK_Num_Lock:
+-		kbd->NumLockMask |= (1 << mod_idx);
+-		break;
+-	      case XK_Scroll_Lock:
+-		kbd->ScrollLockMask |= (1 << mod_idx);
+-		break;
+-	      }
+-	  }
+-      }
+ 
+-  /* XXX check this. assume alt <=> meta if only either set */
+-  if (!kbd->AltMask)  kbd->AltMask  = kbd->MetaMask; 
+-  if (!kbd->MetaMask) kbd->MetaMask = kbd->AltMask; 
++  /* there are 8 modifiers, and the first 3 are shift, shift lock,
++   * and control
++   */
++  map_size = 8 * modmap->max_keypermod;
++  i = 3 * modmap->max_keypermod;
++  while (i < map_size)
++    {
++      /* get the key code at this point in the map,
++       * see if its keysym is one we're interested in
++       */
++      int keycode = modmap->modifiermap[i];
++
++      if (keycode >= min_keycode &&
++          keycode <= max_keycode)
++        {
++          int j = 0;
++          KeySym *syms = keymap + (keycode - min_keycode) * keysyms_per_keycode;
++
++          while (j < keysyms_per_keycode)
++            {
++              if (syms[j] != 0)
++                {
++                  const char *str;
++
++                  str = XKeysymToString (syms[j]);
++                  dbg ("Keysym %s bound to modifier 0x%x\n",
++                       str ? str : "none",
++                       (1 << ( i / modmap->max_keypermod)));
++                }
++
++              if (syms[j] == XK_Num_Lock)
++                {
++                  /* Mod1Mask is 1 << 3 for example, i.e. the
++                   * fourth modifier, i / keyspermod is the modifier
++                   * index
++                   */
++
++                  kbd->NumLockMask |= (1 << ( i / modmap->max_keypermod));
++                }
++              else if (syms[j] == XK_Scroll_Lock)
++                {
++                  kbd->ScrollLockMask |= (1 << ( i / modmap->max_keypermod));
++                }
++              else if (syms[j] == XK_Super_L ||
++                       syms[j] == XK_Super_R)
++                {
++                  kbd->SuperMask |= (1 << ( i / modmap->max_keypermod));
++                }
++              else if (syms[j] == XK_Hyper_L ||
++                       syms[j] == XK_Hyper_R)
++                {
++                  kbd->HyperMask |= (1 << ( i / modmap->max_keypermod));
++                }
++              else if (syms[j] == XK_Meta_L ||
++                       syms[j] == XK_Meta_R)
++                {
++                  kbd->MetaMask |= (1 << ( i / modmap->max_keypermod));
++                }
++
++              ++j;
++            }
++        }
++
++      ++i;
++    }
+ 
++#if 0
++  /* XXX check this. assume alt <=> meta if only either set */
++  if (!kbd->AltMask)  kbd->AltMask  = kbd->MetaMask;
++  if (!kbd->MetaMask) kbd->MetaMask = kbd->AltMask;
++#endif
+   kbd->lock_mask = kbd->ScrollLockMask | kbd->NumLockMask | LockMask;
+ 
+-  if (mod_map) XFreeModifiermap(mod_map);
++  if (modmap) XFreeModifiermap(modmap);
++
++  dbg ("Ignoring modmask 0x%x num lock 0x%x scroll lock 0x%x hyper 0x%x super 0x%x meta 0x%x\n",
++       kbd->lock_mask,
++       kbd->NumLockMask,
++       kbd->ScrollLockMask,
++       kbd->HyperMask,
++       kbd->SuperMask,
++       kbd->MetaMask);
+ 
+ }
+ 
+diff --git a/src/wm.c b/src/wm.c
+index 2d05ff0..9f7d47b 100644
+--- a/src/wm.c
++++ b/src/wm.c
+@@ -928,6 +928,9 @@ wm_event_loop(Wm* w)
+ 	    wm_handle_client_message(w, &ev.xclient); break;
+ 	  case KeyPress:
+ 	    wm_handle_keypress(w, &ev.xkey); break;
++          case KeyRelease:
++            /* Ignore key release silently as we action events on KeyPress */
++            break;
+ 	  case PropertyNotify:
+ 	    wm_handle_property_change(w, &ev.xproperty); break;
+ 	  case GravityNotify:
