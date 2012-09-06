@@ -3,7 +3,7 @@
 [<!ENTITY % poky SYSTEM "../poky.ent"> %poky; ] >
 
 <article id='intro'>
-   <imagedata fileref="figures/yocto-project-trans.png" width="6in" depth="1in" align="right" scale="25" />
+   <imagedata fileref="figures/yocto-project-transp.png" width="6in" depth="1in" align="right" scale="25" />
 
 <section id='fake-title'>
     <title>The Yocto Project Quick Start</title>
@@ -266,7 +266,8 @@
                 <literallayout class='monospaced'>
      $ sudo zypper install python gcc gcc-c++ libtool fop \
      subversion git chrpath automake make wget xsltproc \
-     diffstat texinfo freeglut-devel libSDL-devel dblatex
+     diffstat texinfo freeglut-devel libSDL-devel dblatex \
+     python-curses
                 </literallayout>
         </section>
 

@@ -887,7 +887,7 @@
         can be reviewed and merged by the appropriate maintainer.
         For a list of the Yocto Project and related mailing lists, see the
         "<ulink url='&YOCTO_DOCS_REF_URL;#resources-mailinglist'>Mailing lists</ulink>" section in 
-        The Yocto Project Reference Manual.
+        the Yocto Project Reference Manual.
     </para>
 
     <para>
@@ -987,11 +987,11 @@
                 your detailed description.
                 For example, the Yocto Project uses a specific convention for bug
                 references - any commit that addresses a specific bug should include the
-                bug ID in the description (typically at the end) as follows:
+                bug ID in the description (typically at the beginning) as follows:
                 <literallayout class='monospaced'>
-     &lt;detailed description of change&gt;
-
      [YOCTO #&lt;bug-id&gt;]
+
+     &lt;detailed description of change&gt;
                 </literallayout></para></listitem>
                 Where &lt;bug-id&gt; is replaced with the specific bug ID from the
                 Yocto Project Bugzilla instance.
@@ -1005,11 +1005,12 @@
     </para>
 
     <para>
-        Following are general instructions for both pushing changes upstream and for submitting changes as patches.
+        Following are general instructions for both pushing changes upstream and for submitting 
+        changes as patches.
     </para> 
 
     <section id='pushing-a-change-upstream'>
-        <title>Pushing a Change Upstream and Requesting a Pull</title>
+        <title>Using Scripts to Push a Change Upstream and Request a Pull</title>
 
         <para>
             The basic flow for pushing a change to an upstream "contrib" Git repository is as follows:
@@ -1029,6 +1030,11 @@
                     <filename>send-pull-request</filename>.
                     You can find these scripts in the <filename>scripts</filename> directory of the 
                     Yocto Project file structure.</para>
+                    <para>Using these scripts correctly formats the requests without introducing any
+                    whitespace or HTML formatting.
+                    The maintainer that receives your patches needs to be able to save and apply them 
+                    directly from your emails.
+                    Using these scripts is the preferred method for sending patches.</para>
                     <para>For help on using these scripts, simply provide the 
                     <filename>-h</filename> argument as follows:
                     <literallayout class='monospaced'>
@@ -1045,11 +1051,15 @@
     </section>
 
     <section id='submitting-a-patch'>
-        <title>Submitting a Patch Through Email</title>
+        <title>Using Email to Submit a Patch</title>
 
         <para>
-            If you have a just few changes, you can commit them and then submit them as an 
-            email to the maintainer.
+            You can submit patches without using the <filename>create-pull-request</filename> and 
+            <filename>send-pull-request</filename> scripts described in the previous section.
+            Keep in mind, the preferred method is to use the scripts, however.
+        </para>
+
+        <para>
             Depending on the components changed, you need to submit the email to a specific
             mailing list.
             For some guidance on which mailing list to use, see the list in the 
@@ -1061,7 +1071,8 @@
         </para>
 
         <para>            
-            Here is the general procedure on how to submit a patch through email:
+            Here is the general procedure on how to submit a patch through email without using the 
+            scripts:
             <itemizedlist>
                 <listitem><para>Make your changes in your local Git repository.</para></listitem>
                 <listitem><para>Stage your changes by using the <filename>git add</filename>
@@ -1099,16 +1110,9 @@
                     For information on the <filename>git format-patch</filename> command, 
                     see <filename>GIT_FORMAT_PATCH(1)</filename> displayed using the  
                     <filename>man git-format-patch</filename> command.</para>
-                    <note>If you have many patches to submit, you might consider using the 
-                    method described in the "<link linkend='pushing-a-change-upstream'>Pushing
-                    a change Upstream and Requesting a Pull</link>" section described 
-                    earlier in the manual.
-                    This method uses the <filename>create-pull-request</filename> and 
-                    <filename>send-pull-request</filename> scripts that automate much of the 
-                    process.
-                    You might also consider requesting a contrib area and the associated rights
-                    needed if you become a regular contributor to either the Yocto Project or 
-                    OpenEmbedded.</note></listitem>
+                    <note>If you are or will be a frequent contributor to the Yocto Project
+                    or to OpenEmbedded, you might consider requesting a contrib area and the 
+                    necessary associated rights.</note></listitem>
                 <listitem><para>Import the files into your mail client by using the 
                     <filename>git send-email</filename> command.
                     <note>In order to use <filename>git send-email</filename>, you must have the 

@@ -1,13 +1,13 @@
 DESCRIPTION = "An image you can boot and run using either the VMware Player or VMware Workstation.  For more information, see the<a href='http://www.yoctoproject.org/documentation/build-appliance'>Build Appliance page</a>."
-IMAGE_INSTALL = "task-core-boot task-core-apps-console task-core-ssh-openssh task-self-hosted"
+IMAGE_INSTALL = "packagegroup-core-boot packagegroup-core-ssh-openssh packagegroup-self-hosted"
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=3f40d7994397109285ec7b81fdeb3b58 \
                     file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
-PR = "r15"
+PR = "r16"
 
-IMAGE_FEATURES += "x11-mini package-management"
+IMAGE_FEATURES += "x11-base package-management splash"
 
 # Ensure there's enough space to do a core-image-sato build, with rm_work enabled
 IMAGE_ROOTFS_EXTRA_SPACE = "41943040"
@@ -15,11 +15,12 @@ IMAGE_ROOTFS_EXTRA_SPACE = "41943040"
 # Do a quiet boot with limited console messages
 APPEND += "quiet"
 
+DEPENDS = "zip-native"
 IMAGE_FSTYPES = "vmdk"
 
 inherit core-image
 
-SRCREV = "86a6410fcbfb43e74aa1c9c995a21129d8434f75"
+SRCREV = "f0f23f1741c29baa9601c5fa6b6b4a18175be7c5"
 SRC_URI = "git://git.yoctoproject.org/poky;protocol=git \
            file://Yocto_Build_Appliance.vmx \
            file://Yocto_Build_Appliance.vmxf \

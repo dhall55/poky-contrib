@@ -22,6 +22,7 @@ confirm=
 fsym=
 total_deleted=0
 verbose=
+debug=0
 
 usage () {
   cat << EOF
@@ -68,6 +69,9 @@ Options:
 
   -v, --verbose
         explain what is being done
+
+  -d, --debug
+        show debug info, repeat for more debug info
 
 EOF
 }
@@ -153,8 +157,10 @@ gen_rmlist (){
 remove_duplicated () {
 
   local topdir
+  local oe_core_dir
   local tunedirs
   local all_archs
+  local all_machines
   local ava_archs
   local arch
   local file_names
@@ -164,14 +170,16 @@ remove_duplicated () {
 
   # Find out the archs in all the layers
   echo -n "Figuring out the archs in the layers ... "
-  topdir=$(dirname $(dirname $(readlink -e $0)))
-  tunedirs="`find $topdir/meta* $layers -path '*/meta*/conf/machine/include'`"
+  oe_core_dir=$(dirname $(dirname $(readlink -e $0)))
+  topdir=$(dirname $oe_core_dir)
+  tunedirs="`find $topdir/meta* ${oe_core_dir}/meta* $layers -path '*/meta*/conf/machine/include'`"
   [ -n "$tunedirs" ] || echo_error "Can't find the tune directory"
-  all_archs=`grep -r -h "^AVAILTUNES " $tunedirs | sed -e 's/.*=//' -e 's/\"//g'`
+  all_machines="`find $topdir/meta* ${oe_core_dir}/meta* $layers -path '*/meta*/conf/machine/*' -name '*.conf' | sed -e 's/.*\///' -e 's/.conf$//'`"
+  all_archs=`grep -r -h "^AVAILTUNES .*=" $tunedirs | sed -e 's/.*=//' -e 's/\"//g'`
   # Add the qemu and native archs
   # Use the "_" to substitute "-", e.g., x86-64 to x86_64
   # Sort to remove the duplicated ones
-  all_archs=$(echo $all_archs qemuarm qemux86 qemumips qemuppc qemux86_64 $(uname -m) \
+  all_archs=$(echo $all_archs $all_machines $(uname -m) \
           | sed -e 's/-/_/g' -e 's/ /\n/g' | sort -u)
   echo "Done"
 
@@ -209,31 +217,38 @@ remove_duplicated () {
       for fn in $file_names; do
           [ -z "$verbose" ] || echo "Analyzing $fn-xxx_$suffix.tgz"
           for arch in $ava_archs; do
-              grep -h "/$fn-$arch-" $list_suffix >>$fn_tmp
-          done
-          # Use the modification time
-          to_del=$(ls -t $(cat $fn_tmp) | sed -n '1!p')
-          # The sstate file which is downloaded from the SSTATE_MIRROR is
-          # put in SSTATE_DIR, and there is a symlink in SSTATE_DIR/??/ to
-          # it, so filter it out from the remove list if it should not be
-          # removed.
-          to_keep=$(ls -t $(cat $fn_tmp) | sed -n '1p')
-          for k in $to_keep; do
-              if [ -L "$k" ]; then
-                  # The symlink's destination
-                  k_dest="`readlink -e $k`"
-                  # Maybe it is the one in cache_dir
-                  k_maybe="$cache_dir/${k##/*/}"
-                  # Remove it from the remove list if they are the same.
-                  if [ "$k_dest" = "$k_maybe" ]; then
-                      to_del="`echo $to_del | sed 's#'\"$k_maybe\"'##g'`"
-                  fi
+              grep -h "/$fn-$arch-" $list_suffix >$fn_tmp
+              if [ -s $fn_tmp ] ; then
+                  [ $debug -gt 1 ] && echo "Available files for $fn-$arch- with suffix $suffix:" && cat $fn_tmp
+                  # Use the modification time
+                  to_del=$(ls -t $(cat $fn_tmp) | sed -n '1!p')
+                  [ $debug -gt 2 ] && echo "Considering to delete: $to_del"
+                  # The sstate file which is downloaded from the SSTATE_MIRROR is
+                  # put in SSTATE_DIR, and there is a symlink in SSTATE_DIR/??/ to
+                  # it, so filter it out from the remove list if it should not be
+                  # removed.
+                  to_keep=$(ls -t $(cat $fn_tmp) | sed -n '1p')
+                  [ $debug -gt 2 ] && echo "Considering to keep: $to_keep"
+                  for k in $to_keep; do
+                      if [ -L "$k" ]; then
+                          # The symlink's destination
+                          k_dest="`readlink -e $k`"
+                          # Maybe it is the one in cache_dir
+                          k_maybe="$cache_dir/${k##/*/}"
+                          # Remove it from the remove list if they are the same.
+                          if [ "$k_dest" = "$k_maybe" ]; then
+                              to_del="`echo $to_del | sed 's#'\"$k_maybe\"'##g'`"
+                          fi
+                      fi
+                  done
+                  rm -f $fn_tmp
+                  [ $debug -gt 2 ] && echo "Decided to delete: $to_del"
+                  gen_rmlist $rm_list "$to_del"
               fi
           done
-          rm -f $fn_tmp
-          gen_rmlist $rm_list "$to_del"
       done
       [ ! -s "$rm_list" ] || deleted=`cat $rm_list | wc -l`
+      [ -s "$rm_list" -a $debug -gt 0 ] && cat $rm_list
       echo "($deleted files will be removed)"
       let total_deleted=$total_deleted+$deleted
   done
@@ -292,7 +307,7 @@ rm_by_stamps (){
 
   echo -n "Figuring out the files which will be removed ... "
   for i in $all_sums; do
-      grep ".*-${i}_*" $cache_list >>$keep_list
+      grep ".*-${i}_.*" $cache_list >>$keep_list
   done
   echo "Done"
 
@@ -302,6 +317,7 @@ rm_by_stamps (){
       gen_rmlist $rm_list "$to_del"
       let total_deleted=(`cat $rm_list | wc -w`)
       if [ $total_deleted -gt 0 ]; then
+          [ $debug -gt 0 ] && cat $rm_list
           read_confirm
           if [ "$confirm" = "y" -o "$confirm" = "Y" ]; then
               echo "Removing sstate cache files ... ($total_deleted files)"
@@ -368,6 +384,11 @@ while [ -n "$1" ]; do
         ;;
     --verbose|-v)
       verbose="-v"
+      shift
+        ;;
+    --debug)
+      debug=`expr $debug + 1`
+      echo "Debug level $debug"
       shift
         ;;
     --help|-h)

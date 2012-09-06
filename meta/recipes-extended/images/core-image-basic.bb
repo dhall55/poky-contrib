@@ -1,13 +1,11 @@
-DESCRIPTION = "A foundational basic image without support for X that can be \
-reasonably used for customization."
+DESCRIPTION = "A console-only image with more full-featured Linux system \
+functionality installed."
 
-IMAGE_FEATURES += "apps-console-core ssh-server-openssh"
+IMAGE_FEATURES += "splash ssh-server-openssh"
 
 IMAGE_INSTALL = "\
-    task-core-boot \
-    task-core-basic \
+    packagegroup-core-boot \
+    packagegroup-core-basic \
     "
-
-#    ${CORE_IMAGE_BASE_INSTALL} 
 
 inherit core-image
