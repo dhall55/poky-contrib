@@ -36,9 +36,14 @@ EXTRA_OECONF = "--disable-oggtest --disable-id3libtest \
                 --without-xmms-exec-prefix \
                 --without-libiconv-prefix \
                 --without-id3lib"
+
+FLACOVERRIDE = ":${DEFAULTTUNE}"
+OVERRIDES .= "${FLACOVERRIDE}"
+
 EXTRA_OECONF_prepend_e500mc = "--disable-altivec "
 EXTRA_OECONF_prepend_e5500 = "--disable-altivec "
 EXTRA_OECONF_prepend_e5500-64b = "--disable-altivec "
+EXTRA_OECONF_prepend_ppce300c3 = "--disable-altivec "
 
 PACKAGES += "libflac libflac++ liboggflac liboggflac++"
 FILES_${PN} = "${bindir}/*"
