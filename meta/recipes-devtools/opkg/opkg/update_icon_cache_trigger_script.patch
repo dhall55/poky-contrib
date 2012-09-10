@@ -1,0 +1,23 @@
+Index: trunk/intercept/update_icon_cache
+===================================================================
+--- /dev/null
++++ trunk/intercept/update_icon_cache
+@@ -0,0 +1,18 @@
++#!/bin/sh
++
++if [ ! -f $OPKG_INTERCEPT_DIR/update_icon_cache ]; then
++  cat << "EOF" > $OPKG_INTERCEPT_DIR/update_icon_cache
++# Update the pixbuf loaders in case they haven't been registered yet
++GDK_PIXBUF_MODULEDIR=/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders gdk-pixbuf-query-loaders --update-cache
++
++for icondir in /usr/share/icons/* ; do
++    if [ -d $icondir ] ; then
++        gtk-update-icon-cache -fqt  $icondir
++    fi
++done
++}
++EOF
++
++  chmod +x $OPKG_INTERCEPT_DIR/update_icon_cache
++fi
++
