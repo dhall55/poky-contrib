@@ -1,4 +1,5 @@
 Upstream-Status: Backport [debian]
+Signed-Off-By: Constantin Musca <constantinx.musca@intel.com>
 
 Index: openssl-0.9.8m/apps/CA.pl.in
 ===================================================================
