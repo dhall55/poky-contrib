@@ -101,6 +101,7 @@ class HobHandler(gobject.GObject):
             self.generating = False
 
     def runCommand(self, commandline):
+        print( ">>>>>>>> runCommand: ", commandline )
         try:
             return self.server.runCommand(commandline)
         except Exception as e:
@@ -160,7 +161,7 @@ class HobHandler(gobject.GObject):
     def handle_event(self, event):
         if not event:
             return
-
+        print( ">>>>> handle_event: ", type( event ) )
         if self.building:
             self.current_phase = "building"
             self.build.handle_event(event)

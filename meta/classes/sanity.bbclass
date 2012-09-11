@@ -177,8 +177,8 @@ def check_path_length(filepath, pathname, limit):
     return ""
 
 def check_connectivity(d):
-    bb.error( "STARTING" )
-    a = 1 / 0
+    bb.error( "STARTING1" )
+    print "STARTING2"
     # URI's to check can be set in the CONNECTIVITY_CHECK_URIS variable
     # using the same syntax as for SRC_URI. If the variable is not set
     # the check is skipped
@@ -194,14 +194,14 @@ def check_connectivity(d):
     data.delVar('PREMIRRORS')
     data.delVar('MIRRORS')
     if check_enabled and network_enabled:
-        bb.error( "STARTING NETWORK TESTS" )
+        print "STARTING NETWORK TESTS", test_uris
         try:
             fetcher = bb.fetch2.Fetch(test_uris, data)
             bb.error( "NETWORK STATUS: @1" )
             fetcher.checkstatus()
             bb.error( "NETWORK STATUS: @2" )
         except Exception:
-            bb.error( "GOT EXCEPTION ON NETWORK TESTS" )
+            print "GOT EXCEPTION ON NETWORK TESTS"
             # Allow the message to be configured so that users can be
             # pointed to a support mechanism.
             msg = data.getVar('CONNECTIVITY_CHECK_MSG', True) or ""
