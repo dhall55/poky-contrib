@@ -168,6 +168,8 @@ DESCRIPTION_packagegroup-core-lsb-perl = "Packages required to support libraries
     specified in the LSB Runtime languages specification (Perl parts)"
 RDEPENDS_packagegroup-core-lsb-perl = "\
     perl \
+    perl-dev \
+    perl-doc \
     perl-modules \
     perl-misc \
     perl-pod \
