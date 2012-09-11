@@ -3,7 +3,7 @@ require eglibc.inc
 SRCREV = "20393"
 
 DEPENDS += "gperf-native kconfig-frontends-native"
-PR = "r10"
+PR = "r11"
 PR_append = "+svnr${SRCPV}"
 
 EGLIBC_BRANCH="eglibc-2_16"
@@ -13,7 +13,7 @@ SRC_URI = "svn://www.eglibc.org/svn/branches/;module=${EGLIBC_BRANCH};protocol=h
            file://mips-rld-map-check.patch \
            file://etc/ld.so.conf \
            file://generate-supported.mk \
-           file://ppc-sqrt.patch \
+	   file://glibc.fix_sqrt2.patch \
            file://multilib_readlib.patch \
            file://use-sysroot-cxx-headers.patch \
            file://ppc-sqrt_finite.patch \
