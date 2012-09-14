@@ -183,7 +183,7 @@ class ImageDetailsPage (HobPage):
         self.pack_start(self.group_align, expand=True, fill=True)
 
         self.build_result = None
-        if self.build_succeeded:
+        if self.build_succeeded and self.builder.current_step == self.builder.IMAGE_GENERATING:
             # building is the previous step
             icon = gtk.Image()
             pixmap_path = hic.ICON_INDI_CONFIRM_FILE
@@ -239,7 +239,7 @@ class ImageDetailsPage (HobPage):
         is_runnable = self.create_bottom_buttons(self.buttonlist, self.toggled_image)
 
         # Generated image files info
-        varlist = ["Name: ", "FileCreated: ", "Directory: "]
+        varlist = ["Name: ", "Files created: ", "Directory: "]
         vallist = []
 
         vallist.append(image_name.split('.')[0])
@@ -389,7 +389,13 @@ class ImageDetailsPage (HobPage):
         label = gtk.Label()
         label.set_use_markup(True)
         label.set_alignment(0.0, 0.5)
-        label.set_markup("<span font_desc='12'>Select the image file you want to %s</span>" % primary_action)
+        label.set_padding(12,0)
+        if primary_action == "Run image":
+            label.set_markup("<span font_desc='12'>Select the image file you want to run:</span>")
+        elif primary_action == "Deploy image":
+            label.set_markup("<span font_desc='12'>Select the image file you want to deploy:</span>")
+        else:
+            label.set_markup("<span font_desc='12'>Select the image file you want to %s</span>" % primary_action)
         dialog.vbox.pack_start(label, expand=False, fill=False)
 
         # filter created images as action attribution (deploy or run)
@@ -418,12 +424,12 @@ class ImageDetailsPage (HobPage):
             sel_btn.set_active(fileitem['is_toggled'])
             sel_btn.connect('toggled', self.table_selected_cb, fileitem)
             if curr_row < 10:
-                table.attach(sel_btn, 2, 5, curr_row, curr_row + 1)
+                table.attach(sel_btn, 0, 4, curr_row, curr_row + 1, xpadding=24)
             else:
-                table.attach(sel_btn, 7, 10, curr_row - 10, curr_row - 9)
+                table.attach(sel_btn, 5, 9, curr_row - 10, curr_row - 9, xpadding=24)
             curr_row += 1
 
-        dialog.vbox.pack_start(table, expand=False, fill=False, padding = 6)
+        dialog.vbox.pack_start(table, expand=False, fill=False, padding=6)
 
         button = dialog.add_button("Cancel", gtk.RESPONSE_CANCEL)
         HobAltButton.style_button(button)
@@ -485,8 +491,8 @@ class ImageDetailsPage (HobPage):
         if name in buttonlist and self.test_type_runnable(image_name) and self.test_mach_runnable(image_name):
             if created == True:
                 # separator
-                label = gtk.Label(" or ")
-                self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
+                #label = gtk.Label(" or ")
+                #self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
 
                 # create button "Run image"
                 run_button = HobAltButton("Run image")
@@ -507,8 +513,8 @@ class ImageDetailsPage (HobPage):
         if name in buttonlist:
             if created == True:
                 # separator
-                label = gtk.Label(" or ")
-                self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
+                #label = gtk.Label(" or ")
+                #self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
 
                 # create button "Save as template"
                 save_button = HobAltButton("Save as template")

@@ -33,10 +33,10 @@ from bb.ui.crumbs.hobpages import HobPage
 class RecipeSelectionPage (HobPage):
     pages = [
         {
-         'name'    : 'Included',
+         'name'    : 'Included recipes',
          'tooltip' : 'The recipes currently included for your image',
          'filter'  : { RecipeListModel.COL_INC  : [True],
-                       RecipeListModel.COL_TYPE : ['recipe', 'task'] },
+                       RecipeListModel.COL_TYPE : ['recipe', 'packagegroup'] },
          'columns' : [{
                        'col_name' : 'Recipe name',
                        'col_id'   : RecipeListModel.COL_NAME,
@@ -45,18 +45,18 @@ class RecipeSelectionPage (HobPage):
                        'col_max'  : 400,
                        'expand'   : 'True'
                       }, {
-                       'col_name' : 'Brought in by',
-                       'col_id'   : RecipeListModel.COL_BINB,
-                       'col_style': 'binb',
-                       'col_min'  : 100,
-                       'col_max'  : 500,
-                       'expand'   : 'True'
-                      }, {
                        'col_name' : 'Group',
                        'col_id'   : RecipeListModel.COL_GROUP,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 300,
+                       'expand'   : 'True'
+                      }, {
+                       'col_name' : 'Brought in by',
+                       'col_id'   : RecipeListModel.COL_BINB,
+                       'col_style': 'binb',
+                       'col_min'  : 100,
+                       'col_max'  : 500,
                        'expand'   : 'True'
                       }, {
                        'col_name' : 'Included',
@@ -67,11 +67,18 @@ class RecipeSelectionPage (HobPage):
                       }]
         }, {
          'name'    : 'All recipes',
-         'tooltip' : 'All recipes available in the Yocto Project',
+         'tooltip' : 'All recipes in your configured layers',
          'filter'  : { RecipeListModel.COL_TYPE : ['recipe'] },
          'columns' : [{
                        'col_name' : 'Recipe name',
                        'col_id'   : RecipeListModel.COL_NAME,
+                       'col_style': 'text',
+                       'col_min'  : 100,
+                       'col_max'  : 400,
+                       'expand'   : 'True'
+                      }, {
+                       'col_name' : 'Group',
+                       'col_id'   : RecipeListModel.COL_GROUP,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 400,
@@ -84,13 +91,6 @@ class RecipeSelectionPage (HobPage):
                        'col_max'  : 400,
                        'expand'   : 'True'
                       }, {
-                       'col_name' : 'Group',
-                       'col_id'   : RecipeListModel.COL_GROUP,
-                       'col_style': 'text',
-                       'col_min'  : 100,
-                       'col_max'  : 400,
-                       'expand'   : 'True'
-                      }, {
                        'col_name' : 'Included',
                        'col_id'   : RecipeListModel.COL_INC,
                        'col_style': 'check toggle',
@@ -98,19 +98,12 @@ class RecipeSelectionPage (HobPage):
                        'col_max'  : 100
                       }]
         }, {
-         'name'    : 'Tasks',
-         'tooltip' : 'All tasks available in the Yocto Project',
-         'filter'  : { RecipeListModel.COL_TYPE : ['task'] },
+         'name'    : 'Package Groups',
+         'tooltip' : 'All package groups in your configured layers',
+         'filter'  : { RecipeListModel.COL_TYPE : ['packagegroup'] },
          'columns' : [{
-                       'col_name' : 'Task name',
+                       'col_name' : 'Package group name',
                        'col_id'   : RecipeListModel.COL_NAME,
-                       'col_style': 'text',
-                       'col_min'  : 100,
-                       'col_max'  : 400,
-                       'expand'   : 'True'
-                      }, {
-                       'col_name' : 'Description',
-                       'col_id'   : RecipeListModel.COL_DESC,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 400,
@@ -156,7 +149,7 @@ class RecipeSelectionPage (HobPage):
             filter = page['filter']
             tab.set_model(self.recipe_model.tree_model(filter))
             tab.connect("toggled", self.table_toggled_cb, page['name'])
-            if page['name'] == "Included":
+            if page['name'] == "Included recipes":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
             self.ins.append_page(tab, page['name'], page['tooltip'])
@@ -184,9 +177,9 @@ class RecipeSelectionPage (HobPage):
         self.build_packages_button.connect("clicked", self.build_packages_clicked_cb)
         button_box.pack_end(self.build_packages_button, expand=False, fill=False)
 
-        self.back_button = HobAltButton('<< Back')
+        self.back_button = HobAltButton('Cancel')
         self.back_button.connect("clicked", self.back_button_clicked_cb)
-        button_box.pack_start(self.back_button, expand=False, fill=False)
+        button_box.pack_end(self.back_button, expand=False, fill=False)
 
     def button_click_cb(self, widget, event):
         path, col = widget.table_tree.get_cursor()
@@ -205,13 +198,13 @@ class RecipeSelectionPage (HobPage):
     def refresh_selection(self):
         self.builder.configuration.selected_image = self.recipe_model.get_selected_image()
         _, self.builder.configuration.selected_recipes = self.recipe_model.get_selected_recipes()
-        self.ins.show_indicator_icon("Included", len(self.builder.configuration.selected_recipes))
+        self.ins.show_indicator_icon("Included recipes", len(self.builder.configuration.selected_recipes))
 
     def toggle_item_idle_cb(self, path, view_tree, cell, pagename):
         if not self.recipe_model.path_included(path):
             self.recipe_model.include_item(item_path=path, binb="User Selected", image_contents=False)
         else:
-            if pagename == "Included":
+            if pagename == "Included recipes":
                 self.pre_fadeout_checkout_include(view_tree)
                 self.recipe_model.exclude_item(item_path=path)
                 self.render_fadeout(view_tree, cell)
@@ -243,7 +236,7 @@ class RecipeSelectionPage (HobPage):
         # Check out a model which base on the column COL_FADE_INC,
         # it's save the prev state of column COL_INC before do exclude_item
         filter = { RecipeListModel.COL_FADE_INC  : [True],
-                   RecipeListModel.COL_TYPE      : ['recipe', 'task'] }
+                   RecipeListModel.COL_TYPE      : ['recipe', 'packagegroup'] }
         new_model = self.recipe_model.tree_model(filter, excluded_items_ahead=True)
         tree.set_model(new_model)
 

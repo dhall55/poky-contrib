@@ -192,8 +192,9 @@
                     You might want to reference this information.</para></listitem>
                 <listitem><para><emphasis>Build the image</emphasis>:  The OpenEmbedded build system 
                     uses the BitBake tool to build images based on the type of image you want to create.  
-                    You can find more information on BitBake 
-                    <ulink url='&BITBAKE_DOCS_URL;'>here</ulink>.</para>
+                    You can find more information about BitBake in the user manual, which is found in the 
+                    <filename>bitbake/doc/manual</filename> directory of the 
+                    <link linkend='source-directory'>Source Directory</link>.</para>
                     <para>The build process supports several types of images to satisfy different needs.  
                     See the 
                     "<ulink url='&YOCTO_DOCS_REF_URL;#ref-images'>Images</ulink>" chapter 
@@ -495,8 +496,9 @@
                     <listitem><para><emphasis>Build the image</emphasis>:  The OpenEmbedded 
                         build system uses the BitBake 
                         tool to build images based on the type of image you want to create.  
-                        You can find more information on BitBake 
-                        <ulink url='&BITBAKE_DOCS_URL;'>here</ulink>.</para>
+                        You can find more information on BitBake in the user manual, which is found in the
+                        <filename>bitbake/doc/manual</filename> directory of the 
+                        <link linkend='source-directory'>Source Directory</link>.</para>
                         <para>The build process supports several types of images to satisfy different needs.  
                         See the "<ulink url='&YOCTO_DOCS_REF_URL;#ref-images'>Images</ulink>" chapter in 
                         the Yocto Project Reference Manual for information on supported images.</para></listitem>
@@ -898,24 +900,36 @@
                                 </literallayout>
                                 For this example, the repository is named     
                                 <filename>~/yocto-eclipse</filename>.</para></listitem>
+                            <listitem><para>Be sure you are in the right branch for your Git repository.
+                                For this release set the branch to <filename>1.3_beta</filename>:
+                                <literallayout class='monospaced'>
+     $ git checkout -b 1.3_beta origin/1.3_beta
+                                </literallayout></para></listitem>
                             <listitem><para>Locate the <filename>build.sh</filename> script in the 
                                 Git repository you created in the previous step.
                                 The script is located in the <filename>scripts</filename>.</para></listitem>
                             <listitem><para>Be sure to set and export the <filename>ECLIPSE_HOME</filename> environment
-                                variable to the top-level directory in which you installed the Indigo  
-                                version of Eclipse.
+                                variable to the top-level directory in which you installed your version of Eclipse.
                                 For example, if your Eclipse directory is <filename>$HOME/eclipse</filename>, 
                                 use the following:
                                 <literallayout class='monospaced'>
      $ export ECLIPSE_HOME=$HOME/eclipse
                                 </literallayout></para></listitem>
-                            <listitem><para>Run the <filename>build.sh</filename> script and provide the 
-                                name of the Git branch along with the Yocto Project release you are 
-                                using.
-                                Here is an example that uses the <filename>master</filename> Git repository
-                                and the <filename>1.1M4</filename> release:
+                            <listitem><para>Be sure you have the right branch in the Poky Git repository
+                                checked out.
+                                For example, the following commands checkout the <filename>1.3_beta</filename>
+                                branch in the local Poky Git repository:
                                 <literallayout class='monospaced'>
-     $ scripts/build.sh master 1.1M4 
+     $ cd ~/poky
+     $ git checkout -b 1.3_beta origin/1.3_beta
+                                </literallayout></para></listitem>
+                            <listitem><para>Move back to your Yocto Eclipse directory and 
+                                run the <filename>build.sh</filename> script.  
+                                Provide the name of the Git branch along with the Yocto Project release you are 
+                                using.
+                                Here is an example that uses the <filename>1.3_beta</filename> branches:
+                                <literallayout class='monospaced'>
+     $ scripts/build.sh 1.3_beta 1.3_beta 
                                 </literallayout>
                                 After running the script, the file
                                 <filename>org.yocto.sdk-&lt;release&gt;-&lt;date&gt;-archive.zip</filename>
@@ -928,9 +942,10 @@
                             <listitem><para>Provide anything you want in the "Name" field.</para></listitem>
                             <listitem><para>Click "Archive" and browse to the ZIP file you built 
                                 in step four.  
-                               This ZIP file should not be "unzipped", and must be the 
+                                This ZIP file should not be "unzipped", and must be the 
                                 <filename>*archive.zip</filename> file created by running the 
                                 <filename>build.sh</filename> script.</para></listitem>
+                            <listitem><para>Click through the "Okay" buttons.</para></listitem>
                             <listitem><para>Check the box next to the new entry in the installation window and complete
                         the installation.</para></listitem>
                             <listitem><para>Restart the Eclipse IDE if necessary.</para></listitem>
@@ -1051,10 +1066,17 @@
                                 Developer's Guide for information on how to install the toolchain into the build 
 directory.</para></listitem> 
                             <listitem><para><emphasis>Specify the Sysroot Location:</emphasis>
-                                This location is where the root filesystem for the 
-                                target hardware is created on the development system by the ADT Installer.
-                                The QEMU user-space tools, the 
-                                NFS boot process, and the cross-toolchain all use the sysroot location.
+                                This location is where the root filesystem for the target hardware resides. 
+                                If you used the ADT Installer, then the location is 
+                                <filename>/opt/poky/&lt;release&gt;</filename>.
+                                Additionally, when you use the ADT Installer, the same location is used for 
+                                the QEMU user-space tools and the NFS boot process.</para>
+                                <para>If you used either of the other two methods to install the toolchain, then the 
+                                location of the sysroot filesystem depends on where you separately
+                                extracted and intalled the filesystem.</para>
+                                <para>For information on how to install the toolchain and on how to extract 
+                                and install the sysroot filesystem, see the
+                                "<ulink url='&YOCTO_DOCS_ADT_URL;#installing-the-adt'>Installing the ADT and Toolchains</ulink>" section.
                                 </para></listitem>
                             <listitem><para><emphasis>Select the Target Architecture:</emphasis>
                                 The target architecture is the type of hardware you are 
@@ -1175,7 +1197,11 @@ directory.</para></listitem>
                         The <filename>Yocto Project Settings</filename>
                         Dialog allows you to override those default settings
                         for a given project.</para></listitem>
-                    <listitem><para>Make your configurations for the project and click "OK".</para></listitem>
+                    <listitem><para>Make your configurations for the project and click "OK".
+                        If you are runing the Juno version of Eclipse, you can skip down to the next
+                        section where you build the project. 
+                        If you are not working with Juno, you need to reconfigure the project as 
+                        described in the next step.</para></listitem>
                     <listitem><para>Select <filename>Project -&gt; Reconfigure Project</filename>:   
                         This selection reconfigures the project by running
                        <filename>autogen.sh</filename> in the workspace for your project.  
@@ -1193,7 +1219,9 @@ directory.</para></listitem>
             <title>Building the Project</title>
 
             <para>
-                To build the project, select <filename>Project -&gt; Build Project</filename>.  
+                To build the project in Juno, right click on the project in the navigator pane and select
+                <filename>Build Project</filename>.
+                If you are not running Juno, select <filename>Project -&gt; Build Project</filename>.  
                 The console should update and you can note the cross-compiler you are using.
             </para>
         </section>
@@ -1252,7 +1280,7 @@ directory.</para></listitem>
                         <filename>New Connections</filename> Dialog.</para></listitem>
                     <listitem><para>Use the drop-down menu now in the <filename>Connection</filename> field and pick 
                         the IP Address you entered.</para></listitem>
-                    <listitem><para>Click <filename>Debug</filename> to bring up a login screen 
+                    <listitem><para>Click <filename>Run</filename> to bring up a login screen 
                         and login.</para></listitem>
                     <listitem><para>Accept the debug perspective.</para></listitem>
                 </orderedlist>

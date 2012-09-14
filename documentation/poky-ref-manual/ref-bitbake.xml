@@ -124,10 +124,10 @@
             Once a provider is selected, BitBake resolves all the dependencies for  
             the target. 
             In the case of <filename>core-image-sato</filename>, it would lead to 
-            <filename>task-base.bb</filename>,  
-            which in turn leads to packages like <filename>Contacts</filename>, 
-            <filename>Dates</filename> and <filename>BusyBox</filename>.
-            These packages in turn depend on <filename>eglibc</filename> and the toolchain.
+            <filename>packagegroup-core-x11-sato</filename>, 
+            which in turn leads to recipes like <filename>matchbox-terminal</filename>, 
+            <filename>pcmanfm</filename> and <filename>gthumb</filename>.
+            These recipes in turn depend on <filename>eglibc</filename> and the toolchain.
         </para>
 
         <para>
@@ -185,8 +185,9 @@
   
         <para>
             Dependencies are defined through several variables.
-            You can find information about variables BitBake uses in the 
-            <ulink url='&BITBAKE_DOCS_URL;'>BitBake manual</ulink>. 
+            You can find information about variables BitBake uses in the BitBake documentation,
+            which is found in the <filename>bitbake/doc/manual</filename> directory within the
+            <ulink url='&YOCTO_DOCS_DEV_URL;#source-directory'>Source Directory</ulink>. 
             At a basic level, it is sufficient to know that BitBake uses the 
             <filename><link linkend='var-DEPENDS'>DEPENDS</link></filename> and 
             <filename><link linkend='var-RDEPENDS'>RDEPENDS</link></filename> variables when 
@@ -274,7 +275,7 @@
             <orderedlist>
                 <listitem><para>Tell BitBake to load what you want from the environment
                     into the data store. 
-                    You can do so through the <filename>BB_ENV_WHITELIST</filename>
+                    You can do so through the <filename>BB_ENV_EXTRAWHITE</filename>
                     variable.
                     For example, assume you want to prevent the build system from 
                     accessing your <filename>$HOME/.ccache</filename> directory.
@@ -393,7 +394,9 @@ Options:
             Fetchers are usually triggered by entries in 
             <filename><link linkend='var-SRC_URI'>SRC_URI</link></filename>. 
             You can find information about the options and formats of entries for specific 
-            fetchers in the <ulink url='&BITBAKE_DOCS_URL;'>BitBake manual</ulink>.
+            fetchers in the BitBake manual located in the 
+            <filename>bitbake/doc/manual</filename> directory of the 
+            <ulink url='&YOCTO_DOCS_DEV_URL;#source-directory'>Source Directory</ulink>.
         </para>
 
         <para>

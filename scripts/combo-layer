@@ -174,25 +174,34 @@ def action_init(conf, args):
         if not os.path.exists(ldir):
             logger.info("cloning %s to %s" %(conf.repos[name]['src_uri'], ldir))
             subprocess.check_call("git clone %s %s" % (conf.repos[name]['src_uri'], ldir), shell=True)
-        branch = conf.repos[name].get('branch', "master")
-        runcmd("git checkout %s" % branch, ldir)
     if not os.path.exists(".git"):
         runcmd("git init")
         for name in conf.repos:
             repo = conf.repos[name]
             ldir = repo['local_repo_dir']
-            logger.info("copying data from %s..." % name)
+            branch = repo.get('branch', "master")
+            lastrev = repo.get('last_revision', None)
+            if lastrev and lastrev != "HEAD":
+                initialrev = lastrev
+                if branch:
+                    if not check_rev_branch(name, ldir, lastrev, branch):
+                        sys.exit(1)
+                logger.info("Copying data from %s at specified revision %s..." % (name, lastrev))
+            else:
+                lastrev = None
+                initialrev = branch
+                logger.info("Copying data from %s..." % name)
             dest_dir = repo['dest_dir']
             if dest_dir and dest_dir != ".":
                 extract_dir = os.path.join(os.getcwd(), dest_dir)
                 os.makedirs(extract_dir)
             else:
                 extract_dir = os.getcwd()
-            branch = repo.get('branch', "master")
             file_filter = repo.get('file_filter', "")
-            runcmd("git archive %s | tar -x -C %s %s" % (branch, extract_dir, file_filter), ldir)
-            lastrev = runcmd("git rev-parse %s" % branch, ldir).strip()
-            conf.update(name, "last_revision", lastrev, initmode=True)
+            runcmd("git archive %s | tar -x -C %s %s" % (initialrev, extract_dir, file_filter), ldir)
+            if not lastrev:
+                lastrev = runcmd("git rev-parse %s" % initialrev, ldir).strip()
+                conf.update(name, "last_revision", lastrev, initmode=True)
         runcmd("git add .")
         if conf.localconffile:
             localadded = True
@@ -272,7 +281,7 @@ def drop_to_shell(workdir=None):
     else:
         return True
 
-def check_rev_branch(repodir, rev, branch):
+def check_rev_branch(component, repodir, rev, branch):
     try:
         actualbranch = runcmd("git branch --contains %s" % rev, repodir, printerr=False).rstrip()
     except subprocess.CalledProcessError as e:
@@ -284,10 +293,10 @@ def check_rev_branch(repodir, rev, branch):
     if ' ' in actualbranch:
         actualbranch = actualbranch.split(' ')[-1]
     if not actualbranch:
-        logger.error("Specified revision %s is invalid!" % rev)
+        logger.error("%s: specified revision %s is invalid!" % (component, rev))
         return False
     elif actualbranch != branch:
-        logger.error("Specified revision %s is not on specified branch %s!" % (rev, branch))
+        logger.error("%s: specified revision %s is not on specified branch %s!" % (component, rev, branch))
         return False
     return True
 
@@ -367,7 +376,7 @@ def action_update(conf, args):
             patch_cmd_range = "--root %s" % branch
             rev_cmd_range = branch
         else:
-            if not check_rev_branch(ldir, repo['last_revision'], branch):
+            if not check_rev_branch(name, ldir, repo['last_revision'], branch):
                 sys.exit(1)
             patch_cmd_range = "%s..%s" % (repo['last_revision'], branch)
             rev_cmd_range = patch_cmd_range

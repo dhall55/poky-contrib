@@ -642,7 +642,8 @@ class BBCooker:
         # Calculate priorities for each file
         matched = set()
         for p in self.status.pkg_fn:
-            self.status.bbfile_priority[p] = self.calc_bbfile_priority(p, matched)
+            realfn, cls = bb.cache.Cache.virtualfn2realfn(p)
+            self.status.bbfile_priority[p] = self.calc_bbfile_priority(realfn, matched)
  
         # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
         unmatched = set()
@@ -1691,8 +1692,13 @@ class CookerParser(object):
         except Exception as exc:
             self.error += 1
             etype, value, tb = sys.exc_info()
-            logger.error('Unable to parse %s', value.recipe,
-                         exc_info=(etype, value, exc.traceback))
+            if hasattr(value, "recipe"):
+                logger.error('Unable to parse %s', value.recipe,
+                            exc_info=(etype, value, exc.traceback))
+            else:
+                # Most likely, an exception occurred during raising an exception
+                import traceback
+                logger.error('Exception during parse: %s' % traceback.format_exc())
             self.shutdown(clean=False)
             return False
 

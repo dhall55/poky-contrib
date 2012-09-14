@@ -21,6 +21,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import glib
 import gtk
 import copy
 import os
@@ -28,16 +29,17 @@ import subprocess
 import shlex
 import re
 import logging
+import sys
 from bb.ui.crumbs.template import TemplateMgr
 from bb.ui.crumbs.imageconfigurationpage import ImageConfigurationPage
 from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
 from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
 from bb.ui.crumbs.builddetailspage import BuildDetailsPage
 from bb.ui.crumbs.imagedetailspage import ImageDetailsPage
-from bb.ui.crumbs.hobwidget import hwc, HobButton, HobAltButton, hcc
+from bb.ui.crumbs.hobwidget import hwc, HobButton, HobAltButton
 from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
-                             AdvancedSettingDialog, LayerSelectionDialog, \
-                             DeployImageDialog
+                             AdvancedSettingDialog, SimpleSettingsDialog, \
+                             LayerSelectionDialog, DeployImageDialog
 from bb.ui.crumbs.persistenttooltip import PersistentTooltip
 import bb.ui.crumbs.utils
 
@@ -123,6 +125,7 @@ class Configuration:
         self.selected_image = None
         self.selected_recipes = []
         self.selected_packages = []
+        self.initial_selected_packages = []
 
     def split_proxy(self, protocol, proxy):
         entry = []
@@ -376,15 +379,6 @@ class Builder(gtk.Window):
         END_NOOP              : None,
     }
 
-    @classmethod
-    def interpret_markup(cls, msg):
-        msg = msg.replace('&', '&amp;')
-        msg = msg.replace('<', '&lt;')
-        msg = msg.replace('>', '&gt;')
-        msg = msg.replace('"', '&quot;')
-        msg = msg.replace("'", "&acute;")
-        return msg
-
     def __init__(self, hobHandler, recipe_model, package_model):
         super(Builder, self).__init__()
 
@@ -457,8 +451,14 @@ class Builder(gtk.Window):
         self.set_title("Hob")
         self.set_icon_name("applications-development")
         self.set_resizable(True)
-        window_width = self.get_screen().get_width()
-        window_height = self.get_screen().get_height()
+
+        try:
+            window_width = self.get_screen().get_width()
+            window_height = self.get_screen().get_height()
+        except AttributeError:
+            print "Please set DISPLAY variable before running Hob."
+            sys.exit(1)
+
         if window_width >= hwc.MAIN_WIN_WIDTH:
             window_width = hwc.MAIN_WIN_WIDTH
             window_height = hwc.MAIN_WIN_HEIGHT
@@ -518,6 +518,12 @@ class Builder(gtk.Window):
         self.set_user_config()
         self.handler.reset_build()
         self.handler.generate_packages(all_recipes, self.configuration.default_task)
+
+    def restore_initial_selected_packages(self):
+        self.package_model.set_selected_packages(self.configuration.initial_selected_packages)
+        for package in self.configuration.selected_packages:
+            if package not in self.configuration.initial_selected_packages:
+                self.package_model.exclude_item(self.package_model.find_path_for_item(package))
 
     def fast_generate_image_async(self, log = False):
         self.switch_page(self.FAST_IMAGE_GENERATING)
@@ -646,6 +652,7 @@ class Builder(gtk.Window):
                 self.recipe_details_page.set_recipe_curr_tab(self.recipe_details_page.INCLUDED)
 
         elif next_step == self.PACKAGE_SELECTION:
+            self.configuration.initial_selected_packages = self.configuration.selected_packages
             if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
                 self.package_details_page.set_packages_curr_tab(self.package_details_page.ALL)
             else:
@@ -768,7 +775,7 @@ class Builder(gtk.Window):
 
     def show_error_dialog(self, msg):
         lbl = "<b>Error</b>\n"
-        lbl = lbl + "%s\n\n" % Builder.interpret_markup(msg)
+        lbl = lbl + "%s\n\n" % glib.markup_escape_text(msg)
         dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
         button = dialog.add_button("Close", gtk.RESPONSE_OK)
         HobButton.style_button(button)
@@ -793,6 +800,7 @@ class Builder(gtk.Window):
         self.image_configuration_page.layer_button.set_sensitive(sensitive)
         self.image_configuration_page.layer_info_icon.set_sensitive(sensitive)
         self.image_configuration_page.toolbar.set_sensitive(sensitive)
+        self.image_configuration_page.view_adv_configuration_button.set_sensitive(sensitive)
         self.image_configuration_page.config_build_button.set_sensitive(sensitive)
 
         self.recipe_details_page.set_sensitive(sensitive)
@@ -893,8 +901,13 @@ class Builder(gtk.Window):
                 linkname = 'hob-image-' + self.configuration.curr_mach
             else:
                 linkname = selected_image + '-' + self.configuration.curr_mach
+            image_extension = self.get_image_extension()
             for image_type in self.parameters.image_types:
-                for real_image_type in hcc.SUPPORTED_IMAGE_TYPES[image_type]:
+                if image_type in image_extension:
+                    real_types = image_extension[image_type]
+                else:
+                    real_types = [image_type]
+                for real_image_type in real_types:
                     linkpath = self.parameters.image_addr + '/' + linkname + '.' + real_image_type
                     if os.path.exists(linkpath):
                         self.parameters.image_names.append(os.readlink(linkpath))
@@ -951,7 +964,7 @@ class Builder(gtk.Window):
         self.build_failed()
 
     def handler_no_provider_cb(self, running_build, msg):
-        dialog = CrumbsMessageDialog(self, Builder.interpret_markup(msg), gtk.STOCK_DIALOG_INFO)
+        dialog = CrumbsMessageDialog(self, glib.markup_escape_text(msg), gtk.STOCK_DIALOG_INFO)
         button = dialog.add_button("Close", gtk.RESPONSE_OK)
         HobButton.style_button(button)
         dialog.run()
@@ -1114,10 +1127,21 @@ class Builder(gtk.Window):
             self.save_template(path)
         dialog.destroy()
 
+    def get_image_extension(self):
+        image_extension = {}
+        for type in self.parameters.image_types:
+            ext = self.handler.runCommand(["getVariable", "IMAGE_EXTENSION_%s" % type])
+            if ext:
+                image_extension[type] = ext.split(' ')
+
+        return image_extension
+
     def show_load_my_images_dialog(self):
+        image_extension = self.get_image_extension()
         dialog = ImageSelectionDialog(self.parameters.image_addr, self.parameters.image_types,
                                       "Open My Images", self,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE)
+                                       gtk.FILE_CHOOSER_ACTION_SAVE, None,
+                                       image_extension)
         button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
         HobAltButton.style_button(button)
         button = dialog.add_button("Open", gtk.RESPONSE_YES)
@@ -1141,7 +1165,32 @@ class Builder(gtk.Window):
         dialog.destroy()
 
     def show_adv_settings_dialog(self):
-        dialog = AdvancedSettingDialog(title = "Settings",
+        dialog = AdvancedSettingDialog(title = "Advanced configuration",
+            configuration = copy.deepcopy(self.configuration),
+            all_image_types = self.parameters.image_types,
+            all_package_formats = self.parameters.all_package_formats,
+            all_distros = self.parameters.all_distros,
+            all_sdk_machines = self.parameters.all_sdk_machines,
+            max_threads = self.parameters.max_threads,
+            parent = self,
+            flags = gtk.DIALOG_MODAL
+                    | gtk.DIALOG_DESTROY_WITH_PARENT
+                    | gtk.DIALOG_NO_SEPARATOR)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Save", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
+        response = dialog.run()
+        settings_changed = False
+        if response == gtk.RESPONSE_YES:
+            self.configuration = dialog.configuration
+            self.save_defaults() # remember settings
+            settings_changed = dialog.settings_changed
+        dialog.destroy()
+        return response == gtk.RESPONSE_YES, settings_changed
+
+    def show_simple_settings_dialog(self):
+        dialog = SimpleSettingsDialog(title = "Settings",
             configuration = copy.deepcopy(self.configuration),
             all_image_types = self.parameters.image_types,
             all_package_formats = self.parameters.all_package_formats,

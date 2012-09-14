@@ -145,6 +145,12 @@ class PackageListModel(gtk.TreeStore):
         self.pkg_path = {}
         self.rprov_pkg = {}
 
+        def getpkgvalue(pkgdict, key, pkgname, defaultval = None):
+            value = pkgdict.get('%s_%s' % (key, pkgname), None)
+            if not value:
+                value = pkgdict.get(key, defaultval)
+            return value
+
         for pkginfo in pkginfolist:
             pn = pkginfo['PN']
             pv = pkginfo['PV']
@@ -157,25 +163,24 @@ class PackageListModel(gtk.TreeStore):
                                  self.COL_INC, False)
                 self.pn_path[pn] = self.get_path(pniter)
 
+            # PKG is always present
             pkg = pkginfo['PKG']
-            pkgv = pkginfo['PKGV']
-            pkgr = pkginfo['PKGR']
-            pkgsize = pkginfo['PKGSIZE_%s' % pkg] if 'PKGSIZE_%s' % pkg in pkginfo.keys() else "0"
-            pkg_rename = pkginfo['PKG_%s' % pkg] if 'PKG_%s' % pkg in pkginfo.keys() else ""
-            section = pkginfo['SECTION_%s' % pkg] if 'SECTION_%s' % pkg in pkginfo.keys() else ""
-            summary = pkginfo['SUMMARY_%s' % pkg] if 'SUMMARY_%s' % pkg in pkginfo.keys() else ""
-            rdep = pkginfo['RDEPENDS_%s' % pkg] if 'RDEPENDS_%s' % pkg in pkginfo.keys() else ""
-            rrec = pkginfo['RRECOMMENDS_%s' % pkg] if 'RRECOMMENDS_%s' % pkg in pkginfo.keys() else ""
-            rprov = pkginfo['RPROVIDES_%s' % pkg] if 'RPROVIDES_%s' % pkg in pkginfo.keys() else ""
+            pkgv = getpkgvalue(pkginfo, 'PKGV', pkg)
+            pkgr = getpkgvalue(pkginfo, 'PKGR', pkg)
+            # PKGSIZE is artificial, will always be overridden with the package name if present
+            pkgsize = pkginfo.get('PKGSIZE_%s' % pkg, "0")
+            # PKG_%s is the renamed version
+            pkg_rename = pkginfo.get('PKG_%s' % pkg, "")
+            # The rest may be overridden or not
+            section = getpkgvalue(pkginfo, 'SECTION', pkg, "")
+            summary = getpkgvalue(pkginfo, 'SUMMARY', pkg, "")
+            rdep = getpkgvalue(pkginfo, 'RDEPENDS', pkg, "")
+            rrec = getpkgvalue(pkginfo, 'RRECOMMENDS', pkg, "")
+            rprov = getpkgvalue(pkginfo, 'RPROVIDES', pkg, "")
             for i in rprov.split():
                 self.rprov_pkg[i] = pkg
 
-            if 'ALLOW_EMPTY_%s' % pkg in pkginfo.keys():
-                allow_empty = pkginfo['ALLOW_EMPTY_%s' % pkg]
-            elif 'ALLOW_EMPTY' in pkginfo.keys():
-                allow_empty = pkginfo['ALLOW_EMPTY']
-            else:
-                allow_empty = ""
+            allow_empty = getpkgvalue(pkginfo, 'ALLOW_EMPTY', pkg, "")
 
             if pkgsize == "0" and not allow_empty:
                 continue
@@ -521,17 +526,24 @@ class RecipeListModel(gtk.ListStore):
         val2 = model.get_value(iter2, RecipeListModel.COL_INC)
         return ((val1 == True) and (val2 == False))
 
+    def include_item_sort_func(self, model, iter1, iter2):
+        val1 = model.get_value(iter1, RecipeListModel.COL_INC)
+        val2 = model.get_value(iter2, RecipeListModel.COL_INC)
+        return ((val1 == False) and (val2 == True))
+
     """
     Create, if required, and return a filtered gtk.TreeModelSort
     containing only the items which are items specified by filter
     """
-    def tree_model(self, filter, excluded_items_ahead=False):
+    def tree_model(self, filter, excluded_items_ahead=False, included_items_ahead=True):
         model = self.filter_new()
         model.set_visible_func(self.tree_model_filter, filter)
 
         sort = gtk.TreeModelSort(model)
         if excluded_items_ahead:
             sort.set_default_sort_func(self.exclude_item_sort_func)
+        elif included_items_ahead:
+            sort.set_default_sort_func(self.include_item_sort_func)
         else:
             sort.set_sort_column_id(RecipeListModel.COL_NAME, gtk.SORT_ASCENDING)
             sort.set_default_sort_func(None)
@@ -583,8 +595,8 @@ class RecipeListModel(gtk.ListStore):
 
             depends = event_model["depends"].get(item, []) + event_model["rdepends-pn"].get(item, [])
 
-            if ('task-' in name):
-                atype = 'task'
+            if ('packagegroup.bbclass' in " ".join(inherits)):
+                atype = 'packagegroup'
             elif ('image.bbclass' in " ".join(inherits)):
                 if name != "hob-image":
                     atype = 'image'

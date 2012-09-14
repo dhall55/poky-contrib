@@ -27,12 +27,12 @@ package_update_index_rpm () {
 	fi
 
 	# Update target packages
-	base_archs="${PACKAGE_ARCHS}"
-	ml_archs="${MULTILIB_PACKAGE_ARCHS}"
+	base_archs="`echo ${PACKAGE_ARCHS} | sed 's/-/_/g'`"
+	ml_archs="`echo ${MULTILIB_PACKAGE_ARCHS} | sed 's/-/_/g'`"
 	package_update_index_rpm_common "${RPMCONF_TARGET_BASE}" base_archs ml_archs
 
 	# Update SDK packages
-	base_archs="${SDK_PACKAGE_ARCHS}"
+	base_archs="`echo ${SDK_PACKAGE_ARCHS} | sed 's/-/_/g'`"
 	package_update_index_rpm_common "${RPMCONF_HOST_BASE}" base_archs
 }
 
@@ -191,7 +191,7 @@ rpm_update_pkg () {
 
         # Attempt to install the incremental pkgs
         if [ -s $installdir/incremental.manifest ]; then
-            rpm_common_comand --nodeps --replacefiles --replacepkgs \
+            rpm_common_comand --replacefiles --replacepkgs \
                -Uvh $installdir/incremental.manifest
         fi
     else
@@ -313,7 +313,14 @@ package_install_internal_rpm () {
 			done
 		fi
 	else
-		mv ${target_rootfs}/install/total_solution.manifest ${target_rootfs}/install/original_solution.manifest
+		# We may run through the complementary installs multiple times.  For each time
+		# we should add the previous solution manifest to the full "original" set to
+		# avoid duplicate install steps.
+		echo "Update original solution..."
+		cat ${target_rootfs}/install/initial_solution.manifest >> ${target_rootfs}/install/original_solution.manifest
+		cat ${target_rootfs}/install/total_solution.manifest >> ${target_rootfs}/install/original_solution.manifest
+		rm ${target_rootfs}/install/initial_solution.manifest
+		rm ${target_rootfs}/install/total_solution.manifest
 	fi
 
 	# Setup manifest of packages to install...
@@ -517,7 +524,7 @@ EOF
 			${target_rootfs}/install/original_solution_sorted.manifest > \
 			${target_rootfs}/install/diff.manifest
 		mv ${target_rootfs}/install/diff.manifest ${target_rootfs}/install/total_solution.manifest
-	elif [ "${INC_RPM_IMAGE_GEN}" = "1" -a -d "${target_rootfs}${rpmlibdir}" ]; then
+	elif [ "${INC_RPM_IMAGE_GEN}" = "1" -a -f "${target_rootfs}/etc/passwd" ]; then
 		echo "Skipping pre install due to existing image"
 	else
 		# RPM is special. It can't handle dependencies and preinstall scripts correctly. Its
@@ -1113,8 +1120,8 @@ python do_package_rpm () {
     rpmbuild = d.getVar('RPMBUILD', True)
     targetsys = d.getVar('TARGET_SYS', True)
     targetvendor = d.getVar('TARGET_VENDOR', True)
-    package_arch = d.getVar('PACKAGE_ARCH', True) or ""
-    if package_arch not in "all any noarch".split() and not package_arch.endswith("-nativesdk"):
+    package_arch = (d.getVar('PACKAGE_ARCH', True) or "").replace("-", "_")
+    if package_arch not in "all any noarch".split() and not package_arch.endswith("_nativesdk"):
         ml_prefix = (d.getVar('MLPREFIX', True) or "").replace("-", "_")
         d.setVar('PACKAGE_ARCH_EXTEND', ml_prefix + package_arch)
     else:

@@ -80,35 +80,48 @@ license_create_manifest() {
 	# Get list of installed packages
 	list_installed_packages | grep -v "locale" |sort > ${LICENSE_DIRECTORY}/${IMAGE_NAME}/package.manifest
 	INSTALLED_PKGS=`cat ${LICENSE_DIRECTORY}/${IMAGE_NAME}/package.manifest`
+	LICENSE_MANIFEST="${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest"
 	# remove existing license.manifest file
-	if [ -f ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest ]; then
-		rm ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest
+	if [ -f ${LICENSE_MANIFEST} ]; then
+		rm ${LICENSE_MANIFEST}
 	fi
 	# list of installed packages is broken for deb
 	for pkg in ${INSTALLED_PKGS}; do
 		# not the best way to do this but licenses are not arch dependant iirc
 		filename=`ls ${TMPDIR}/pkgdata/*/runtime-reverse/${pkg}| head -1`
 		pkged_pn="$(sed -n 's/^PN: //p' ${filename})"
-		pkged_lic="$(sed -n '/^LICENSE: /{ s/^LICENSE: //; s/[+|&()*]/ /g; s/  */ /g; p }' ${filename})"
-		pkged_pv="$(sed -n 's/^PV: //p' ${filename})"
-		# check to see if the package name exists in the manifest. if so, bail.
-		if ! grep -q "PACKAGE NAME: ${pkg}" ${filename}; then
-			# exclude local recipes
-			if [ ! "${pkged_pn}" = "*locale*" ]; then
-				echo "PACKAGE NAME:" ${pkg} >> ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest
-				echo "PACKAGE VERSION:" ${pkged_pv} >> ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest
-				echo "RECIPE NAME:" ${pkged_pn} >> ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest
-				echo "LICENSE: " >> ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest
-				for lic in ${pkged_lic}; do
-					if [ -e "${LICENSE_DIRECTORY}/${pkged_pn}/generic_${lic}" ]; then
-						echo ${lic}|sed s'/generic_//'g >> ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest
-					else
-						echo "WARNING: The license listed, " ${lic} " was not in the licenses collected for " ${pkged_pn}>> ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest
-					fi
-				done
-				echo "" >> ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest
-			fi
+
+		# exclude locale recipes
+		if [ "${pkged_pn}" = "*locale*" ]; then
+			continue
 		fi
+
+		# check to see if the package name exists in the manifest. if so, bail.
+		if grep -q "^PACKAGE NAME: ${pkg}" ${LICENSE_MANIFEST}; then
+			continue
+		fi
+
+		pkged_pv="$(sed -n 's/^PV: //p' ${filename})"
+		pkged_name="$(basename $(readlink ${filename}))"
+		pkged_lic="$(sed -n "/^LICENSE_${pkged_name}: /{ s/^LICENSE_${pkged_name}: //; s/[|&()*]/ /g; s/  */ /g; p }" ${filename})"
+		if [ -z ${pkged_lic} ]; then
+			# fallback checking value of LICENSE
+			pkged_lic="$(sed -n "/^LICENSE: /{ s/^LICENSE: //; s/[|&()*]/ /g; s/  */ /g; p }" ${filename})"
+		fi
+
+		echo "PACKAGE NAME:" ${pkg} >> ${LICENSE_MANIFEST}
+		echo "PACKAGE VERSION:" ${pkged_pv} >> ${LICENSE_MANIFEST}
+		echo "RECIPE NAME:" ${pkged_pn} >> ${LICENSE_MANIFEST}
+		echo -n "LICENSE:" >> ${LICENSE_MANIFEST}
+		for lic in ${pkged_lic}; do
+			# to reference a license file trim trailing + symbol
+			if [ -e "${LICENSE_DIRECTORY}/${pkged_pn}/generic_${lic%+}" ]; then
+				echo -n " ${lic}" >> ${LICENSE_MANIFEST}
+			else
+				echo "WARNING: The license listed ${lic} was not in the licenses collected for ${pkged_pn}"
+			fi
+		done
+		echo -e "\n" >> ${LICENSE_MANIFEST}
 	done
 
 	# Two options here:
@@ -117,7 +130,7 @@ license_create_manifest() {
 	# With both options set we see a .5 M increase in core-image-minimal
 	if [ -n "${COPY_LIC_MANIFEST}" ]; then
 		mkdir -p ${IMAGE_ROOTFS}/usr/share/common-licenses/
-		cp ${LICENSE_DIRECTORY}/${IMAGE_NAME}/license.manifest ${IMAGE_ROOTFS}/usr/share/common-licenses/license.manifest
+		cp ${LICENSE_MANIFEST} ${IMAGE_ROOTFS}/usr/share/common-licenses/license.manifest
 		if [ -n "${COPY_LIC_DIRS}" ]; then
 			for pkg in ${INSTALLED_PKGS}; do
 				mkdir -p ${IMAGE_ROOTFS}/usr/share/common-licenses/${pkg}

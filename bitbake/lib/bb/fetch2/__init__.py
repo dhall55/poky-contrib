@@ -54,7 +54,7 @@ class MalformedUrl(BBFetchException):
          msg = "The URL: '%s' is invalid and cannot be interpreted" % url
          self.url = url
          BBFetchException.__init__(self, msg)
-         self.args = url
+         self.args = (url,)
 
 class FetchError(BBFetchException):
     """General fetcher exception when something happens incorrectly"""
@@ -87,7 +87,7 @@ class NoMethodError(BBFetchException):
          msg = "Could not find a fetcher which supports the URL: '%s'" % url
          self.url = url
          BBFetchException.__init__(self, msg)
-         self.args = url
+         self.args = (url,)
 
 class MissingParameterError(BBFetchException):
     """Exception raised when a fetch method is missing a critical parameter in the url"""
@@ -178,6 +178,9 @@ def encodeurl(decoded):
         url += "@"
     if host and type != "file":
         url += "%s" % host
+    # Standardise path to ensure comparisons work
+    while '//' in path:
+        path = path.replace("//", "/")
     url += "%s" % urllib.quote(path)
     if p:
         for parm in p:
@@ -938,7 +941,7 @@ class FetchMethod(object):
                 if dos:
                     cmd = '%s -a' % cmd
                 cmd = "%s '%s'" % (cmd, file)
-            elif file.endswith('.src.rpm') or file.endswith('.srpm'):
+            elif file.endswith('.rpm') or file.endswith('.srpm'):
                 if 'extract' in urldata.parm:
                     unpack_file = urldata.parm.get('extract')
                     cmd = 'rpm2cpio.sh %s | cpio -i %s' % (file, unpack_file)
@@ -946,6 +949,8 @@ class FetchMethod(object):
                     iterate_file = unpack_file
                 else:
                     cmd = 'rpm2cpio.sh %s | cpio -i' % (file)
+            elif file.endswith('.deb') or file.endswith('.ipk'):
+                cmd = 'ar -p %s data.tar.gz | zcat | tar --no-same-owner -xpf -' % file
 
         if not unpack or not cmd:
             # If file == dest, then avoid any copies, as we already put the file into dest!

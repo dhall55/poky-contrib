@@ -6,13 +6,8 @@ SANITY_REQUIRED_UTILITIES ?= "patch diffstat makeinfo git bzip2 tar gzip gawk ch
 
 def raise_sanity_error(msg, d):
     if d.getVar("SANITY_USE_EVENTS", True) == "1":
-        # FIXME: handle when BitBake version is too old to support bb.event.SanityCheckFailed
-        # We can just fire the event directly once the minimum version is bumped beyond 1.15.1
-        try:
-            bb.event.fire(bb.event.SanityCheckFailed(msg), d)
-            return
-        except AttributeError:
-            pass
+        bb.event.fire(bb.event.SanityCheckFailed(msg), d)
+        return
 
     bb.fatal(""" OE-core's config sanity checker detected a potential misconfiguration.
     Either fix the cause of this error or at your own risk disable the checker (see sanity.conf).
@@ -320,13 +315,16 @@ def check_sanity(sanity_data):
         messages = messages + 'Bitbake version %s is required and version %s was found\n' % (minversion, bb.__version__)
 
     # Check that the MACHINE is valid, if it is set
+    machinevalid = True
     if sanity_data.getVar('MACHINE', True):
         if not check_conf_exists("conf/machine/${MACHINE}.conf", sanity_data):
             messages = messages + 'Please set a valid MACHINE in your local.conf or environment\n'
+            machinevalid = False
         else:
             messages = messages + check_sanity_validmachine(sanity_data)
     else:
         messages = messages + 'Please set a MACHINE in your local.conf or environment\n'
+        machinevalid = False
 
     # Check we are using a valid lacal.conf
     current_conf  = sanity_data.getVar('CONF_VERSION', True)
@@ -428,9 +426,10 @@ def check_sanity(sanity_data):
         messages = messages + pseudo_msg + '\n'
 
     check_supported_distro(sanity_data)
-    toolchain_msg = check_toolchain(sanity_data)
-    if toolchain_msg != "":
-        messages = messages + toolchain_msg + '\n'
+    if machinevalid:
+        toolchain_msg = check_toolchain(sanity_data)
+        if toolchain_msg != "":
+            messages = messages + toolchain_msg + '\n'
 
     # Check if DISPLAY is set if IMAGETEST is set
     if not sanity_data.getVar( 'DISPLAY', True ) and sanity_data.getVar( 'IMAGETEST', True ) == 'qemu':

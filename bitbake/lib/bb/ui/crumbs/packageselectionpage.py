@@ -34,12 +34,19 @@ class PackageSelectionPage (HobPage):
 
     pages = [
         {
-         'name'    : 'Included',
+         'name'    : 'Included packages',
+         'tooltip' : 'The packages currently included for your image',
          'filter'  : { PackageListModel.COL_INC : [True] },
          'columns' : [{
                        'col_name' : 'Package name',
                        'col_id'   : PackageListModel.COL_NAME,
-                       'col_t_id' : PackageListModel.COL_FONT,
+                       'col_style': 'text',
+                       'col_min'  : 100,
+                       'col_max'  : 300,
+                       'expand'   : 'True'
+                      }, {
+                       'col_name' : 'Size',
+                       'col_id'   : PackageListModel.COL_SIZE,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 300,
@@ -47,35 +54,24 @@ class PackageSelectionPage (HobPage):
                       }, {
                        'col_name' : 'Brought in by',
                        'col_id'   : PackageListModel.COL_BINB,
-                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'binb',
                        'col_min'  : 100,
                        'col_max'  : 350,
                        'expand'   : 'True'
                       }, {
-                       'col_name' : 'Size',
-                       'col_id'   : PackageListModel.COL_SIZE,
-                       'col_t_id' : PackageListModel.COL_FONT,
-                       'col_style': 'text',
-                       'col_min'  : 100,
-                       'col_max'  : 300,
-                       'expand'   : 'True'
-                      }, {
                        'col_name' : 'Included',
                        'col_id'   : PackageListModel.COL_INC,
-                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'check toggle',
-                       'col_group': 'tree store group',
                        'col_min'  : 100,
                        'col_max'  : 100
                      }]
         }, {
          'name'    : 'All packages',
+         'tooltip' : 'All packages that have been built',
          'filter'  : {},
          'columns' : [{
                        'col_name' : 'Package name',
                        'col_id'   : PackageListModel.COL_NAME,
-                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 400,
@@ -83,7 +79,6 @@ class PackageSelectionPage (HobPage):
                       }, {
                        'col_name' : 'Size',
                        'col_id'   : PackageListModel.COL_SIZE,
-                       'col_t_id' : PackageListModel.COL_FONT,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 500,
@@ -92,7 +87,6 @@ class PackageSelectionPage (HobPage):
                        'col_name' : 'Included',
                        'col_id'   : PackageListModel.COL_INC,
                        'col_style': 'check toggle',
-                       'col_group': 'tree store group',
                        'col_min'  : 100,
                        'col_max'  : 100
                       }]
@@ -131,16 +125,18 @@ class PackageSelectionPage (HobPage):
             filter = page['filter']
             tab.set_model(self.package_model.tree_model(filter))
             tab.connect("toggled", self.table_toggled_cb, page['name'])
-            tab.connect_group_selection(self.table_selected_cb)
-            if page['name'] == "Included":
+            if page['name'] == "Included packages":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            self.ins.append_page(tab, page['name'])
+            self.ins.append_page(tab, page['name'], page['tooltip'])
             self.tables.append(tab)
 
         self.ins.set_entry("Search packages:")
         # set the search entry for each table
         for tab in self.tables:
+            search_tip = "Enter a package name to find it"
+            self.ins.search.set_tooltip_text(search_tip)
+            self.ins.search.props.has_tooltip = True
             tab.set_search_entry(0, self.ins.search)
 
         # add all into the dialog
@@ -157,9 +153,9 @@ class PackageSelectionPage (HobPage):
         self.build_image_button.connect("clicked", self.build_image_clicked_cb)
         self.button_box.pack_end(self.build_image_button, expand=False, fill=False)
 
-        self.back_button = HobAltButton('<< Back')
+        self.back_button = HobAltButton('Cancel')
         self.back_button.connect("clicked", self.back_button_clicked_cb)
-        self.button_box.pack_start(self.back_button, expand=False, fill=False)
+        self.button_box.pack_end(self.back_button, expand=False, fill=False)
 
     def button_click_cb(self, widget, event):
         path, col = widget.table_tree.get_cursor()
@@ -178,14 +174,13 @@ class PackageSelectionPage (HobPage):
         for child in children:
             self.button_box.remove(child)
         # re-packed the buttons as request, add the 'view log' button if build success
-        self.button_box.pack_start(self.back_button, expand=False, fill=False)
         self.button_box.pack_end(self.build_image_button, expand=False, fill=False)
         if log_file:
             view_log_button = HobAltButton("View log")
             view_log_button.connect("clicked", self.view_log_clicked_cb, log_file)
             view_log_button.set_tooltip_text("Open the building log files")
             self.button_box.pack_end(view_log_button, expand=False, fill=False)
-
+        self.button_box.pack_end(self.back_button, expand=False, fill=False)
         self.show_all()
 
     def build_image_clicked_cb(self, button):
@@ -195,6 +190,8 @@ class PackageSelectionPage (HobPage):
         if self.builder.current_step ==  self.builder.PACKAGE_GENERATED:
             self.builder.show_recipes()
         elif self.builder.previous_step ==  self.builder.IMAGE_GENERATED:
+            self.builder.restore_initial_selected_packages()
+            self.refresh_selection()
             self.builder.show_image_details()
 
     def _expand_all(self):
@@ -221,13 +218,13 @@ class PackageSelectionPage (HobPage):
 
         self.label.set_label("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
                             (selected_packages_num, selected_packages_size_str, image_total_size_str))
-        self.ins.show_indicator_icon("Included", selected_packages_num)
+        self.ins.show_indicator_icon("Included packages", selected_packages_num)
 
     def toggle_item_idle_cb(self, path, view_tree, cell, pagename):
         if not self.package_model.path_included(path):
             self.package_model.include_item(item_path=path, binb="User Selected")
         else:
-            if pagename == "Included":
+            if pagename == "Included packages":
                 self.pre_fadeout_checkout_include(view_tree)
                 self.package_model.exclude_item(item_path=path)
                 self.render_fadeout(view_tree, cell)
@@ -284,21 +281,6 @@ class PackageSelectionPage (HobPage):
         tree.set_model(self.package_model.tree_model(self.pages[0]['filter']))
         tree.expand_all()
 
-    def foreach_cell_change_font(self, model, path, iter, paths=None):
-        # Changed the font for a group cells
-        if path and iter and path[0] == paths[0]:
-            self.package_model.set(iter, self.package_model.COL_FONT, "bold")
-        else:
-            if iter and model.iter_parent(iter) == None:
-                self.package_model.set(iter, self.package_model.COL_FONT, '11')
-            else:
-                self.package_model.set(iter, self.package_model.COL_FONT, '10')
-
-    def table_selected_cb(self, selection):
-        model, paths = selection.get_selected_rows()
-        if paths:
-            child_path = self.package_model.convert_vpath_to_path(model, paths[0])
-            self.package_model.foreach(self.foreach_cell_change_font, child_path)
-
     def set_packages_curr_tab(self, curr_page):
         self.ins.set_current_page(curr_page)
+

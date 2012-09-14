@@ -3,17 +3,17 @@ require recipes-kernel/linux/linux-yocto.inc
 KBRANCH_DEFAULT = "standard/base"
 KBRANCH = "${KBRANCH_DEFAULT}"
 
-SRCREV_machine_qemuarm ?= "84d8ee32265eea5d60f57a2f70bd3b9a0fb9213d"
-SRCREV_machine_qemumips  ?= "ba0e336d4527080233c3c410989d4f351529ee4e"
-SRCREV_machine_qemuppc ?= "e82b8a111430e3820b11f507863c4b8e8734ed8e"
-SRCREV_machine_qemux86 ?= "0985844fa6235422c67ef269952fa4e765f252f9"
-SRCREV_machine_qemux86-64 ?= "0985844fa6235422c67ef269952fa4e765f252f9"
-SRCREV_machine ?= "0985844fa6235422c67ef269952fa4e765f252f9"
-SRCREV_meta ?= "463299bc2e533e1bd38b0053ae7b210980f269c3"
+SRCREV_machine_qemuarm ?= "679978b4fd1ef8cfea97d4ee4b4cd7c51bc62ee2"
+SRCREV_machine_qemumips  ?= "9c7810609ff37a77e8d39680f98f1baefee18a80"
+SRCREV_machine_qemuppc ?= "cf4bad14983753ad4b592c40fb36466b202b24a4"
+SRCREV_machine_qemux86 ?= "59c3ff750831338d05ab67d5efd7fc101c451aff"
+SRCREV_machine_qemux86-64 ?= "59c3ff750831338d05ab67d5efd7fc101c451aff"
+SRCREV_machine ?= "59c3ff750831338d05ab67d5efd7fc101c451aff"
+SRCREV_meta ?= "7c50e572635d356f0b66d9ab90823f127f835744"
 
 SRC_URI = "git://git.yoctoproject.org/linux-yocto-3.4.git;protocol=git;nocheckout=1;branch=${KBRANCH},meta;name=machine,meta"
 
-LINUX_VERSION ?= "3.4.9"
+LINUX_VERSION ?= "3.4.10"
 
 PR = "${INC_PR}.1"
 PV = "${LINUX_VERSION}+git${SRCPV}"
@@ -24,6 +24,7 @@ COMPATIBLE_MACHINE = "qemuarm|qemux86|qemuppc|qemumips|qemux86-64"
 
 # Functionality flags
 KERNEL_REVISION_CHECKING=""
-KERNEL_FEATURES="features/netfilter"
+KERNEL_FEATURES_append = " features/netfilter"
 KERNEL_FEATURES_append_qemux86=" cfg/sound"
 KERNEL_FEATURES_append_qemux86-64=" cfg/sound"
+KERNEL_FEATURES_append = " ${@bb.utils.contains("TUNE_FEATURES", "mx32", " cfg/x32", "" ,d)}"

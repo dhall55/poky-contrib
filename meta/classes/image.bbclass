@@ -329,8 +329,10 @@ rootfs_install_complementary() {
     list_installed_packages arch > ${WORKDIR}/installed_pkgs.txt
 
     # Apply the globs to all the packages currently installed
-    if [ "$1" = "populate_sdk" ] ; then
+    if [ -n "$1" -a "$1" = "populate_sdk" ] ; then
         GLOBS="${SDKIMAGE_INSTALL_COMPLEMENTARY}"
+    elif [ -n "$1" ]; then
+        GLOBS="$@"
     else
         GLOBS="${IMAGE_INSTALL_COMPLEMENTARY}"
         # Add locales
@@ -369,6 +371,7 @@ zap_root_password () {
 # allow openssh accept login with empty password string
 openssh_allow_empty_password () {
 	if [ -e ${IMAGE_ROOTFS}${sysconfdir}/ssh/sshd_config ]; then
+		sed -i 's#.*PermitRootLogin.*#PermitRootLogin yes#' ${IMAGE_ROOTFS}${sysconfdir}/ssh/sshd_config
 		sed -i 's#.*PermitEmptyPasswords.*#PermitEmptyPasswords yes#' ${IMAGE_ROOTFS}${sysconfdir}/ssh/sshd_config
 	fi
 }

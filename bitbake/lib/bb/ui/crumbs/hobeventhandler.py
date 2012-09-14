@@ -22,7 +22,6 @@
 import gobject
 import logging
 from bb.ui.crumbs.runningbuild import RunningBuild
-from bb.ui.crumbs.hobwidget import hcc
 
 class HobHandler(gobject.GObject):
 
@@ -178,7 +177,9 @@ class HobHandler(gobject.GObject):
 
         elif isinstance(event, logging.LogRecord):
             if event.levelno >= logging.ERROR:
-                self.error_msg += event.msg + '\n'
+                formatter = bb.msg.BBLogFormatter()
+                formatter.format(event)
+                self.error_msg += event.message + '\n'
 
         elif isinstance(event, bb.event.TargetsTreeGenerated):
             self.current_phase = "data generation"
