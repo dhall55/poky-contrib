@@ -491,7 +491,7 @@ def check_sanity(sanity_data):
             messages = messages + check_sanity_tmpdir_change(tmpdir, sanity_data)
         if last_sstate_dir != sstate_dir:
             messages = messages + check_sanity_sstate_dir_change(sstate_dir, sanity_data)
-
+    messages = messages + check_connectivity(sanity_data)
     if os.path.exists("conf") and not messages:
         f = file(sanityverfile, 'w')
         f.write("SANITY_VERSION %s\n" % sanity_version) 

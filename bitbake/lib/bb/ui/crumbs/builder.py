@@ -21,7 +21,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import gtk
+import gtk, gobject
 import copy
 import os
 import subprocess
@@ -34,6 +34,7 @@ from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
 from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
 from bb.ui.crumbs.builddetailspage import BuildDetailsPage
 from bb.ui.crumbs.imagedetailspage import ImageDetailsPage
+from bb.ui.crumbs.sanitycheckpage import SanityCheckPage
 from bb.ui.crumbs.hobwidget import hwc, HobButton, HobAltButton, hcc
 from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
                              AdvancedSettingDialog, LayerSelectionDialog, \
@@ -338,7 +339,8 @@ def hob_conf_filter(fn, data):
 
 class Builder(gtk.Window):
 
-    (MACHINE_SELECTION,
+    (INITIAL_CHECKS,
+     MACHINE_SELECTION,
      RCPPKGINFO_POPULATING,
      RCPPKGINFO_POPULATED,
      BASEIMG_SELECTED,
@@ -351,16 +353,18 @@ class Builder(gtk.Window):
      IMAGE_GENERATED,
      MY_IMAGE_OPENED,
      BACK,
-     END_NOOP) = range(14)
+     END_NOOP) = range(15)
 
-    (IMAGE_CONFIGURATION,
+    (SANITY_CHECK,
+     IMAGE_CONFIGURATION,
      RECIPE_DETAILS,
      BUILD_DETAILS,
      PACKAGE_DETAILS,
      IMAGE_DETAILS,
-     END_TAB) = range(6)
+     END_TAB) = range(7)
 
     __step2page__ = {
+        INITIAL_CHECKS        : SANITY_CHECK,
         MACHINE_SELECTION     : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATING : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATED  : IMAGE_CONFIGURATION,
@@ -474,9 +478,13 @@ class Builder(gtk.Window):
         self.build_details_page       = BuildDetailsPage(self)
         self.package_details_page     = PackageSelectionPage(self)
         self.image_details_page       = ImageDetailsPage(self)
+        self.sanity_check_page        = SanityCheckPage(self)
+        self.display_sanity_check = False
+        self.sanity_check_post_func = False
 
         self.nb = gtk.Notebook()
         self.nb.set_show_tabs(False)
+        self.nb.insert_page(self.sanity_check_page,        None, self.SANITY_CHECK)
         self.nb.insert_page(self.image_configuration_page, None, self.IMAGE_CONFIGURATION)
         self.nb.insert_page(self.recipe_details_page,      None, self.RECIPE_DETAILS)
         self.nb.insert_page(self.build_details_page,       None, self.BUILD_DETAILS)
@@ -487,9 +495,34 @@ class Builder(gtk.Window):
         self.show_all()
         self.nb.set_current_page(0)
 
+    def sanity_check_timeout(self):
+        # The minimum time for showing the 'sanity check' page has passe
+        # If someone set the 'sanity_check_post_step' meanwhile, execute it now
+        self.display_sanity_check = False
+        if self.sanity_check_post_func:
+          temp = self.sanity_check_post_func
+          self.sanity_check_post_func = None
+          temp()
+        return False
+
+    def show_sanity_check_page(self):
+        # This window must stay on screen for at least 5 seconds, according to the design document
+        self.nb.set_current_page(self.SANITY_CHECK)
+        self.sanity_check_page.start()
+        self.sanity_check_post_step = None
+        self.display_sanity_check = True
+        gobject.timeout_add(5000, self.sanity_check_timeout)
+
+    def execute_after_sanity_check(self, func):
+        if not self.display_sanity_check:
+          func()
+        else:
+          sanity_check_post_func = func
+
     def initiate_new_build_async(self):
         self.switch_page(self.MACHINE_SELECTION)
         if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == False:
+            self.show_sanity_check_page()
             self.handler.init_cooker()
             self.handler.set_extra_inherit("image_types")
             self.handler.generate_configuration()
@@ -679,7 +712,10 @@ class Builder(gtk.Window):
         self.current_step = next_step
 
     def set_user_config(self):
+        print "SET_USER_CONFIG STARTING"
         self.handler.init_cooker()
+        import traceback
+        traceback.print_stack();
         # set bb layers
         self.handler.set_bblayers(self.configuration.layers)
         # set local configuration
@@ -745,12 +781,20 @@ class Builder(gtk.Window):
     def handler_package_formats_updated_cb(self, handler, formats):
         self.parameters.all_package_formats = formats
 
+    def switch_to_image_configuration_helper(self):
+        self.sanity_check_page.stop()
+        self.switch_page(self.IMAGE_CONFIGURATION)
+        self.image_configuration_page.switch_machine_combo()
+
     def handler_command_succeeded_cb(self, handler, initcmd):
+        print( "---------- COMMAND SUCCEDED: ", initcmd )
         if initcmd == self.handler.GENERATE_CONFIGURATION:
             self.update_configuration_parameters(self.get_parameters_sync())
             self.sanity_check()
         elif initcmd == self.handler.SANITY_CHECK:
-            self.image_configuration_page.switch_machine_combo()
+            # Switch to the 'image configuration' page now, but we might need
+            # to wait for the minimum display time of the sanity check page
+            self.execute_after_sanity_check(self.switch_to_image_configuration_helper)
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
                          self.handler.GENERATE_IMAGE]:

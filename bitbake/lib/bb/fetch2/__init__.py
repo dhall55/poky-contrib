@@ -1232,7 +1232,7 @@ class Fetch(object):
         import traceback, sys
         traceback.print_stack()
 
-        for u in urls:
+        for u in urls:            
             print( ">>>>>>>>>>> TESTING", u )
             ud = self.ud[u]
             ud.setup_localpath(self.d)
