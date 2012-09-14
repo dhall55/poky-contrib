@@ -213,22 +213,20 @@ python license_create_pkg_manifest() {
                 license_manifest_file.close()
 }
 
-python license_create_rootfs_manifest() {
-    import bb.build
-    import bb.event
-    import bb.data
+python do_license_create_rootfs_manifest() {
     import os
     import shutil
-    image_name = e.data.getVar('MANIFEST_IMAGE_NAME', True)
+    image_name = d.getVar('MANIFEST_IMAGE_NAME', True)
+    manifest_dir = d.getVar('MANIFEST_DIRECTORY', True)
     # All packages that get installed to the rootfs end up here.
-    image_manifest_dir = os.path.join(e.data.getVar('MANIFEST_DIRECTORY', True), image_name)
+    image_manifest_dir = os.path.join(manifest_dir, image_name)
     try:
         bb.mkdirhier(image_manifest_dir)
     except:
         pass
     spdx_license_manifest = os.path.join(image_manifest_dir, "license.rdf")
     license_manifest = os.path.join(image_manifest_dir, "license.manifest")
-    image_rootfs = e.data.getVar('IMAGE_ROOTFS', True)
+    image_rootfs = d.getVar('IMAGE_ROOTFS', True)
     image_rfs_cl = os.path.join(image_rootfs, "/usr/share/common-licenses/")
 
     # list_installed_packages does just that. List things that are 
@@ -245,9 +243,9 @@ python license_create_rootfs_manifest() {
         if os.path.isdir(pkg_man_dir):
             pkg_spdx_rdf = os.path.join(pkg_man_dir, "license.rdf")
             pkg_lic_man = os.path.join(pkg_man_dir, "license.manifest")
-            pkg_lic_dir = os.path.join(e.data.getVar('LICENSE_DIRECTORY', True), dirs)
+            pkg_lic_dir = os.path.join(d.getVar('LICENSE_DIRECTORY', True), dirs)
             rootfs_lic_dir = os.path.join(image_rfs_cl, dirs)
-            if e.data.getVar('GENERATE_SPDX', True):
+            if d.getVar('GENERATE_SPDX', True):
                 pkg_spdx_rdf_file = open(pkg_spdx_rdf, "r")
                 fout = pkg_spdx_rdf_file.read()
                 spdx_license_manifest_file = open(spdx_license_manifest, "a")
@@ -259,7 +257,7 @@ python license_create_rootfs_manifest() {
             license_manifest_file = open(license_manifest, "a")
             license_manifest_file.write(fout + "\n")
             license_manifest_file.close()
-            if e.data.getVar('COPY_LIC_DIRS', True):
+            if d.getVar('COPY_LIC_DIRS', True):
                 try:
                     bb.mkdirhier(rootfs_lic_dir)
                 except:
@@ -276,20 +274,20 @@ python license_create_rootfs_manifest() {
                         else:
                             shutil.copyfile(os.path.join(pkg_lic_dir, lic), os.path.join(rootfs_lic_dir, lic))
 
-    if e.data.getVar('GENERATE_SPDX', True):
+    if d.getVar('GENERATE_SPDX', True):
         fout = ""
         fout = "</Packages>"
         fout = fout + "</SpdxDocument>\n</rdf:RDF>"
         spdx_license_manifest_file = open(spdx_license_manifest, "a")
         spdx_license_manifest_file.write(fout + "\n")
         spdx_license_manifest_file.close()
-    if e.data.getVar('COPY_LIC_MANIFEST', True):
+    if d.getVar('COPY_LIC_MANIFEST', True):
         try:
             bb.mkdirhier(image_rfs_cl)
         except:
             pass
         shutil.copyfile(license_manifest, os.path.join(image_rfs_cl, license.manifest))
-        if e.data.getVar('GENERATE_SPDX', True):
+        if d.getVar('GENERATE_SPDX', True):
             shutil.copyfile(spdx_license_manifest, os.path.join(image_rfs_cl, license.rdf))
 }
 
@@ -534,12 +532,12 @@ do_populate_lic[sstate-name] = "populate-lic"
 do_populate_lic[sstate-inputdirs] = "${LICSSTATEDIR}"
 do_populate_lic[sstate-outputdirs] = "${LICENSE_DIRECTORY}/"
 
-ROOTFS_POSTPROCESS_COMMAND_prepend = "license_create_rootfs_manifest;"
-
 python do_populate_lic_setscene () {
     sstate_setscene(d)
 }
 
 addtask do_populate_lic_setscene
+
+addtask do_license_create_rootfs_manifest before do_rootfs
 
 addhandler license_create_pkg_manifest
