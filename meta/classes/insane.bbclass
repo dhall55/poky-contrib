@@ -212,6 +212,35 @@ def package_qa_check_staticdev(path, name, d, elf, messages):
         messages.append("non -staticdev package contains static .a library: %s path '%s'" % \
                  (name, package_qa_clean_path(path,d)))
 
+QAPATHTEST[libdir] = "package_qa_check_libdir"
+def package_qa_check_libdir(path, base_libdir, libdir, exec_prefix, d):
+    """
+    """
+    import re
+    
+    bb.warn(">>>> exec_prefix: %s" % exec_prefix)
+
+    messages = []
+    my_files = []
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            full_path = os.path.join(root,file)
+            my_files.append(full_path[len(path):])
+
+    lib_re = re.compile("^/lib.*\.so")
+    exec_re = re.compile("^/usr.*/lib*.\.so")
+
+    for file in my_files:
+        if lib_re.match(file):
+            if base_libdir in file:
+                messages.append("Found library in wrong location: %s" % file)
+        if exec_re.match(file):
+            bb.warn(">>> Found Match: %s" % file)
+            if libdir in file:
+                messages.append("Found library in wrong location: %s" % file)
+    if messages:
+        package_qa_handle_error("libdir", "\n".join(messages), d)
+
 QAPATHTEST[debug-files] = "package_qa_check_dbg"
 def package_qa_check_dbg(path, name, d, elf, messages):
     """
@@ -687,6 +716,13 @@ python do_package_qa () {
         if not package_qa_check_rdepends(package, pkgdest, skip, d):
             rdepends_sane = False
 
+
+    pkgd = d.getVar('PKGD', True)
+    base_libdir = d.getVar("base_libdir",True)
+    libdir = d.getVar("libdir", True)
+    exec_prefix = d.getVar("exec_prefix", True)
+
+    package_qa_check_libdir(pkgd,base_libdir, libdir, exec_prefix, d)
 
     if not walk_sane or not rdepends_sane:
         bb.fatal("QA run found fatal errors. Please consider fixing them.")
