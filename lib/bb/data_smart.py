@@ -111,6 +111,48 @@ class ExpansionError(Exception):
     def __str__(self):
         return self.msg
 
+class IncludeHistory(object):
+    def __init__(self, parent = None, filename = None):
+        self.parent = parent
+        if parent:
+            self.top = parent.top
+        else:
+            self.top = self
+        self.filename = filename or '[TOP LEVEL]'
+        self.children = []
+        self.current = self
+
+    def include(self, filename):
+        newfile = IncludeHistory(self.current, filename)
+        self.current.children.append(newfile)
+        self.current = newfile
+        return self
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, a, b, c):
+        if self.current.parent:
+            self.current = self.current.parent
+        else:
+            bb.warn("Include log: Tried to finish '%s' at top level." % filename)
+        return False
+
+    def emit(self, o, level = 0):
+        """Emit an include history file, and its children."""
+        if self != self.top:
+            spaces = "  " * level
+            o.write("# %s%s" % (spaces, self.filename))
+            if len(self.children) > 0:
+                o.write(" includes:")
+            o.write("\n")
+            level = level + 1
+        else:
+            o.write("#\n# INCLUDE HISTORY:\n#\n")
+        for child in self.children:
+            child.emit(o, level)
+
+
 class DataSmart(MutableMapping):
     def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
         self.dict = {}
@@ -118,6 +160,7 @@ class DataSmart(MutableMapping):
         # cookie monster tribute
         self._special_values = special
         self._seen_overrides = seen
+        self.history = IncludeHistory()
 
         self.expand_cache = {}
 
@@ -411,6 +454,7 @@ class DataSmart(MutableMapping):
         # we really want this to be a DataSmart...
         data = DataSmart(seen=self._seen_overrides.copy(), special=self._special_values.copy())
         data.dict["_data"] = self.dict
+        data.history = copy.deepcopy(self.history)
 
         return data
 
