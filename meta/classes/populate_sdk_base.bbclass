@@ -118,7 +118,7 @@ fakeroot create_shar() {
 
 DEFAULT_INSTALL_DIR="${SDKPATH}"
 
-echo -n "Enter target directory for Poky SDK (default: $DEFAULT_INSTALL_DIR): "
+echo -n "Enter target directory for SDK (default: $DEFAULT_INSTALL_DIR): "
 read target_sdk_dir
 
 if [ "$target_sdk_dir" = "" ]; then
@@ -132,7 +132,7 @@ else
 	target_sdk_dir=$(readlink -m $target_sdk_dir)
 fi
 
-echo -n "You are about to install Poky SDK to \"$target_sdk_dir\". Proceed[Y/n]?"
+echo -n "You are about to install the SDK to \"$target_sdk_dir\". Proceed[Y/n]?"
 read answer
 
 if [ "$answer" = "" ]; then
