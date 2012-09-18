@@ -519,18 +519,22 @@ class Builder(gtk.Window):
         else:
           sanity_check_post_func = func
 
+    def generate_configuration(self):
+        self.show_sanity_check_page()
+        self.handler.generate_configuration()
+
     def initiate_new_build_async(self):
         self.switch_page(self.MACHINE_SELECTION)
         if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == False:
             self.show_sanity_check_page()
             self.handler.init_cooker()
             self.handler.set_extra_inherit("image_types")
-            self.handler.generate_configuration()
+            self.generate_configuration()
 
     def update_config_async(self):
         self.switch_page(self.MACHINE_SELECTION)
         self.set_user_config()
-        self.handler.generate_configuration()
+        self.generate_configuration()
 
     def sanity_check(self):
         self.handler.trigger_sanity_check()
@@ -819,15 +823,30 @@ class Builder(gtk.Window):
         response = dialog.run()
         dialog.destroy()
 
+    def show_network_error_dialog(self):
+        lbl = "<b>Error</b>\n"
+        msg = "Hob cannot connect to the network. Please check that your proxy settings are configured correctly."
+        lbl = lbl + "%s\n\n" % Builder.interpret_markup(msg)
+        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
+        button = dialog.add_button("Open proxy settings", gtk.RESPONSE_OK)
+        HobButton.style_button(button)
+        button.connect("clicked", lambda b:self.show_adv_settings_dialog(AdvancedSettingDialog.PROXIES_PAGE_ID))
+        response = dialog.run()
+        dialog.destroy()
+
     def handler_command_failed_cb(self, handler, msg):
         if msg:
             self.show_error_dialog(msg)
         self.reset()
 
-    def handler_sanity_failed_cb(self, handler, msg):
-        msg = msg.replace("your local.conf", "Settings")
-        self.show_error_dialog(msg)
-        self.reset()
+    def handler_sanity_failed_cb(self, handler, msg, network_error):
+        if network_error:
+            self.sanity_check_page.stop()
+            self.show_network_error_dialog()
+        else:
+            msg = msg.replace("your local.conf", "Settings")
+            self.show_error_dialog(msg)
+            self.reset()
 
     def window_sensitive(self, sensitive):
         self.image_configuration_page.machine_combo.set_sensitive(sensitive)
@@ -1184,7 +1203,7 @@ class Builder(gtk.Window):
 
         dialog.destroy()
 
-    def show_adv_settings_dialog(self):
+    def show_adv_settings_dialog(self, tab=None):
         dialog = AdvancedSettingDialog(title = "Settings",
             configuration = copy.deepcopy(self.configuration),
             all_image_types = self.parameters.image_types,
@@ -1200,6 +1219,8 @@ class Builder(gtk.Window):
         HobAltButton.style_button(button)
         button = dialog.add_button("Save", gtk.RESPONSE_YES)
         HobButton.style_button(button)
+        if tab:
+            dialog.switch_to_page(tab)
         response = dialog.run()
         settings_changed = False
         if response == gtk.RESPONSE_YES:

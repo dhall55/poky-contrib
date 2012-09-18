@@ -351,6 +351,12 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         return setting_hbox, setting_store
 
+    (IMAGE_TYPES_PAGE_ID,
+     OUTPUT_PAGE_ID,
+     BUILD_ENV_PAGE_ID,
+     PROXIES_PAGE_ID,
+     OTHER_PAGE_ID) = range(5)
+
     def __init__(self, title, configuration, all_image_types,
             all_package_formats, all_distros, all_sdk_machines,
             max_threads, parent, flags, buttons=None):
@@ -743,6 +749,9 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         md5 = self.config_md5()
         self.settings_changed = (self.md5 != md5)
+
+    def switch_to_page(self, page_id):
+        self.nb.set_current_page(page_id)
 
 #
 # DeployImageDialog

@@ -4,12 +4,12 @@
 
 SANITY_REQUIRED_UTILITIES ?= "patch diffstat makeinfo git bzip2 tar gzip gawk chrpath wget cpio"
 
-def raise_sanity_error(msg, d):
+def raise_sanity_error(msg, d, network_error=False):
     if d.getVar("SANITY_USE_EVENTS", True) == "1":
         # FIXME: handle when BitBake version is too old to support bb.event.SanityCheckFailed
         # We can just fire the event directly once the minimum version is bumped beyond 1.15.1
         try:
-            bb.event.fire(bb.event.SanityCheckFailed(msg), d)
+            bb.event.fire(bb.event.SanityCheckFailed(msg, network_error), d)
             return
         except AttributeError:
             pass
@@ -124,8 +124,9 @@ def check_sanity_tmpdir_change(tmpdir, data):
     # Check that TMPDIR isn't on a filesystem with limited filename length (eg. eCryptFS)
     testmsg = check_create_long_filename(tmpdir, "TMPDIR")
     # Check that we can fetch from various network transports
+    errmsg = check_connectivity(data)
     testmsg = testmsg + check_connectivity(data)
-    return testmsg
+    return testmsg, errmsg == ""
         
 def check_sanity_version_change(data):
     # Sanity checks to be done when SANITY_VERSION changes
@@ -484,14 +485,18 @@ def check_sanity(sanity_data):
     sanity_version = int(sanity_data.getVar('SANITY_VERSION', True) or 1)
     if last_sanity_version < sanity_version: 
         messages = messages + check_sanity_version_change(sanity_data)
-        messages = messages + check_sanity_tmpdir_change(tmpdir, sanity_data)
+        err, network_error = check_sanity_tmpdir_change(tmpdir, sanity_data)
+        messages = messages + err
         messages = messages + check_sanity_sstate_dir_change(sstate_dir, sanity_data)
     else: 
         if last_tmpdir != tmpdir:
-            messages = messages + check_sanity_tmpdir_change(tmpdir, sanity_data)
+            err, network_error = check_sanity_tmpdir_change(tmpdir, sanity_data)
+            messages = messages + err
         if last_sstate_dir != sstate_dir:
             messages = messages + check_sanity_sstate_dir_change(sstate_dir, sanity_data)
-    messages = messages + check_connectivity(sanity_data)
+    err = check_connectivity(sanity_data)
+    messages = messages + err
+    network_error = err != ""
     if os.path.exists("conf") and not messages:
         f = file(sanityverfile, 'w')
         f.write("SANITY_VERSION %s\n" % sanity_version) 
@@ -562,7 +567,7 @@ def check_sanity(sanity_data):
         messages = messages + "Error, you have a space in your COREBASE directory path. Please move the installation to a directory which doesn't include a space."
 
     if messages != "":
-        raise_sanity_error(sanity_data.expand(messages), sanity_data)
+        raise_sanity_error(sanity_data.expand(messages), sanity_data, network_error)
 
 # Create a copy of the datastore and finalise it to ensure appends and 
 # overrides are set - the datastore has yet to be finalised at ConfigParsed
@@ -579,7 +584,9 @@ python check_sanity_eventhandler() {
     elif bb.event.getName(e) == "SanityCheck":
         sanity_data = copy_data(e)
         sanity_data.setVar("SANITY_USE_EVENTS", "1")
+        print( "*"*60, "BEFORE SANITY CHECK")
         check_sanity(sanity_data)
+        print( "*"*60, "AFTER SANITY CHECK")
         bb.event.fire(bb.event.SanityCheckPassed(), e.data)
 
     return
