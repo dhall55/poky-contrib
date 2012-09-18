@@ -172,7 +172,6 @@ if [ $buildpseudo -gt 0 ]; then
     mkdir -p $PSEUDOBINDIR/../../var/pseudo
 fi
 BITBAKE=`which bitbake`
-echo ">>>>>>> BITBAKE is $BITBAKE"
 export PATH=$OLDPATH
 if [ $needpseudo = "1" ]; then
     export PSEUDO_BUILD=2

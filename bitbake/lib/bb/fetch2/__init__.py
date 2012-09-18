@@ -1229,11 +1229,7 @@ class Fetch(object):
         if len(urls) == 0:
             urls = self.urls
 
-        import traceback, sys
-        traceback.print_stack()
-
         for u in urls:            
-            print( ">>>>>>>>>>> TESTING", u )
             ud = self.ud[u]
             ud.setup_localpath(self.d)
             m = ud.method
@@ -1242,20 +1238,13 @@ class Fetch(object):
             mirrors = mirror_from_string(self.d.getVar('PREMIRRORS', True))
             ret = try_mirrors(self.d, ud, mirrors, True)
             if not ret:
-                print( ">>>>>>>>>>>>> %s needs explicit check" % u )
                 # Next try checking from the original uri, u
                 try:
-                    #signal.signal( signal.SIGALRM, signal.SIG_DFL )
-                    #signal.alarm( 2 )
                     ret = m.checkstatus(u, ud, self.d)
-                    print( ">>>>>>>>>>> %s worked!" % u )
                 except e:
-                    print( e )
-                    print( ">>>>>>>>>>> GOT EXCEPTION for ", u )
                     # Finally, try checking uri, u, from MIRRORS
                     mirrors = mirror_from_string(self.d.getVar('MIRRORS', True))
                     ret = try_mirrors(self.d, ud, mirrors, True)
-                #signal.alarm( 0 )
             if not ret:
                 raise FetchError("URL %s doesn't work" % u, u)
 

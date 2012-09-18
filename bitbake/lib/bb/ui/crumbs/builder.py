@@ -716,10 +716,7 @@ class Builder(gtk.Window):
         self.current_step = next_step
 
     def set_user_config(self):
-        print "SET_USER_CONFIG STARTING"
         self.handler.init_cooker()
-        import traceback
-        traceback.print_stack();
         # set bb layers
         self.handler.set_bblayers(self.configuration.layers)
         # set local configuration
@@ -791,7 +788,6 @@ class Builder(gtk.Window):
         self.image_configuration_page.switch_machine_combo()
 
     def handler_command_succeeded_cb(self, handler, initcmd):
-        print( "---------- COMMAND SUCCEDED: ", initcmd )
         if initcmd == self.handler.GENERATE_CONFIGURATION:
             self.update_configuration_parameters(self.get_parameters_sync())
             self.sanity_check()
