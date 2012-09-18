@@ -1,12 +1,24 @@
 FILES_${PN} += "${datadir}/icons/hicolor"
 
-DEPENDS += "${@['hicolor-icon-theme', '']['${BPN}' == 'hicolor-icon-theme']}"
+DEPENDS += "${@['hicolor-icon-theme', '']['${BPN}' == 'hicolor-icon-theme']} gtk+-native"
 
-# This could run on the host as icon cache files are architecture independent,
-# but there is no gtk-update-icon-cache built natively.
 gtk_icon_cache_postinst() {
 if [ "x$D" != "x" ]; then
-        exit 1
+    if [ ! -f $INTERCEPT_DIR/update_icon_cache ]; then
+        cat << "EOF" > $INTERCEPT_DIR/update_icon_cache
+#!/bin/bash -x
+
+# Update the native pixbuf loader's cache
+gdk-pixbuf-query-loaders --update-cache
+
+for icondir in $D/usr/share/icons/* ; do
+    if [ -d $icondir ] ; then
+        gtk-update-icon-cache -fqt  $icondir
+    fi
+done
+EOF
+    fi
+    exit 0
 fi
 
 # Update the pixbuf loaders in case they haven't been registered yet
@@ -17,6 +29,7 @@ for icondir in /usr/share/icons/* ; do
         gtk-update-icon-cache -fqt  $icondir
     fi
 done
+
 }
 
 gtk_icon_cache_postrm() {
