@@ -166,9 +166,9 @@ def inheritFromOS(d, savedenv, permitted):
     for s in savedenv.keys():
         if s in permitted:
             try:
-                setVar(s, getVar(s, savedenv, True), d)
+                d.setVar(s, getVar(s, savedenv, True), op = 'inherit')
                 if s in exportlist:
-                    setVarFlag(s, "export", True, d)
+                    d.setVarFlag(s, "export", True, op = 'automatic')
             except TypeError:
                 pass
 
@@ -194,8 +194,34 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
         return 0
 
     if all:
+        history = d.history.variable(var)
         commentVal = re.sub('\n', '\n#', str(oval))
-        o.write('# %s=%s\n' % (var, commentVal))
+        if history:
+            if len(history) == 1:
+                o.write("#\n# $%s\n" % var)
+            else:
+                o.write("#\n# $%s [%d operations]\n" % (var, len(history)))
+            for event in history:
+                # o.write("# %s\n" % str(event))
+                if 'details' in event and event['details']:
+                    value = event['details']
+                else:
+                    value = event['value']
+                if 'func' in event:
+                    func = ' [%s]' % event['func']
+                else:
+                    func = ''
+                if 'flag' in event:
+                    flag = '[%s] ' % (event['flag'])
+                else:
+                    flag = ''
+                o.write("#   %s %s:%s%s\n#     %s\"%s\"\n" % (event['op'], event['file'], event['line'], func, flag, re.sub('\n', '\n#     ', value)))
+            if len(history) > 1:
+                o.write("# computed:\n")
+                o.write('#   "%s"\n' % (commentVal))
+        else:
+            o.write("#\n# $%s\n#   [no history recorded]\n#\n" % var)
+            o.write('#   "%s"\n' % (commentVal))
 
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
         return 0
@@ -273,7 +299,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
 
 def update_data(d):
     """Performs final steps upon the datastore, including application of overrides"""
-    d.finalize()
+    d.finalize(parent = True)
 
 def build_dependencies(key, keys, shelldeps, vardepvals, d):
     deps = set()

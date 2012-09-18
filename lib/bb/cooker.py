@@ -101,8 +101,10 @@ class BBCooker:
         # to use environment variables which have been cleaned from the
         # BitBake processes env
         self.savedenv = bb.data.init()
+        if self.configuration.show_environment:
+            self.savedenv.enableTracking()
         for k in savedenv:
-            self.savedenv.setVar(k, savedenv[k])
+            self.savedenv.setVar(k, savedenv[k], op = 'inherit', file = '[saved environment]')
 
         self.caches_array = []
         # Currently, only Image Creator hob ui needs extra cache.
@@ -177,6 +179,8 @@ class BBCooker:
 
     def initConfigurationData(self):
         self.configuration.data = bb.data.init()
+        if self.configuration.show_environment:
+            self.configuration.data.enableTracking()
 
         if not self.server_registration_cb:
             self.configuration.data.setVar("BB_WORKERCONTEXT", "1")
@@ -186,6 +190,8 @@ class BBCooker:
 
     def loadConfigurationData(self):
         self.configuration.data = bb.data.init()
+        if self.configuration.show_environment:
+            self.configuration.data.enableTracking()
 
         if not self.server_registration_cb:
             self.configuration.data.setVar("BB_WORKERCONTEXT", "1")
@@ -840,6 +846,8 @@ class BBCooker:
 
     def parseConfigurationFiles(self, prefiles, postfiles):
         data = self.configuration.data
+        if self.configuration.show_environment:
+            data.enableTracking()
         bb.parse.init_parser(data)
 
         # Parse files for loading *before* bitbake.conf and any includes
