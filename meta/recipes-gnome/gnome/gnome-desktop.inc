@@ -11,7 +11,7 @@ do_configure_prepend () {
 
 FILES_${PN} += "${datadir}/gnome-about ${datadir}/libgnome-desktop/pnp.ids"
 
-PR = "r6"
+PR = "r7"
 
 inherit gnome pkgconfig
 

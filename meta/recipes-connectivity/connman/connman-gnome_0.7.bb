@@ -12,6 +12,8 @@ DEPENDS = "gtk+ dbus-glib"
 SRCREV = "cf3c325b23dae843c5499a113591cfbc98acb143"
 SRC_URI = "git://github.com/connectivity/connman-gnome.git;protocol=git"
 
+PR = "r1"
+
 S = "${WORKDIR}/git"
 
 inherit autotools gtk-icon-cache

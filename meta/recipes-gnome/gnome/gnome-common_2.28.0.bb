@@ -6,7 +6,7 @@ LICENSE = "GPLv3"
 LIC_FILES_CHKSUM = "file://COPYING;md5=d32239bcb673463ab874e80d47fae504"
 
 SECTION = "x11/gnome"
-PR = "r1"
+PR = "r2"
 inherit gnome allarch
 
 # The omf.make file failed if scrollkeeper doesn't happen to be
