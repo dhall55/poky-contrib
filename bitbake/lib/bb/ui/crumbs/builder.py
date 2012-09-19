@@ -820,14 +820,16 @@ class Builder(gtk.Window):
         dialog.destroy()
 
     def show_network_error_dialog(self):
-        lbl = "<b>Error</b>\n"
-        msg = "Hob cannot connect to the network. Please check that your proxy settings are configured correctly."
+        lbl = "<b>Hob cannot connect to the network</b>\n"
+        msg = "Please check the network connectivity. If you are using a proxy server, please check it is configured correctly."
         lbl = lbl + "%s\n\n" % Builder.interpret_markup(msg)
         dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
-        button = dialog.add_button("Open proxy settings", gtk.RESPONSE_OK)
+        button = dialog.add_button("Close", gtk.RESPONSE_OK)
+        HobButton.style_button(button)
+        button = dialog.add_button("Proxy settings", gtk.RESPONSE_OK)
         HobButton.style_button(button)
         button.connect("clicked", lambda b:self.show_adv_settings_dialog(AdvancedSettingDialog.PROXIES_PAGE_ID))
-        response = dialog.run()
+        dialog.run()
         dialog.destroy()
 
     def handler_command_failed_cb(self, handler, msg):
