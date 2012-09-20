@@ -1,0 +1,62 @@
+meta-dlna
+===========
+
+This layer provides support for building a headless mediaserver which
+supports the DLNA protocol via the Rygel Server and Tracker plugins
+
+The meta-data for this layer is collected from the meta-guacamayo
+layer using the combo-layer tools, the combo-layer.conf file show
+
+
+Dependencies
+------------
+
+This layer depends on the Poky metadata. For more information on Poky see
+the Yocto Project website:
+
+http://www.yoctoproject.org.
+
+The Denzil 7.0.1 (1.2.1) release  is required.
+
+
+
+Maintenance
+-----------
+
+This layer is maintained by the Yocto Project. Send patches / pull requests
+to yocto@yoctoproject.org with '[meta-dlna]' in the subject.
+
+
+
+Building the meta-dlna layer
+------------------------------
+
+After you download meta-dlna, be sure to add its location to bblayers.conf.
+Optionally, if you are building this for an x86 or x86-64 Virtual Machine,
+you should consider adding the meta-kvm layer, which will enable the Virtio
+and Paravirtualization drivers.
+
+BBLAYERS ?= " \
+  /<path>/meta \
+  /<path>/meta-yocto \
+  /<path>/meta-dlna/meta-guacamayo \
+  /<path>/meta-dlna/meta-kvm \
+
+  "
+
+You should then be able to build the image as such:
+
+  $ . ./oe-init-build-env
+  $ bitbake guacamayo-image-mediaserver
+
+
+
+License
+-------
+
+All metadata is MIT licensed unless otherwise stated. Source code included
+in tree for individual recipes is under the LICENSE stated in each recipe
+(.bb file) unless otherwise stated.
+
+This README document is Copyright (C) 2012 Intel Corporation.
+
