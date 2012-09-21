@@ -248,7 +248,7 @@ class HobHandler(gobject.GObject):
             message["title"] = "Parsing recipes: "
             self.emit("parsing-completed", message)
 
-        if self.error_msg and not self.commands_async:
+        if self.error_msg and not self.commands_async and not self.building:
             self.display_error()
 
         return
