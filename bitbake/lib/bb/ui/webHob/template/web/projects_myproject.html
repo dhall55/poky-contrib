@@ -1,0 +1,642 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+		function check_inviteInfo(){
+			var receiver_email = $("#receiver_email").val();
+			if(receiver_email == ""){
+				$("#msg_error").show();
+				$("#msg_error").html("* email address is null");
+				return false;
+			}else{
+				var reg = /(\S)+[@]{1}(\S)+[.]{1}(\w)+/;
+				email_format = new RegExp(reg);
+				if (!email_format.test(receiver_email)){
+					$("#msg_error").show();
+					$("#msg_error").html("* email address is not valid");
+					return false;
+				}
+			}
+			var invite_content = $("#invite_content").val();
+			if(invite_content == ""){
+				$("#msg_error").show();
+				$("#msg_error").html("* invite content is null");
+				return false;
+			}
+			return true;
+		}
+		function group_selected(param){
+			var current_user = $("#current_user").val();
+			var current_project = $("#current_project").val();
+			$.get('/hob/projects/add_mygroup_to_project/',
+					{"current_user": current_user,
+					"current_project": current_project,
+					"group_selected": param},
+					function(data){
+						json = $.parseJSON(data);
+						alert(json.result);
+						if (json.flag == "1"){
+							window.location="/hob/projects/projects_myproject/?current_user="+json.current_user+"&current_project="+json.current_project;
+						}
+					},'text');
+		}
+		/*
+			parse recipe
+		*/
+		var timer = null;
+		function send_parseRecipe_request(param){
+			if(param == " "){
+				alert("please select one machine first!");
+				$("#machines").val($("#machine_selected").val());
+			}else{
+				$("#baseimage_title").hide();
+				$("#baseimage_content").hide();
+				$("#build_button").hide();
+				$("#machine_selected").val(param);
+				$("#current_pct").html("0");
+				var current_user=$("#current_user").val();
+				var current_project = $("#current_project").val();
+				$.post('/hob/builds/parseRecipe_request/',
+						{"machine_selected": param,
+						"current_user": current_user,
+						"current_project": current_project},
+						function(data){
+							json = $.parseJSON(data);
+							if(json.result){
+								if(json.result == "error"){
+									alert(json.msg);
+									window.location="/hob/projects/projects_myproject/?current_user="+current_user+"&current_project="+current_project;
+								}else{
+									$("#parse_recipe").trigger("click");
+									$("#parse_percent").html("<div id='parse_percent' class='bar' style='width:0%;'></div>");
+									timer=setInterval('get_recipe_events()','1000');
+								}
+							}
+						},'text');
+			}
+		}
+		function get_recipe_events(){
+			var current_user = $("#current_user").val();
+			var current_project = $("#current_project").val();
+			$.get('/hob/builds/recipe_events/',
+					{"current_user": current_user,
+					"current_project": current_project,
+					'value': Math.random()},
+					function(data){
+						json = $.parseJSON(data);
+						if(json.pct){
+							$("#current_pct").html(json.pct);
+							str = '<div id="parse_percent" class="bar " style="width: '+json.pct+'%;">parsing '+json.pct+'%</div>';
+							$("#parse_percent").html(str);
+							if(parseInt(json.pct)>60){
+								$("#cancel_parsing").hide();
+							}
+						}
+						if(json.base_images){
+							clearInterval(timer);
+							$("#baseimage_title").show();
+							$("#baseimage_content").show();
+							$("#build_button").show();
+							var temp="<option value=''>---select a base image---</option>";
+							for(var i=0;i<json.base_images.length;i++){
+								temp=temp+"<option value='"+json.base_images[i]+"'>"+json.base_images[i]+"</option>";
+							}
+							$("#baseImage").html(temp);
+							$("#current_pct").html("100");
+							$("#parse_percent").html("<div id='parse_percent' class='bar' style='width:100%;'> parsing 100%</div>");
+							$("#stop_parse").trigger("click");
+						}
+					},'text');
+		}
+		function get_baseimage_dependency(param){
+			var current_project = $("#current_project").val();
+			var current_user = $("#current_user").val();
+			$.get('/hob/builds/search_baseimage_dependencies/',
+					{"baseimage_selected": param,
+					"current_user": current_user,
+					"current_project": current_project},
+					function(data){
+						json = $.parseJSON(data);
+					},
+					'text');
+		}
+		function buildpackage_by_baseimage_selected(){
+			if($("#baseImage").val() != ""){
+				var baseimage = $("#baseImage").val();
+				var machine = $("#machines").val();
+				var current_user = $("#current_user").val();
+				var current_project = $("#current_project").val();
+				window.location="/hob/builds/createbuild_packages/?current_user="+current_user+"&current_project="+current_project+"&baseimage="+baseimage+"&machine="+machine;
+			}else{
+				alert("please select base image first!");
+			}
+		}
+		function check_machine_baseImage_isSelected(){
+			var flag = true;
+			var machine_selected = $("#machines").val();
+			var baseImage_selected = $("#baseImage").val();
+			if(machine_selected == ""){
+				alert("please select one machine first!");
+				flag = false;
+			}
+			if(baseImage_selected == ""){
+				alert("please select one baseImage!");
+				flag = false;
+			}
+			if(baseImage_selected == "self-hosted-image"){
+				alert("please select recipes and packages!");
+				flag = false;
+			}
+			if(flag){
+				$("#error_schedule").html("");
+				$("#machine_schedule").html(machine_selected);
+				$("#machine_fastBuild").val(machine_selected);
+				$("#baseImage_schedule").html(baseImage_selected);
+				$("#baseImage_fastBuild").val(baseImage_selected);
+				$("#build_schedule").trigger("click");
+			}
+		}
+		function image_fastBuild(){
+			$("#build_cancel").trigger("click");
+			$("#scheduleForm").submit();
+		}
+		function checkLayer(param){
+			var current_project = $("#current_project").val();
+			var current_user = $("#current_user").val();
+			layer_name=$(param).val();
+			if($(param).is(":checked")){
+				is_selected=1;
+			}else{
+				is_selected=0;
+			}
+			$.get('/hob/projects/check_layer/',
+				{"current_user": current_user,
+				"current_project": current_project,
+				"is_selected": is_selected,
+				"layer_selected": layer_name},
+				function(data){
+					json = $.parseJSON(data);
+				},'text');
+		}
+	</script>
+	<script type="text/javascript">
+	var timer = null;
+	var temp = null;
+	$(function(){
+		//error msg
+		var error_message =$("#error_message").val();
+		if(error_message != ""){
+			alert(error_message);
+		}
+
+		//is_modify_machine_baseImage
+		var is_modify_machine_baseImage = $("#is_modify_machine_baseImage").val();
+		if (is_modify_machine_baseImage != ""){
+			$("#machines").attr("disabled","disabled");
+			$("#baseImage").attr("disabled","disabled");
+			$("#img_pkg_button").hide();
+		}
+
+		//baseImage list
+		var baseImages = $.trim($("#baseImage_list").val());
+		var machine_selected = $("#machine_selected").val();
+		if(machine_selected != ""){
+			$("#baseimage_title").show();
+			$("#baseimage_content").show();
+			$("#build_button").show();
+			var array_str = baseImages.split(" ");
+			var temp="<option value=''>---select a base image---</option>";
+			for(var i=0;i<array_str.length;i++){
+				temp=temp+"<option value='"+array_str[i]+"'>"+array_str[i]+"</option><br/>";
+			}
+			$("#baseImage").html(temp);
+		}
+
+		//machine list
+		var machines = $.trim($("#machine_list").val());
+		if(machines == ""){
+			$("#obtain_asynconfig").trigger("click");
+			timer=setInterval('get_asynConfig()','1000');
+		}
+
+		//check machine and baseImage are selected
+		var baseImage_selected = $("#baseImage_selected").val();
+		if(machine_selected != ""){
+			$("#machines").val(machine_selected);
+		}
+		if(baseImage_selected != ""){
+			$("#baseImage").val(baseImage_selected);
+		}
+
+		//Queue Modal Content
+		var is_getPercent = $("#is_getPercent").val();
+		if(is_getPercent != ""){
+			temp=setInterval('getProgressPercent()','1000');
+		}
+	});
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+			{"current_user": current_user,
+			'value': Math.random()},
+			function(data){
+				json = jQuery.parseJSON(data);
+				if(json.progressPercents){
+					for(var i=0;i<json.progressPercents.length;i++){
+						var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+						var bar_name = "name_"+json.progressPercents[i].guid;
+						var bar_guid ="guid_"+json.progressPercents[i].guid;
+						var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+						if(parseInt(json.progressPercents[i].percent) < 100){
+							$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+							$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+							$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+							$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+						}
+					}
+				}
+				if(json.progressPercents.length == 0){
+					clearInterval(temp);
+					current_project = $("#current_project").val();
+					window.location = "/hob/projects/projects_myproject/?current_user="+current_user+"&current_project="+current_project;
+				}
+			},"text");
+	}
+	function get_asynConfig(){
+		var project=$.trim($("#current_project").val());
+		$.get("/hob/projects/check_project_machineList/",
+			{"current_project": project,
+			'value': Math.random()},
+			function(data){
+				json = $.parseJSON(data);
+				if(json.result=="yes"){
+					clearInterval(timer);
+					$("#hide_window").trigger("click");
+					if (json.error_msg){
+						alert(json.error_msg);
+					}
+					var current_user = $("#current_user").val();
+					var current_project = $("#current_project").val();
+					window.location="/hob/projects/projects_myproject/?current_user="+current_user+"&current_project="+current_project;
+				}
+			},
+			'text');
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+	<input type="hidden" name="current_project" id="current_project" value="{{ current_project }}"/>
+	<input type="hidden" name="machine_selected" id="machine_selected" value="{{userSettings.machine_selected|default:''}}"/>
+	<input type="hidden" name="baseImage_selected" id="baseImage_selected" value="{{userSettings.baseImage_selected|default:''}}"/>
+	<input type="hidden" name="baseImage_list" id="baseImage_list" value="{{ baseimage_str }}"/>
+	<input type="hidden" name="is_getPercent" id="is_getPercent" value="{{ is_getPercent }}"/>
+	<input type="hidden" name="error_message" id="error_message" value="{{error_message}}"/>
+	<input type="hidden" name="is_modify_machine_baseImage" id="is_modify_machine_baseImage" value="{{is_modify_machine_baseImage}}"/>
+	<!-- Main Content -->
+	<div id="main" class="container" >
+		<!--Top Bar-->
+		<h1>Projects</h1>
+		<div class="row">
+			<div class="span12" >
+			<h2 class="pull-left">{{ current_project }}</h2>
+			<ul class="nav nav-pills topbarnav pull-left" style="margin-left:0;">
+			<li class="active"><a href="/hob/projects/projects_myproject/?current_user={{ current_user }}&current_project={{ current_project }}">Project</a></li>
+			<li><a href="/hob/projects/projects_history/?current_user={{ current_user }}&current_project={{ current_project }}"><i class="icon-time"></i> History</a></li>
+			<li><a href="/hob/projects/projects_settings/?current_user={{ current_user }}&current_project={{ current_project }}"><i class="icon-cog"></i> Settings</a></li>
+			<li><a href="/hob/projects/projects_permisisons/?current_user={{ current_user }}&current_project={{ current_project }}"><i class="icon-lock"></i> Permissions</a></li>
+			</ul>
+			</div>
+		</div>
+		<!--Top Bar-->
+		<div class="row">
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+				<!--Project List-->
+				<div class=" grouppods">
+					<h3 class="pull-left" style="clear:both;">Builds</h3>
+					<ul class="nav nav-pills pull-right">
+						<li class="active"><a>Show most recent</a></li>
+					</ul>
+					{% for val in builds %}
+					<table class="table mybuildtable">
+						<tr>
+							<td class="col_one"><b>{{forloop.counter}}</b></td>
+							<td ><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#{{val.guid}}"><b>{{ val.name }}</b>_{{val.guid}}</a></td>
+							<td ><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#{{val.guid}}">{{ val.size }}MB</a></td>
+							<td ><a href="#">{{ val.create_date|date:"m/d/Y H:i:s"}}</a></td>
+							<td ><i class="icon-user"></i> <a href="#">{{ val.operator.name }}</a></td>
+						</tr>
+					</table>
+					<!--Collapsed-->
+					<div id="{{val.guid}}" class="accordion-body collapse">
+						<div class="accordion-inner well">
+						<form id="downloadForm" action="#" method="post">
+							<table class="table table-bordered table-striped">
+								{% for item in val.images.all %}
+								<tr>
+									<td><i class="icon-download_alt"></i> <a href="{{item.url}}">{{item.name}}</a></td>
+									<td>{{item.size}} MB</td>
+									<td><a href="{{item.url}}" target="_blank"><i class="icon-download-alt"></i>Download</a></td>
+								</tr>
+								{% endfor %}
+							</table>
+						</form>
+						</div>
+					</div>
+					{% empty %}
+					<table class="table mybuildtable">
+						<tr>
+							<td colspan="5" style="color: red;text-align: center;">No Available Builds!</td>
+						</tr>
+					</table>
+					{% endfor %}
+				</div>
+			</div>
+			<!--MAIN WORK AREA-->
+			<!--SIDEBAR-->
+			<div class="span3">
+				<h4>Project Members</h4>
+				{% for val in project.groups.all %}
+				<h4><small>{{ val.name }}</small></h4>
+				<p>
+					{% for item in val.operators.all %}
+					<a href="#" rel="tooltip" title="{{item.name}}" class="tooltip-test"><img src="/static/images/avatar_user.png" alt="{{item.name}}" width="36" height="36" /></a>
+					{% endfor %}
+				</p>
+				{% endfor %}
+				{% if project_members_list %}
+				<h4><small>No Group</small></h4>
+				<p>
+					{% for val in project_members_list %}
+					<a href="#" rel="tooltip" title="{{val}}" class="tooltip-test"><img src="/static/images/avatar_user.png" alt="{{val}}" width="36" height="36" /></a>
+					{% endfor %}
+				</p>
+				{% endif %}
+				<p><a data-toggle="modal" href="#addpersonModal"><button class="btn"><i class="icon-plus-sign"></i> Add someone to project</button></a></p>
+				<form class="form">
+				<select id="select_addgroup" name="available_group" onchange="return group_selected(this.value);">
+					<option>Add a group</option>
+					{% for val in my_groups %}
+					<option value="{{val.name}}">{{ val.name }}</option>
+					{% endfor %}
+				</select>
+				</form>
+			</div>
+			<!--SIDEBAR-->
+		</div>
+		<!--CREATE A BUILD-->
+		<div class="row">
+			<div class="span12">
+				<!--WELL-->
+				<div class="well">
+					<!--CAB Header-->
+					<div class="row">
+						<div class="span12"><h2>Create a build</h2></div>
+					</div>
+					<!--CAB Header-->
+					<!--CAB MAIN-->
+					<div class="row">
+						<!--LeftSide-->
+						<div class="span7">
+							<!--SELECT MACHINE-->
+							<!--header-->
+							<div class="row"><div class="span7"><h3>Select a machine</h3></div></div>
+							<!--header-->
+							<!--content-->
+							<div class="row">
+								<!--left-->
+								<div class="span3">
+								<form class="form">
+								<fieldset>
+									<div class="controls">
+									<select id="machines" name="machine" onchange="send_parseRecipe_request(this.value)">
+										<option value=" ">---select a machine---</option>
+										{% for val in machines_list %}
+										<option value="{{val}}">{{ val }}</option>
+										{% endfor %}
+									</select>
+									</div>
+								</fieldset>
+								</form>
+								</div>
+								<!--left-->
+								<!--right-->
+								<div class="span4">
+								<p>The Yocto Project™ is an open source collaboration project that provides templates, tools and methods to help you create custom Linux-based systems for embedded products regardless of the hardware architecture
+								<a href="http://www.yoctoproject.org" target="_blank">Yocto Project &#187;</a></p>
+								</div>
+								<!--right-->
+							</div>
+							<!--content-->
+							<!--SELECT MACHINE-->
+							<!--SELECT BASE IMG-->
+							<!--header-->
+							<div class="row" style="display: none;" id="baseimage_title"><div class="span7"><h3>Select a base image</h3></div></div>
+							<!--header-->
+							<!--content-->
+							<div class="row" style="display: none;" id="baseimage_content">
+								<!--left-->
+								<div class="span3">
+								<form class="form">
+								<fieldset>
+									<div class="controls">
+									<select class="controls" name="baseImage" id="baseImage" onchange="get_baseimage_dependency(this.value)">
+									<option value=" ">---select a base image---</option>
+									</select>
+									</div>
+								</fieldset>
+								</form>
+								</div>
+								<!--left-->
+								<!--right-->
+								<div class="span4">
+								<p>This is the lowest spec image you can base your build off of. Good for starting from scratch on your build project.<br />
+								Read more about this base image
+								<a href="/hob/builds/createbuild_packagegroups/?current_user={{ current_user }}&current_project={{ current_project }}">view recipes&#187;</a></p>
+								</div>
+								<!--right-->
+							</div>
+							<!--content-->
+							<!--SELECT BASE IMG-->
+							<div class="alert alert-info"><strong>Heads up!</strong> If you're all ready, you can go straight to building your image. If you want a little more customisation, then you should build your packages first.<a class="close" data-dismiss="alert" href="#">x</a></div>
+							<hr />
+							<div class="row pull-right" style="display: none;" id="build_button">
+								<div id="img_pkg_button">
+								<a data-toggle="modal" href="#" class="btn btn-primary btn-large" onclick="check_machine_baseImage_isSelected()">Build Image</a>
+								<a class="btn btn-large" href="javascript:buildpackage_by_baseimage_selected();">Build Packages</a>
+								</div>
+							</div>
+						</div>
+						<!--LeftSide-->
+						<!--CAB Sidebar-->
+						<div class="span4 well2">
+							<div class="row">
+								<div class="span2" style="width:220px;"><h2>Add Layers</h2></div>
+							</div>
+							<div class="row">
+								<div class="span4">
+								<form class="form-inline">
+								<input type="text" class="input-small" placeholder="Search..." style="width:350px;" />
+								</form>
+								</div>
+							</div>
+							<div class="row">
+								<div class="span4 pull-left">
+								<form class="form">
+								<table class="table">
+								{% for val in layerList.object_list %}
+								<tr>
+									<td><label class="checkbox"><input type="checkbox" id="{{val.name}}_id" value="{{val.name}}" onclick="checkLayer(this)" {% ifequal val.types "core" %} disabled {% endifequal %} {% if val.ischecked %}checked{% endif %}>{{ val.name }}</label></td>
+									<td><label class="control-label" for="a_optionsCheckbox1">{{ val.types }}</label></td>
+									<td>{% ifequal val.types "test" %}<a href="/hob/projects/delete_project_layer/?layerName={{val.name}}&current_project={{current_project}}&current_user={{ current_user }}" title="{{val.name}}"><i class="icon-trash"></i></a>{% endifequal %}</td>
+								</tr>
+								{% endfor %}
+								</table>
+								</form>
+								</div>
+							</div>
+							<div class="row">
+								<div class="span4">
+									<div class="btn-toolbar">
+										<div class="btn-group">
+										{% if layerList.previous_page_number %}
+										<a href="?page={{ layerList.previous_page_number }}"><button class="btn">&lt;</button></a>
+										{% else %}
+										<button class="btn">&lt;</button>
+										{% endif %}
+										{% for val in page_range %}
+										{% ifequal val layerList.number %}
+										<button class="btn">{{val}}</button>
+										{% else %}
+										<a href="?page={{val}}"><button class="btn">{{val}}</button></a>
+										{% endifequal %}
+										{% endfor %}
+										{% if layerList.next_page_number %}
+										<a href="#"><button class="btn">&gt;</button></a>
+										{% else %}
+										<button class="btn">&gt;</button>
+										{% endif %}
+										</div>
+										<form class="form" action="/hob/projects/upload_file/" method="post" enctype="multipart/form-data">
+										<input type="hidden" name="current_project" value="{{current_project}}"/>
+										<input type="hidden" name="current_user" value="{{current_user}}"/>
+										<label>Add Layer by URL</label>
+										<input type="text" class="span3" placeholder="URL">
+										<button type="button" class="btn">Add</button>
+										<label>Add Layer from external file</label>
+										<input type="file" class="span3" placeholder="Browse for file on your computer" name="filename">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+										<input type="submit" name="upload" value="upload"/>
+										</form>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!--CAB Sidebar-->
+					</div>
+					<!--CAB MAIN-->
+				</div>
+				<!--WELL-->
+			</div>
+		</div>
+		<!--CREATE A BUILD-->
+	</div>
+	<!-- Main Content -->
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+		{% if buildings %}
+			{% for val in buildings %}
+			{% if not val.is_finished %}
+			<h4><span id="name_{{val.guid}}"></span></h4>
+			<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+			<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+			{% endif %}
+			{% endfor %}
+		{% else %}
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		{% endif %}
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+	<!--Add Person Modal Content-->
+	<div id="addpersonModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Add someone to the project</h3>
+		</div>
+		<form class="form" action="/hob/projects/add_someone_to_project/" method="post" onsubmit="return check_inviteInfo();">
+		<div class="modal-body">
+			<p>Adding someone to your project is easy. They don't have to be a member of your group. Just put in their email, type a message if you like and they'll be sent a message and have an ID automatically created for them.</p>
+			<input type="hidden" name="sender" value="{{ current_user }}"/>
+			<input type="hidden" name="current_project" value="{{current_project}}"/>
+			<input type="text" class="input-medium" name="receiver_email" id="receiver_email" placeholder="Email Address">
+			<p></p>
+			<div class="controls"><textarea class="input-textarea_modal" id="invite_content" rows="3" name="invite_content"></textarea></div>
+			<span id="msg_error" style="color: red;display: none;"></span><br/>
+			<button type="reset" class="btn">Clear</button><br />
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal" >Cancel</a>
+			<button class="btn btn-primary" type="submit"><i class="icon-plus-sign icon-white"></i> Add</button>
+		</div>
+		</form>
+	</div>
+	<!--Add Person Modal Content-->
+	<!--Build Schedule Modal Content-->
+	<a data-toggle="modal" href="#buildscheduleModal" id="build_schedule"></a>
+	<div id="buildscheduleModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Fast Build Image</h3>
+		</div>
+		<div class="modal-body">
+			<div class="alert alert-info">
+				<strong>Hey!</strong> Just so you know! Your build will run when resources allow so times aren’t exact.<button type="button" class="close" data-dismiss="alert">x</button>
+			</div>
+			<h4>Image to build</h4>
+			<form name="scheduleForm" action="/hob/builds/build_fast_package/?current_user={{current_user}}&current_project={{current_project}}" id="scheduleForm" method="post">
+			<div class="well">
+				<p><strong>Machine:</strong> <span id="machine_schedule"></span><input type="hidden" name="machine_fastBuild" id="machine_fastBuild" value=""/></p>
+				<p><strong>Base image:</strong> <span id="baseImage_schedule"></span><input type="hidden" name="baseImage_fastBuild" id="baseImage_fastBuild" value=""/></p>
+			</div>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary" onclick="image_fastBuild()">Fast Build Image</button>
+			<a href="#" class="btn" data-dismiss="modal" id="build_cancel">Cancel</a>
+		</div>
+	</div>
+	<!--Build Schedule Modal Content-->
+	<!-- parse recipe -->
+	<a data-toggle="modal" href="#parse_recipe_progress" id="parse_recipe"></a>
+	<div id="parse_recipe_progress" class="modal hide">
+		<div class="modal-header">
+			<h3>Parse recipe</h3>
+		</div>
+		<div class="modal-body">
+			<div class="progress progress-striped active">
+				<div id="parse_percent"></div>
+			</div>
+			<p><i class="icon-time"></i> parsing <b><span id="current_pct">0</span> %</b></p>
+		</div>
+		<div class="modal-footer"><a href="#" data-dismiss="modal" id="stop_parse"></a><div id="cancel_parsing"><a href="#" class="btn">Stop</a></div></div>
+	</div>
+	<!-- parse recipe -->
+	<!-- get asynconfig -->
+	<a data-toggle="modal" href="#get_settings_config" id="obtain_asynconfig"></a>
+	<input type="hidden" name="machine_list" id="machine_list" value="{{machines}}"/>
+	<div id="get_settings_config" class="modal hide">
+		<div class="modal-body">
+			<label style="text-align: center;"><i class="icon-warning-sign"></i>&nbsp;&nbsp;&nbsp;&nbsp;Getting Asynchronous Configuration Information.<a href="#"  data-dismiss="modal" id="hide_window">&nbsp;</a></label>
+		</div>
+	</div>
+	<!-- get asynconfig -->
+	{% endblock %}

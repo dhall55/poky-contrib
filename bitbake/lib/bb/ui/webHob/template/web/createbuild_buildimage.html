@@ -1,0 +1,255 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+	var timer = null;
+	var temp = null;
+	$(function(){
+		timer=setInterval('getImageEvent()','20');
+		temp = setInterval('getProgressPercent()','10');
+	});
+	function getImageEvent(){
+		var current_user = $("#current_user").val();
+		var current_project = $("#current_project").val();
+		$.get("/hob/builds/get_image_events/",
+				{"current_user": current_user,
+				"current_project": current_project,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.queue){
+						for(var i=0;i<json.queue.length;i++){
+							if(json.queue[i].state){
+								if(json.queue[i].state == "build_configuration"){
+									$("#pkg_build_config").html(json.queue[i].message);
+									$("#log_build_config").html(json.queue[i].message);
+								}else if(json.queue[i].state == "buildstarted"){
+									$("#pkg_build_start").html(json.queue[i].message);
+								}else if(json.queue[i].state == "task"){
+									var logs = "package: "+json.queue[i].package+"<br/>"+"task: "+json.queue[i].task+"<br/>"+"message: "+json.queue[i].message+"<br/>";
+									$("#pkg_log").html(logs);
+								}else if(json.queue[i].state == "issue"){
+									$("#log_error").html(parseInt($("#log_error").text())+1);
+									$("#pkg_error_msg").append(json.queue[i].message+"<br/>");
+								}else if(json.queue[i].state == "buildcompleted"){
+									$("#pkg_build_end").html(json.queue[i].message);
+								}else if(json.queue[i].state == "log"){
+									$("#log_no_provider").html(json.queue[i].message);
+								}
+							}
+							if(json.queue[i].percent){
+								var str = '<div class="bar" style="width: '+json.queue[i].percent+'%;"> building '+json.queue[i].percent+'%</div>';
+								$("#build_percent").html(str);
+							}
+							if(json.queue[i].building_result){
+								clearInterval(timer);
+								$("#build_percent").html("<div class='bar' style='width:100%;'> building 100%</div>");
+								window.location="/hob/builds/createbuild_buildimage_download/?current_user={{ current_user }}&current_project={{ current_project }}";
+							}
+						}
+					}
+				},
+				'text');
+	}
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+				{"current_user": current_user,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.progressPercents){
+						for(var i=0;i<json.progressPercents.length;i++){
+							var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+							var bar_name = "name_"+json.progressPercents[i].guid;
+							var bar_guid ="guid_"+json.progressPercents[i].guid;
+							var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+							$("#current_guid").val(json.progressPercents[i].guid);
+							if(parseInt(json.progressPercents[i].percent) < 100){
+								$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+								$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+								$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+							}
+							if(json.progressPercents[i].guid == $("#current_guid").val()){
+								var str = '<div class="bar" style="width: '+json.progressPercents[i].percent+'%;"> building '+json.progressPercents[i].percent+'%</div>';
+								$("#build_percent").html(str);
+
+								var build_config = $("#build_config").val();
+								if(build_config != ""){
+									$("#pkg_build_config").html(build_config);
+									$("#log_build_config").html(build_config);
+								}
+
+								var build_start = $("#build_start").val();
+								if(build_start != ""){
+									$("#pkg_build_start").html(build_start);
+								}
+							}
+						}
+					}
+					if(json.progressPercents.length == 0){
+						$("#"+"progress_bar_"+$("#current_guid").val()).html("<div class='bar' style='width:100%;'> building 100%</div>");
+						clearInterval(temp);
+					}
+				},"text");
+	}
+	function cancel_build(){
+		var current_user = $("#current_user").val();
+		var current_project = $("#current_project").val();
+		$.get("/hob/builds/stop_building/",
+				{"current_user": current_user,
+				"current_project": current_project,
+				"current_task": "image"},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.result){
+						window.location="/hob/builds/createbuild_packages_list/?current_user={{ current_user }}&current_project={{ current_project }}";
+					}
+				},'text');
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<!-- Main Content -->
+	<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+	<input type="hidden" name="current_project" id="current_project" value="{{ current_project }}"/>
+	<input type="hidden" name="current_guid" id="current_guid" value=""/>
+	<input type="hidden" name="build_start" id="build_start" value="{{userSettings.build_start|default:''}}"/>
+	<input type="hidden" name="build_config" id="build_config" value="{{userSettings.build_conf|default:''}}"/>
+	<div id="main" class="container" >
+		<!--Top Bar-->
+		<div class="row">
+			<div class="span12" >
+			<h1 class="pull-left">{{ current_project }}</h1>
+			<ul class="nav nav-pills topbarnav pull-left match-h1"  style="margin-left:0;">
+				<li><a href="/hob/builds/createbuild_packagegroups/?current_user={{ current_user }}&current_project={{ current_project }}">Package Groups</a></li>
+				<li><a href="/hob/builds/createbuild_recipes/?current_user={{ current_user }}&current_project={{ current_project }}">Recipes</a></li>
+				<li><a href="/hob/builds/createbuild_packages/?current_user={{ current_user }}&current_project={{ current_project }}">Packages</a></li>
+				<li class="active"><a href="/hob/builds/createbuild_buildimage/?current_user={{ current_user }}&current_project={{ current_project }}">Build Images</a></li>
+			</ul>
+			</div>
+		</div>
+		<!--Top Bar-->
+		<div class="row">
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+			<h2><a href="/hob/builds/createbuild_packagegroups/?current_user={{ current_user }}&current_project={{ current_project }}">Package Groups <i class=" icon-ok"></i></a></h2>
+			<hr />
+			<h2><a href="/hob/builds/createbuild_recipes/?current_user={{ current_user }}&current_project={{ current_project }}">Recipes  <i class=" icon-ok"></i></a></h2>
+			<hr />
+			<h2><a href="/hob/builds/createbuild_packages/?current_user={{ current_user }}&current_project={{ current_project }}">Packages  <i class=" icon-ok"></i></a></h2>
+			<hr />
+			</div>
+			<!--MAIN WORK AREA-->
+			<!--SIDEBAR-->
+			<div class="span3">&nbsp;</div>
+			<!--SIDEBAR-->
+		</div>
+		<!--BUILD IMAGE-->
+		<div class="row">
+			<div class="span9">
+			<h2>Build Image</h2>
+				<!--Build Image Header-->
+				<div class="row">
+					<div class="span4">
+						<p><i class="icon-book"></i> {{current_building.name}}-{{current_building.guid}}</p>
+						<div class="progress" id="build_percent"></div>
+					</div>
+					<div class="span3">
+					</div>
+					<div class="pull-right">
+						<p><i class="icon-time"></i> {{current_building.create_date|date:"m/d/Y H:i:s"}}</p>
+						<a data-toggle="modal" href="#" class="btn pull-right" onclick="cancel_build()"><i class="icon-remove-sign"></i> Stop</a>
+					</div>
+				</div>
+				<!--Build Image Header-->
+				<!--Build Functions-->
+				<div class="row">
+					<div class="span9">
+						<div class="accordion" id="accordion2">
+							<!--Build Configuraion-->
+							<div class="accordion-group">
+								<div class="accordion-heading">
+									<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne"><strong>Build Configuration</strong></a>
+								</div>
+								<div id="collapseOne" class="accordion-body collapse in">
+									<div class="accordion-inner">
+										<p><span id="pkg_build_config"></span></p>
+									</div>
+								</div>
+							</div>
+							<!--Build Configuration-->
+							<!--Issues-->
+							<div class="accordion-group">
+								<div class="accordion-heading">
+								<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo" style="color:red;"><strong>
+								Issues <i class="icon-warning-sign"></i></strong> <span class="pull-right"><strong><span id="log_error">0</span> issues</strong> found with your build</span></a>
+								</div>
+								<div id="collapseTwo" class="accordion-body collapse">
+									<div class="accordion-inner" id="pkg_error_msg">
+									</div>
+								</div>
+							</div>
+							<!--Issues-->
+							<!--Log-->
+							<div class="accordion-group">
+								<div class="accordion-heading">
+									<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">Log</a>
+								</div>
+								<div id="collapseThree" class="accordion-body collapse">
+									<div class="accordion-inner">
+										<span id="pkg_build_start"></span><br/>
+										<span id="pkg_build_end"></span><br/>
+										<span id="log_build_config"></span>
+										<p></p>
+										<span id="log_no_provider"></span><br/>
+										<div id="pkg_log"></div>
+									</div>
+								</div>
+							</div>
+							<!--Log-->
+						</div>
+					</div>
+				</div>
+				<!--Build Functions-->
+			</div>
+			<!--SIDEBAR-->
+			<div class="span3">
+				<div class="well">
+					<h4>What happens now?</h4>
+					<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+					<p>Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Donec sed odio dui.</p>
+					<div class="thumbnail"><img src="http://placehold.it/215x120" alt=""></div>
+				</div>
+			</div>
+			<!--SIDEBAR-->
+		</div>
+		<!--BUILD IMAGE-->
+	</div>
+	<!-- Main Content -->
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+		{% if buildings %}
+			{% for val in buildings %}
+			{% if not val.is_finished %}
+			<h4><span id="name_{{val.guid}}"></span></h4>
+			<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+			<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+			{% endif %}
+			{% endfor %}
+		{% else %}
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		{% endif %}
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+	{% endblock %}

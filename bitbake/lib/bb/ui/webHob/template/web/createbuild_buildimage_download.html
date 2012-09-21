@@ -1,0 +1,217 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+	var timer = null;
+	$(function(){
+		var is_getPercent = $("#is_getPercent").val();
+		if(is_getPercent != ""){
+			timer=setInterval('getProgressPercent()','1000');
+		}
+	});
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+				{"current_user": current_user,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.progressPercents){
+						for(var i=0;i<json.progressPercents.length;i++){
+							var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+							var bar_name = "name_"+json.progressPercents[i].guid;
+							var bar_guid ="guid_"+json.progressPercents[i].guid;
+							var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+							if(parseInt(json.progressPercents[i].percent) < 100){
+								$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+								$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+								$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+							}
+						}
+					}
+					if(json.progressPercents.length == 0){
+						clearInterval(timer);
+					}
+				},"text");
+	}
+	function checkAll(){
+		if($("#CheckboxAll").attr("checked")){
+			$("[name='checkbox']").attr("checked",'true');
+		}else{
+			$("[name='checkbox']").removeAttr("checked");
+		}
+	}
+	function download_items_isChecked(){
+		if($("input[name='checkbox']:checked").length == 0){
+			alert("at least one option is selected");
+		}else{
+			$('#downloadForm').submit();
+		}
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<!-- Main Content -->
+	<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+	<input type="hidden" name="is_getPercent" id="is_getPercent" value="{{ is_getPercent }}"/>
+	<div id="main" class="container" >
+		<!--Top Bar-->
+		<div class="row">
+			<div class="span12" >
+			<h1 class="pull-left">{{ current_project }}</h1>
+			<ul class="nav nav-pills topbarnav pull-left match-h1" style="margin-left:0;">
+				<li><a href="/hob/builds/createbuild_packagegroups/?current_user={{ current_user }}&current_project={{ current_project }}">Package Groups</a></li>
+				<li><a href="/hob/builds/createbuild_recipes/?current_user={{ current_user }}&current_project={{ current_project }}">Recipes</a></li>
+				<li><a href="/hob/builds/createbuild_packages/?current_user={{ current_user }}&current_project={{ current_project }}">Packages</a></li>
+				<li class="active"><a href="/hob/builds/createbuild_buildimage/?current_user={{ current_user }}&current_project={{ current_project }}">Build Images</a></li>
+			</ul>
+			</div>
+		</div>
+		<!--Top Bar-->
+		<div class="row">
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+				<h2><a href="/hob/builds/createbuild_packagegroups/?current_user={{ current_user }}&current_project={{ current_project }}">Package Groups <i class=" icon-ok"></i></a></h2>
+				<hr />
+				<h2><a href="/hob/builds/createbuild_recipes/?current_user={{ current_user }}&current_project={{ current_project }}">Recipes  <i class=" icon-ok"></i></a></h2>
+				<hr />
+				<h2><a href="/hob/builds/createbuild_packages/?current_user={{ current_user }}&current_project={{ current_project }}">Packages  <i class=" icon-ok"></i></a></h2>
+				<hr />
+			</div>
+			<!--MAIN WORK AREA-->
+			<!--SIDEBAR-->
+			<div class="span3">&nbsp;</div>
+			<!--SIDEBAR-->
+		</div>
+		<!--BUILD IMAGE-->
+		<div class="row">
+			<div class="span9">
+				<h2>Build Image</h2>
+				<div class="alert alert-success">
+					<strong>All done! </strong>You have successfully made an image with everything you picked. Now pick your image to deploy
+					<a class="close" data-dismiss="alert" href="#">×</a>
+				</div>
+				<!--Build Image Header-->
+				<div class="row">
+					<div class="span9">
+						<table style="width:100%;">
+							<tr>
+								<td><a href="#"><i class="icon-book"></i> {{ build_download.name }}_{{ build_download.guid }}</a></td>
+								<td><a href="#">{{ build_download.size }} MB</a></td>
+								<td><div class="pull-right"><i class="icon-time"></i><a href="#">{{ build_download.create_date|date:"m/d/Y H:i:s"}}</a><!-- &nbsp; <a class="btn" data-toggle="modal" href="#buildgraphsModal" >Graphs</a> <button class="btn">Report</button>--></div></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				<!--Build Image Header-->
+				<hr />
+				<!--Build Functions-->
+				<div class="row">
+					<div class="span9">
+						<form id="downloadForm" action="#" method="post">
+						<table class="table table-bordered table-striped">
+							{% for val in build_download.images.all %}
+							<tr>
+								<!--<td style="text-align:center;"><div class="controls"><input type="checkbox" name="checkbox" id="optionsCheckbox" value="{{val.id}}"></div></td>-->
+								<td><a href="{{val.url}}" target="_blank">{{val.name}}</a></td>
+								<td>{{val.size}} MB</td>
+								<td><a href="{{val.url}}" target="_blank"><i class="icon-download-alt"></i>Download</a></td>
+							</tr>
+							{% endfor %}
+						</table>
+						</form>
+					</div>
+				</div>
+				<!--Build Functions-->
+			</div>
+			<!--SIDEBAR-->
+			<div class="span3">
+				<div class="well">
+					<h4>Your source</h4>
+					<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+					<p><a href="#"><i class="icon-download-alt"></i> Source (.tar)</a></p>
+					<p><a href="#"><i class="icon-book"></i> License Manifest</a></p>
+					<div class="thumbnail"><img src="http://placehold.it/215x120" alt=""></div>
+				</div>
+			</div>
+			<!--SIDEBAR-->
+		</div>
+		<!--BUILD IMAGE-->
+	</div>
+	<!-- Main Content -->
+
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+		{% if buildings %}
+			{% for val in buildings %}
+			{% if not val.is_finished %}
+			<h4><span id="name_{{val.guid}}"></span></h4>
+			<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+			<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+			<!--<p><i class="icon-time"></i> 01:23:02 remaining</p>-->
+			{% endif %}
+			{% endfor %}
+		{% else %}
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		{% endif %}
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+	<!--Build Graphs Modal Content-->
+	<div id="buildgraphsModal" class="modal hide" style="width:680px;">
+		<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		<h3>core-image-minimal-atom-pc-11233768765</h3>
+		</div>
+		<div class="modal-body">
+		<p>&nbsp;</p>
+		<a href="#" rel="popover" title="Package Data" data-content="Individual package 132k"><img src="/static/images/buildgraph.png" width="670" height="151" alt="buildgraph" /></a>
+		<p>&nbsp;</p>
+		</div>
+		<div class="modal-footer">
+		<a href="#" class="btn" data-dismiss="modal" >Close</a>
+		</div>
+	</div>
+	<!--Build Graphs Modal Content-->
+	<!--Build Report Modal Content-->
+	<div id="build_reportModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Report a build configuration</h3>
+		</div>
+		<div class="modal-body">
+			<div class="alert alert-error">
+				<strong>Hey!</strong> Reporting false bad configurations can screw other people up.  Be careful.
+				<button type="button" class="close" data-dismiss="alert">x</button>
+			</div>
+			<form>
+				<label class="control-label" for="textarea01">Additional info about what went wrong</label>
+				<textarea class="input-textarea_modal" id="textarea01" rows="3"></textarea>
+				<p><button class="btn pull-right">Clear</button></p>
+				<h3>Severity of the problem</h3>
+				<div class="control-group">
+					<div class="controls">
+						<label class="radio"><input type="radio" name="optionsRadios" id="optionsRadios1" value="option1" checked>Critical </label>
+						<label class="radio"><input type="radio" name="optionsRadios" id="optionsRadios2" value="option2" checked>Blocker </label>
+						<label class="radio"><input type="radio" name="optionsRadios" id="optionsRadios3" value="option3" checked>Medium </label>
+						<label class="radio"><input type="radio" name="optionsRadios" id="optionsRadios4" value="option4" checked>Low </label>
+					</div>
+				</div>
+				<div class="form-actions">
+					<button type="submit" class="btn btn-primary  pull-right">Report</button>
+					<button  href="#" class="btn pull-right" data-dismiss="modal">Cancel</button>
+				</div>
+			</form>
+		</div>
+	</div>
+	<!--Build Report Modal Content-->
+	{% endblock %}

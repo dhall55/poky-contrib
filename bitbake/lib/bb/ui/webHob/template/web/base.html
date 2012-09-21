@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Yocto Web Hob</title>
+<link href="/static/css/assets/bootstrap.css" rel="stylesheet">
+<link href="/static/css/yocto.css" rel="stylesheet">
+<link href="/static/css/assets/bootstrap-responsive.css" rel="stylesheet">
+<!-- Le fav and touch icons -->
+<link rel="shortcut icon" href="/static/images/assets/ico/favicon.ico">
+
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="/static/js/assets/jquery.js"></script>
+<script src="/static/js/assets/bootstrap-transition.js"></script>
+<script src="/static/js/assets/bootstrap-alert.js"></script>
+<script src="/static/js/assets/bootstrap-modal.js"></script>
+<script src="/static/js/assets/bootstrap-dropdown.js"></script>
+<script src="/static/js/assets/bootstrap-scrollspy.js"></script>
+<script src="/static/js/assets/bootstrap-tab.js"></script>
+<script src="/static/js/assets/bootstrap-tooltip.js"></script>
+<script src="/static/js/assets/bootstrap-popover.js"></script>
+<script src="/static/js/assets/bootstrap-button.js"></script>
+<script src="/static/js/assets/bootstrap-collapse.js"></script>
+<script src="/static/js/assets/bootstrap-carousel.js"></script>
+<script src="/static/js/assets/bootstrap-typeahead.js"></script>
+{% block javascrip%}{% endblock %}
+</head>
+<body>
+<div id="wrap">
+	<!--HEADER-->
+	<div class="navbar navbar-fixed-top">
+		<div class="navbar-inner">
+			<div class="container aligncenter">
+			<a class="brand" href="#">&nbsp;</a>
+				<div class="nav-collapse aligncenter">
+				<ul class="nav">
+				<li><a href="/hob/builds/index/?current_user={{ current_user }}" class="icon-builds">Builds</a></li>
+				<li><a href="/hob/projects/index/?current_user={{ current_user }}&current_project=" class="icon-projects">Projects</a></li>
+				<li><a href="/hob/groups/index/?current_user={{ current_user }}" class="icon-groups">Groups</a></li>
+				</ul>
+					<!--Top Right Tools-->
+					<div id="top-right-tools">
+					<ul class="nav">
+						<li><a href="#"><img src="/static/images/icon_search.png" alt="Search" title="Search" /></a></li>
+						<li><a data-toggle="modal" href="#queueModal"><span><img src="/static/images/icon_runningbuilds.png" alt="Queue &mdash; {{building_queue|default:'0'}} builds in progress" title="Queue &mdash; {{building_queue|default:'0'}} builds in progress" /></span><span class="badge badge-success" style="float:right;">{{ building_queue|default:"0" }}</span></a></li>
+						<li class="dropdown"><a href="#" class="dropdown dropdown-toggle" data-toggle="dropdown">
+							<img src="/static/images/icon_user.png" alt="Username" title="Username" />
+							<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu">
+								<li><img src="/static/images/avatar_user.png"> {% block current_user%}{% endblock %}</li>
+								<li class="divider"></li>
+								<li><a class="btn btn-primary" href="/hob/operators/logout/?current_user={{current_user}}">Log Out</a></li>
+							</ul>
+						</li>
+					</ul>
+					</div>
+					<!--Top Right Tools-->
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--HEADER-->
+
+	<!-- Main Content -->
+	{% block content %}{% endblock %}
+	<!-- Main Content -->
+</div>
+<footer>
+	<p>&copy; The Yocto Project</p>
+</footer>
+</body>
+</html>

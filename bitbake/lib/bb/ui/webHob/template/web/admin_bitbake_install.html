@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Yocto Web Hob</title>
+<link href="/static/css/assets/bootstrap.css" rel="stylesheet">
+<link href="/static/css/yocto.css" rel="stylesheet">
+<link href="/static/css/assets/bootstrap-responsive.css" rel="stylesheet">
+<!-- Le fav and touch icons -->
+<link rel="shortcut icon" href="/static/images/assets/ico/favicon.ico">
+
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="/static/js/assets/jquery.js"></script>
+<script src="/static/js/assets/bootstrap-transition.js"></script>
+<script src="/static/js/assets/bootstrap-alert.js"></script>
+<script src="/static/js/assets/bootstrap-modal.js"></script>
+<script src="/static/js/assets/bootstrap-dropdown.js"></script>
+<script src="/static/js/assets/bootstrap-scrollspy.js"></script>
+<script src="/static/js/assets/bootstrap-tab.js"></script>
+<script src="/static/js/assets/bootstrap-tooltip.js"></script>
+<script src="/static/js/assets/bootstrap-popover.js"></script>
+<script src="/static/js/assets/bootstrap-button.js"></script>
+<script src="/static/js/assets/bootstrap-collapse.js"></script>
+<script src="/static/js/assets/bootstrap-carousel.js"></script>
+<script src="/static/js/assets/bootstrap-typeahead.js"></script>
+<style type="text/css">
+.wrap{width:90%; margin:15px auto; border:1px #ddd solid; padding:10px; overflow:hidden; }
+h3{font-weight:normal;}
+h2{ font-weight:bold; border-bottom:1px #ddd solid; width:100%;  line-height:25px; font-size:16px;margin-bottom:5px;}
+.cont{ margin:10px 0px;}
+.cont li{padding:10px 0;}
+.cont li span.t{ height:25px;  font-weight:bold;}
+.cont li p{ line-height:25px; margin:5px;}
+.cont li p input.btn{ width:100px; height:28px; border:border:1px #ddd solid; line-height:22px; margin-left:20px; font-weight:bold; font-size:14px;}
+#getResult{ margin:15px 2% 15px 2%;  padding:5px; border:2px #7f7f7f solid; background-color:#000; overflow-y:auto; height:450px; color:#00ff00;font-size:16px;  }
+#getResult p{ padding:2px; border:1px #ffa500 solid; line-height:16px;}
+
+#getResult pre{color:#00ff00; background:none; border:none}
+</style>
+
+<script type="text/javascript">
+	var intervalTimer = null;
+	var intervalSecond = 1000;
+	var ip = null;
+	var passwd = null;
+
+	function runEventTimer(funcName, param){
+		if (param==''){
+			intervalTimer = setInterval(funcName+"()", intervalSecond);
+		}else{
+			intervalTimer = setInterval(function(){funcName(action);}, intervalSecond);
+		}
+	}
+
+	$(function(){
+		$('#root_install').click(function(){
+			ip = $('#ip').val();
+			passwd = $('#root_passwd').val();
+			if (!ip || !passwd) {
+				alert('ip is empty');
+			}else{
+				$.post('/cmd_install/',
+				{'ip':ip,'passwd':passwd},
+				function(data,s){
+					$('#getResult div.a').html('<pre>'+data+'</pre>');
+					runEventTimer('get_install_events','');
+				},
+				'text'
+			);
+			}
+		});
+
+		$('#builder_start').click(function(){
+			ip = $('#ip').val();
+			if (!ip) {
+				alert('ip is empty');
+			}else {
+				$.post('/cmd_start/',
+					{'ip': ip},
+					function(data,s){
+						$('#getResult div.a').html('<pre>'+data+'</pre>');
+						runEventTimer('get_start_events','');
+					},
+					'text'
+				);
+			}
+		});
+
+		$('#builder_stop').click(function(){
+			clearInterval(intervalTimer);
+			ip = $('#ip').val();
+			if(!ip){
+				alert('ip is empty');
+			}else{
+				$.post('/stop/',
+				{'ip': ip},
+				function(data,s){
+					$('#getResult div.a').html('<pre>'+data+'</pre>');
+					$('#getResult div.b').html('');
+				},
+				'text'
+			);
+			}
+		});
+
+		$('#builder_status').click(function(){
+			clearInterval(intervalTimer);
+			ip = $('#ip').val();
+			if(!ip){
+				alert('ip is empty');
+			}else{
+				$.post('/status/',
+					{'ip': ip},
+					function(data,s){
+						$('#getResult div.a').html('<pre>Status: '+data.status+'</pre>');
+						$('#getResult div.b').html('<pre>'+data.retval+'</pre>');
+					},
+					'json'
+				);
+			}
+		});
+	});
+	function get_install_events(){
+		$.post('/get_install_log/',
+				{'ip': $('#ip').val(),'passwd':$('#root_passwd').val()},
+				function(data,s){
+					if(data.status == "Done"){
+						$('#getResult div.b').html('<pre>'+data.retval+'</pre>');
+						clearInterval(intervalTimer);
+					}else{
+						$('#getResult div.b').html('<pre>'+data.retval+'</pre>');
+						$('#getResult').animate({
+							scrollTop : jQuery('#getResult').scrollTop()+ jQuery('#getResult').height()
+						}, 500);
+					}
+
+				},
+				'json'
+			);
+	}
+
+	function get_start_events(){
+		$.post('/get_start_log/',
+				{'ip': $('#ip').val()},
+				function(data,s){
+					if(data.status == "Done"){
+						$('#getResult div.b').html('<pre>'+data.retval+'</pre>');
+						clearInterval(intervalTimer);
+					}else{
+						$('#getResult div.b').html('<pre>'+data.retval+'</pre>');
+						$('#getResult').animate({
+							scrollTop : jQuery('#getResult').scrollTop()+ jQuery('#getResult').height()
+						}, 500);
+					}
+
+				},
+				'json'
+			);
+	}
+</script>
+</head>
+<body>
+<div id="wrap">
+	<!--HEADER-->
+	<div class="navbar navbar-fixed-top">
+		<div class="navbar-inner">
+			<div class="container aligncenter">
+			<a class="brand" href="#">&nbsp;</a>
+				<div class="nav-collapse aligncenter">
+
+					<!--Top Right Tools-->
+					<div id="top-right-tools">
+					<ul class="nav">
+						<li class="dropdown"><a href="#" class="dropdown dropdown-toggle" data-toggle="dropdown">
+							<img src="/static/images/icon_user.png" alt="Username" title="Username" />
+							<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu">
+								<li><img src="/static/images/avatar_user.png"> UserName</li>
+								<li class="divider"></li>
+								<li><a class="btn btn-primary" href="/admin_login/">Log In</a></li>
+							</ul>
+						</li>
+					</ul>
+					</div>
+					<!--Top Right Tools-->
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--HEADER-->
+
+	<!-- Main Content -->
+	<div id="main" class="container">
+		<!-- Main hero unit for a primary marketing message or call to action -->
+		<div class="hero-unit_yocto">
+			<div class="row">
+				<!--left-->
+
+<ul class='cont'>
+	<li>
+		<h2>&nbsp;&nbsp;&nbsp;&nbsp;Installation (Default user:ROOT)</h2>
+		<p>
+			<span class="t">&nbsp;&nbsp;IP:</span><input class='text' id="ip" type="text" value="{{ip}}" />
+			<span class="t">password(root):</span><input class='text' id="root_passwd" type="text" value="linux123" />
+			<input id="root_install" name="" type="button" value="Install"  />
+			<input id="builder_status" name="" type="button" value="Status"  />
+			<input id="builder_start" name="" type="button" value="Start"  />
+			<input id="builder_stop" name="" type="button" value="stop"  />
+		</p>
+	</li>
+
+	<li>
+		<div id="getResult">
+			<div class='a'></div>
+			<div class='b'></div>
+		</div>
+	</li>
+</ul>
+<div align="right"><a class="btn" href="javascript:history.go(-1);">back</a></div>
+				<!--left-->
+			</div>
+		</div>
+		<!-- Main hero unit for a primary marketing message or call to action -->
+	</div>
+	<!-- Main Content -->
+
+</div>
+<footer>
+	<p>&copy; The Yocto Project</p>
+</footer>
+</body>
+</html>

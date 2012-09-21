@@ -1,0 +1,252 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+		function package_deps(param){
+			var current_project = $("#current_project").val();
+			var current_user = $("#current_user").val();
+			var packageId_selected = $(param).val();
+			if($(param).is(":checked")){
+				is_selected=1;
+			}else{
+				is_selected=0;
+			}
+			$.get('/hob/builds/search_package_dependencies/',
+				{"package_id": packageId_selected,
+				"is_selected": is_selected,
+				"current_user": current_user,
+				"current_project": current_project},
+				function(data){
+					json = $.parseJSON(data);
+					var current_user = $("#current_user").val();
+					var current_project = $("#current_project").val();
+					if(json.result){
+						window.location="/hob/builds/createbuild_packages_list/?current_user="+current_user+"&current_project="+current_project;
+					}
+				},
+				'text');
+		}
+
+		function disp_packageInfo(param){
+			var current_project = $("#current_project").val();
+			var current_user = $("#current_user").val();
+			$.get('/hob/builds/get_package_detail/',
+					{"package_name": param,
+					"current_user": current_user,
+					"current_project": current_project},
+					function(data){
+						json = $.parseJSON(data);
+						$("#package_name").html(json.package_name);
+						$("#package_summary").html(json.package_summary);
+						$("#package_broughtInBuy").html(json.package_broughtInBuy);
+						$("#package_section").html(json.package_section);
+						$("#package_size").html(json.package_size);
+						$("#package_detail").trigger("click");
+					},
+					'text');
+		}
+	</script>
+	<script type="text/javascript">
+	var timer = null;
+	$(function(){
+		var is_getPercent = $("#is_getPercent").val();
+		if(is_getPercent != ""){
+			timer=setInterval('getProgressPercent()','1000');
+		}
+	});
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+				{"current_user": current_user,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.progressPercents){
+						for(var i=0;i<json.progressPercents.length;i++){
+							var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+							var bar_name = "name_"+json.progressPercents[i].guid;
+							var bar_guid ="guid_"+json.progressPercents[i].guid;
+							var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+							if(parseInt(json.progressPercents[i].percent) < 100){
+								$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+								$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+								$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+							}
+						}
+					}
+					if(json.progressPercents.length == 0){
+						clearInterval(timer);
+					}
+				},"text");
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+	<input type="hidden" name="current_project" id="current_project" value="{{ current_project }}"/>
+	<input type="hidden" name="is_getPercent" id="is_getPercent" value="{{ is_getPercent }}"/>
+	<!-- Main Content -->
+	<div id="main" class="container" >
+		<!--Top Bar-->
+		<div class="row">
+			<div class="span12" >
+			<h1 class="pull-left">{{ current_project }}</h1>
+			<ul class="nav nav-pills topbarnav pull-left match-h1" style="margin-left:0;">
+				<li><a href="/hob/builds/createbuild_packagegroups/?current_user={{ current_user }}&current_project={{ current_project }}">Package Groups</a></li>
+				<li><a href="/hob/builds/createbuild_recipes/?current_user={{ current_user }}&current_project={{ current_project }}">Recipes</a></li>
+				<li class="active"><a href="/hob/builds/createbuild_packages/?current_user={{ current_user }}&current_project={{ current_project }}">Packages</a></li>
+				<li><a href="/hob/builds/createbuild_buildimage/?current_user={{ current_user }}&current_project={{ current_project }}">Build Images</a></li>
+			</ul>
+			</div>
+		</div>
+		<!--Top Bar-->
+		<div class="row">
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+			<h2><a href="/hob/builds/createbuild_packagegroups/?current_user={{ current_user }}&current_project={{ current_project }}">Package Groups <i class=" icon-ok"></i></a></h2>
+			<hr />
+			<h2><a href="/hob/builds/createbuild_recipes/?current_user={{ current_user }}&current_project={{ current_project }}">Recipes  <i class=" icon-ok"></i></a></h2>
+			<hr />
+			</div>
+			<!--MAIN WORK AREA-->
+			<!--SIDEBAR-->
+			<div class="span3">&nbsp;</div>
+			<!--SIDEBAR-->
+		</div>
+		<!--BUILD IMAGE-->
+		<div class="row">
+			<div class="span9">
+				<h2>Packages</h2>
+				<div style="overflow-y:auto;height: 600px">
+				<!--accordion1-->
+				{% for group, data in pkg_list %}
+				<div id="accordion1">
+					<table class="build_table">
+						{% ifequal forloop.counter 1 %}
+						<thead>
+						<tr>
+							<th>&nbsp;</th>
+							<th>Packages</th>
+							<th>Brought in by</th>
+							<th>Size</th>
+						</tr>
+						</thead>
+						{% endifequal %}
+						<tr>
+							<td class="cb_td_one"><input type="checkbox" id="optionsCheckbox1" value="{% if group.group_inc_id %}{{ group.group_inc_id }}{% else %}{% for item in data %}{{ item.id }},{% endfor %}{% endif %}" {% if group.group_inc_id %}checked="yes"{% endif %} onclick="package_deps(this)" {% if buiding %} disabled="disabled" {% endif %}/></td>
+							<td class="cb_td_two"><label class="checkbox1"><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapse{{forloop.counter}}">{{ group.group_name }}</a></label></td>
+							<td class="cb_td_three"></td>
+							<td class="cb_td_two"><b>{{ group.count }}</b> packages</td>
+						</tr>
+					</table>
+					<!--Collapsed-->
+					<div id="collapse{{forloop.counter}}" class="accordion-body collapse">
+						<div class="accordion-inner">
+							<table class="table table-bordered table-striped">
+							{% for item in data %}
+								<tr>
+									<td><input type="checkbox" id="optionsCheckbox1" value="{{ item.id }}" {% if item.is_inc %}checked="yes"{% endif %} onclick="package_deps(this)" {% if buiding %} disabled="disabled" {% endif %}/></td>
+									<td><label class="checkbox1">{{ item.name }}&nbsp;<a data-toggle="modal" href="#" onclick="disp_packageInfo('{{item.name}}')"><i class="icon-info-sign"></i></a></label></td>
+									<td>{{ item.binb }}</td>
+									<td>{{ item.size }}</td>
+								</tr>
+							{% endfor %}
+							</table>
+						</div>
+					</div>
+					<!--Collapsed-->
+				</div>
+				{% endfor %}
+				<!--accordion1-->
+				</div>
+				<p>&nbsp;</p>
+				{% if not buiding %}
+				<a href="/hob/builds/createbuild_buildimage/?current_user={{ current_user }}&current_project={{ current_project }}" type="submit" class="btn btn-primary btn-large"><i class="icon-fire icon-white"></i> Build Image</a>
+				{% endif %}
+			</div>
+			<!--SIDEBAR-->
+			<div class="span3">
+				<div class="well">
+					<h4>Packages</h4>
+					<!-- <p>{{included_pkg_str}}</p> -->
+					<p><i class="icon-folder-open"></i> Estimated size: {{estimated_size|floatformat}} MB</p>
+					<p><i class="icon-folder-open"></i> Included total: {{inlcude_count}}</p>
+					<p><i class="icon-folder-open"></i> Package total: {{all_count}}</p>
+				</div>
+			</div>
+			<!--SIDEBAR-->
+		</div>
+		<!--BUILD IMAGES-->
+		<div class="span9" style="margin-left:0;">
+			<hr />
+			<h2><a href="/hob/builds/createbuild_buildimage/?current_user={{ current_user }}&current_project={{ current_project }}">Build Image</a></h2>
+		</div>
+	</div>
+	<!-- Main Content -->
+
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+		{% if buildings %}
+			{% for val in buildings %}
+			{% if not val.is_finished %}
+			<h4><span id="name_{{val.guid}}"></span></h4>
+			<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+			<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+			{% endif %}
+			{% endfor %}
+		{% else %}
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		{% endif %}
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+	<!--Package Info Modal Content-->
+	<a data-toggle="modal" href="#packageinfoModal" id="package_detail"></a>
+	<div id="packageinfoModal" class="modal hide">
+		<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		<h3><span id="package_name"></span></h3>
+		</div>
+		<div>
+		<table class="table" style="text-align:right;">
+		<tr>
+			<td class="pi_td_one">Summary</td>
+			<td><span id="package_summary"></span></td>
+		</tr>
+		<tr>
+			<td class="pi_td_one">Brought In By</td>
+			<td><span id="package_broughtInBuy"></span></td>
+		</tr>
+		<tr>
+			<td class="pi_td_one">Homepage</td>
+			<td><a href=#">http://www.yoctoproject.org/</a></td>
+		</tr>
+		<tr>
+			<td class="pi_td_one">Bugtracker</td>
+			<td><a href="#">http://www.yoctoproject.org/</a></td>
+		</tr>
+		<tr>
+			<td class="pi_td_one">Size</td>
+			<td><span id="package_size"></span></td>
+		</tr>
+		<tr>
+			<td class="pi_td_one">Section</td>
+			<td><span id="package_section"></span></td>
+		</tr>
+		</table>
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal" >Close</a>
+		</div>
+	</div>
+	<!--Package Info Modal Content-->
+	{% endblock %}

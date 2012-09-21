@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="refresh" content="2;url=/">
+<title>Yocto Web Hob</title>
+<link href="/static/css/assets/bootstrap.css" rel="stylesheet">
+<link href="/static/css/yocto.css" rel="stylesheet">
+<link href="/static/css/yocto-theme.css" rel="stylesheet">
+<link href="/static/css/assets/bootstrap-responsive.css" rel="stylesheet">
+<!-- Le fav and touch icons -->
+<link rel="shortcut icon" href="/static/images/assets/ico/favicon.ico">
+
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="/static/js/assets/jquery.js"></script>
+<script src="/static/js/assets/bootstrap-transition.js"></script>
+<script src="/static/js/assets/bootstrap-alert.js"></script>
+<script src="/static/js/assets/bootstrap-modal.js"></script>
+<script src="/static/js/assets/bootstrap-dropdown.js"></script>
+<script src="/static/js/assets/bootstrap-scrollspy.js"></script>
+<script src="/static/js/assets/bootstrap-tab.js"></script>
+<script src="/static/js/assets/bootstrap-tooltip.js"></script>
+<script src="/static/js/assets/bootstrap-popover.js"></script>
+<script src="/static/js/assets/bootstrap-button.js"></script>
+<script src="/static/js/assets/bootstrap-collapse.js"></script>
+<script src="/static/js/assets/bootstrap-carousel.js"></script>
+<script src="/static/js/assets/bootstrap-typeahead.js"></script>
+</head>
+<body>
+<div id="wrap">
+	<!--HEADER-->
+	<div class="navbar navbar-fixed-top">
+		<div class="navbar-inner">
+			<div class="container aligncenter">
+			<a class="brand" href="#">&nbsp;</a>
+				<div class="nav-collapse aligncenter">
+				<ul class="nav">
+				<li><a href="#" class="icon-builds">Builds</a></li>
+				<li><a href="#" class="icon-projects">Projects</a></li>
+				<li><a href="#" class="icon-groups">Groups</a></li>
+				</ul>
+					<!--Top Right Tools-->
+					<div id="top-right-tools">
+					<ul class="nav">
+					<li><a href="#"><span class="glyph general">=</span></a></li>
+					<li><a data-toggle="modal" href="#queueModal"><span class="glyph general">7</span><span class="badge badge-success">0</span></a></li>
+					<li><a href="#"><span class="glyph general">a</span></a></li>
+					<li class="dropdown"><a href="#" class="dropdown dropdown-toggle" data-toggle="dropdown"><span class="glyph social">x</span><span class="caret"></span></a>
+						<ul class="dropdown-menu">
+						<li><img src="/static/images/avatar_user.png"> UserName</li>
+						<li class="divider"></li>
+						<li><a class="btn btn-primary" href="/hob/operators/logout/">Log In</a></li>
+						</ul>
+					</li>
+					</ul>
+					</div>
+					<!--Top Right Tools-->
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--HEADER-->
+
+	<!-- Main Content -->
+	<div id="main" class="container" >
+		<div class="row main">
+			<div class="span12">
+				<div class="row">
+					<div class="span2"><h2>Error</h2></div>
+					<div class="span7"><p><span style="color: red;">{{ error_message }}</span></p></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Main Content -->
+
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+			<h4>Build 1</h4>
+			<p>Some information about the build.</p>
+			<div class="progress progress-success"><div class="bar" style="width: 60%;"></div></div>
+			<div class="alert alert-success">Done! <a href="#">Download Build 1 here.</a></div>
+			<h4>Build 2</h4>
+			<p>Some information about the build.</p>
+			<div class="progress progress-striped active"><div class="bar " style="width: 60%;"></div></div>
+			<p><i class="icon-time"></i> 01:23:02 remaining</p>
+			<h4>Build 3</h4>
+			<p>Some information about the build.</p>
+			<div class="progress progress-striped active"><div class="bar " style="width: 60%;"></div></div>
+			<p><i class="icon-time"></i> 01:23:02 remaining</p>
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+</div>
+<footer>
+	<p>&copy; The Yocto Project</p>
+</footer>
+</body>
+</html>

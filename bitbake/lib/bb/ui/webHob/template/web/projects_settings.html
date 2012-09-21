@@ -1,0 +1,233 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+	function disp_pkgformat(param){
+		$("#pkg_change").html("<label>Additional package formats</label>");
+		$("[name='pkg_list'][checked]").each(function(){
+			if(param == $(this).val()){
+				$("#pkg_defaul").hide();
+				$("#pkg_change").show();
+			}else{
+				str = '<label class="checkbox"><input type="checkbox" name="pkg_checkbox" value="'+$(this).val()+'">'+$(this).val()+'</label>'
+				$("#pkg_change").append(str);
+			}
+		});
+	}
+	</script>
+	<script type="text/javascript">
+	var temp = null;
+	$(function(){
+		var is_getPercent = $("#is_getPercent").val();
+		if(is_getPercent != ""){
+			temp=setInterval('getProgressPercent()','1000');
+		}
+	});
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+				{"current_user": current_user,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.progressPercents){
+						for(var i=0;i<json.progressPercents.length;i++){
+							var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+							var bar_name = "name_"+json.progressPercents[i].guid;
+							var bar_guid ="guid_"+json.progressPercents[i].guid;
+							var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+							if(parseInt(json.progressPercents[i].percent) < 100){
+								$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+								$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+								$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+							}
+						}
+					}
+					if(json.progressPercents.length == 0){
+						clearInterval(temp);
+					}
+				},"text");
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<input type="hidden" name="is_getPercent" id="is_getPercent" value="{{ is_getPercent }}"/>
+	<!-- Main Content -->
+	<div id="main" class="container" >
+		{% for val in package_format %}
+		<input type="hidden" name="pkg_list" checked="checked" value="{{val}}"/>
+		{% endfor %}
+		<!--Top Bar-->
+		<div class="row">
+			<div class="span12" >
+			<h1>Projects</h1>
+			<h2 class="pull-left">{{ current_project }}</h2>
+			<ul class="nav nav-pills topbarnav pull-left">
+			<li><a href="/hob/projects/projects_myproject/?current_user={{ current_user }}&current_project={{ current_project }}">Project</a></li>
+			<li><a href="/hob/projects/projects_history/?current_user={{ current_user }}&current_project={{ current_project }}"><i class="icon-time"></i> History</a></li>
+			<li class="active"><a href="/hob/projects/projects_settings/?current_user={{ current_user }}&current_project={{ current_project }}"><i class="icon-cog icon-white"></i> Settings</a></li>
+			<li><a href="/hob/projects/projects_permisisons/?current_user={{ current_user }}&current_project={{ current_project }}"><i class="icon-lock"></i> Permissions</a></li>
+			</ul>
+			</div>
+		</div>
+		<!--Top Bar-->
+		<hr />
+		<div class="row">
+			<form action="/hob/projects/save_advance_settings/" method="post">
+			<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+			<input type="hidden" name="current_project" id="current_project" value="{{ current_project }}"/>
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+				<h3>Output</h3>
+				<h4>Image Types</h4>
+				<div class="control-group checkbox_series">
+				<table class="settingschecks">
+				{% for val in image_types %}
+				{% ifequal forloop.counter 1 %}
+				<tr>
+				{% endifequal %}
+					<td><label class="checkbox"><input type="checkbox" name="checkbox" value="{{ val }}" {% for item in image_type_selected %}{% ifequal item val %}checked="checked"{% endifequal %}{% endfor %}> {{ val }}</label></td>
+				{% if forloop.counter|divisibleby:3 %}
+				</tr>
+				{% endif %}
+				{% endfor %}
+				</tr>
+				</table>
+				</div>
+				<!--Packaging Format-->
+				<div class="row">
+					<div class="span2"><h4>Packaging Format</h4></div>
+					<div class="span7">
+						<div class="row">
+							<div class="span3">
+								<label class="control-label" for="select01">Root file system packaging format</label>
+								<div class="controls">
+								<select id="select01" name="package_formats" onchange="disp_pkgformat(this.value)">
+									{% for val in package_format %}
+									<option {% if val in pkg_format_selected %} selected="selected" {% endif %}>{{ val }}</option>
+									{% endfor %}
+								</select>
+								</div>
+							</div>
+							<div class="span4"><p>Selects the package format used to generate rootfs.</p></div>
+						</div>
+						<div class="row">
+							<div class="span3" id="pkg_defaul">
+								<label>Additional package formats</label>
+								{% for val in package_format %}
+								{% ifnotequal val pkg_format_selected %}
+								<label class="checkbox"><input type="checkbox" name="pkg_checkbox" value="{{val}}" {% if pkgs %}{% for item in pkgs %}{% ifequal item val %}checked="checked"{% endifequal %}{% endfor %}{% endif %}> {{val}}</label>
+								{% endifnotequal %}
+								{% endfor %}
+							</div>
+							<div class="span3" id="pkg_change" style="display: none;">
+								<label>Additional package formats</label>
+							</div>
+							<div class="span4"><p>Selects extra package formats to build.</p></div>
+						</div>
+					</div>
+				</div>
+				<!--Packaging Format-->
+				<!--Image rootfs size-->
+				<div class="row">
+					<div class="span2"><h4>Image rootfs size</h4></div>
+					<div class="span7">
+						<div class="row">
+							<div class="span3">
+								<input type="text" name="image_rooft_size" class="input-small pull-left" placeholder="{{image_rooft_size}}" value="{{image_rooft_size}}" onkeyup="this.value=this.value.replace(/\D/g,'')" onblur="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')"> &nbsp;<label class="pull-left" style="margin: 5px 0 0 5px;"> MB</label>
+							</div>
+							<div class="span4">
+								<p>Sets the basic size of your target image. This is the basic size of your target image unless your selected package size exceeds this value or you select Image Extra Size.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--Image rootfs size-->
+				<!--Image extra size-->
+				<div class="row">
+					<div class="span2"><h4>Image extra size</h4></div>
+					<div class="span7">
+						<div class="row">
+							<div class="span3">
+								<input type="text" class="input-small pull-left" name="image_extra_size" placeholder="{{advance_setting.image_extra_size}}" value="{{advance_setting.image_extra_size}}" onkeyup="this.value=this.value.replace(/\D/g,'')" onblur="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')"> &nbsp;<label class="pull-left" style="margin: 5px 0 0 5px;"> MB</label>
+							</div>
+							<div class="span4">
+								<p>Sets the extra free space of your target image. By default, the system reserves 30% of your image size as free space. If your image contains zypper, it brings in 50MB more space. The maximum free space is 64MB.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--Image extra size-->
+				<!--buildtoolchain-->
+				<div class="row">
+					<div class="span3">
+					<label class="checkbox"><input type="checkbox" name="gplv3_checkbox" {% if advance_setting.gplv3_checkbox %} checked="checked" {% endif %} value="gplv3"> Exclude GPLv3 packages</label>
+					<label class="checkbox"><input type="checkbox" name="build_toolchain_checkbox" {% if advance_setting.build_toolchain_checkbox %} checked="checked" {% endif %} value="{{advance_setting.build_toolchain_checkbox}}"> Build toolchain</label>
+					<select id="select02" name="build_toolchain">
+						{% for val in build_toolchain %}
+						<option {% ifequal val advance_setting.build_toolchain_value %} selected="selected"{% endifequal %} value="{{val}}">{{ val }}</option>
+						{% endfor %}
+					</select>
+					</div>
+					<div class="span4"><p>Selects the host platform for which you want to run the toolchain.</div>
+				</div>
+				<!--buildtoolchain-->
+				<h3>Build Environment</h3>
+				<div class="row">
+					<div class="span3">
+					<label>Select distro</label>
+					<select id="select03" name="distro">
+						{% for val in distro %}
+						<option {% ifequal val advance_setting.distro %} selected="selected"{% endifequal %} value="{{val}}">{{ val }}</option>
+						{% endfor %}
+					</select>
+					</div>
+					<div class="span4"><p>Select the best distro.</p></div>
+				</div>
+			</div>
+			<!--MAIN WORK AREA-->
+			<!--SIDEBAR-->
+			<div class="span3">
+				<div>
+					<p><button class="btn" type="submit" name="submit" value="template">Save settings as template</button></p>
+					<p><button class="btn" type="submit" name="submit" value="archive">Archive project</button></p>
+				</div>
+				<p>&nbsp;</p>
+				<div class="well">
+					<h4>Settings and Projects</h4>
+					<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+					<p><a href="#">More about the build process and how to reduce errors in your builds &#187;</a></p>
+				</div>
+			</div>
+			<!--SIDEBAR-->
+			</form>
+		</div>
+	</div>
+	<!-- Main Content -->
+
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+		{% if buildings %}
+			{% for val in buildings %}
+			{% if not val.is_finished %}
+			<h4><span id="name_{{val.guid}}"></span></h4>
+			<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+			<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+			{% endif %}
+			{% endfor %}
+		{% else %}
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		{% endif %}
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+	{% endblock %}
