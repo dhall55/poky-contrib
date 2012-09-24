@@ -11,7 +11,7 @@ SECTION = "libs"
 DEPENDS = "libtool-cross"
 DEPENDS_virtclass-native = "libtool-native"
 
-PR = "r1"
+PR = "r2"
 
 SRC_URI = "http://www.ijg.org/files/jpegsrc.v${PV}.tar.gz \
 	   file://debian-libjpeg7_7-1.diff \
@@ -22,8 +22,10 @@ SRC_URI[sha256sum] = "00029b1473f0f0ea72fbca3230e8cb25797fbb27e58ae2e46bb8bf5a80
 
 inherit autotools 
 
-EXTRA_OECONF="--enable-static --enable-shared"
-EXTRA_OEMAKE='"LIBTOOL=${STAGING_BINDIR_CROSS}/${HOST_SYS}-libtool"'
+EXTRA_OECONF = "--enable-static --enable-shared"
+EXTRA_OEMAKE = '"LIBTOOL=${STAGING_BINDIR_CROSS}/${HOST_SYS}-libtool"'
+
+EXTRA_OEMAKE_class-native = ""
 
 CFLAGS_append = " -D_REENTRANT"
 
