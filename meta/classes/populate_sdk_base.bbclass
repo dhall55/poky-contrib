@@ -118,7 +118,7 @@ fakeroot create_shar() {
 
 DEFAULT_INSTALL_DIR="${SDKPATH}"
 
-echo -n "Enter target directory for Poky SDK (default: $DEFAULT_INSTALL_DIR): "
+printf "Enter target directory for SDK (default: $DEFAULT_INSTALL_DIR): "
 read target_sdk_dir
 
 if [ "$target_sdk_dir" = "" ]; then
@@ -126,9 +126,13 @@ if [ "$target_sdk_dir" = "" ]; then
 fi
 
 eval target_sdk_dir=$target_sdk_dir
-target_sdk_dir=$(readlink -m $target_sdk_dir)
+if [ -d $target_sdk_dir ]; then
+	target_sdk_dir=$(cd $target_sdk_dir; pwd)
+else
+	target_sdk_dir=$(readlink -m $target_sdk_dir)
+fi
 
-echo -n "You are about to install Poky SDK to \"$target_sdk_dir\". Proceed[Y/n]?"
+printf "You are about to install the SDK to \"$target_sdk_dir\". Proceed[Y/n]?"
 read answer
 
 if [ "$answer" = "" ]; then
@@ -146,15 +150,15 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-payload_offset=$(($(grep -na -m1 "^MARKER:$" $(basename $0)|cut -d':' -f1) + 1))
+payload_offset=$(($(grep -na -m1 "^MARKER:$" $0|cut -d':' -f1) + 1))
 
-echo -n "Extracting SDK..."
-tail -n +$payload_offset $(basename $0) | tar xj --strip-components=4 -C $target_sdk_dir
+printf "Extracting SDK..."
+tail -n +$payload_offset $0| tar xj --strip-components=4 -C $target_sdk_dir
 echo "done"
 
-echo -n "Setting it up..."
+printf "Setting it up..."
 # fix environment paths
-env_setup_script=$(find $target_sdk_dir -name "environment-setup-${REAL_MULTIMACH_TARGET_SYS}")
+env_setup_script=$(find $target_sdk_dir/ -name "environment-setup-${REAL_MULTIMACH_TARGET_SYS}")
 sed -e "s:$DEFAULT_INSTALL_DIR:$target_sdk_dir:g" -i $env_setup_script
 
 # fix dynamic loader paths in all ELF SDK binaries
@@ -169,6 +173,11 @@ fi
 
 # replace ${SDKPATH} with the new prefix in all text files: configs/scripts/etc
 find $native_sysroot -type f -exec file '{}' \;|grep ":.*ASCII.*text"|cut -d':' -f1|xargs sed -i -e "s:$DEFAULT_INSTALL_DIR:$target_sdk_dir:g"
+
+# change all symlinks pointing to ${SDKPATH}
+for l in $(find $native_sysroot -type l); do
+	ln -sf $(readlink $l|sed -e "s:$DEFAULT_INSTALL_DIR:$target_sdk_dir:") $l
+done
 
 echo done
 

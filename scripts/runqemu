@@ -208,6 +208,7 @@ if [ -z "$MACHINE" ]; then
 fi
 
 YOCTO_KVM_WIKI="https://wiki.yoctoproject.org/wiki/How_to_enable_KVM_for_Poky_qemu"
+YOCTO_PARAVIRT_KVM_WIKI="https://wiki.yoctoproject.org/wiki/Running_an_x86_Yocto_Linux_image_under_QEMU_KVM"
 # Detect KVM configuration
 if [ "x$KVM_ENABLED" = "xyes" ]; then
     if [ -z "$KVM_CAPABLE" ]; then
@@ -226,12 +227,25 @@ if [ "x$KVM_ENABLED" = "xyes" ]; then
         echo "$YOCTO_KVM_WIKI";
         exit 1;
     fi
+    if [ ! -e /dev/vhost-net ]; then
+        echo "Missing virtio net device. Have you inserted vhost-net module?"
+        echo "For further help see"
+        echo "$YOCTO_PARAVIRT_KVM_WIKI";
+        exit 1;
+    fi
     if 9<>/dev/kvm ; then
-        SCRIPT_QEMU_OPT="$SCRIPT_QEMU_OPT -enable-kvm"
+        SCRIPT_QEMU_OPT="$SCRIPT_QEMU_OPT -enable-kvm -cpu host"
+        KVM_ACTIVE="yes"
     else
         echo "You have no rights on /dev/kvm."
         echo "Please change the ownership of this file as described at"
         echo "$YOCTO_KVM_WIKI";
+        exit 1;
+    fi
+    if [ ! -w /dev/vhost-net -a -r /dev/vhost-net ]; then
+        echo "You have no rights on /dev/vhost-net."
+        echo "Please change the ownership of this file as described at"
+        echo "$YOCTO_PARAVIRT_KVM_WIKI";
         exit 1;
     fi
 fi
@@ -283,8 +297,16 @@ setup_tmpdir() {
         # We have bitbake in PATH, get OE_TMPDIR from bitbake
         OE_TMPDIR=`MACHINE=$MACHINE bitbake -e | grep ^TMPDIR=\" | cut -d '=' -f2 | cut -d '"' -f2`
         if [ -z "$OE_TMPDIR" ]; then
-            echo "Error: this script needs to be run from your build directory,"
-            echo "or you need to explicitly set OE_TMPDIR in your environment"
+            # Check for errors from bitbake that the user needs to know about
+            BITBAKE_OUTPUT=`bitbake -e | wc -l`
+            if [ "$BITBAKE_OUTPUT" -eq "0" ]; then
+                echo "Error: this script needs to be run from your build directory,"
+                echo "or you need to explicitly set OE_TMPDIR in your environment"
+            else
+                echo "There was an error running bitbake to determine TMPDIR"
+                echo "Here is the output from 'bitbake -e':"
+                bitbake -e
+            fi
             exit 1
         fi
     fi

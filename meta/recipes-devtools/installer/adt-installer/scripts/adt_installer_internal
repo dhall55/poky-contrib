@@ -112,7 +112,7 @@ check_result
 
 #install below must sdk-host packages
 OPKG_INSTALL_CMD="$OPKG_CMD "
-OPKG_INSTALL_NATIVE_CMD="$OPKG_INSTALL_CMD  -f $OPKG_CONFIG_FILE -o $NATIVE_INSTALL_DIR install"
+OPKG_INSTALL_NATIVE_CMD="$OPKG_INSTALL_CMD  --force-overwrite -f $OPKG_CONFIG_FILE -o $NATIVE_INSTALL_DIR install"
 
 BASE_HOSTSDK_PKGNAMES="pseudo opkg pkgconfig libtool autoconf automake"
 for pkg in $BASE_HOSTSDK_PKGNAMES; do
@@ -158,31 +158,33 @@ fi
 # the entire directory structure. We could patch opkg to do that but it's far
 # simpler to do that here and achieve the same result.
 # This is done in two steps:
-# Step 1: copy ./opt/${DISTRO}/${SDK_VERSION} contents to $NATIVE_INSTALL_DIR.
-# We cannot use move if $NATIVE_INSTALL_DIR is not empty (for example: contains
-# another SDK)
-$SUDO cp -r $NATIVE_INSTALL_DIR/$DEFAULT_INSTALL_FOLDER/* $NATIVE_INSTALL_DIR
+if [ -d $NATIVE_INSTALL_DIR/$DEFAULT_INSTALL_FOLDER ]; then
+    # Step 1: copy ./opt/${DISTRO}/${SDK_VERSION} contents to $NATIVE_INSTALL_DIR.
+    # We cannot use move if $NATIVE_INSTALL_DIR is not empty (for example: contains
+    # another SDK)
+    $SUDO cp -r $NATIVE_INSTALL_DIR/$DEFAULT_INSTALL_FOLDER/* $NATIVE_INSTALL_DIR
 
-# delete the source directory now
-$SUDO rm -rf $NATIVE_INSTALL_DIR/$DEFAULT_INSTALL_FOLDER/*
+    # delete the source directory now
+    $SUDO rm -rf $NATIVE_INSTALL_DIR/$DEFAULT_INSTALL_FOLDER/*
 
-# Step 2: Delete the ./opt/${DISTRO}/${SDK_VERSION} directories too, they should be empty
-dir=$NATIVE_INSTALL_DIR/$DEFAULT_INSTALL_FOLDER
-while [ "$dir" != "$NATIVE_INSTALL_DIR" ]; do
-    # if the user chose / as the install folder, then we should leave /opt in place
-    if [ "$dir" = "/opt" ]; then
-        break
-    fi
+    # Step 2: Delete the ./opt/${DISTRO}/${SDK_VERSION} directories too, they should be empty
+    dir=$NATIVE_INSTALL_DIR/$DEFAULT_INSTALL_FOLDER
+    while [ "$dir" != "$NATIVE_INSTALL_DIR" ]; do
+        # if the user chose / as the install folder, then we should leave /opt in place
+        if [ "$dir" = "/opt" ]; then
+            break
+        fi
 
-    # try to delete the directory, only if it's empty
-    $SUDO rmdir $dir
-    if [ $? -ne 0 ]; then
-        break
-    fi
+        # try to delete the directory, only if it's empty
+        $SUDO rmdir $dir
+        if [ $? -ne 0 ]; then
+            break
+        fi
 
-    # go to the next directory
-    dir=$(dirname $dir)
-done
+        # go to the next directory
+        dir=$(dirname $dir)
+    done
+fi
 
 # Link the ld.so.cache file into the hosts filesystem
 if [ ! -f "$OECORE_NATIVE_SYSROOT/etc/ld.so.cache" ]; then
@@ -207,11 +209,16 @@ $SUDO scripts/relocate_sdk_tmp.py $INSTALL_FOLDER $dl_path $executable_files
 check_result
 
 # replace /opt/${DISTRO}/${SDK_VERSION} with the install folder in all configs
-env_setup_script=$(find $NATIVE_INSTALL_DIR -name "environment-setup-*")
+env_setup_script=$(find $NATIVE_INSTALL_DIR/ -name "environment-setup-*")
 $SUDO sed -i -e "s:$DEFAULT_INSTALL_FOLDER:$NATIVE_INSTALL_DIR:g" $env_setup_script
 
 find $OECORE_NATIVE_SYSROOT -type f -exec file '{}' \;|grep ":.*ASCII.*text"|cut -d':' -f1|\
     xargs $SUDO sed -i -e "s:$DEFAULT_INSTALL_FOLDER:$NATIVE_INSTALL_DIR:g"
+
+# change all symlinks pointing to /opt/${DISTRO}/${SDK_VERSION}
+for l in $(find $NATIVE_INSTALL_DIR -type l); do
+	ln -sf $(readlink $l|sed -e "s:$DEFAULT_INSTALL_FOLDER:$NATIVE_INSTALL_DIR:") $l
+done
 
 echo_info "\nSuccessfully installed selected native ADT!"
 }
