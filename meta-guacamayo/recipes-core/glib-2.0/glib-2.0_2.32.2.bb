@@ -17,7 +17,10 @@ DEPENDS += "libffi python-argparse-native zlib"
 DEPENDS_virtclass-native += "libffi-native python-argparse-native"
 DEPENDS_virtclass-nativesdk += "libffi-nativesdk python-argparse-native zlib-nativesdk"
 
-EXTRA_OECONF += "--enable-debug=minimal"
+EXTRA_OECONF += "--enable-debug=minimal \
+                 ac_cv_alignof_guint32=4 \
+                 ac_cv_alignof_guint64=4 \
+                 ac_cv_alignof_unsigned_long=4"
 
 SHRT_VER = "${@d.getVar('PV',1).split('.')[0]}.${@d.getVar('PV',1).split('.')[1]}"
 
