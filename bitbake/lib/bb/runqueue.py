@@ -466,7 +466,7 @@ class RunQueueData:
                 # (makes sure sometask runs after targetname's someothertask)
                 idepends = taskData.tasks_idepends[task]
                 for (depid, idependtask) in idepends:
-                    if depid in taskData.build_targets:
+                    if depid in taskData.build_targets and not depid in taskData.failed_deps:
                         # Won't be in build_targets if ASSUME_PROVIDED
                         depdata = taskData.build_targets[depid][0]
                         if depdata is not None:
@@ -692,13 +692,14 @@ class RunQueueData:
             stampfnwhitelist.append(fn)
         self.stampfnwhitelist = stampfnwhitelist
 
-        # Interate over the task list looking for tasks with a 'setscene' function
+        # Iterate over the task list looking for tasks with a 'setscene' function
         self.runq_setscene = []
-        for task in range(len(self.runq_fnid)):
-            setscene = taskData.gettask_id(self.taskData.fn_index[self.runq_fnid[task]], self.runq_task[task] + "_setscene", False)
-            if not setscene:
-                continue
-            self.runq_setscene.append(task)
+        if not self.cooker.configuration.nosetscene:
+            for task in range(len(self.runq_fnid)):
+                setscene = taskData.gettask_id(self.taskData.fn_index[self.runq_fnid[task]], self.runq_task[task] + "_setscene", False)
+                if not setscene:
+                    continue
+                self.runq_setscene.append(task)
 
         def invalidate_task(fn, taskname, error_nostamp):
             taskdep = self.dataCache.task_deps[fn]
@@ -931,6 +932,8 @@ class RunQueue:
         try:
             return self._execute_runqueue()
         except bb.runqueue.TaskFailure:
+            raise
+        except SystemExit:
             raise
         except:
             logger.error("An uncaught exception occured in runqueue, please see the failure below:")

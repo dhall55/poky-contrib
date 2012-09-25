@@ -31,7 +31,7 @@
        <link linkend='var-MACHINE'>M</link> 
 <!--               <link linkend='var-glossary-n'>N</link> -->
 <!--               <link linkend='var-glossary-o'>O</link> -->
-       <link linkend='var-PACKAGE_ARCH'>P</link> 
+       <link linkend='var-P'>P</link> 
 <!--               <link linkend='var-glossary-q'>Q</link> -->
        <link linkend='var-RCONFLICTS'>R</link> 
        <link linkend='var-S'>S</link> 
@@ -93,14 +93,15 @@
         <glossentry id='var-B'><glossterm>B</glossterm>
             <glossdef>
                 <para>
-                    The directory in which the OpenEmbedded build system places
-                    generated objects during a recipe's build process.
+                    The <ulink url='&YOCTO_DOCS_DEV_URL;#build-directory'>build directory</ulink>.
+                    The OpenEmbedded build system places generated objects into the build directory
+                    during a recipe's build process.
                     By default, this directory is the same as the <link linkend='var-S'><filename>S</filename></link>
                     directory:
                     <literallayout class='monospaced'>
      B = ${WORKDIR}/${BPN}-{PV}/
                     </literallayout>
-                    You can separate the source directory (<filename>S</filename>) and the directory pointed to 
+                    You can separate the (<filename>S</filename>) directory and the directory pointed to 
                     by the <filename>B</filename> variable.
                     Most autotools-based recipes support separating these directories.
                     The build system defaults to using separate directories for <filename>gcc</filename>
@@ -264,6 +265,18 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BP'><glossterm>BP</glossterm>
+            <glossdef>
+                <para>The base recipe name and version but without any special 
+                    package name suffix (i.e. <filename>-native</filename>, <filename>lib64-</filename>,
+                    and so forth).
+                    <filename>BP</filename> is comprised of the following:
+                    <literallayout class="monospaced">
+     ${BPN}-${PV}
+                    </literallayout></para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BPN'><glossterm>BPN</glossterm>
             <glossdef>
                 <para>Bare name of package with any suffixes like -cross -native removed.</para>
@@ -311,7 +324,7 @@
 
                 <para>  
                     To use the <filename>CONFFILES</filename> variable, provide a package name
-                    override that identifies the package.
+                    override that identifies the resulting package.
                     Then, provide a space-separated list of files.
                     Here is an example:
                     <literallayout class='monospaced'>                       
@@ -622,9 +635,9 @@
 
                 <para>
                     To use the <filename>FILES</filename> variable, provide a package name
-                    override that identifies the package.
+                    override that identifies the resulting package.
                     Then, provide a space-separated list of files or paths that identifies the 
-                    files you want included as part of the package.
+                    files you want included as part of the resulting package.
                     Here is an example:
                     <literallayout class='monospaced'>                       
   FILES_${PN} += "${bindir}/mydir1/ ${bindir}/mydir2/myfile"
@@ -1480,6 +1493,16 @@ recipes-graphics/xorg-font/xorg-font-common.inc:INC_PR = "r2"
 
     <glossdiv id='var-glossary-p'><title>P</title>
 
+        <glossentry id='var-P'><glossterm>P</glossterm>
+            <glossdef>
+                <para>The recipe name and version.
+                    <filename>P</filename> is comprised of the following:
+                    <literallayout class='monospaced'>
+     ${PN}-${PV}
+                    </literallayout></para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-PACKAGE_ARCH'><glossterm>PACKAGE_ARCH</glossterm>
             <glossdef>
                 <para>The architecture of the resulting package or packages.</para>
@@ -1543,13 +1566,39 @@ recipes-graphics/xorg-font/xorg-font-common.inc:INC_PR = "r2"
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-PF'><glossterm>PF</glossterm>
+            <glossdef>
+                <para>Specifies the recipe or package name and includes all version and revision
+                    numbers (i.e. <filename>eglibc-2.13-r20+svnr15508/</filename> and
+                    <filename>bash-4.2-r1/</filename>).
+                    This variable is comprised of the following:
+                    <literallayout class='monospaced'>
+     ${PN}-${EXTENDPE}${PV}-${PR}
+                    </literallayout></para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-PN'><glossterm>PN</glossterm>
             <glossdef>
-                <para>The name of the recipe. The name is normally extracted from the recipe file name.
+                <para>This variable can have two separate functions depending on the context: a recipe
+                    name or a resulting package name.</para>
+                <para><filename>PN</filename> refers to a recipe name in the context of a file used 
+                    by the OpenEmbedded build system as input to create a package.
+                    The name is normally extracted from the recipe file name.
                     For example, if the recipe is named 
                     <filename>expat_2.0.1.bb</filename>, then the default value of <filename>PN</filename>
-                    will be "expat". 
-                    </para>
+                    will be "expat".</para>
+                <para> 
+                    The variable refers to a package name in the context of a file created or produced by the
+                    OpenEmbedded build system.</para>
+                <para>If applicable, the <filename>PN</filename> variable also contains any special 
+                    suffix or prefix.
+                    For example, using <filename>bash</filename> to build packages for the native
+                    machine, <filename>PN</filename> is <filename>bash-native</filename>.
+                    Using <filename>bash</filename> to build packages for the target and for Multilib,
+                    <filename>PN</filename> would be <filename>bash</filename> and  
+                    <filename>lib64-bash</filename>, respectively.
+                </para>
             </glossdef>
         </glossentry>
 
@@ -1558,6 +1607,25 @@ recipes-graphics/xorg-font/xorg-font-common.inc:INC_PR = "r2"
                 <para>The revision of the recipe. 
                     The default value for this variable is "r0".
                     </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PRINC'><glossterm>PRINC</glossterm>
+            <glossdef>
+                <para>Causes the <filename>PR</filename> variable to dynamically increment.
+                    This incrementation increases the value of a recipe's revision 
+                    (<filename>PR</filename>) while minimizing the impact of layer ordering.</para>
+                <para>In order to ensure multiple <filename>.bbappend</filename> files can co-exist, 
+                    <filename>PRINC</filename> should be self referencing.
+                    The variable defaults to 0.</para>
+                <para>Following is an example that increments <filename>PR</filename> by two:
+                    <literallayout class='monospaced'>
+     PRINC := "${@int(PRINC) + 2}"
+                    </literallayout>
+                    It is adviseable not to use strings such as ".= '.1'" with the variable because
+                    this usage is very sensitive to layer ordering. 
+                    Explicit assignments should be avoided as they cannot adequately represent multiple 
+                    <filename>.bbappend</filename> files.</para>
             </glossdef>
         </glossentry>
 
@@ -1826,7 +1894,134 @@ recipes-graphics/xorg-font/xorg-font-common.inc:INC_PR = "r2"
 
         <glossentry id='var-SRC_URI'><glossterm>SRC_URI</glossterm>
             <glossdef>
-                <para>The list of source files - local or remote.</para>
+                <para>The list of source files - local or remote.
+                    This variable tells the OpenEmbedded build system which bits to pull
+                    in for the build and how to pull them in.
+                    For example, if the recipe only needs to fetch a tarball from the 
+                    internet, the recipe uses a single <filename>SRC_URI</filename> entry.
+                    On the other hand, if the recipe needs to fetch a tarball, apply
+                    two patches, and include a custom file, the recipe would include four
+                    instances of the variable.</para>
+                <para>The following list explains the available URI protocols:
+                    <itemizedlist>
+                        <listitem><para><emphasis><filename>file://</filename> -</emphasis> Fetches files, which is usually
+                            a file shipped with the metadata, from the local machine. 
+                            The path is relative to the 
+                            <link linkend='var-FILESPATH'><filename>FILESPATH</filename></link> 
+                            variable.
+                            Thus, the build system searches, in order, from the following directories,
+                            which are assumed to be a subdirectories of the directory in which the 
+                            recipe file resides:
+                            <itemizedlist>
+                                <listitem><para><emphasis><filename>${PN}</filename> -</emphasis> The recipe name 
+                                    with any special suffix or prefix, if applicable.
+                                    For example, using <filename>bash</filename> to build for the native
+                                    machine, <filename>PN</filename> is <filename>bash-native</filename>.
+                                    Using <filename>bash</filename> to build for the target and for Multilib,
+                                    <filename>PN</filename> would be <filename>bash</filename> and  
+                                    <filename>lib64-bash</filename>, respectively.
+                                    </para></listitem>
+                                <listitem><para><emphasis><filename>${PF}</filename> - </emphasis>
+                                    <filename>${PN}-${EXTENDPE}${PV}-${PR}</filename>.
+                                    The recipe name including all version and revision numbers 
+                                    (i.e. <filename>eglibc-2.13-r20+svnr15508/</filename> and
+                                    <filename>bash-4.2-r1/</filename>).</para></listitem>
+                                <listitem><para><emphasis><filename>${P}</filename> -</emphasis> 
+                                    <filename>${PN}-${PV}</filename>. 
+                                    The recipe name and version (i.e. <filename>bash-4.2</filename>).
+                                    </para></listitem>
+                                <listitem><para><emphasis><filename>${BPN}</filename> -</emphasis> The 
+                                    base recipe name without any special suffix or version numbers.
+                                    </para></listitem>
+                                <listitem><para><emphasis><filename>${BP}</filename> -</emphasis> 
+                                    <filename>${BPN}-${PV}</filename>.
+                                    The base recipe name and version but without any special 
+                                    package name suffix.</para></listitem>
+                                <listitem><para><emphasis>Files -</emphasis> Files beneath the directory in which the recipe
+                                    resides.</para></listitem>
+                                <listitem><para><emphasis>Directory -</emphasis> The directory itself in which the recipe
+                                    resides.</para></listitem>
+                            </itemizedlist></para></listitem>
+                        <listitem><para><emphasis><filename>bzr://</filename> -</emphasis> Fetches files from a 
+                            Bazaar revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>git://</filename> -</emphasis> Fetches files from a 
+                            Git revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>osc://</filename> -</emphasis> Fetches files from 
+                            an OSC (OpenSuse Build service) revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>repo://</filename> -</emphasis> Fetches files from 
+                            a repo (Git) repository.</para></listitem>
+                        <listitem><para><emphasis><filename>svk://</filename> -</emphasis> Fetches files from 
+                            an SVK revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>http://</filename> -</emphasis> Fetches files from 
+                            the Internet using <filename>http</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>https://</filename> -</emphasis> Fetches files 
+                            from the Internet using <filename>https</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>ftp://</filename> -</emphasis> Fetches files 
+                            from the Internet using <filename>ftp</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>cvs://</filename> -</emphasis> Fetches files from 
+                            a CVS revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>hg://</filename> -</emphasis> Fetches files from 
+                            a Mercurial (<filename>hg</filename>) revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>p4://</filename> -</emphasis> Fetches files from 
+                            a Perforce (<filename>p4</filename>) revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>ssh://</filename> -</emphasis> Fetches files from 
+                            a secure shell.</para></listitem>
+                        <listitem><para><emphasis><filename>svn://</filename> -</emphasis> Fetches files from 
+                            a Subversion (<filename>svn</filename>) revision control repository.</para></listitem>
+                    </itemizedlist>
+                </para>
+                <para>Standard and recipe-specific options for <filename>SRC_URI</filename> exist.
+                    Here are standard options:
+                    <itemizedlist>
+                        <listitem><para><emphasis><filename>apply</filename> -</emphasis> Whether to apply 
+                            the patch or not. 
+                            The default action is to apply the patch.</para></listitem>
+                        <listitem><para><emphasis><filename>striplevel</filename> -</emphasis> Which 
+                            striplevel to use when applying the patch.
+                            The default level is 1.</para></listitem>
+                    </itemizedlist>
+                </para>
+                <para>Here are options specific to recipes building code from a revision control system:
+                    <itemizedlist>
+                        <listitem><para><emphasis><filename>mindate</filename> -</emphasis> Only applies 
+                            the patch if <link linkend='var-SRCDATE'><filename>SRCDATE</filename></link> 
+                            is equal to or greater than <filename>mindate</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>maxdate</filename> -</emphasis> Only applies 
+                            the patch if <link linkend='var-SRCDATE'><filename>SRCDATE</filename></link> 
+                            is not later than <filename>mindate</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>minrev</filename> -</emphasis> Only applies 
+                            the patch if <link linkend='var-SRCREV'><filename>SRCREV</filename></link> 
+                            is equal to or greater than <filename>minrev</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>maxrev</filename> -</emphasis> Only applies 
+                            the patch if <link linkend='var-SRCREV'><filename>SRCREV</filename></link> 
+                            is not later than <filename>maxrev</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>rev</filename> -</emphasis> Only applies the 
+                            patch if <link linkend='var-SRCREV'><filename>SRCREV</filename></link> 
+                            is equal to <filename>rev</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>notrev</filename> -</emphasis> Only applies 
+                            the patch if <link linkend='var-SRCREV'><filename>SRCREV</filename></link> 
+                            is not equal to <filename>rev</filename>.</para></listitem>
+                    </itemizedlist>
+                </para>
+                <para>Here are some additional options worth mentioning:
+                    <itemizedlist>
+                        <listitem><para><emphasis><filename>unpack</filename> -</emphasis> Controls 
+                            whether or not to unpack the file if it is an archive.
+                            The default action is to upack the file.</para></listitem>
+                        <listitem><para><emphasis><filename>subdir</filename> -</emphasis> Places the file 
+                            (or extracts its contents) into the specified 
+                            subdirectory of <link linkend='var-WORKDIR'><filename>WORKDIR</filename></link>.
+                            This option is useful for unusual tarballs or other archives that 
+                            don't have their files already in a subdirectory within the archive.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>name</filename> -</emphasis> Specifies a 
+                            name to be used for association with <filename>SRC_URI</filename> checksums 
+                            when you have more than one file specified in <filename>SRC_URI</filename>.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>downloadfilename</filename> -</emphasis> Specifies  
+                            the filename used when storing the downloaded file.</para></listitem>
+                    </itemizedlist>
+                </para>
             </glossdef>
         </glossentry>
 

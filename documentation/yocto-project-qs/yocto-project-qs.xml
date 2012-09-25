@@ -387,7 +387,8 @@
              <literallayout class='monospaced'>
      $ wget &YOCTO_POKY_DL_URL;
      $ tar xjf &YOCTO_POKY;.tar.bz2
-     $ source &OE_INIT_PATH; &YOCTO_POKY;-build
+     $ cd &YOCTO_POKY;
+     $ source &OE_INIT_FILE;
              </literallayout>
          </para>
 
@@ -412,12 +413,15 @@
              <listitem><para>The second command extracts the files from the tarball and places 
                  them into a directory named <filename>&YOCTO_POKY;</filename> in the current 
                  directory.</para></listitem>
-             <listitem><para>The third command runs the Yocto Project environment setup script.
-                 Running this script defines OpenEmbedded build environment settings needed to 
+             <listitem><para>The third and fourth commands change the working directory to the
+                 <ulink url='&YOCTO_DOCS_DEV_URL;#source-directory'>source directory</ulink>
+                 and run the Yocto Project environment setup script.
+                 Running this script defines OpenEmbedded build environment settings needed to
                  complete the build.
                  The script also creates the 
                  <ulink url='&YOCTO_DOCS_DEV_URL;#build-directory'>build directory</ulink>,
-                 which is <filename>&YOCTO_POKY;-build</filename> in this case.
+                 which is <filename>build</filename> in this case and is located in the 
+                 source directory.
                  After the script runs, your current working directory is set 
                  to the build directory.
                  Later, when the build completes, the build directory contains all the files 
@@ -426,7 +430,7 @@
          </itemizedlist>
          <para>
              Take some time to examine your <filename>local.conf</filename> file 
-             in your project's configuration directory.
+             in your project's configuration directory, which is found in the build directory.
              The defaults in that file should work fine.
              However, there are some variables of interest at which you might look.
          </para>
@@ -533,9 +537,9 @@
                 Toolchains are available for 32-bit and 64-bit development systems from the 
                 <filename>i686</filename> and <filename>x86-64</filename> directories, respectively. 
                 Each type of development system supports five target architectures.
-                The names of the tarballs are such that a string representing the host system appears 
-                first in the filename and then is immediately followed by a string representing
-                the target architecture.
+                The names of the tarball installer scripts are such that a string representing the 
+                host system appears first in the filename and then is immediately followed by a 
+                string representing the target architecture.
             </para>
 
             <literallayout class='monospaced'>
@@ -731,7 +735,7 @@
                 pages.
             </para>
         </footnote>
-        gives you a very fast description of how to use the Yocto Project to build images 
+        gives you a minimal description of how to use the Yocto Project to build images 
         for a BeagleBoard xM starting from scratch. 
         The steps were performed on a 64-bit Ubuntu 10.04 system.
     </para>
@@ -773,16 +777,18 @@
         <title>Initializing the Build Environment</title>
 
         <para>
-            From the parent directory of local source directory, initialize your environment 
-            and provide a meaningful 
+            From the parent directory your
+            <ulink url='&YOCTO_DOCS_DEV_URL;#source-directory'>source directory</ulink>, 
+            initialize your environment and provide a meaningful 
             <ulink url='&YOCTO_DOCS_DEV_URL;#build-directory'>build directory</ulink>
             name:
             <literallayout class='monospaced'>
-     $ source poky/oe-init-build-env mybuilds
+     $ source poky/&OE_INIT_FILE; mybuilds
             </literallayout>
             At this point, the <filename>mybuilds</filename> directory has been created for you 
             and it is now your current working directory.
-            If you don't provide your own directory name it defaults to <filename>build</filename>.
+            If you don't provide your own directory name it defaults to <filename>build</filename>,
+            which is inside the source directory.
         </para>
     </section>
 
@@ -847,7 +853,7 @@
      $ bitbake -c fetchall core-image-minimal
                     </literallayout>
                     This variation guarantees that you have all the sources for that BitBake target 
-                    should you to disconnect from the net and want to do the build later offline.
+                    should you disconnect from the net and want to do the build later offline.
                     </para></listitem>
                 <listitem><para>Specify to continue the build even if BitBake encounters an error.
                     By default, BitBake aborts the build when it encounters an error.

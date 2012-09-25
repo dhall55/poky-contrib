@@ -653,6 +653,7 @@ class Builder(gtk.Window):
 
         elif next_step == self.PACKAGE_SELECTION:
             self.configuration.initial_selected_packages = self.configuration.selected_packages
+            self.package_details_page.set_title("Edit packages")
             if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
                 self.package_details_page.set_packages_curr_tab(self.package_details_page.ALL)
             else:
@@ -665,6 +666,7 @@ class Builder(gtk.Window):
             self.build_details_page.show_page(next_step)
 
         elif next_step == self.PACKAGE_GENERATED:
+            self.package_details_page.set_title("Step 2 of 2: Edit packages")
             if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
                 self.package_details_page.set_packages_curr_tab(self.package_details_page.ALL)
             else:
@@ -754,6 +756,8 @@ class Builder(gtk.Window):
 
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.GENERATE_CONFIGURATION:
+            if not self.configuration.curr_mach:
+                self.configuration.curr_mach = self.handler.runCommand(["getVariable", "HOB_MACHINE"]) or ""
             self.update_configuration_parameters(self.get_parameters_sync())
             self.sanity_check()
         elif initcmd == self.handler.SANITY_CHECK:
@@ -1021,20 +1025,11 @@ class Builder(gtk.Window):
     def destroy_window_cb(self, widget, event):
         if not self.sensitive:
             return True
-        lbl = "<b>Do you really want to exit the Hob image creator?</b>"
-        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
-        HobAltButton.style_button(button)
-        button = dialog.add_button("Exit Hob", gtk.RESPONSE_YES)
-        HobButton.style_button(button)
-        dialog.set_default_response(gtk.RESPONSE_YES)
-        response = dialog.run()
-        dialog.destroy()
-        if response == gtk.RESPONSE_YES:
-            gtk.main_quit()
-            return False
-        else:
+        elif self.handler.building:
+            self.stop_build()
             return True
+        else:
+            gtk.main_quit()
 
     def build_packages(self):
         _, all_recipes = self.recipe_model.get_selected_recipes()
