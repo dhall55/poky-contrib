@@ -17,10 +17,7 @@ DEPENDS += "libffi python-argparse-native zlib"
 DEPENDS_virtclass-native += "libffi-native python-argparse-native"
 DEPENDS_virtclass-nativesdk += "libffi-nativesdk python-argparse-native zlib-nativesdk"
 
-EXTRA_OECONF += "--enable-debug=minimal \
-                 ac_cv_alignof_guint32=4 \
-                 ac_cv_alignof_guint64=4 \
-                 ac_cv_alignof_unsigned_long=4"
+EXTRA_OECONF += "--enable-debug=minimal"
 
 SHRT_VER = "${@d.getVar('PV',1).split('.')[0]}.${@d.getVar('PV',1).split('.')[1]}"
 
@@ -38,7 +35,6 @@ SRC_URI_append_libc-uclibc = " ${@['', 'file://${COREBASE}/meta/recipes-core/gli
 
 SRC_URI_append_virtclass-native = " file://${COREBASE}/meta/recipes-core/glib-2.0/glib-2.0/glib-gettextize-dir.patch"
 BBCLASSEXTEND = "native nativesdk"
-
 
 do_configure_prepend() {
   # missing ${topdir}/gtk-doc.make and --disable-gtk-doc* is not enough, because it calls gtkdocize (not provided by gtk-doc-native)

@@ -1,11 +1,9 @@
 DESCRIPTION="Guacamayo tasks"
 LICENSE = "MIT"
 
-LIC_FILES_CHKSUM = "file://${GUACABASE}/meta-guacamayo/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta-guacamayo/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
-PR = "r27"
-
-DEPENDS += "alsa-plugins"
+PR = "r32"
 
 PACKAGES="\
 	task-guacamayo			\
@@ -31,8 +29,8 @@ ALLOW_EMPTY = "1"
 #
 # These packages have 'commercial' license flag set
 GUACA_COMMERCIAL_CORE  = "connman-guacamayo-ntp"
-GUACA_COMMERCIAL_AUDIO = ""
-GUACA_COMMERCIAL_VIDEO = "gst-fluendo-mp3"
+GUACA_COMMERCIAL_AUDIO = "gst-fluendo-mp3"
+GUACA_COMMERCIAL_VIDEO = ""
 
 python __anonymous () {
     def license_flag_matches(flag, whitelist, pn):
@@ -99,6 +97,7 @@ python __anonymous () {
 GUACA_NETWORKING = "connman-initd \
                     connman-plugin-ethernet \
                     connman-plugin-loopback \
+                    ${@base_contains('DISTRO_FEATURES', 'wifi','connman-plugin-wifi', '', d)} \
                    "
 
 GUACA_PA_CORE = "pulseaudio \
@@ -119,6 +118,7 @@ GUACA_DEMOS_VIDEO    = "guacamayo-demos-video"
 
 # dbus-x11 is needed for dbus-launch (fixed in oe-core master)
 RDEPENDS_task-guacamayo-core = "			\
+			     linux-firmware		\
 			     tzdata			\
 			     dconf			\
 			     guacamayo-gsettings	\
@@ -141,6 +141,7 @@ RDEPENDS_task-guacamayo-core = "			\
 			     shared-mime-info		\
 			     "
 
+RDEPENDS_task-guacamayo-core_append_beagleboard = "gstreamer-ti"
 RDEPENDS_task-guacamayo-core_append_raspberrypi = "rpi-zram-service-initd"
 
 RDEPENDS_task-guacamayo-renderer = " \

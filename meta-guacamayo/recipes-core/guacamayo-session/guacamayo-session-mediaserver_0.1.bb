@@ -1,16 +1,21 @@
 DESCRIPTION="Mediaserver session"
 LICENSE = "MIT"
 
-LIC_FILES_CHKSUM = "file://${GUACABASE}/meta-guacamayo/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta-guacamayo/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
 RDEPENDS_${PN} += "sudo ${PN}-initd"
-CONFLICTS_${PN} += "guacamayo-session-x11"
+CONFLICTS_${PN} += "guacamayo-session-x11		\
+		    guacamayo-session-egl		\
+		    guacamayo-session-audioplayer	\
+		   "
 
-PR = "r0"
+PR = "r3"
 
 inherit update-rc.d useradd
 
-SRC_URI = "file://guacamayo-session-mediaserver"
+SRC_URI = "file://guacamayo-session-mediaserver	\
+	   file://guacamayo-session-common	\
+	  "
 
 ALLOW_EMPTY = "1"
 PACKAGES =+ "${PN}-initd"
@@ -30,6 +35,7 @@ USERADD_PARAM_${PN} = "--home-dir=/home/rygel \
 do_install_append() {
     install -d ${D}${sysconfdir}/init.d
     install -m 0755 ${WORKDIR}/${PN} ${D}${sysconfdir}/init.d
+    install -m 0644 ${WORKDIR}/guacamayo-session-common ${D}/${sysconfdir}
 }
 
 FILES_${PN}-initd += "${sysconfdir}/init.d"
