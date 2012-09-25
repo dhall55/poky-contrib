@@ -26,13 +26,13 @@ if [ -x "/usr/bin/yum" ];then
 
     /usr/bin/yum -y install pytz python-libxml2 python-libxslt1 python-lxml
 elif [ -x "/usr/bin/apt-get" ];then
-    /usr/bin/apt-get -y install sed wget subversion git-core coreutils \
+    /usr/bin/apt-get install -y --force-yes sed wget subversion git-core coreutils \
     unzip texi2html texinfo libsdl1.2-dev docbook-utils fop gawk \
     python-pysqlite2 diffstat make gcc build-essential xsltproc \
     g++ desktop-file-utils chrpath libgl1-mesa-dev libglu1-mesa-dev \
     autoconf automake groff libtool xterm libxml-parser-perl nfs-common portmap
 
-    /usr/bin/apt-get -y install python-tz python-libxml2 python-libxslt1 python-lxml
+    /usr/bin/apt-get install -y --force-yes python-tz python-libxml2 python-libxslt1 python-lxml
 else
     echo "Currently only supported Ubuntu and Fedora OS"
     exit 0
@@ -124,12 +124,12 @@ if [ ! -d ${shareimages_dir} ];then
     chown -R builder:builder /home/builder/build
 fi
 
-printf "\ntry to mount ..."
+printf "\ntry to checking exports root of file server ...\n"
 # checking exports of fileserver
 nfs_export_root=`showmount -e ${file_serv} | grep ${file_root}`
 if [ $? -eq 0 ];then
     echo "checking exports ok: ${file_serv}:$nfs_export_root"
-    echo "to mounted .."
+    echo "do mount .."
 
     mount -t nfs "${file_serv_nfs_root}/upload" ${sharelayers_dir}
     tail --lines 2 /etc/fstab |  grep "${file_root}/upload"
@@ -143,17 +143,19 @@ if [ $? -eq 0 ];then
         echo "${file_serv_nfs_root}/download ${shareimages_dir} nfs user,rw 0 0" >> /etc/fstab
     fi
 
-#    mount -t nfs "${file_serv_nfs_root}/sourcetarball" ${sources_dir}
-#    tail --lines 2 /etc/fstab |  grep "${file_root}/sourcetarball"
-#    if [ $? -ne 1 ];then
-#        echo "${file_serv_nfs_root}/sourcetarball ${sources_dir} nfs user,rw 0 0" >> /etc/fstab
-#    fi
-#
-#    mount -t nfs "${file_serv_nfs_root}/${file_root}/sstate" ${sstate_dir}
-#    tail --lines 2 /etc/fstab |  grep "${file_root}/sstate"
-#    if [ $? -ne 1 ];then
-#        echo "${file_serv_nfs_root}/sstate ${sstate_dir} nfs user,rw 0 0" >> /etc/fstab
-#    fi
+    mount -t nfs "${file_serv_nfs_root}/sourcetarball" ${sources_dir}
+    tail --lines 2 /etc/fstab |  grep "${file_root}/sourcetarball"
+    if [ $? -ne 0 ];then
+        echo "${file_serv_nfs_root}/sourcetarball ${sources_dir} nfs user,rw 0 0" >> /etc/fstab
+    fi
+
+    mount -t nfs "${file_serv_nfs_root}/sstate" ${sstate_dir}
+    tail --lines 2 /etc/fstab |  grep "${file_root}/sstate"
+    if [ $? -ne 0 ];then
+        echo "${file_serv_nfs_root}/sstate ${sstate_dir} nfs user,rw 0 0" >> /etc/fstab
+    fi
+
+    printf "\n mounted"
 else
     printf "\nChecking the exported root of nfs serv is failure\n"
 fi
