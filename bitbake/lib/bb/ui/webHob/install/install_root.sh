@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# configurate nfs client
+file_serv="10.239.47.176"
+file_root="/home/nation/ftp"
+file_serv_nfs_root=${file_serv}:${file_root}
+# shared folders for nfs_dir to mount
+shareimages_dir="/home/builder/build/tmp/deploy/images"
+sharelayers_dir="/home/builder/nfsroot"
+sstate_dir="/home/builder/build/sstate-cache"
+sources_dir="/home/builder/build/downloads"
+
 #install required packages
 printf  "\n#[ Installing and checking required packages.... ]\n"
 if [ -x "/usr/bin/yum" ];then
@@ -12,7 +22,7 @@ if [ -x "/usr/bin/yum" ];then
     groff linuxdoc-tools patch cmake \
     perl-ExtUtils-MakeMaker tcl-devel gettext chrpath ncurses apr \
     SDL-devel mesa-libGL-devel mesa-libGLU-devel gnome-doc-utils \
-    autoconf automake libtool xterm
+    autoconf automake libtool xterm portmap nfs-common
 
     /usr/bin/yum -y install pytz python-libxml2 python-libxslt1 python-lxml
 elif [ -x "/usr/bin/apt-get" ];then
@@ -20,7 +30,7 @@ elif [ -x "/usr/bin/apt-get" ];then
     unzip texi2html texinfo libsdl1.2-dev docbook-utils fop gawk \
     python-pysqlite2 diffstat make gcc build-essential xsltproc \
     g++ desktop-file-utils chrpath libgl1-mesa-dev libglu1-mesa-dev \
-    autoconf automake groff libtool xterm libxml-parser-perl
+    autoconf automake groff libtool xterm libxml-parser-perl nfs-common portmap
 
     /usr/bin/apt-get -y install python-tz python-libxml2 python-libxslt1 python-lxml
 else
@@ -49,9 +59,14 @@ fi
 # add builder user
 printf  "\n#[ Add user named 'builder' for building images of bitbake.... ]\n"
 
+[ -d "/home/builder" ] || mkdir /home/builder
 pass=$(perl -e 'print crypt($ARGV[0], "password")' "builder123")
-addgroup builder
-/usr/sbin/useradd builder -p $pass -d /home/builder -s /bin/bash -g builder
+/usr/sbin/groupadd builder
+/usr/sbin/useradd builder -d /home/builder -s /bin/bash -g builder -p $pass
+[ ! -d $shareimages_dir ] || umount $shareimages_dir
+[ ! -d $sharelayers_dir ] || umount $sharelayers_dir
+[ ! -d $sstate_dir ] || umount $sstate_dir
+[ ! -d $sources_dir ] || umount $sources_dir
 chown -R builder:builder /home/builder
 
 #proxy
@@ -75,7 +90,6 @@ if [ $is_proxy -eq 0 ];then
     fi
 fi
 
-
 #proxy config
 if [ ! -f "/home/builder/.gitconfig" ];then
     #cp /home/xiaotong/.gitconfig /home/builder/
@@ -92,6 +106,56 @@ if [ ! -f "/home/builder/poky-contrib/bitbake/lib/bb/ui/webhob_webservice.py" ];
     su - builder -c "/usr/bin/git clone git://git.yoctoproject.org/poky-contrib"
     cd /home/builder/poky-contrib
     /usr/bin/git checkout remotes/origin/xtlv/webhob-webservice -b webservice
+fi
+
+# create shared folders for bitbake,(nfs client)
+if [ ! -d "$sharelayers_dir" ];then
+    mkdir -p $sharelayers_dir
+    chown -R builder:builder $sharelayers_dir
+fi
+
+if [ ! -d ${shareimages_dir} ];then
+    mkdir /home/builder/build
+    mkdir /home/builder/build/tmp
+    mkdir /home/builder/build/tmp/deploy
+    mkdir ${shareimages_dir}
+    [ -d $sstate_dir ] || mkdir ${sstate_dir}
+    [ -d $sources_dir ] || mkdir ${sources_dir}
+    chown -R builder:builder /home/builder/build
+fi
+
+printf "\ntry to mount ..."
+# checking exports of fileserver
+nfs_export_root=`showmount -e ${file_serv} | grep ${file_root}`
+if [ $? -eq 0 ];then
+    echo "checking exports ok: ${file_serv}:$nfs_export_root"
+    echo "to mounted .."
+
+    mount -t nfs "${file_serv_nfs_root}/upload" ${sharelayers_dir}
+    tail --lines 2 /etc/fstab |  grep "${file_root}/upload"
+    if [ $? -ne 0 ];then
+        echo "${file_serv_nfs_root}/upload ${sharelayers_dir} nfs user,rw 0 0" >> /etc/fstab
+    fi
+
+    mount -t nfs "${file_serv_nfs_root}/download" ${shareimages_dir}
+    tail --lines 2 /etc/fstab |  grep "${file_root}/download"
+    if [ $? -ne 0 ];then
+        echo "${file_serv_nfs_root}/download ${shareimages_dir} nfs user,rw 0 0" >> /etc/fstab
+    fi
+
+#    mount -t nfs "${file_serv_nfs_root}/sourcetarball" ${sources_dir}
+#    tail --lines 2 /etc/fstab |  grep "${file_root}/sourcetarball"
+#    if [ $? -ne 1 ];then
+#        echo "${file_serv_nfs_root}/sourcetarball ${sources_dir} nfs user,rw 0 0" >> /etc/fstab
+#    fi
+#
+#    mount -t nfs "${file_serv_nfs_root}/${file_root}/sstate" ${sstate_dir}
+#    tail --lines 2 /etc/fstab |  grep "${file_root}/sstate"
+#    if [ $? -ne 1 ];then
+#        echo "${file_serv_nfs_root}/sstate ${sstate_dir} nfs user,rw 0 0" >> /etc/fstab
+#    fi
+else
+    printf "\nChecking the exported root of nfs serv is failure\n"
 fi
 
 #pkill -9 python
