@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://Copying;md5=2b4c6ffbcfcbdee469f02565f253d81a \
 # We need gnugrep (for -I)
 DEPENDS = "virtual/db grep-native"
 DEPENDS += "gdbm zlib"
-PR = "r9"
+PR = "r10"
 
 # 5.10.1 has Module::Build built-in
 PROVIDES += "libmodule-build-perl"
@@ -190,6 +190,18 @@ do_compile() {
 
 do_install() {
 	oe_runmake install DESTDIR=${D}
+
+	# Weird workaround.. somehow we install to ${D}${base_prefix}...
+	if [ -n "${base_prefix}" ]; then
+         if [ "${base_prefix}" != "/" ]; then
+          if [ -d "${D}${base_prefix}${base_prefix}" ]; then
+	    mv ${D}${base_prefix}${base_prefix} ${D}${base_prefix}.new
+	    rm -r ${D}${base_prefix}
+	    mv ${D}${base_prefix}.new ${D}${base_prefix}
+	  fi
+         fi
+        fi
+
         # Add perl pointing at current version
         ln -sf perl${PV} ${D}${bindir}/perl
 
