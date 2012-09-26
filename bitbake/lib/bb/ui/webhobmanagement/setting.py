@@ -27,7 +27,9 @@ FILE_SERV_ADDRESS = "ftp://ftpuser:123456@FSERV321:30004/download/"
 # if timeout, it means manager can not received the opertion task 'done' from bitbake side
 TASK_EXECUTING_TIMEOUT_CNT = 30 * 60 #30min
 # if always received the 'null' from the bitbake side, it means bitbake is bad
-REQ_CONNECTION_INVAILD_CNT = 10 * 60 #10min
+#REQ_CONNECTION_INVAILD_CNT = 10 * 60 #default is 10min,
+# but now in some case of different machine, maybe the net is too slow to trig this switch in normally use
+REQ_CONNECTION_INVAILD_CNT = 0 #default is 10min, but now in some case of different machine, maybe the net
 # in some case, the django side can't received the 'done', so it will request the data again and again,
 # so add the max long connection timeout for django side. also to no these case[building package, building image]
 # Note: there has another case, if user net is too slow, maybe cause this switch in normal processing.

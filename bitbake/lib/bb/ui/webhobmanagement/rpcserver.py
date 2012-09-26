@@ -268,7 +268,7 @@ class Builder(BuildTask):
 
     def is_bb_viable(self):
         if self.info['response_null_timeout']:
-            #self.info['response_null_timeout'] = False
+            self.info['response_null_timeout'] = False
             print '-----------is inviable-'
             return False
         return True
