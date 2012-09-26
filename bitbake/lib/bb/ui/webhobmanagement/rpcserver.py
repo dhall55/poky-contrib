@@ -168,7 +168,7 @@ class RequestApi(object):
                 for key, val in each_one.iteritems():
                     if 'ftp_addr' in key:
                         img = val.split("/")[-1]
-                        each_one[key] = os.path.join(FILE_SERV_DOWN_ROOT_URL, img)
+                        each_one[key] = os.path.join(FILE_SERV_ADDRESS, img)
         else:
             pass
         return ret_val
