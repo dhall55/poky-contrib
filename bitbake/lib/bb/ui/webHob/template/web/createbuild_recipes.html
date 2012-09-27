@@ -1,0 +1,166 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+		function rearch_recipe_dependencies(param){
+			var current_project = $("#current_project").val();
+			var current_user = $("#current_user").val();
+			var recipeId_selected = $(param).val();
+			if($(param).is(":checked")){
+				is_selected=1;
+			}else{
+				is_selected=0;
+			}
+			$.get('/hob/builds/search_recipe_dependencies/',
+					{"recipe_id": recipeId_selected,
+					"is_selected": is_selected,
+					"current_user": current_user,
+					"current_project": current_project},
+					function(data){
+						json = $.parseJSON(data);
+						var current_user = $("#current_user").val();
+						var current_project = $("#current_project").val();
+						if(json.result){
+							if(json.flag == "0"){
+								window.location="/hob/builds/createbuild_recipes/?current_user="+current_user+"&current_project="+current_project;
+							}else{
+								window.location="/hob/builds/createbuild_packagegroups/?current_user="+current_user+"&current_project="+current_project;
+							}
+						}
+					},
+					'text');
+		}
+	</script>
+	<script type="text/javascript">
+	var timer = null;
+	$(function(){
+		var is_getPercent = $("#is_getPercent").val();
+		if(is_getPercent != ""){
+			timer=setInterval('getProgressPercent()','1000');
+		}
+	});
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+				{"current_user": current_user,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.progressPercents){
+						for(var i=0;i<json.progressPercents.length;i++){
+							var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+							var bar_name = "name_"+json.progressPercents[i].guid;
+							var bar_guid ="guid_"+json.progressPercents[i].guid;
+							var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+							if(parseInt(json.progressPercents[i].percent) < 100){
+								$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+								$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+								$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+							}
+						}
+					}
+					if(json.progressPercents.length == 0){
+						clearInterval(timer);
+					}
+				},"text");
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+	<input type="hidden" name="current_project" id="current_project" value="{{ current_project }}"/>
+	<input type="hidden" name="is_getPercent" id="is_getPercent" value="{{ is_getPercent }}"/>
+	<!-- Main Content -->
+	<div id="main" class="container" >
+		<!--Top Bar-->
+		<div class="row">
+			<div class="span12" >
+			<h1 class="pull-left">{{ current_project }}</h1>
+			<ul class="nav nav-pills topbarnav pull-left match-h1" style="margin-left:0;">
+				<li><a href="/hob/builds/createbuild_packagegroups/?current_user={{ current_user }}&current_project={{ current_project }}">Package Groups</a></li>
+				<li class="active"><a href="/hob/builds/createbuild_recipes/?current_user={{ current_user }}&current_project={{ current_project }}">Recipes</a></li>
+				<li><a href="/hob/builds/createbuild_packages/?current_user={{ current_user }}&current_project={{ current_project }}">Packages</a></li>
+				<li><a href="/hob/builds/createbuild_buildimage/?current_user={{ current_user }}&current_project={{ current_project }}">Build Images</a></li>
+			</ul>
+			</div>
+		</div>
+		<!--Top Bar-->
+		<div class="row">
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+				<h2><a href="/hob/builds/createbuild_packagegroups/?current_user={{ current_user }}&current_project={{ current_project }}">Package Groups <i class=" icon-ok"></i></a></h2>
+				<hr />
+				<h2>Recipes</h2>
+				<form>
+				<div style="overflow-y:auto;height: 600px">
+				<table class="table table-bordered">
+				<thead>
+				<tr>
+					<th>&nbsp;</th>
+					<th>Recipe name</th>
+					<th>Brought in by</th>
+				</tr>
+				</thead>
+				{% for val in recipes %}
+				<tr>
+					<td class="cb_td_one"><input type="checkbox" id="optionsCheckbox1" value="{{val.id}}" {% ifequal val.is_inc 1 %} checked="yes" {% endifequal %}  onclick="rearch_recipe_dependencies(this)" {% if buiding %} disabled="disabled" {% endif %}/></td>
+					<td class="cb_td_two"><label class="checkbox1">{{ val.name }}</label></td>
+					<td>{{ val.binb }}</td>
+				</tr>
+				{% endfor %}
+				</table>
+				</div>
+				{% if not buiding %}
+				<a href="/hob/builds/createbuild_packages/?current_user={{ current_user }}&current_project={{ current_project }}" class="btn btn-primary btn-large"><i class="icon-fire icon-white"></i> Build Packages</a>
+				{% endif %}
+				</form>
+				<hr />
+				<!--Packages-->
+				<h2><a href="/hob/builds/createbuild_packages/?current_user={{ current_user }}&current_project={{ current_project }}">Packages</a></h2>
+				<!--Packages-->
+				<hr />
+				<h2><a href="/hob/builds/createbuild_buildimage/?current_user={{ current_user }}&current_project={{ current_project }}">Build Image</a></h2>
+			</div>
+			<!--MAIN WORK AREA-->
+			<!--SIDEBAR-->
+			<div class="span3">
+				<div class="well">
+				<h4>What are recipes?</h4>
+				<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+					<div class="thumbnail"><img src="http://placehold.it/160x120" alt=""></div>
+				<p><a href="#">More about the build process and how to reduce errors in your builds &#187;</a></p>
+				</div>
+				<h4>Recipes</h4>
+				<p><i class="icon-folder-open"></i> Included total: {{ recipes_included|length }}</p>
+				<p><i class="icon-folder-open"></i> Recipe total: {{ recipes|length }}</p>
+			</div>
+			<!--SIDEBAR-->
+		</div>
+	</div>
+	<!-- Main Content -->
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+		{% if buildings %}
+			{% for val in buildings %}
+			{% if not val.is_finished %}
+			<h4><span id="name_{{val.guid}}"></span></h4>
+			<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+			<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+			{% endif %}
+			{% endfor %}
+		{% else %}
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		{% endif %}
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+	{% endblock %}

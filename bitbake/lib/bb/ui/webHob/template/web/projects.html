@@ -1,0 +1,204 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+		function check_value(){
+			var project_name = $("#project_name").val();
+			if(project_name == ""){
+				$("#error").html("* project name is null");
+				return false;
+			}
+			return true;
+		}
+		function clearError(){
+			$("#error").html('');
+		}
+		var timer = null;
+		$(function(){
+			var project=$.trim($("#project_current").val());
+			if (project != ""){
+				$("#obtain_asynconfig").trigger("click");
+				timer=setInterval('get_asynConfig()','1000');
+			}
+		});
+		function get_asynConfig(){
+			var project=$.trim($("#project_current").val());
+			$.get("/hob/projects/check_project_config/",
+				{"current_project": project,
+				'value': Math.random()},
+				function(data){
+					json = $.parseJSON(data);
+					if(json.result=="yes"){
+						clearInterval(timer);
+						$("#hide_window").trigger("click");
+						$("#project_current").val("");
+					}
+				},
+				'text');
+		}
+	</script>
+	<script type="text/javascript">
+	var temp = null;
+	$(function(){
+		var is_getPercent = $("#is_getPercent").val();
+		if(is_getPercent != ""){
+			temp=setInterval('getProgressPercent()','1000');
+		}
+	});
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+				{"current_user": current_user,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.progressPercents){
+						for(var i=0;i<json.progressPercents.length;i++){
+							var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+							var bar_name = "name_"+json.progressPercents[i].guid;
+							var bar_guid ="guid_"+json.progressPercents[i].guid;
+							var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+							if(parseInt(json.progressPercents[i].percent) < 100){
+								$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+								$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+								$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+							}
+						}
+					}
+					if(json.progressPercents.length == 0){
+						clearInterval(temp);
+					}
+				},"text");
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<input type="hidden" name="is_getPercent" id="is_getPercent" value="{{ is_getPercent }}"/>
+	<!--Main Content-->
+	<div id="main" class="container" >
+		<!--Top Bar-->
+		<div class="row">
+			<div class="span12">
+				<div class="row">
+					<div class="span2"><h1>Projects</h1></div>
+					<div class="span7"><p>&nbsp;</p></div>
+				</div>
+			</div>
+		</div>
+		<!--Top Bar-->
+
+		<div class="row">
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+				<!--Project List-->
+				{% for val in projects %}
+				<!--Project3-->
+				<div class="row">
+					<div class="span2"><h4><a href="/hob/projects/projects_myproject/?current_user={{ current_user }}&current_project={{ val.name }}">{{ val.name }}</a></h4></div>
+					<div class="span7">
+						<div class="row">
+							<div class="span4"><p>{{ val.name }} to rollout a thing made out of Yocto.</p></div>
+							<div class="span3">
+								{% for operator in val.operators.all %}
+								<a href="#" rel="tooltip" title="{{ operator.name }}" class="tooltip-test"><img src="/static/images/avatar_user.png"></a>
+								{% endfor %}
+							</div>
+						</div>
+					</div>
+				</div>
+				{% empty %}
+				<div class="alert alert-info" align="center">
+					<strong>there is no available project,please create project first!</strong>
+				</div>
+				{% endfor %}
+				<!--Project3-->
+				<!--Project List-->
+				<p>&nbsp;</p>
+				<!--Create Project-->
+				<div class="row">
+					<div class="span8 well">
+					<h2>Create a new project</h2>
+						<form class="form createnewproject" action="/hob/projects/save_project/" method="post" onsubmit="return check_value();">
+						<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+						<div><input type="text" class="span3" name="name" placeholder="Name your project" id="project_name" onclick="clearError()"><span id="error" style="color: red">{{ error }}</span></div>
+						<!--
+						<p>&nbsp;</p>
+						<div class="control-group">
+							<div class="controls">
+							<select id="select01">
+								<option>Select a template</option>
+								{% for val in projects %}
+								<option>{{ val.name }}</option>
+								{% endfor %}
+							</select>
+							</div>
+						</div>
+						<span class="pull-left">or &nbsp; &nbsp; </span>
+						<div class="control-group">
+							<div class="controls">
+							<select id="select01">
+								<option>Duplicate a project</option>
+								{% for val in projects %}
+								<option>{{ val.name }}</option>
+								{% endfor %}
+							</select>
+							</div>
+						</div>
+						-->
+						<div style="width:100%;display:inline;float:left; margin-top:24px;"><button type="submit" class="btn btn-primary">Create Project</button></div>
+						</form>
+					</div>
+				</div>
+				<!--Create Project-->
+			</div>
+			<!--MAIN WORK AREA-->
+
+			<!--SIDEBAR-->
+			<div class="span3">
+				<div class="well">
+				<h4>What are projects?</h4>
+				<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+				<p><a href="#">More about projects &raquo;</a></p>
+				</div>
+			</div>
+			<!--SIDEBAR-->
+		</div>
+	</div>
+	<!--Main Content-->
+
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+		{% if buildings %}
+			{% for val in buildings %}
+			{% if not val.is_finished %}
+			<h4><span id="name_{{val.guid}}"></span></h4>
+			<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+			<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+			{% endif %}
+			{% endfor %}
+		{% else %}
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		{% endif %}
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+
+	<!-- get asynconfig -->
+	<a data-toggle="modal" href="#get_settings_config" id="obtain_asynconfig"></a>
+	<input type="hidden" name="project_current" id="project_current" value="{{current_project}}"/>
+	<div id="get_settings_config" class="modal hide">
+		<div class="modal-body">
+			<label style="text-align: center;"><i class="icon-warning-sign"></i>&nbsp;&nbsp;&nbsp;&nbsp;Getting Asynchronous Configuration Information.<a href="#"  data-dismiss="modal" id="hide_window">&nbsp;</a></label>
+		</div>
+	</div>
+	<!-- get asynconfig -->
+	{% endblock %}

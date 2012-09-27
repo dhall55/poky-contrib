@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Yocto Web Hob</title>
+<link href="/static/css/assets/bootstrap.css" rel="stylesheet">
+<link href="/static/css/yocto.css" rel="stylesheet">
+<link href="/static/css/assets/bootstrap-responsive.css" rel="stylesheet">
+<!-- Le fav and touch icons -->
+<link rel="shortcut icon" href="/static/images/assets/ico/favicon.ico">
+
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="/static/js/assets/jquery.js"></script>
+<script src="/static/js/assets/bootstrap-transition.js"></script>
+<script src="/static/js/assets/bootstrap-alert.js"></script>
+<script src="/static/js/assets/bootstrap-modal.js"></script>
+<script src="/static/js/assets/bootstrap-dropdown.js"></script>
+<script src="/static/js/assets/bootstrap-scrollspy.js"></script>
+<script src="/static/js/assets/bootstrap-tab.js"></script>
+<script src="/static/js/assets/bootstrap-tooltip.js"></script>
+<script src="/static/js/assets/bootstrap-popover.js"></script>
+<script src="/static/js/assets/bootstrap-button.js"></script>
+<script src="/static/js/assets/bootstrap-collapse.js"></script>
+<script src="/static/js/assets/bootstrap-carousel.js"></script>
+<script src="/static/js/assets/bootstrap-typeahead.js"></script>
+<script type="text/javascript">
+function check_value(){
+	var login_email = $("#login_email").val();
+	if (login_email == ""){
+		$("#error").html("* username is null");
+		return false;
+	}else{
+		var reg = /(\S)+[@]{1}(\S)+[.]{1}(\w)+/;
+		email_format =new RegExp(reg);
+		if (!email_format.test(login_email)){
+			$("#error").html("* username is not invalide");
+			return false;
+		}
+	}
+	var login_password = $("#login_password").val();
+	if (login_password == ""){
+		$("#error").html("* password is null");
+		return false;
+	}
+	return true;
+}
+
+function clearError(){
+	$("#error").html('');
+}
+</script>
+</head>
+<body>
+<div id="wrap">
+	<!--HEADER-->
+	<div class="navbar navbar-fixed-top">
+		<div class="navbar-inner">
+			<div class="container aligncenter">
+			<a class="brand" href="#">&nbsp;</a>
+				<div class="nav-collapse aligncenter">
+				<ul class="nav">
+				<li><a href="#" class="icon-builds">Builds</a></li>
+				<li><a href="#" class="icon-projects">Projects</a></li>
+				<li><a href="#" class="icon-groups">Groups</a></li>
+				</ul>
+					<!--Top Right Tools-->
+					<div id="top-right-tools">
+					<ul class="nav">
+						<li><a href="#"><img src="/static/images/icon_search.png" alt="Search" title="Search" /></a></li>
+						<li><a data-toggle="modal" href="#queueModal"><span><img src="/static/images/icon_runningbuilds.png" alt="Queue &mdash; 2 builds in progress" title="Queue &mdash; 2 builds in progress" /></span><span class="badge badge-success" style="float:right;">0</span></a></li>
+						<li class="dropdown"><a href="#" class="dropdown dropdown-toggle" data-toggle="dropdown">
+							<img src="/static/images/icon_user.png" alt="Username" title="Username" />
+							<span class="caret"></span>
+							</a>
+							<!--
+							<ul class="dropdown-menu">
+								<li><img src="/static/images/avatar_user.png"> UserName</li>
+								<li class="divider"></li>
+								<li><a class="btn btn-primary" href="/hob/operators/logout/">Log In</a></li>
+							</ul>-->
+						</li>
+					</ul>
+					</div>
+					<!--Top Right Tools-->
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--HEADER-->
+
+	<!-- Main Content -->
+	<div id="main" class="container">
+		<!-- Main hero unit for a primary marketing message or call to action -->
+		<div class="hero-unit_yocto">
+			<div class="row">
+				<!--left-->
+				<div class="span5">
+				<h1>Hello from Yocto!</h1>
+				<p>This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information. </p>
+					<form class="form-inline" action="/hob/operators/login/" method="post" onsubmit="return check_value();">
+					<fieldset>
+					<legend>Sign In</legend>
+					<div class="control-group">
+						<div class="controls">
+						<input type="text" class="input-medium" id="login_email" placeholder="Email" onclick="clearError()" name="email">
+						<input type="password" class="input-medium" id="login_password" placeholder="Password" onclick="clearError()" name="password">
+						<button type="submit" class="btn">Go</button>
+						<a href="/hob/operators/register/" type="submit" class="btn">Register</a>
+						</div>
+						<span id="error" style="color: red">{{ error_message }}</span>
+					</div>
+					</fieldset>
+					</form>
+				</div>
+				<!--left-->
+				<!--right-->
+				<div class="pull-right">
+					<div id="myCarousel" class="carousel slide" style="width:480px">
+					<!-- Carousel items -->
+						<div class="carousel-inner">
+							<div class="item active"><img src="/static/images/slide.png" alt=""></div>
+							<div class="item"><img src="/static/images/slide.png" alt=""></div>
+							<div class="item"><img src="/static/images/slide.png" alt=""></div>
+						</div>
+						<a class="carousel-control left" href="#myCarousel" data-slide="prev">&lsaquo;</a>
+						<a class="carousel-control right" href="#myCarousel" data-slide="next">&rsaquo;</a>
+					<!-- Carousel items -->
+					</div>
+				</div>
+				<!--right-->
+			</div>
+		</div>
+		<!-- Main hero unit for a primary marketing message or call to action -->
+
+		<div id="main" class="container" >
+			<div class="row">
+				<div class="span4">
+				<h2>Community</h2>
+				<p>The Yocto Project welcomes contributions from all types of people. You can contribute code, submit patches, file bugs, answer questions on our mailing lists and IRC channels, review and edit our documentation and much more!</p>
+				<p>The Yocto community includes platform developers, equipment and device manufacturers and other embedded Linux professionals and enthusiasts. In short, people who are doing interesting work on Yocto. Our governance page has more information about the Yocto Project structure and how you can contribute.</p>
+				<ul style="list-style-type:none;margin: 0 0 9px 0px;">
+				<li><a href="#">Bugs &#187;</a></li>
+				<li><a href="#">IRC &#187;</a></li>
+				<li><a href="#">Mailing Lists &#187;</a></li>
+				<li><a href="#">Wiki &#187;</a></li>
+				<li><a href="#">Participating Organisations &#187;</a></li>
+				</ul>
+				</div>
+				<div class="span4">
+				<h2>FAQ</h2>
+				<ul class="homefaq">
+				<li><a href="#">Q: What is the Yocto Project?</a></li>
+				<li><a href="#">Q: What does the Linux Foundation hope to achieve with the Yocto Project?</a></li>
+				<li><a href="#">Q: How does the Yocto Project help Linux reach a wider embedded audience?</a></li>
+				<li><a href="#">Q: Isn�t the Yocto Project just yet another Linux distribution?</a></li>
+				<li><a href="#">Q: What benefits does the Yocto Project provide embedded developers and how is the Yocto Project superior to existing, similar tools?</a></li>
+				<li><a href="#">Q: How does the existing embedded workflow compare to the Yocto Project and where can embedded developers save time?</a></li>
+				<li><a href="#">Q: Does the Yocto Project have a special governance model, or is it managed as an open source project?</a></li>
+				</ul>
+				</div>
+				<div class="span4">
+				<h2>Yocto News</h2>
+				<ul class="homenews">
+				<li><a href="#">Documentation? They call it code for a reason.</a> - Elizabeth Flanagan - 18 May 2012 - 10:54</li>
+				<li><a href="#">Build Appliance: Eating Your Own Dog Food</a> - Saul Wold - 7 May 2012 - 13:04</li>
+				<li><a href="#">Yocto Project 1.2 Now Available</a> - Jeffrey Osier-Mixon - 30 Apr 2012 - 17:11</li>
+				<li><a href="#">A quick Yocto-grid</a> - David Stewart - 24 Apr 2012 - 08:44</li>
+				<li><a href="#">The Yocto-yumminess of our BSPs</a> - David Stewart - 6 Apr 2012 - 16:21</li>
+				<li><a href="#">more &#187</a></li>
+				</ul>
+				</div>
+			</div>
+		</div>
+
+		<!--Queue Modal Content-->
+		<div id="queueModal" class="modal hide">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h3>Running Builds</h3>
+			</div>
+			<div class="modal-body">
+			</div>
+			<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+		</div>
+		<!--Queue Modal Content-->
+	</div>
+	<!-- Main Content -->
+</div>
+<footer>
+	<p>&copy; The Yocto Project</p>
+</footer>
+</body>
+</html>

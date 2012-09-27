@@ -1,0 +1,109 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+		function check_value(){
+			var login_email = $("#login_email").val();
+			if (login_email == ""){
+				$("#error").html("* username is null");
+				return false;
+			}else{
+				var reg = /(\S)+[@]{1}(\S)+[.]{1}(\w)+/;
+				email_format=new RegExp(reg);
+				if (!email_format.test(login_email)){
+					$("#error").html("* username is not invalide");
+					return false;
+				}
+			}
+			var login_password = $("#login_password").val();
+			if (login_password == ""){
+				$("#error").html("* password is null");
+				return false;
+			}
+			var re_password = $("#re_password").val();
+			if (re_password == ""){
+				$("#error").html("* repeat password is null");
+				return false;
+			}
+
+			if (login_password != re_password){
+				$("#error").html("* password not equal repeat password ");
+				return false;
+			}
+			return true;
+		}
+
+		function clearError(){
+			$("#error").html('');
+		}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<!-- Main Content -->
+	<div id="main" class="container" >
+		<div class="row main">
+			<div class="span12">
+				<div class="row">
+					<div class="span2"><h2>New user registration</h2></div>
+					<div class="span7"><p>First you need to register an account, then you can use this account to sign in.</p></div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+				<div class="row grouppods">
+					<div class="span2"><h3>Basic info</h3></div>
+					<div class="span7">
+						<h4>Note:</h4>
+						<p><span id="error" style="color: red;">* {% if error %}{{ error }}{% else %}Please register below so we can allow you to login in webhob.{% endif %}</span></p>
+						<form class="horizontal-form" action="/hob/operators/save_user/" method="post" onsubmit="return check_value();">
+						<fieldset>
+						<div class="control-group ">
+							user email:
+							<div class="controls">
+							<font color="red">*</font><input type="text" class="input-medium" name="email" id="login_email" placeholder="Email">(e.g. free2rhyme@intel.com)
+							</div>
+							password:
+							<div class="controls">
+							<font color="red">*</font><input type="password" class="input-medium" name="password" id="login_password" placeholder="Password">
+							</div>
+							repeat password:
+							<div class="controls">
+							<font color="red">*</font><input type="password" class="input-medium" name="re_password" id="re_password" placeholder="re-Password">
+							</div>
+						</div>
+						</fieldset>
+						<button type="submit" class="btn">submit</button>
+						<a class="btn" href="/">back</a>
+						</form>
+					</div>
+				</div>
+			</div>
+			<!--MAIN WORK AREA-->
+			<div class="span3">
+				<div class="well">
+				<h4>How do I use Groups with Yocto?</h4>
+				<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+				<p>Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Donec sed odio dui.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Main Content -->
+
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+	{% endblock %}

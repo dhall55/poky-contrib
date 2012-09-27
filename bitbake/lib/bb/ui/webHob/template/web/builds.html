@@ -1,0 +1,307 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+		function buildReports(param){
+			$("#report_error").html("");
+			$("#report_project").val(param);
+			$("#report_operator").val($("#current_user").val());
+		}
+		function shareBuilds(guid, param){
+			$("#share_guid").val(guid);
+			$("#share_project").val(param);
+			$("#share_operator").val($("#current_user").val());
+		}
+		function check_value(){
+			var message = $("#message").val();
+			if(message == ""){
+				$("#report_error").html("* report content is null");
+				return false;
+			}
+			return true;
+		}
+		function check_shareInfo(){
+			var share_email = $("#share_email").val();
+			if(share_email == ""){
+				$("#share_error").html("* email is null");
+				return false;
+			}else{
+				var reg = /(\S)+[@]{1}(\S)+[.]{1}(\w)+/;
+				email_format =new RegExp(reg);
+				if (!email_format.test(share_email)){
+					$("#share_error").html("* email format is error");
+					return false;
+				}
+			}
+
+			var contents = $("#contents").val();
+			if(contents == ""){
+				$("#share_error").html("* share content is null");
+				return false;
+			}
+			return true;
+		}
+		function clearValue(){
+			$("#report_error").html("");
+			$("#share_error").html("");
+		}
+		function checkAll(obj){
+			var checkName = $(obj).val();
+			if($(obj).attr("checked")){
+				$("[name='"+checkName+"']").attr("checked",'true');
+			}else{
+				$("[name='"+checkName+"']").removeAttr("checked");
+			}
+		}
+		function download_item_isSelected_check(param){
+			if($("input[name='"+param+"']:checked").length == 0){
+				alert("at least one option is selected");
+			}else{
+				$('#downloadForm').submit();
+			}
+		}
+		function cancel_building(projectName, current_task){
+			$("#current_project_cancel").val(projectName);
+			$("#current_task_cancel").val(current_task);
+		}
+	</script>
+	<script type="text/javascript">
+	var timer = null;
+	$(function(){
+		var is_getPercent = $("#is_getPercent").val();
+		if(is_getPercent != ""){
+			timer=setInterval('getProgressPercent()','1000');
+		}
+	});
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+				{"current_user": current_user,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.progressPercents){
+						for(var i=0;i<json.progressPercents.length;i++){
+							var dashboard_id = "builds_"+json.progressPercents[i].guid;
+							var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+							var bar_name = "name_"+json.progressPercents[i].guid;
+							var bar_guid ="guid_"+json.progressPercents[i].guid;
+							var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+							if(parseInt(json.progressPercents[i].percent) < 100){
+								$("#"+dashboard_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+								$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+								$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+							}
+						}
+					}
+					if(json.progressPercents.length == 0){
+						clearInterval(timer);
+						window.location = "/hob/builds/index/?current_user="+current_user;
+					}
+				},"text");
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+	<input type="hidden" name="is_getPercent" id="is_getPercent" value="{{ is_getPercent }}"/>
+	<!--Main Content-->
+	<div id="main" class="container">
+		<div class="row main">
+			<div class="span9">
+			<h1 class="inline">Builds</h1>
+				<ul class="nav nav-pills pull-right match-h1">
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">Sort by {{sortField|default:"date"}}<b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="/hob/builds/builds_sort/?current_user={{current_user}}&sortField=date">Sort by date</a></li>
+							<li><a href="/hob/builds/builds_sort/?current_user={{current_user}}&sortField=project">Sort by project</a></li>
+						</ul>
+					</li>
+				</ul>
+				<!--MY BUILDS-->
+				{% if buildings %}
+				<div class="row" style='clear:both;'>
+					<div class="span9">
+						<!--BUILD STATUSES-->
+						{% for val in buildings %}
+						<!--Build Status2-->
+						{% if not val.is_finished %}
+						<p><i class="icon-book"></i> {{ val.name }}_{{ val.guid }}<span class="pull-right">{{val.create_date|date:"m/d/Y H:i:s"}}</span></p>
+						<div class="row">
+							<div class="span4">
+								<div class="progress"><div id="builds_{{val.guid}}"><div class="bar" style="width: {{val.build_percent}}%;"></div></div></div>
+							</div>
+							<div class="span2 copy12">&nbsp;</div>
+							<div class="span3 copy12"><span class="pull-right"><a data-toggle="modal" href="#build_cancelModal" class="btn pull-right" onclick="cancel_building('{{val.project.name}}','{{val.current_build_task}}')"><i class="icon-remove-sign"></i> Stop</a></span></div>
+						</div>
+						{% endif %}
+						<!--Build Status2-->
+						{% endfor %}
+						<!--BUILD STATUSES-->
+					</div>
+				</div>
+				{% else %}
+				<div class="row">
+				</div>
+				{% endif %}
+				<!--MY BUILDS-->
+				{% if builds %}
+				<div class="accordion" id="accordion1">
+					<!--accordion1-->
+					{% for val in builds %}
+					<table class="build_table">
+						<tr>
+							<td class="col_one"><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#{{val.guid}}">{{ val.name }}</a></td>
+							<td class="col_two"><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#{{val.guid}}">{{ val.size }}MB</a></td>
+							<td class="col_three"><a href="#">{{ val.create_date|date:"m/d/Y H:i:s"}}</a></td>
+							<td class="col_four"><span class="label">{{ val.project.name }}</span></td>
+							<td class="col_five"><i class="icon-user"></i> <a href="#">{{ val.operator.name }}</a></td>
+							<td class="col_six">
+								<a data-toggle="modal" href="#build_reportModal" onclick="buildReports('{{val.project.name}}')"><i class="icon-warning-sign"></i></a>
+								<a data-toggle="modal" href="#build_shareModal" onclick="shareBuilds('{{val.guid}}','{{val.project.name}}')"><i class="icon-share-alt"></i></a>
+								<a href="/hob/builds/delete_builds/?guid={{val.guid}}&current_user={{current_user}}"><i class="icon-trash"></i></a>
+							</td>
+						</tr>
+					</table>
+					<!--Collapsed-->
+					<div id="{{val.guid}}" class="accordion-body collapse">
+						<div class="accordion-inner well">
+						<form id="downloadForm" action="#" method="post">
+							<table class="table table-bordered table-striped">
+								{% for item in val.images.all %}
+								<tr>
+									<td><a href="{{item.url}}">{{item.name}}</a></td>
+									<td>{{item.size}} MB</td>
+									<td><a href="{{item.url}}" target="_blank"><i class="icon-download-alt"></i>Download</a></td>
+								</tr>
+								{% endfor %}
+							</table>
+						</form>
+						</div>
+					</div>
+					{% endfor %}
+					<!--Collapsed-->
+					<!--accordion1-->
+				</div>
+				{% endif %}
+			</div>
+
+			<div class="span3">
+				<div class="well">
+				<h3>Your Builds</h3>
+				<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+				<p>Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Donec sed odio dui.</p>
+				</div>
+			</div>
+		</div>
+		<!--Queue Modal Content-->
+		<div id="queueModal" class="modal hide">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h3>Running Builds</h3>
+			</div>
+			<div class="modal-body">
+			{% if buildings %}
+				{% for val in buildings %}
+				{% if not val.is_finished %}
+				<h4><span id="name_{{val.guid}}"></span></h4>
+				<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+				<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+				{% endif %}
+				{% endfor %}
+			{% else %}
+				<div class="alert alert-info" align="center">
+					<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+				</div>
+			{% endif %}
+			</div>
+			<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+		</div>
+		<!--Queue Modal Content-->
+		<!--Build Report Modal Content-->
+		<div id="build_reportModal" class="modal hide">
+			<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Report a build configuration</h3>
+			</div>
+			<div class="modal-body">
+				<div class="alert alert-error">
+				<strong>Hey!</strong> Reporting false bad configurations can screw other people up.  Be careful.<button type="button" class="close" data-dismiss="alert">x</button>
+				</div>
+				<form action="/hob/builds/buildReports/" method="post" onsubmit="return check_value();">
+				<input type="hidden" name="report_project" id="report_project" value=""/>
+				<input type="hidden" name="report_operator" id="report_operator" value=""/>
+				<label class="control-label" for="textarea01">Additional info about what went wrong</label>
+				<textarea class="input-textarea_modal" id="message" rows="3" name="message" onclick="clearValue()"></textarea>
+				<p><button type="reset" class="btn pull-right">Clear</button><span id="report_error" style="color: red"></span></p>
+				<h3>Severity of the problem</h3>
+				<div class="control-group">
+					<div class="controls">
+					<label class="radio"><input type="radio" name="error_level" id="optionsRadios1" value="Critical" checked>Critical</label>
+					<label class="radio"><input type="radio" name="error_level" id="optionsRadios2" value="Blocker" checked>Blocker</label>
+					<label class="radio"><input type="radio" name="error_level" id="optionsRadios3" value="Medium" checked>Medium</label>
+					<label class="radio"><input type="radio" name="error_level" id="optionsRadios4" value="Low" checked>Low</label>
+					</div>
+				</div>
+				<div class="form-actions">
+				<button type="submit" class="btn btn-primary  pull-right">Report</button>
+				<button href="#" class="btn pull-right" data-dismiss="modal">Cancel</button>
+				</div>
+				</form>
+			</div>
+		</div>
+		<!--Build Report Modal Content-->
+		<!--Share Build Modal Content-->
+		<div id="build_shareModal" class="modal hide">
+			<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Share your build</h3>
+			</div>
+			<div class="modal-body">
+				<div class="alert alert-info">
+				<strong>Share what you made!</strong> Just put in someone's email and they'll get a lnk.<button type="button" class="close" data-dismiss="alert">x</button>
+				</div>
+				<form action="/hob/builds/shareBuilds/" method="post" onsubmit="return check_shareInfo();">
+				<input type="hidden" name="share_guid" id="share_guid" value=""/>
+				<input type="hidden" name="share_project" id="share_project" value=""/>
+				<input type="hidden" name="share_operator" id="share_operator" value=""/>
+				<input type="text" class="span3" placeholder="Email address of recipient" name="share_email" id="share_email" onclick="clearValue()">
+				<label class="control-label" for="textarea01">Message</label>
+				<textarea class="input-textarea_modal" id="contents" rows="3" name="contents" onclick="clearValue()"></textarea>
+				<span id="share_error" style="color: red"></span>
+				<div class="form-actions">
+				<button type="submit" class="btn btn-primary  pull-right">Send</button>
+				<button href="#" class="btn pull-right" data-dismiss="modal">Cancel</button>
+				</div>
+				</form>
+			</div>
+		</div>
+		<!--Share Build Modal Content-->
+		<!--Cancel Build Modal Content-->
+		<div id="build_cancelModal" class="modal hide">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h3>Cancel your build</h3>
+			</div>
+			<div class="modal-body">
+				<div class="alert alert-info">
+					<strong>Are you sure?</strong> You can't undo deleting a build.<button type="button" class="close" data-dismiss="alert">x</button>
+				</div>
+				<form action="/hob/builds/cancel_buildings/" method="post">
+				<input type="hidden" name="current_project" id="current_project_cancel" value=""/>
+				<input type="hidden" name="current_user" id="current_user_cancel" value="{{current_user}}"/>
+				<input type="hidden" name="current_task" id="current_task_cancel" value=""/>
+				<div class="form-actions">
+					<button type="submit" class="btn btn-primary pull-right">Okay</button>
+					<button href="#" class="btn pull-right" data-dismiss="modal">Cancel</button>
+				</div>
+				</form>
+			</div>
+		</div>
+		<!--Cancel Build Modal Content-->
+	</div>
+	<!--Main Content-->
+	{% endblock %}

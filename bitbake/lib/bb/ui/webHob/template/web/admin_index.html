@@ -1,0 +1,413 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Yocto Web Hob</title>
+<link href="/static/css/assets/bootstrap.css" rel="stylesheet">
+<link href="/static/css/yocto.css" rel="stylesheet">
+<link href="/static/css/yocto-theme.css" rel="stylesheet">
+<link href="/static/css/assets/bootstrap-responsive.css" rel="stylesheet">
+<!-- Le fav and touch icons -->
+<link rel="shortcut icon" href="/static/images/assets/ico/favicon.ico">
+
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="/static/js/assets/jquery.js"></script>
+<script src="/static/js/assets/bootstrap-transition.js"></script>
+<script src="/static/js/assets/bootstrap-alert.js"></script>
+<script src="/static/js/assets/bootstrap-modal.js"></script>
+<script src="/static/js/assets/bootstrap-dropdown.js"></script>
+<script src="/static/js/assets/bootstrap-scrollspy.js"></script>
+<script src="/static/js/assets/bootstrap-tab.js"></script>
+<script src="/static/js/assets/bootstrap-tooltip.js"></script>
+<script src="/static/js/assets/bootstrap-popover.js"></script>
+<script src="/static/js/assets/bootstrap-button.js"></script>
+<script src="/static/js/assets/bootstrap-collapse.js"></script>
+<script src="/static/js/assets/bootstrap-carousel.js"></script>
+<script src="/static/js/assets/bootstrap-typeahead.js"></script>
+<script type="text/javascript">
+	function modify_bitbake(ip, port){
+		$("#ip_old").val(ip);
+		$("#bitbakeserver_ip").html(ip);
+		$("#new_bitbake_ip").val(ip);
+		$("#ip_bitbake").val(ip);
+		$("#port_old").val(port);
+		$("#bitbake_port").val(port);
+		$("#flag").val("update");
+		$("#tr_bitbake").show();
+		$("#bitbake_operator_button").html("Update Bitbake");
+	}
+	function clearValue(){
+		$("#bitbake_ip").val("");
+		$("#bitbake_loginUser").val("");
+		$("#bitbake_password").val("");
+		$("#proxy_http").val("proxy-shz.intel.com");
+		$("#proxy_https").val("proxy-shz.intel.com");
+		$("#proxy_ftp").val("proxy-shz.intel.com");
+		$("#proxy_sockets").val("");
+		$("#bitbake_ip_error").html("*");
+		$("#bitbake_loginUser_error").html("*");
+		$("#bitbake_password_error").html("*");
+	}
+	function clearError(){
+		$("#bitbake_ip_error").html("*");
+		$("#bitbake_loginUser_error").html("*");
+		$("#bitbake_password_error").html("*");
+		$("#proxy_error").html("");
+		$("#ip_bitbake_error").html("*");
+		$("#bitbake_port_error").html("*");
+		$("#url_git_clone_error").html("*");
+		$("#bitbake_repo_error").html("*");
+		$("#bitbake_branch_error").html("*");
+		$("#bitbake_commit_error").html("*");
+		$("#url_nfs_error").html("*");
+		$("#ip_documentServer_error").html("*");
+		$("#url_image_error").html("*");
+	}
+	function checkValue(){
+		var ip_bitbake = $("#ip_bitbake").val();
+		if(ip_bitbake == ""){
+			$("#ip_bitbake_error").html("* bitbake ip is null");
+			return false;
+		}
+		var bitbake_port = $("#bitbake_port").val();
+		if(bitbake_port == ""){
+			$("#bitbake_port_error").html("* bitbake port is null");
+			return false;
+		}
+		var bitbake_repo = $("#bitbake_repo").val();
+		if(bitbake_repo == ""){
+			$("#bitbake_repo_error").html("* repo is null");
+			return false;
+		}
+		var bitbake_branch = $("#bitbake_branch").val();
+		if(bitbake_branch == ""){
+			$("#bitbake_branch_error").html("* branch is null");
+			return false;
+		}
+		var bitbake_commit = $("#bitbake_commit").val();
+		if(bitbake_commit == ""){
+			$("#bitbake_commit_error").html("* commit is null");
+			return false;
+		}
+		var url_git_clone = $("#url_git_clone").val();
+		if(url_git_clone == ""){
+			$("#url_git_clone_error").html("* git clone url is null");
+			return false;
+		}
+		var url_image = $("#url_image").val();
+		if(url_image == ""){
+			$("#url_image_error").html("* image url is null");
+			return false;
+		}
+		var ip_documentServer = $("#ip_documentServer").val();
+		if(ip_documentServer == ""){
+			$("#ip_documentServer_error").html("* documentServer ip is null");
+			return false;
+		}
+		var url_nfs = $("#url_nfs").val();
+		if(url_nfs == ""){
+			$("#url_nfs_error").html("* nfs root is null");
+			return false;
+		}
+		$("form").submit();
+	}
+	$(function(){
+		var msg= $("#msg").val();
+		if(msg != ""){
+			alert(msg);
+		}
+	});
+	function disp_proxy(param){
+		if($(param).is(":checked")){
+			is_selected=true;
+		}else{
+			is_selected=false;
+		}
+		if (is_selected){
+			$("#is_useProxy").val("1");
+			$("#proxyInfo").show();
+		}else{
+			$("#is_useProxy").val("");
+			$("#proxyInfo").hide();
+		}
+	}
+	function connect_bitbake(){
+		var bitbake_ip = $("#bitbake_ip").val();
+		if(bitbake_ip == ""){
+			$("#bitbake_ip_error").html("* bitbake ip is null!");
+			return;
+		}
+		var bitbake_loginUser = $("#bitbake_loginUser").val();
+		if(bitbake_loginUser == ""){
+			$("#bitbake_loginUser_error").html("* bitbake_loginUser is null!");
+			return;
+		}
+		var bitbake_password = $("#bitbake_password").val();
+		if(bitbake_password == ""){
+			$("#bitbake_password_error").html("* bitbake_password is null!");
+			return;
+		}
+		var is_useProxy = $("#is_useProxy").val();
+		var proxy_http = $("#proxy_http").val();
+		var proxy_http_port = $("#proxy_http_port").val();
+		var proxy_https = $("#proxy_https").val();
+		var proxy_https_port = $("#proxy_https_port").val();
+		var proxy_ftp = $("#proxy_ftp").val();
+		var proxy_ftp_port = $("#proxy_ftp_port").val();
+		var proxy_sockets = $("#proxy_sockets").val();
+		var proxy_sockets_port = $("#proxy_sockets_port").val();
+		if(is_useProxy != ""){
+			var flag = false;
+			if(proxy_http != ""){
+				if(!flag){
+					flag = true;
+				}
+			}
+			if(proxy_https != ""){
+				if(!flag){
+					flag = true;
+				}
+			}
+			if(proxy_ftp != ""){
+				if(!flag){
+					flag = true;
+				}
+			}
+			if(proxy_sockets != ""){
+				if(!flag){
+					flag = true;
+				}
+			}
+			if(!flag){
+				$("#proxy_error").html("* proxy info is null");
+				return;
+			}else{
+				$("#proxy_error").html("");
+			}
+		}
+		$.get('/connect_bitbake/',
+			{"bitbake_ip":bitbake_ip,
+			"bitbake_loginUser":bitbake_loginUser,
+			"bitbake_password":bitbake_password,
+			"is_useProxy":is_useProxy,
+			"proxy_http":proxy_http,
+			"proxy_http_port":proxy_http_port,
+			"proxy_https":proxy_https,
+			"proxy_https_port":proxy_https_port,
+			"proxy_ftp":proxy_ftp,
+			"proxy_ftp_port":proxy_ftp_port,
+			"proxy_sockets":proxy_sockets,
+			"proxy_sockets_port":proxy_sockets_port},
+			function(data){
+				json = $.parseJSON(data);
+				if(json.result){
+					$("#set_bitbake_build_url").val(json.set_bitbake_flag);
+					$("#bitbakeserver_ip").html(json.bitbake_ip);
+					$("#new_bitbake_ip").val(json.bitbake_ip);
+					$("#ip_bitbake").val(json.bitbake_ip);
+					$("#cancel_connect").trigger("click");
+					$("#set_bitbakeserver_config").trigger("click");
+				}
+			},'text');
+	}
+</script>
+</head>
+<body>
+<div id="wrap">
+	<!--HEADER-->
+	<div class="navbar navbar-fixed-top">
+		<div class="navbar-inner">
+			<div class="container aligncenter">
+			<a class="brand" href="#">&nbsp;</a>
+				<div class="nav-collapse aligncenter">
+
+					<!--Top Right Tools-->
+					<div id="top-right-tools">
+					<ul class="nav">
+						<li class="dropdown"><a href="#" class="dropdown dropdown-toggle" data-toggle="dropdown">
+							<img src="/static/images/icon_user.png" alt="Username" title="Username" />
+							<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu">
+								<li><img src="/static/images/avatar_user.png"> {{username}}</li>
+								<li class="divider"></li>
+								<li><a class="btn btn-primary" href="/admin_login/">Log Out</a></li>
+							</ul>
+						</li>
+					</ul>
+					</div>
+					<!--Top Right Tools-->
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--HEADER-->
+
+	<!--Main Content-->
+	<input type="hidden" name="msg" id="msg" value="{{msg}}"/>
+	<input type="hidden" name="set_bitbake_build_url" id="set_bitbake_build_url" value=""/>
+	<div id="main" class="container">
+		<div class="row main">
+			<div class="span9">
+			<h2 class="inline">Bitbake Server</h2>
+				<!--MY BUILDS-->
+				<div class="row">
+				</div>
+				<!--MY BUILDS-->
+				<div class="accordion">
+					<!--accordion-->
+					<table border="1" width="100%" bordercolor="#E0E0E0">
+						<tr>
+							<th width="10%">Id</th>
+							<th width="20%">Ip</th>
+							<th width="15%">Port</th>
+							<th width="15%">Status</th>
+							<th width="*">Edit</th>
+						</tr>
+						{% for val in bitbake_list %}
+						<tr align="center">
+							<td>{{forloop.counter}}</td>
+							<td>{{ val.ip }}</td>
+							<td>{{ val.port }}</td>
+							<td>{{ val.status }}</td>
+							<td><a data-toggle="modal" href="#build_bitbake_config" onclick="modify_bitbake('{{val.ip}}','{{val.port}}')">modify</a> || <a href="/delete_bitbake/?ip={{val.ip}}&port={{val.port}}">delete</a> || <a href="/install/?ip={{val.ip}}&port={{val.port}}" >bitbake install</a></td>
+						</tr>
+						{% empty %}
+						<tr align="center">
+							<td colspan="5"><span style="color: red">no available bitbakes!</span></td>
+						</tr>
+						{% endfor %}
+					</table>
+					<p></p>
+					<div>
+						<a class="btn btn-primary btn-large" data-toggle="modal" href="#build_reportModal" onclick="clearValue()"><i class="icon_download_alt"></i>New Bitbake</a>&nbsp;&nbsp;
+						<a class="btn btn-primary btn-large" data-toggle="modal" href="/reset_bitbake_all/"><i class="icon_download_alt"></i>Reset All Bitbake</a>
+					</div>
+					<!--accordion-->
+				</div>
+			</div>
+
+			<div class="span3">
+				<div class="well">
+				<h3>Bitbakes</h3>
+				<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+				<p>Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Donec sed odio dui.</p>
+				</div>
+			</div>
+		</div>
+		<!-- bitbake connection -->
+		<div id="build_reportModal" class="modal hide">
+			<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Bitbake Connection</h3>
+			</div>
+			<div class="modal-body">
+				<div class="control-group">
+					<table>
+						<tr>
+							<td align="right">bitbake ip:</td><td>&nbsp;<input type="text" class="input-large" name="bitbake_ip" id="bitbake_ip" value="" onclick="clearError()"><span style="color: red" id="bitbake_ip_error">*</span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">root account:</td><td>&nbsp;<input type="text" class="input-large" name="bitbake_loginUser" id="bitbake_loginUser" value="" onclick="clearError()"><span style="color: red" id="bitbake_loginUser_error">*</span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">root password:</td><td>&nbsp;<input type="password" class="input-large" name="bitbake_password" id="bitbake_password" value="" onclick="clearError()" maxlength="16"><span style="color: red" id="bitbake_password_error">*</span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr><td colspan="2" height="10">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="checkbox_proxy" onclick="disp_proxy(this)"/>&nbsp;Use Proxy</td></tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tbody id="proxyInfo" style="display: none;">
+						<tr>
+							<td align="right">method:</td><td>&nbsp;<select name="proxy_method" style="width: 90px;" id="proxy_method"><option value="">None</option><option value="manual" selected="selected">Manual</option><option value="automatic">Automatic</option></select></td>
+						</tr>
+						<tr><td colspan="2" height="5"><input type="hidden" name="is_useProxy" value="" id="is_useProxy"/></td></tr>
+						<tr><td align="right">HTTP Proxy:</td><td>&nbsp;<input type="text" name="proxy_http" id="proxy_http" value="proxy-shz.intel.com"/>&nbsp;&nbsp;<input type="text" name="proxy_http" value="911" id="proxy_http_port" style="width: 40px;" maxlength="4" onkeyup="this.value=this.value.replace(/\D/g,'')" onblur="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')"/></td></tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr><td align="right">HTTPS Proxy:</td><td>&nbsp;<input type="text" name="proxy_https" id="proxy_https" value="proxy-shz.intel.com"/>&nbsp;&nbsp;<input type="text" name="proxy_http" value="911" id="proxy_https_port" style="width: 40px;" maxlength="4" onkeyup="this.value=this.value.replace(/\D/g,'')" onblur="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')"/></td></tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr><td align="right">FTP Proxy:</td><td>&nbsp;<input type="text" name="proxy_ftp" id="proxy_ftp" value="proxy-shz.intel.com"/>&nbsp;&nbsp;<input type="text" name="proxy_http" id="proxy_ftp_port" value="911" style="width: 40px;" maxlength="4" onkeyup="this.value=this.value.replace(/\D/g,'')" onblur="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')"/></td></tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr><td align="right">Sockets Host:</td><td>&nbsp;<input type="text" name="proxy_sockets" id="proxy_sockets" value="proxy-shz.intel.com"/>&nbsp;&nbsp;<input type="text" name="proxy_http" id="proxy_sockets_port" value="911" style="width: 40px;" maxlength="4" onkeyup="this.value=this.value.replace(/\D/g,'')" onblur="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')"/></td></tr>
+						<tr><td colspan="2" height="5"><span style="color: red" id="proxy_error"></span></td></tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="form-actions">
+					<button href="#" class="btn pull-right" data-dismiss="modal" id="cancel_connect">Cancel</button>
+					<button type="button" class="btn btn-primary  pull-right" onclick="connect_bitbake();">Connect</button>
+				</div>
+			</div>
+		</div>
+		<!-- bitbake connection -->
+		<!-- set bitbake config -->
+		<a data-toggle="modal" href="#build_bitbake_config" id="set_bitbakeserver_config"></a>
+		<div id="build_bitbake_config" class="modal hide">
+			<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Bitbake <span id="bitbakeserver_ip"></span></h3>
+			</div>
+			<div class="modal-body">
+				<form action="/edit_bitbake/" method="post" onsubmit="return checkValue()">
+				<input type="hidden" id="new_bitbake_ip" name="bitbake_ip" value=""/>
+				<input type="hidden" id="flag" name="flag" value="" />
+				<input type="hidden" name="ip_old" id="ip_old" value=""/>
+				<input type="hidden" name="port_old" id="port_old" value=""/>
+				<div class="control-group">
+					<table>
+						<tr style="display: none;" id="tr_bitbake">
+							<td align="right">bitbake ip:</td><td>&nbsp;<input type="text" class="input-large" name="ip_bitbake" id="ip_bitbake" value="" onclick="clearError()" ><span style="color: red" id="ip_bitbake_error"></span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">bitbake port:</td><td>&nbsp;<input type="text" name="bitbake_port" id="bitbake_port" style="width: 40px;" maxlength="4" onkeyup="this.value=this.value.replace(/\D/g,'')" onblur="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')"/><span style="color: red" id="bitbake_port_error"></span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">repo:</td><td>&nbsp;<input type="text" class="input-medium" name="bitbake_repo" id="bitbake_repo" value="poky-contrib" onclick="clearError()"><span style="color: red" id="bitbake_repo_error"></span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">branch:</td><td>&nbsp;<input type="text" class="input-medium" name="bitbake_branch" id="bitbake_branch" value="master" onclick="clearError()"><span style="color: red" id="bitbake_branch_error"></span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">commit:</td><td>&nbsp;<input type="text" class="input-xxxlarge" name="bitbake_commit" id="bitbake_commit" value="7f4d50bc5b8cd591f34dd1b163a2e4400b9e9666" onclick="clearError()"><span style="color: red" id="bitbake_commit_error"></span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">git clone url:</td><td>&nbsp;<input type="text" class="input-xxxlarge" name="url_git_clone" id="url_git_clone" value="git://git.yoctoproject.org/poky-contrib" onclick="clearError()"><span style="color: red" id="url_git_clone_error"></span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">image download url:</td><td>&nbsp;<input type="text" class="input-xxxlarge" name="url_image" id="url_image" value="ftp://ftpuser:123456@10.239.47.176/download" onclick="clearError()"><span style="color: red" id="url_image_error"></span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">document server ip:</td><td>&nbsp;<input type="text" class="input-large" name="ip_documentServer" id="ip_documentServer" value="10.239.47.176" onclick="clearError()"><span style="color: red" id="ip_documentServer_error"></span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+						<tr>
+							<td align="right">nfs root url:</td><td>&nbsp;<input type="text" class="input-xlarge" name="url_nfs" id="url_nfs" value="10.239.47.176:/home/nation/ftp" onclick="clearError()"><span style="color: red" id="url_nfs_error"></span></td>
+						</tr>
+						<tr><td colspan="2" height="5"></td></tr>
+					</table>
+				</div>
+				<div class="form-actions">
+					<button href="#" class="btn pull-right" data-dismiss="modal">Cancel</button>
+					<button type="submit" class="btn btn-primary  pull-right"><span id="bitbake_operator_button">Create Bitbake</span></button>
+				</div>
+				</form>
+			</div>
+		</div>
+		<!-- set bitbake config -->
+	</div>
+	<!--Main Content-->
+</div>
+
+<footer>
+	<p>&copy; The Yocto Project</p>
+</footer>
+</body>
+</html>

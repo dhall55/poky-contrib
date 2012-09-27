@@ -1,0 +1,115 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+	var timer = null;
+	$(function(){
+		var is_getPercent = $("#is_getPercent").val();
+		if(is_getPercent != ""){
+			timer=setInterval('getProgressPercent()','1000');
+		}
+	});
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+				{"current_user": current_user,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.progressPercents){
+						for(var i=0;i<json.progressPercents.length;i++){
+							var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+							var bar_name = "name_"+json.progressPercents[i].guid;
+							var bar_guid ="guid_"+json.progressPercents[i].guid;
+							var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+							if(parseInt(json.progressPercents[i].percent) < 100){
+								$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+								$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+								$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+							}
+						}
+					}
+					if(json.progressPercents.length == 0){
+						clearInterval(timer);
+					}
+				},"text");
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<input type="hidden" name="current_project" id="current_project" value="{{ current_project }}"/>
+	<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+	<input type="hidden" name="is_getPercent" id="is_getPercent" value="{{ is_getPercent }}"/>
+	<!-- Main Content -->
+	<div id="main" class="container" >
+		<!--Top Bar-->
+		<div class="row">
+			<div class="span12" >
+			<h1>Projects</h1>
+			<h2 class="pull-left">{{ current_project }}</h2>
+			<ul class="nav nav-pills topbarnav pull-left" style="margin-left:0;">
+				<li><a href="/hob/projects/projects_myproject/?current_user={{ current_user }}&current_project={{ current_project }}">Project</a></li>
+				<li class="active"><a href="/hob/projects/projects_history/?current_user={{ current_user }}&current_project={{ current_project }}"><i class="icon-time icon-white"></i> History</a></li>
+				<li><a href="/hob/projects/projects_settings/?current_user={{ current_user }}&current_project={{ current_project }}"><i class="icon-cog"></i> Settings</a></li>
+				<li><a href="/hob/projects/projects_permisisons/?current_user={{ current_user }}&current_project={{ current_project }}"><i class="icon-lock"></i> Permissions</a></li>
+			</ul>
+			</div>
+		</div>
+		<!--Top Bar-->
+		<div class="row">
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+				<!--Project List-->
+				<div class=" tablesattop">
+					<div>
+					<table class="table">
+						{% for val in history %}
+						<tr>
+						<td><a href="#">{{ val.create_date|date:"m/d/Y H:i:s" }}</a></td>
+						<td>{{ val.message }}</td>
+						<td><span class="label">{{ val.project.name }}</span></td>
+						<td><a href="#"><i class="icon-user"></i> {{ val.operator.name }}</a></td>
+						</tr>
+						{% endfor %}
+					</table>
+					</div>
+				</div>
+				<!--Project List-->
+			</div>
+			<!--MAIN WORK AREA-->
+			<!--SIDEBAR-->
+			<div class="span3">
+				<h4>History?</h4>
+				<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+				<p><a href="#">More about the build process and how to reduce errors in your builds �</a></p>
+			</div>
+			<!--SIDEBAR-->
+		</div>
+	</div>
+	<!-- Main Content -->
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+		{% if buildings %}
+			{% for val in buildings %}
+			{% if not val.is_finished %}
+			<h4><span id="name_{{val.guid}}"></span></h4>
+			<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+			<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+			{% endif %}
+			{% endfor %}
+		{% else %}
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		{% endif %}
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+	{% endblock %}

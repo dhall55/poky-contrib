@@ -1,0 +1,259 @@
+	{% extends 'web/base.html' %}
+	{% block current_user %} {{ current_user }} {% endblock %}
+	{% block javascrip%}
+	<script type="text/javascript">
+		function check_value(){
+			var project_name = $("#group_name").val();
+			if(project_name == ""){
+				$("#error").html("* group name is null");
+				return false;
+			}
+			return true;
+		}
+		function clearError(){
+			$("#error").html('');
+			$("#msg_error").hide();
+		}
+		function check_remindInfo(){
+			var receiver_email = $("#receiver_email").val();
+			if(receiver_email == ""){
+				$("#msg_error").show();
+				$("#msg_error").html("* email address is null");
+				return false;
+			}else{
+				var reg = /(\S)+[@]{1}(\S)+[.]{1}(\w)+/;
+				email_format = new RegExp(reg);
+				if (!email_format.test(receiver_email)){
+					$("#msg_error").show();
+					$("#msg_error").html("* email address is not valid");
+					return false;
+				}
+			}
+			var remind_content = $("#remind_content").val();
+			if(remind_content == ""){
+				$("#msg_error").show();
+				$("#msg_error").html("* remind content is null");
+				return false;
+			}
+			return true;
+		}
+		function group_selected(param){
+			$("#receiver_email").val('');
+			$("#remind_content").val('');
+			$("#togroup").val(param);
+		}
+		function get_user_permission(group_param, user_param){
+			$.get('/hob/groups/get_user_permission/',
+					{'group_name': group_param, 'user_name': user_param},
+					function(data){
+						json = $.parseJSON(data);
+						$("#edit_project").attr("checked",false);
+						$("#edit_builds").attr("checked",false);
+						$("#edit_layers").attr("checked",false);
+						if (json.edit_project == "1"){
+							$("#edit_project").attr("checked",true);
+						}
+						if (json.edit_builds == "1"){
+							$("#edit_builds").attr("checked",true);
+						}
+						if (json.edit_layers == "1"){
+							$("#edit_layers").attr("checked",true);
+						}
+					},'text');
+		}
+		function set_user_permission(group_param, user_param){
+			$("#group_permission").val(group_param);
+			$("#user_permission").val(user_param);
+			get_user_permission(group_param, user_param);
+		}
+		function check_permission_selected(){
+			if($("input[name=permission_checkbox]:checked").size() == 0){
+				$("#perrmission_error").html("please select one at least");
+				return false;
+			}
+			return true;
+		}
+	</script>
+	<script type="text/javascript">
+	var timer = null;
+	$(function(){
+		var is_getPercent = $("#is_getPercent").val();
+		if(is_getPercent != ""){
+			timer=setInterval('getProgressPercent()','1000');
+		}
+	});
+	function getProgressPercent(){
+		var current_user = $("#current_user").val();
+		$.get("/hob/builds/getProgressBar/",
+				{"current_user": current_user,
+				'value': Math.random()},
+				function(data){
+					json = jQuery.parseJSON(data);
+					if(json.progressPercents){
+						for(var i=0;i<json.progressPercents.length;i++){
+							var bar_id = "progress_bar_"+json.progressPercents[i].guid;
+							var bar_name = "name_"+json.progressPercents[i].guid;
+							var bar_guid ="guid_"+json.progressPercents[i].guid;
+							var bar_buildtask ="buildtask_"+json.progressPercents[i].guid;
+							if(parseInt(json.progressPercents[i].percent) < 100){
+								$("#"+bar_id).html("<div class='bar' style='width: "+json.progressPercents[i].percent+"%;'> building "+json.progressPercents[i].percent+"%</div>");
+								$("#"+bar_name).html("name:"+json.progressPercents[i].name);
+								$("#"+bar_guid).html("guid:"+json.progressPercents[i].guid+"  |  ");
+								$("#"+bar_buildtask).html("build task:"+json.progressPercents[i].buildTask);
+							}
+						}
+					}
+					if(json.progressPercents.length == 0){
+						clearInterval(timer);
+					}
+				},"text");
+	}
+	</script>
+	{% endblock %}
+	{% block content %}
+	<input type="hidden" name="is_getPercent" id="is_getPercent" value="{{ is_getPercent }}"/>
+	<!-- Main Content -->
+	<div id="main" class="container" >
+		<div class="row main">
+			<div class="span12">
+				<div class="row">
+					<div class="span2"><h1>Groups</h1></div>
+					<div class="span7"><p class="match-h1">First thing you would read is probably some introductory text about groups in Yocto and what they do really quickly. This is different from the stuff in the side bar.</p></div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<!--MAIN WORK AREA-->
+			<div class="span9">
+				{% for val in groups %}
+				<div class="row grouppods">
+					<div class="span2"><h3>{{ val.name }}</h3></div>
+					<div class="span7">
+						<h4>Group Permissions</h4>
+						<p>Group members inherit group permissions by default.</p>
+						<form class="horizontal-form">
+						<fieldset>
+						<div class="control-group ">
+							<div class="controls">
+							<label class="checkbox inline"><input type="checkbox" id="inlineCheckbox1" name="add_project" value="createproject">Create Project</label>
+							<label class="checkbox inline"><input type="checkbox" id="inlineCheckbox2" name="access_del_builds" value="access_deletebuilds"> Access/delete builds</label>
+							<label class="checkbox inline"><input type="checkbox" id="inlineCheckbox3" name="add_layer" value="addlayers"> Add external Layers</label>
+							</div>
+						</div>
+						</fieldset>
+						</form>
+						<h4>Group Members</h4>
+						<div class="row">
+							{% for item in val.operators.all %}
+							<div class="span3">
+								<img src="/static/images/avatar_user.png" class="pull-left">
+								<p>{{ item.name }} <a data-toggle="modal" href="#userpermissionsModal" onclick="javascript:set_user_permission('{{val.name}}', '{{item.name}}')"><i class="icon-cog"></i></a>
+								{% ifnotequal item.name current_user %}
+								<a href="/hob/groups/delete_memeber_from_group/?current_user={{current_user}}&groupName={{val.name}}&operatorSelected={{item.name}}"><i class="icon-trash"></i></a>
+								{% endifnotequal %}
+								<br />
+							<a href="#"><i class="icon-envelope"></i> {{ item.email }}</a></p>
+							</div>
+							{% endfor %}
+						</div>
+						<a data-toggle="modal" href="#addpersonModal" onclick="javascript:group_selected('{{val.name}}')"><button class="btn"><i class="icon-plus-sign"></i> Add someone to the group</button></a>
+					</div>
+				</div>
+				{% endfor %}
+				<p>&nbsp;</p>
+				<!-- Create Group -->
+				<div class="row">
+					<div class="span8 well">
+						<h2>Create a new group</h2>
+						<form class="form createnewproject" action="/hob/groups/save_group/" method="post" onsubmit="return check_value();">
+						<input type="hidden" name="current_user" id="current_user" value="{{ current_user }}"/>
+						<div><input type="text" class="span3" name="name" placeholder="Name your group" id="group_name" onclick="clearError()"><span id="error" style="color: red">{{ error }}</span></div>
+						<div style="width:100%;display:inline;float:left; margin-top:24px;"><button type="submit" class="btn btn-primary">Create Group</button></div>
+						</form>
+					</div>
+				</div>
+				<!-- Create Group -->
+			</div>
+			<!--MAIN WORK AREA-->
+			<div class="span3">
+				<div class="well">
+				<h4>How do I use Groups with Yocto?</h4>
+				<p>Nullam quis risus eget urna mollis ornare vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam id dolor id nibh ultricies vehicula ut id elit.</p>
+				<p>Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Donec sed odio dui.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Main Content -->
+
+	<!--Queue Modal Content-->
+	<div id="queueModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Running Builds</h3>
+		</div>
+		<div class="modal-body">
+		{% if buildings %}
+			{% for val in buildings %}
+			{% if not val.is_finished %}
+			<h4><span id="name_{{val.guid}}"></span></h4>
+			<p><span id="guid_{{val.guid}}"></span><span id="buildtask_{{val.guid}}"></span></p>
+			<div class="progress progress-striped active"><div id="progress_bar_{{val.guid}}"><div class="bar " style="width: {{val.build_percent}}%;"></div></div></div>
+			{% endif %}
+			{% endfor %}
+		{% else %}
+			<div class="alert alert-info" align="center">
+				<strong><i class=" icon-warning-sign"></i>&nbsp;There are no building tasks !</strong>
+			</div>
+		{% endif %}
+		</div>
+		<div class="modal-footer"><a href="#" class="btn" data-dismiss="modal" >Close</a></div>
+	</div>
+	<!--Queue Modal Content-->
+	<!--User Permissions Modal Content-->
+	<div id="userpermissionsModal" class="modal hide">
+		<form class="form-inline form-permissions" action="/hob/groups/set_group_permission/" method="post" onsubmit="return check_permission_selected();">
+		<input type="hidden" name="creator" value="{{ current_user }}"/>
+		<input type="hidden" name="group_permission" id="group_permission" value=""/>
+		<input type="hidden" name="user_permission" id="user_permission" value=""/>
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>User level permissions</h3>
+		</div>
+		<div align="center"><span style="color: red;" id="perrmission_error"></span></div>
+		<div class="modal-body">
+			<label class="checkbox"><input type="checkbox" name="permission_checkbox" id="edit_project" value="edit_project"> Create Project</label>
+			<label class="checkbox"><input type="checkbox" name="permission_checkbox" id="edit_builds" value="edit_builds"> Access/delete builds</label>
+			<label class="checkbox"><input type="checkbox" name="permission_checkbox" id="edit_layers" value="edit_layers"> Add external layers</label>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary" type="submit"><i class="icon-plus-sign icon-white"></i> save</button>
+		</div>
+		</form>
+	</div>
+	<!--User Permissions Modal Content-->
+	<!-- Add someone to group -->
+	<div id="addpersonModal" class="modal hide">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h3>Add someone to the group</h3>
+		</div>
+		<form class="form" action="/hob/groups/add_someone_to_group/" method="post" onsubmit="return check_remindInfo();">
+		<input type="hidden" name="sender" value="{{ current_user }}"/>
+		<input type="hidden" name="togroup" id="togroup" value=""/>
+		<div class="modal-body">
+			<p>Adding someone to your group is easy. They don't have to be a member of your group. Just put in their email, type a message if you like and they'll be sent a message and have an ID automatically created for them.</p>
+			<input type="text" class="input-medium" name="receiver_email" id="receiver_email" placeholder="Email Address" onclick="clearError()">
+			<p></p>
+			<div class="controls"><textarea class="input-textarea_modal" id="remind_content" rows="3" name="remind_content" onclick="clearError()"></textarea></div>
+			<span id="msg_error" style="color: red;display: none;"></span><br/>
+			<button type="reset" class="btn">Clear</button><br />
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal" >Cancel</a>
+			<button class="btn btn-primary" type="submit"><i class="icon-plus-sign icon-white"></i> Add</button>
+		</div>
+		</form>
+	</div>
+	<!-- Add someone to group -->
+	{% endblock %}
