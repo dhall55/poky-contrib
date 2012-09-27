@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://Copying;md5=2b4c6ffbcfcbdee469f02565f253d81a \
 # We need gnugrep (for -I)
 DEPENDS = "virtual/db grep-native"
 DEPENDS += "gdbm zlib"
-PR = "r9"
+PR = "r10"
 
 # 5.10.1 has Module::Build built-in
 PROVIDES += "libmodule-build-perl"
@@ -237,6 +237,7 @@ perl_package_preprocess () {
             ${PKGD}${libdir}/perl/${PV}/Config.pm \
             ${PKGD}${libdir}/perl/${PV}/Config_heavy.pl \
             ${PKGD}${libdir}/perl/${PV}/CORE/perl.h \
+            ${PKGD}${libdir}/perl/${PV}/CORE/config.h \
             ${PKGD}${libdir}/perl/${PV}/CORE/pp.h
 }
 
