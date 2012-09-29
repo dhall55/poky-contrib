@@ -29,7 +29,14 @@ python populate_packages_prepend () {
         d.setVar('PKG_'+bpn+'-dev', 'libc6-dev')
         d.setVar('PKG_'+bpn+'-dbg', 'libc6-dbg')
         # For backward compatibility with old -dbg package
-        d.appendVar('RPROVIDES_' + bpn + '-dbg', ' libc-dbg')
-        d.appendVar('RCONFLICTS_' + bpn + '-dbg', ' libc-dbg')
-        d.appendVar('RREPLACES_' + bpn + '-dbg', ' libc-dbg')
+
+        def add_dep(var, dep):
+            deps = bb.utils.explode_dep_versions(d.getVar(var + '_' + bpn, True) or "")
+            if not dep in deps:
+                deps[dep] = ""
+                d.setVar(var + '_' + bpn, bb.utils.join_deps(deps, commasep=False))
+
+        add_dep('RPROVIDES', 'libc-dbg')
+        add_dep('RCONFLICTS', 'libc-dbg')
+        add_dep('RREPLACES', 'libc-dbg')
 }

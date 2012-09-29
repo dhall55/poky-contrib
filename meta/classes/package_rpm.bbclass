@@ -608,6 +608,13 @@ python write_specfile () {
                 name = "".join(name.split(eext[1] + '-'))
         return name
 
+    def strip_multilib_deps(deps, d):
+        depends = bb.utils.explode_dep_versions(deps or "")
+        newdeps = {}
+        for dep in depends:
+            newdeps[strip_multilib(dep, d)] = depends[dep]
+        return bb.utils.join_deps(newdeps)
+
 #        ml = d.getVar("MLPREFIX", True)
 #        if ml and name and len(ml) != 0 and name.find(ml) == 0:
 #            return ml.join(name.split(ml, 1)[1:])
@@ -709,7 +716,7 @@ python write_specfile () {
     srchomepage    = d.getVar('HOMEPAGE', True)
     srcdescription = d.getVar('DESCRIPTION', True) or "."
 
-    srcdepends     = strip_multilib(d.getVar('DEPENDS', True), d)
+    srcdepends     = strip_multilib_deps(d.getVar('DEPENDS', True), d)
     srcrdepends    = []
     srcrrecommends = []
     srcrsuggests   = []
@@ -772,12 +779,12 @@ python write_specfile () {
         # Map the dependencies into their final form
         mapping_rename_hook(localdata)
 
-        splitrdepends    = strip_multilib(localdata.getVar('RDEPENDS', True), d) or ""
-        splitrrecommends = strip_multilib(localdata.getVar('RRECOMMENDS', True), d) or ""
-        splitrsuggests   = strip_multilib(localdata.getVar('RSUGGESTS', True), d) or ""
-        splitrprovides   = strip_multilib(localdata.getVar('RPROVIDES', True), d) or ""
-        splitrreplaces   = strip_multilib(localdata.getVar('RREPLACES', True), d) or ""
-        splitrconflicts  = strip_multilib(localdata.getVar('RCONFLICTS', True), d) or ""
+        splitrdepends    = strip_multilib_deps(localdata.getVar('RDEPENDS', True), d)
+        splitrrecommends = strip_multilib_deps(localdata.getVar('RRECOMMENDS', True), d)
+        splitrsuggests   = strip_multilib_deps(localdata.getVar('RSUGGESTS', True), d)
+        splitrprovides   = strip_multilib_deps(localdata.getVar('RPROVIDES', True), d)
+        splitrreplaces   = strip_multilib_deps(localdata.getVar('RREPLACES', True), d)
+        splitrconflicts  = strip_multilib_deps(localdata.getVar('RCONFLICTS', True), d)
         splitrobsoletes  = []
 
         # Gather special src/first package data
@@ -826,16 +833,16 @@ python write_specfile () {
         spec_preamble_bottom.append('Group: %s' % splitsection)
 
         # Replaces == Obsoletes && Provides
-        if splitrreplaces and splitrreplaces.strip() != "":
-            for dep in splitrreplaces.split(','):
-                if splitrprovides:
-                    splitrprovides = splitrprovides + ", " + dep
-                else:
-                    splitrprovides = dep
-                if splitrobsoletes:
-                    splitrobsoletes = splitrobsoletes + ", " + dep
-                else:
-                    splitrobsoletes = dep
+        robsoletes = bb.utils.explode_dep_versions(splitrobsoletes or "")
+        rprovides = bb.utils.explode_dep_versions(splitrprovides or "")
+        rreplaces = bb.utils.explode_dep_versions(splitrreplaces or "")
+        for dep in rreplaces:
+            if not dep in robsoletes:
+                robsoletes[dep] = rreplaces[dep]
+            if not dep in rprovides:
+                rprovides[dep] = rreplaces[dep]
+        splitrobsoletes = bb.utils.join_deps(robsoletes, commasep=False)
+        splitrprovides = bb.utils.join_deps(rprovides, commasep=False)
 
         print_deps(splitrdepends, "Requires", spec_preamble_bottom, d)
         # Suggests in RPM are like recommends in OE-core!
@@ -918,16 +925,16 @@ python write_specfile () {
     tail_source(d)
 
     # Replaces == Obsoletes && Provides
-    if srcrreplaces and srcrreplaces.strip() != "":
-        for dep in srcrreplaces.split(','):
-            if srcrprovides:
-                srcrprovides = srcrprovides + ", " + dep
-            else:
-                srcrprovides = dep
-            if srcrobsoletes:
-                srcrobsoletes = srcrobsoletes + ", " + dep
-            else:
-                srcrobsoletes = dep
+    robsoletes = bb.utils.explode_dep_versions(srcrobsoletes or "")
+    rprovides = bb.utils.explode_dep_versions(srcrprovides or "")
+    rreplaces = bb.utils.explode_dep_versions(srcrreplaces or "")
+    for dep in rreplaces:
+        if not dep in robsoletes:
+            robsoletes[dep] = rreplaces[dep]
+        if not dep in rprovides:
+            rprovides[dep] = rreplaces[dep]
+    srcrobsoletes = bb.utils.join_deps(robsoletes, commasep=False)
+    srcrprovides = bb.utils.join_deps(rprovides, commasep=False)
 
     print_deps(srcdepends, "BuildRequires", spec_preamble_top, d)
     print_deps(srcrdepends, "Requires", spec_preamble_top, d)
