@@ -1637,14 +1637,19 @@ def read_libdep_files(d):
     pkglibdeps = {}
     packages = d.getVar('PACKAGES', True).split()
     for pkg in packages:
-        pkglibdeps[pkg] = []
+        pkglibdeps[pkg] = {}
         for extension in ".shlibdeps", ".pcdeps", ".clilibdeps":
             depsfile = d.expand("${PKGDEST}/" + pkg + extension)
             if os.access(depsfile, os.R_OK):
                 fd = file(depsfile)
                 lines = fd.readlines()
                 fd.close()
-                pkglibdeps[pkg].extend([l.rstrip() for l in lines])
+                for l in lines:
+                    l.rstrip()
+                    deps = bb.utils.explode_dep_versions(l)
+                    for dep in deps:
+                        if not dep in pkglibdeps[pkg]:
+                            pkglibdeps[pkg][dep] = deps[dep]
     return pkglibdeps
 
 python read_shlibdeps () {
@@ -1654,7 +1659,10 @@ python read_shlibdeps () {
     for pkg in packages:
         rdepends = bb.utils.explode_dep_versions(d.getVar('RDEPENDS_' + pkg, False) or d.getVar('RDEPENDS', False) or "")
         for dep in pkglibdeps[pkg]:
-            rdepends[dep] = ""
+            # Add the dep if it's not already there, or if no comparison is set
+            if not dep in rdepends or not rdepends[dep]:
+                rdepends[dep] = pkglibdeps[pkg][dep]
+
         d.setVar('RDEPENDS_' + pkg, bb.utils.join_deps(rdepends, commasep=False))
 }
 
@@ -1761,7 +1769,11 @@ python package_depchains() {
         pkglibdeplist = []
         for pkg in pkglibdeps:
             for dep in pkglibdeps[pkg]:
-                add_dep(pkglibdeplist, dep)
+                cmp = pkglibdeps[pkg][dep]
+                if cmp:
+                    add_dep(pkglibdeplist, dep)
+                else:
+                    add_dep(pkglibdeplist, "%s (%s)" % (dep, cmp))
         # FIXME this should not look at PN once all task recipes inherit from task.bbclass
         dbgdefaultdeps = ((d.getVar('DEPCHAIN_DBGDEFAULTDEPS', True) == '1') or (d.getVar('PN', True) or '').startswith('packagegroup-'))
 

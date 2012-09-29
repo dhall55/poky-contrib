@@ -20,6 +20,13 @@ python __anonymous () {
     image = d.getVar('INITRAMFS_IMAGE', True)
     if image:
         d.setVar('INITRAMFS_TASK', '${INITRAMFS_IMAGE}:do_rootfs')
+
+    # RPROVIDES_kernel-base += "kernel-${KERNEL_VERSION}"
+    rprovides = bb.utils.explode_dep_versions(d.getVar("RPROVIDES_kernel-base", True) or "")
+    dep = d.expand("kernel-${KERNEL_VERSION}")
+    if not dep in rprovides:
+        rprovides[dep] = ""
+    d.setVar("RPROVIDES_kernel-base", bb.utils.join_deps(rprovides, commasep=False))
 }
 
 inherit kernel-arch deploy
@@ -269,7 +276,6 @@ RDEPENDS_kernel = "kernel-base"
 RDEPENDS_kernel-base ?= "kernel-image"
 PKG_kernel-image = "kernel-image-${@legitimize_package_name('${KERNEL_VERSION}')}"
 PKG_kernel-base = "kernel-${@legitimize_package_name('${KERNEL_VERSION}')}"
-RPROVIDES_kernel-base += "kernel-${KERNEL_VERSION}"
 ALLOW_EMPTY_kernel = "1"
 ALLOW_EMPTY_kernel-base = "1"
 ALLOW_EMPTY_kernel-image = "1"
@@ -429,13 +435,11 @@ python populate_packages_prepend () {
             old_desc = d.getVar('DESCRIPTION_' + pkg, True) or ""
             d.setVar('DESCRIPTION_' + pkg, old_desc + "; " + vals["description"])
 
-        rdepends_str = d.getVar('RDEPENDS_' + pkg, True)
-        if rdepends_str:
-            rdepends = rdepends_str.split()
-        else:
-            rdepends = []
-        rdepends.extend(get_dependencies(file, pattern, format))
-        d.setVar('RDEPENDS_' + pkg, ' '.join(rdepends))
+        rdepends = bb.utils.explode_dep_versions(d.getVar('RDEPENDS_' + pkg, True) or "")
+        for dep in get_dependencies(file, pattern, format):
+            if not dep in rdepends:
+                rdepends[dep] = ""
+        d.setVar('RDEPENDS_' + pkg, bb.utils.join_deps(rdepends, commasep=False))
 
     module_deps = parse_depmod()
     module_regex = '^(.*)\.k?o$'
