@@ -22,6 +22,8 @@ EXTRA_OECONF += "${STAP_DOCS} "
 
 inherit autotools gettext
 
+EXTRA_AUTORECONF += "--exclude=autopoint"
+
 BBCLASSEXTEND = "native nativesdk"
 
 FILES_${PN}-dbg += "${libexecdir}/systemtap/.debug"
