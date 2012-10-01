@@ -30,7 +30,7 @@ inherit siteinfo
 export CONFIG_SITE = "${@siteinfo_get_files(d)}"
 
 acpaths = "default"
-EXTRA_AUTORECONF = "--exclude=autopoint"
+EXTRA_AUTORECONF = ""
 
 export lt_cv_sys_lib_dlsearch_path_spec = "${libdir} ${base_libdir}"
 
