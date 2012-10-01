@@ -1538,11 +1538,10 @@
             <filename><ulink url='&YOCTO_DOCS_REF_URL;#var-PR'>PR</ulink></filename> 
             variable needs to be increased 
             (or "bumped") as part of that commit. 
-            This means that for new recipes you must be sure to add the <filename>PR</filename>
+            For new recipes you should add the <filename>PR</filename>
             variable and set its initial value equal to "r0".  
-            Failing to define <filename>PR</filename> makes it easy to miss when you bump a package.
-            Note that you can only use integer values following the "r" in the 
-            <filename>PR</filename> variable.
+            This is the default value, however, adding it initially makes 
+            it harder to miss bumping it when you make changes in future.
         </para>
 
         <para>
