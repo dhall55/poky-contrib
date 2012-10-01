@@ -161,6 +161,8 @@
                 <listitem><para><emphasis>nfs-server:</emphasis> Installs an NFS server.</para></listitem>
                 <listitem><para><emphasis>dev-pkgs:</emphasis> Installs development packages (headers and 
                     extra library links) for all packages installed in a given image.</para></listitem>
+                <listitem><para><emphasis>staticdev-pkgs:</emphasis> Installs static development packages (static
+                    libraries i.e .a files) for all packages installed in a given image.</para></listitem>
                 <listitem><para><emphasis>dbg-pkgs:</emphasis> Installs debug symbol packages for all packages 
                     installed in a given image.</para></listitem>
                 <listitem><para><emphasis>doc-pkgs:</emphasis> Installs documentation packages for all packages 
