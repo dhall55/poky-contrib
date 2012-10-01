@@ -21,6 +21,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import glob
+import glib
 import gtk
 import gobject
 import hashlib
@@ -236,18 +237,18 @@ class CrumbsMessageDialog(CrumbsDialog):
     A GNOME HIG compliant dialog widget.
     Add buttons with gtk.Dialog.add_button or gtk.Dialog.add_buttons
     """
-    def __init__(self, parent=None, label="", icon=gtk.STOCK_INFO):
-        super(CrumbsMessageDialog, self).__init__("", parent, gtk.DIALOG_DESTROY_WITH_PARENT)
+    def __init__(self, parent=None, label="", icon=gtk.STOCK_INFO, msg=""):
+        super(CrumbsMessageDialog, self).__init__("", parent, gtk.DIALOG_MODAL)
 
         self.set_border_width(6)
         self.vbox.set_property("spacing", 12)
         self.action_area.set_property("spacing", 12)
         self.action_area.set_property("border-width", 6)
 
-        first_row = gtk.HBox(spacing=12)
-        first_row.set_property("border-width", 6)
-        first_row.show()
-        self.vbox.add(first_row)
+        first_column = gtk.HBox(spacing=12)
+        first_column.set_property("border-width", 6)
+        first_column.show()
+        self.vbox.add(first_column)
 
         self.icon = gtk.Image()
         # We have our own Info icon which should be used in preference of the stock icon
@@ -255,15 +256,43 @@ class CrumbsMessageDialog(CrumbsDialog):
         self.icon.set_from_stock(self.icon_chk.check_stock_icon(icon), gtk.ICON_SIZE_DIALOG)
         self.icon.set_property("yalign", 0.00)
         self.icon.show()
-        first_row.add(self.icon)
-
-        self.label = gtk.Label()
-        self.label.set_use_markup(True)
-        self.label.set_line_wrap(True)
-        self.label.set_markup(label)
-        self.label.set_property("yalign", 0.00)
-        self.label.show()
-        first_row.add(self.label)
+        first_column.pack_start(self.icon, expand=False, fill=True, padding=0)
+        
+        if 0 <= len(msg) < 200:
+            lbl = label + "%s" % glib.markup_escape_text(msg)
+            self.label_short = gtk.Label()
+            self.label_short.set_use_markup(True)
+            self.label_short.set_line_wrap(True)
+            self.label_short.set_markup(lbl)
+            self.label_short.set_property("yalign", 0.00)
+            self.label_short.show()
+            first_column.add(self.label_short)
+        else:
+            second_row = gtk.VBox(spacing=12)
+            second_row.set_property("border-width", 6)
+            self.label_long = gtk.Label()
+            self.label_long.set_use_markup(True)
+            self.label_long.set_line_wrap(True)
+            self.label_long.set_markup(label)
+            self.label_long.set_alignment(0.0, 0.0)
+            second_row.pack_start(self.label_long, expand=False, fill=False, padding=0)
+            self.label_long.show()
+            self.textWindow = gtk.ScrolledWindow()
+            self.textWindow.set_shadow_type(gtk.SHADOW_IN)
+            self.msgView = gtk.TextView()
+            self.msgView.set_editable(False)
+            self.msgView.set_wrap_mode(gtk.WRAP_WORD)
+            self.msgView.set_cursor_visible(False)
+            self.msgView.set_size_request(300, 300)
+            self.buf = gtk.TextBuffer()
+            self.buf.set_text(msg)
+            self.msgView.set_buffer(self.buf)
+            self.textWindow.add(self.msgView)
+            self.msgView.show()
+            second_row.add(self.textWindow)
+            self.textWindow.show()
+            first_column.add(second_row)
+            second_row.show()
 
 #
 # SimpleSettings Dialog
@@ -271,7 +300,9 @@ class CrumbsMessageDialog(CrumbsDialog):
 class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
 
     (BUILD_ENV_PAGE_ID,
-     PROXIES_PAGE_ID) = range(2)
+     SHARED_STATE_PAGE_ID,
+     PROXIES_PAGE_ID,
+     OTHERS_PAGE_ID) = range(4)
 
     def __init__(self, title, configuration, all_image_types,
             all_package_formats, all_distros, all_sdk_machines,
@@ -616,27 +647,9 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.refresh_proxy_components()
         return advanced_vbox
 
-
-    def create_visual_elements(self):
-        self.nb = gtk.Notebook()
-        self.nb.set_show_tabs(True)
-        self.nb.append_page(self.create_build_environment_page(), gtk.Label("Build environment"))
-        self.nb.append_page(self.create_shared_state_page(), gtk.Label("Shared state"))
-        self.nb.append_page(self.create_proxy_page(), gtk.Label("Proxies"))
-        self.nb.set_current_page(0)
-        self.vbox.pack_start(self.nb, expand=True, fill=True)
-        self.vbox.pack_end(gtk.HSeparator(), expand=True, fill=True)
-
-        self.show_all()
-
     def switch_to_page(self, page_id):
         self.nb.set_current_page(page_id)
 
-#
-# AdvancedSettings Dialog
-#
-class AdvancedSettingDialog (CrumbsDialog, SettingsUIHelper):
-    
     def details_cb(self, button, parent, protocol):
         dialog = ProxyDetailsDialog(title = protocol.upper() + " Proxy Details",
             user = self.configuration.proxies[protocol][1],
@@ -806,6 +819,7 @@ class AdvancedSettingDialog (CrumbsDialog, SettingsUIHelper):
         self.nb = gtk.Notebook()
         self.nb.set_show_tabs(True)        
         self.nb.append_page(self.create_build_environment_page(), gtk.Label("Build environment"))
+        self.nb.append_page(self.create_shared_state_page(), gtk.Label("Shared state"))
         self.nb.append_page(self.create_proxy_page(), gtk.Label("Proxies"))        
         self.nb.append_page(self.create_others_page(), gtk.Label("Others"))
         self.nb.set_current_page(0)

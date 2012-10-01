@@ -2,6 +2,17 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
+emergency_shell()
+{
+    echo "Bug in initramfs /init detected. Dropping to a shell. Good luck!"
+    echo
+    sh
+}
+trap "emergency_shell" 0 2
+
+# exit immediately if a command fails
+set -e
+
 ROOT_MOUNT="/rootfs/"
 ROOT_IMAGE="rootfs.img"
 MOUNT="/bin/mount"
@@ -10,15 +21,15 @@ ISOLINUX=""
 UNIONFS="no"
 
 early_setup() {
-    mkdir /proc
-    mkdir /sys
+    mkdir -p /proc
+    mkdir -p /sys
     mount -t proc proc /proc
     mount -t sysfs sysfs /sys
 
     # support modular kernel
     modprobe isofs 2> /dev/null
 
-    mkdir /run
+    mkdir -p /run
     udevd --daemon
     udevadm trigger --action=add
 }

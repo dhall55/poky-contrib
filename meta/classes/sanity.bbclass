@@ -4,9 +4,62 @@
 
 SANITY_REQUIRED_UTILITIES ?= "patch diffstat makeinfo git bzip2 tar gzip gawk chrpath wget cpio"
 
-def raise_sanity_error(msg, d):
+python check_bblayers_conf() {
+    bblayers_fn = os.path.join(d.getVar('TOPDIR', True), 'conf/bblayers.conf')
+
+    current_lconf = int(d.getVar('LCONF_VERSION', True))
+    if not current_lconf:
+        sys.exit()
+    lconf_version = int(d.getVar('LAYER_CONF_VERSION', True))
+    lines = []
+
+    import re
+    def find_line(pattern, lines):
+        return next(((index, line)
+            for index, line in enumerate(lines)
+            if re.search(pattern, line)), (None, None))
+
+    if current_lconf < 4:
+        sys.exit()
+
+    with open(bblayers_fn, 'r') as f:
+        lines = f.readlines()
+
+    if current_lconf == 4:
+        topdir_var = '$' + '{TOPDIR}'
+        index, bbpath_line = find_line('BBPATH', lines)
+        if bbpath_line:
+            start = bbpath_line.find('"')
+            if start != -1 and (len(bbpath_line) != (start + 1)):
+                if bbpath_line[start + 1] == '"':
+                    lines[index] = (bbpath_line[:start + 1] +
+                                    topdir_var + bbpath_line[start + 1:])
+                else:
+                    if not topdir_var in bbpath_line:
+                        lines[index] = (bbpath_line[:start + 1] +
+                                    topdir_var + ':' + bbpath_line[start + 1:])
+            else:
+                sys.exit()
+        else:
+            index, bbfiles_line = find_line('BBFILES', lines)
+            if bbfiles_line:
+                lines.insert(index, 'BBPATH = "' + topdir_var + '"\n')
+            else:
+                sys.exit()
+
+        index, line = find_line('LCONF_VERSION', lines)
+        current_lconf += 1
+        lines[index] = 'LCONF_VERSION = "%d"\n' % current_lconf
+        with open(bblayers_fn, "w") as f:
+            f.write(''.join(lines))
+}
+
+def raise_sanity_error(msg, d, network_error=False):
     if d.getVar("SANITY_USE_EVENTS", True) == "1":
-        bb.event.fire(bb.event.SanityCheckFailed(msg), d)
+        try:
+            bb.event.fire(bb.event.SanityCheckFailed(msg, network_error), d)
+        except TypeError:
+            bb.event.fire(bb.event.SanityCheckFailed(msg), d)
         return
 
     bb.fatal(""" OE-core's config sanity checker detected a potential misconfiguration.
@@ -119,8 +172,9 @@ def check_sanity_tmpdir_change(tmpdir, data):
     # Check that TMPDIR isn't on a filesystem with limited filename length (eg. eCryptFS)
     testmsg = check_create_long_filename(tmpdir, "TMPDIR")
     # Check that we can fetch from various network transports
+    errmsg = check_connectivity(data)
     testmsg = testmsg + check_connectivity(data)
-    return testmsg
+    return testmsg, errmsg == ""
         
 def check_sanity_version_change(data):
     # Sanity checks to be done when SANITY_VERSION changes
@@ -337,7 +391,16 @@ def check_sanity(sanity_data):
     current_lconf = sanity_data.getVar('LCONF_VERSION', True)
     lconf_version = sanity_data.getVar('LAYER_CONF_VERSION', True)
     if current_lconf != lconf_version:
-        messages = messages + "Your version of bblayers.conf was generated from an older version of bblayers.conf.sample and there have been updates made to this file. Please compare the two files and merge any changes before continuing.\nMatching the version numbers will remove this message.\n\"meld conf/bblayers.conf ${COREBASE}/meta*/conf/bblayers.conf.sample\" is a good way to visualise the changes.\n"
+        try:
+            bb.build.exec_func("check_bblayers_conf", sanity_data)
+            if sanity_data.getVar("SANITY_USE_EVENTS", True) == "1":
+                bb.event.fire(bb.event.SanityCheckFailed("Your conf/bblayers.conf has been automatically updated. Please close and re-run."), sanity_data)
+                return
+            else:
+                bb.note("Your conf/bblayers.conf has been automatically updated. Please re-run %s." % os.path.basename(sys.argv[0]))
+                sys.exit(0)
+        except Exception:
+            messages = messages + "Your version of bblayers.conf was generated from an older version of bblayers.conf.sample and there have been updates made to this file. Please compare the two files and merge any changes before continuing.\nMatching the version numbers will remove this message.\n\"meld conf/bblayers.conf ${COREBASE}/meta*/conf/bblayers.conf.sample\" is a good way to visualise the changes.\n"
 
     # If we have a site.conf, check it's valid
     if check_conf_exists("conf/site.conf", sanity_data):
@@ -475,16 +538,18 @@ def check_sanity(sanity_data):
                 last_sstate_dir = line.split()[1]
     
     sanity_version = int(sanity_data.getVar('SANITY_VERSION', True) or 1)
+    network_error = False
     if last_sanity_version < sanity_version: 
         messages = messages + check_sanity_version_change(sanity_data)
-        messages = messages + check_sanity_tmpdir_change(tmpdir, sanity_data)
+        err, network_error = check_sanity_tmpdir_change(tmpdir, sanity_data)
+        messages = messages + err
         messages = messages + check_sanity_sstate_dir_change(sstate_dir, sanity_data)
     else: 
         if last_tmpdir != tmpdir:
-            messages = messages + check_sanity_tmpdir_change(tmpdir, sanity_data)
+            err, network_error = check_sanity_tmpdir_change(tmpdir, sanity_data)
+            messages = messages + err
         if last_sstate_dir != sstate_dir:
             messages = messages + check_sanity_sstate_dir_change(sstate_dir, sanity_data)
-
     if os.path.exists("conf") and not messages:
         f = file(sanityverfile, 'w')
         f.write("SANITY_VERSION %s\n" % sanity_version) 
@@ -555,7 +620,7 @@ def check_sanity(sanity_data):
         messages = messages + "Error, you have a space in your COREBASE directory path. Please move the installation to a directory which doesn't include a space."
 
     if messages != "":
-        raise_sanity_error(sanity_data.expand(messages), sanity_data)
+        raise_sanity_error(sanity_data.expand(messages), sanity_data, network_error)
 
 # Create a copy of the datastore and finalise it to ensure appends and 
 # overrides are set - the datastore has yet to be finalised at ConfigParsed

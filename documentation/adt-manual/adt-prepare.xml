@@ -200,9 +200,10 @@
             </note>
 
             <para>
-                Once the installer begins to run, you are asked to confirm the location for 
-                cross-toolchain installation, which is <filename>/opt/poky/&lt;release&gt;</filename>.
-                After confirming the location, you are prompted to run in  
+                Once the installer begins to run, you are asked to enter the location for 
+                cross-toolchain installation.
+                The default location is <filename>/opt/poky/&lt;release&gt;</filename>.
+                After selecting the location, you are prompted to run in  
                 interactive or silent mode.  
                 If you want to closely monitor the installation, choose “I” for interactive 
                 mode rather than “S” for silent mode.  
@@ -264,8 +265,10 @@
                         be in <filename>tmp/deploy/sdk</filename> in the build directory.
                         </para></note>
                     </para></listitem>
-                <listitem><para>Once you have the installer, run it to install the toolchain. 
-                    The following command shows how to run the installer given a toolchain tarball 
+                <listitem><para>Once you have the installer, run it to install the toolchain.
+                    You must change the permissions on the toolchain installer 
+                    script so that it is executable.</para>
+                    <para>The following command shows how to run the installer given a toolchain tarball 
                     for a 64-bit development host system and a 32-bit target architecture.
                     The example assumes the toolchain installer is located in <filename>~/Downloads/</filename>.
                     <literallayout class='monospaced'>
@@ -402,7 +405,15 @@
         </para>
 
         <para>
-            If you plan on remotely deploying and debugging your application from within the 
+            If you are planning on developing against your image and you are not
+            building or using one of the Yocto Project development images 
+            (e.g. core-image-*-dev), you must be sure to include the development
+            packages as part of your image recipe.
+        </para>            
+
+        <para>
+            Furthermore, if you plan on remotely deploying and debugging your 
+            application from within the 
             Eclipse IDE, you must have an image that contains the Yocto Target Communication
             Framework (TCF) agent (<filename>tcf-agent</filename>). 
             By default, the Yocto Project provides only one type pre-built image that contains the 

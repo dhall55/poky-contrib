@@ -263,8 +263,6 @@ class BuildDetailsPage (HobPage):
         self.box_group_area.pack_start(self.vbox, expand=True, fill=True)
 
         self.vbox.pack_start(self.notebook, expand=True, fill=True)
-
-        self.box_group_area.pack_end(self.button_box, expand=False, fill=False)
         self.show_all()
         self.back_button.hide()
 
@@ -392,7 +390,7 @@ class BuildDetailsPage (HobPage):
             self.builder.show_recipes()
         elif "Edit packages" in action:
             self.builder.show_packages()
-        elif "Edit image configuration" in action:
+        elif "Edit image" in action:
             self.builder.show_configuration()
 
     def stop_primary_action_button_clicked_cb(self, button, action):
