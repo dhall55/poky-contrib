@@ -27,7 +27,7 @@ early_setup() {
     mount -t sysfs sysfs /sys
 
     # support modular kernel
-    modprobe isofs 2> /dev/null
+    modprobe isofs 2> /dev/null || true
 
     mkdir -p /run
     udevd --daemon
@@ -42,7 +42,7 @@ read_args() {
             root=*)
                 ROOT_DEVICE=$optarg ;;
             rootfstype=*)
-                modprobe $optarg 2> /dev/null ;;
+                modprobe $optarg 2> /dev/null || true ;;
             LABEL=*)
                 label=$optarg ;;
             video=*)
@@ -60,7 +60,7 @@ read_args() {
 }
 
 boot_live_root() {
-    killall udevd 2>/dev/null
+    killall udevd 2>/dev/null || true
 
     # use devtmpfs if available
     if grep -q devtmpfs /proc/filesystems; then
@@ -105,7 +105,7 @@ done
 case $label in
     boot)
 	mkdir $ROOT_MOUNT
-	mknod /dev/loop0 b 7 0 2>/dev/null
+	mknod /dev/loop0 b 7 0 2>/dev/null || true
 
 	
 	if [ "$UNIONFS" = "yes" ]; then
