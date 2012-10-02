@@ -5,15 +5,20 @@ LIC_FILES_CHKSUM = "file://${THISDIR}/../../COPYING.MIT;md5=3da9cfbcb788c80a0384
 
 PR = "r1"
 
-GUACAMAYO_FEATURES =+ "\
-		      package-management \
-		      guacamayo-server \
-		      guacamayo-restricted \
-		      "
+inherit core-image
 
-inherit guacamayo-image
+IMAGE_FEATURES =+ "package-management \
+		  "
 
-IMAGE_INSTALL += "guacamayo-session-mediaserver"
+IMAGE_INSTALL += "rygel-plugin-media-export \
+                  guacamayo-session-mediaserver \
+                  tzdata                     \
+                  dconf                      \
+                  guacamayo-gsettings        \
+                  dbus                       \
+                  dbus-x11                   \
+                 "
 
-GUACA_DEMOS_FEATURE = "${@base_contains("IMAGE_FEATURES", "guacamayo-demos", "task-guacamayo-demos-audio task-guacamayo-demos-video task-guacamayo-demos-pictures", "", d)}"
+GUACA_DEMOS_FEATURE = "${@base_contains("IMAGE_FEATURES", "guacamayo-demos", "guacamayo-demos-audio guacamayo-demos-video guacamayo-demos-pictures", "", d)}"
+
 IMAGE_INSTALL += "${GUACA_DEMOS_FEATURE}"
