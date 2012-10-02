@@ -162,6 +162,10 @@ autotools_do_configure() {
 		else
 			CONFIGURE_AC=configure.ac
 		fi
+
+		bbnote Executing autoreconf --verbose --install --force ${EXTRA_AUTORECONF} $acpaths
+		autoreconf -Wcross --verbose --install --force ${EXTRA_AUTORECONF} $acpaths || bbfatal "autoreconf execution failed."
+
 		if ! echo ${EXTRA_OECONF} | grep -q "\-\-disable-nls"; then
 			if grep "^[[:space:]]*AM_GLIB_GNU_GETTEXT" $CONFIGURE_AC >/dev/null; then
 				if grep "sed.*POTFILES" $CONFIGURE_AC >/dev/null; then
@@ -173,12 +177,12 @@ autotools_do_configure() {
 			fi
 		fi
 		mkdir -p m4
+
 		if grep "^[[:space:]]*[AI][CT]_PROG_INTLTOOL" $CONFIGURE_AC >/dev/null; then
 			bbnote Executing intltoolize --copy --force --automake
 			intltoolize --copy --force --automake
 		fi
-		bbnote Executing autoreconf --verbose --install --force ${EXTRA_AUTORECONF} $acpaths
-		autoreconf -Wcross --verbose --install --force ${EXTRA_AUTORECONF} $acpaths || bbfatal "autoreconf execution failed."
+
 		cd $olddir
 	fi
 	if [ -e ${S}/configure ]; then
