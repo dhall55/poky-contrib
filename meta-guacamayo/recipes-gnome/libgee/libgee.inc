@@ -12,6 +12,8 @@ inherit autotools pkgconfig gnome vala
 
 SRC_URI = "${GNOME_MIRROR}/${BPN}/${@gnome_verdir("${PV}")}/${BPN}-${PV}.tar.xz;name=archive"
 
+EXTRA_OECONF += "--disable-introspetion --without-introspection"
+
 do_configure_prepend() {
      MACROS="libtool.m4 lt~obsolete.m4 ltoptions.m4 ltsugar.m4 ltversion.m4"
       for i in ${MACROS}; do
