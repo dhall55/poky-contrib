@@ -1,7 +1,7 @@
 require recipes-graphics/clutter/clutter.inc
 require recipes-graphics/clutter/clutter-package.inc
 
-PR = "r3"
+PR = "r2"
 
 # We're API/ABI compatible and this may make things easier for layers
 PROVIDES += "clutter-1.6"
@@ -10,7 +10,8 @@ PACKAGES =+ "${PN}-examples"
 FILES_${PN}-examples = "${bindir}/test-* ${pkgdatadir}/redhand.png"
 
 SRC_URI = "http://source.clutter-project.org/sources/clutter/1.8/clutter-${PV}.tar.bz2 \
-           file://enable_tests-1.4.patch"
+           file://enable_tests-1.4.patch \
+           file://update_gettext_macro_version.patch"
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=4fbd65380cdd255951079008b364516c"
 # because we've namespaced PN to clutter-1.8
