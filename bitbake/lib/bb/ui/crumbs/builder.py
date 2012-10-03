@@ -1310,7 +1310,8 @@ class Builder(gtk.Window):
             parent = self,
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT
-                    | gtk.DIALOG_NO_SEPARATOR)
+                    | gtk.DIALOG_NO_SEPARATOR,
+            handler = self.handler)
         button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
         HobAltButton.style_button(button)
         button = dialog.add_button("Save", gtk.RESPONSE_YES)

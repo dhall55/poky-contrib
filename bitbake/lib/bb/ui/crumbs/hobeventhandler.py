@@ -65,10 +65,17 @@ class HobHandler(gobject.GObject):
          "package-populated"       : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      ()),
+         "network-passed"          : (gobject.SIGNAL_RUN_LAST,
+                                      gobject.TYPE_NONE,
+                                     ()),
+         "network-failed"          : (gobject.SIGNAL_RUN_LAST,
+                                      gobject.TYPE_NONE,
+                                     ()),
     }
 
-    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO, SANITY_CHECK) = range(6)
-    (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_SANITY_CHECK, SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE) = range(11)
+    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO, SANITY_CHECK, NETWORK_TEST) = range(7)
+    (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_SANITY_CHECK,
+     SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE, SUB_NETWORK_TEST) = range(12)
 
     def __init__(self, server, recipe_model, package_model):
         super(HobHandler, self).__init__()
@@ -247,6 +254,12 @@ class HobHandler(gobject.GObject):
             message["total"] = event.total
             message["title"] = "Parsing recipes: "
             self.emit("parsing-completed", message)
+        elif isinstance(event, bb.event.NetworkTestFailed):
+            self.emit("network-failed")
+            self.run_next_command()
+        elif isinstance(event, bb.event.NetworkTestPassed):
+            self.emit("network-passed")
+            self.run_next_command()
 
         if self.error_msg and not self.commands_async:
             self.display_error()
@@ -340,6 +353,10 @@ class HobHandler(gobject.GObject):
     def trigger_sanity_check(self):
         self.commands_async.append(self.SUB_SANITY_CHECK)
         self.run_next_command(self.SANITY_CHECK)
+
+    def trigger_network_test(self):
+        self.commands_async.append(self.SUB_NETWORK_TEST)
+        self.run_next_command(self.NETWORK_TEST)
 
     def generate_configuration(self):
         self.commands_async.append(self.SUB_PARSE_CONFIG)
