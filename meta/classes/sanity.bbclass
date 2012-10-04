@@ -640,7 +640,6 @@ python check_sanity_eventhandler() {
         check_sanity(sanity_data)
         bb.event.fire(bb.event.SanityCheckPassed(), e.data)
     elif bb.event.getName(e) == "NetworkTest":
-        print "Starting network tests"
         sanity_data = copy_data(e)
         bb.event.fire(bb.event.NetworkTestFailed() if check_connectivity(sanity_data) else bb.event.NetworkTestPassed(), e.data)
 
