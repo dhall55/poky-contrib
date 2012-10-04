@@ -344,6 +344,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.md5 = self.config_md5()
         self.settings_changed = False
         self.handler = handler
+        self.proxy_test_ran = False
 
         # create visual elements on the dialog
         self.create_visual_elements()
@@ -455,7 +456,20 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.configuration.same_proxy = self.same_checkbox.get_active()
         self.refresh_proxy_components()
 
-    def response_cb(self, dialog, response_id):        
+    def save_proxy_data(self, configuration):
+        self.configuration.split_proxy("http", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+        if self.configuration.same_proxy:
+            self.configuration.split_proxy("https", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+            self.configuration.split_proxy("ftp", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+            self.configuration.split_proxy("git", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+            self.configuration.split_proxy("cvs", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+        else:
+            self.configuration.split_proxy("https", self.https_proxy.get_text() + ":" + self.https_proxy_port.get_text())
+            self.configuration.split_proxy("ftp", self.ftp_proxy.get_text() + ":" + self.ftp_proxy_port.get_text())
+            self.configuration.split_proxy("git", self.git_proxy.get_text() + ":" + self.git_proxy_port.get_text())
+            self.configuration.split_proxy("cvs", self.cvs_proxy.get_text() + ":" + self.cvs_proxy_port.get_text())       
+
+    def response_cb(self, dialog, response_id):
         self.configuration.dldir = self.dldir_text.get_text()
         self.configuration.sstatedir = self.sstatedir_text.get_text()
         self.configuration.sstatemirror = ""
@@ -468,19 +482,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
                 self.configuration.sstatemirror += smirror
         self.configuration.bbthread = self.bb_spinner.get_value_as_int()
         self.configuration.pmake = self.pmake_spinner.get_value_as_int()
-                
-        self.configuration.split_proxy("http", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
-        if self.configuration.same_proxy:
-            self.configuration.split_proxy("https", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
-            self.configuration.split_proxy("ftp", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
-            self.configuration.split_proxy("git", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
-            self.configuration.split_proxy("cvs", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
-        else:
-            self.configuration.split_proxy("https", self.https_proxy.get_text() + ":" + self.https_proxy_port.get_text())
-            self.configuration.split_proxy("ftp", self.ftp_proxy.get_text() + ":" + self.ftp_proxy_port.get_text())
-            self.configuration.split_proxy("git", self.git_proxy.get_text() + ":" + self.git_proxy_port.get_text())
-            self.configuration.split_proxy("cvs", self.cvs_proxy.get_text() + ":" + self.cvs_proxy_port.get_text())
-
+        self.save_proxy_data(self.configuration)
         self.configuration.extra_setting = {}
         it = self.setting_store.get_iter_first()
         while it:
@@ -603,18 +605,35 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.nb.set_current_page(page_num)
 
     def test_proxy_ended(self, passed):
-        print("PASSED" if passed else "FAILED")
-        self.direct_checkbox.set_sensitive(True)
-        self.proxy_checkbox.set_sensitive(True)
+        self.proxy_test_running = False
+        self.set_test_proxy_state(self.TEST_PROXY_PASSED if passed else self.TEST_PROXY_FAILED)
+        self.set_sensitive(True)
         self.refresh_proxy_components()
+
+    def timer_func(self):
+        self.test_proxy_progress.pulse()
+        return self.proxy_test_running
 
     def test_proxy_button_cb(self, b):
         self.set_test_proxy_state(self.TEST_PROXY_RUNNING)
+        self.set_sensitive(False)
+        self.save_proxy_data(self.configuration)
+        if self.configuration.enable_proxy == True:
+            self.handler.set_http_proxy(self.configuration.combine_proxy("http"))
+            self.handler.set_https_proxy(self.configuration.combine_proxy("https"))
+            self.handler.set_ftp_proxy(self.configuration.combine_proxy("ftp"))
+            self.handler.set_git_proxy(self.configuration.combine_host_only("git"), self.configuration.combine_port_only("git"))
+            self.handler.set_cvs_proxy(self.configuration.combine_host_only("cvs"), self.configuration.combine_port_only("cvs"))
+        elif self.configuration.enable_proxy == False:
+            self.handler.set_http_proxy("")
+            self.handler.set_https_proxy("")
+            self.handler.set_ftp_proxy("")
+            self.handler.set_git_proxy("", "")
+            self.handler.set_cvs_proxy("", "")
+        self.proxy_test_ran = True
+        self.proxy_test_running = True
+        gobject.timeout_add(100, self.timer_func)
         self.handler.trigger_network_test()
-        [(lambda w:w.set_sensitive(False))(e) for e in self.proxy_page_input_elements]
-
-    def test_proxy_cancel_button_cb(self, b):
-        self.handler.cancel_network_test()
 
     def set_test_proxy_state(self, state):
         if self.test_proxy_state == state:
@@ -622,7 +641,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.test_proxy_hbox.foreach(lambda w:self.test_proxy_hbox.remove(w))
         if state == self.TEST_PROXY_INITIAL:
             # Show the "text proxy configuration" button
-            alignment = gtk.Alignment(0.5, 0, 0, 0)
+            alignment = gtk.Alignment(0.5, 0.5, 0, 0)
             self.test_proxy_hbox.pack_start(alignment, expand=True, fill=False)
             alignment.show()
             button = HobAltButton("Test proxy configuration")
@@ -632,18 +651,27 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         elif state == self.TEST_PROXY_RUNNING:
             self.test_proxy_progress = HobProgressBar()
             self.test_proxy_progress.set_rcstyle("running")
-            self.test_proxy_hbox.pack_start(self.test_proxy_progress, expand=True, fill=True, padding=24)
+            self.test_proxy_progress.set_text("Testing proxy configuration")
+            self.test_proxy_hbox.pack_start(self.test_proxy_progress, expand=True, fill=True)
             self.test_proxy_progress.show()
-            cancel_button = HobAltButton("Cancel")
-            cancel_button.connect("clicked", self.test_proxy_cancel_button_cb)
-            self.test_proxy_hbox.pack_end(cancel_button, expand=False, fill=False)
-            cancel_button.show()
-        elif state == self.TEST_PROXY_PASSED:
-            pass 
+        else: # passed or failed
+            dummy_progress = HobProgressBar()
+            dummy_progress.update(1.0)
+            if state == self.TEST_PROXY_PASSED:
+                dummy_progress.set_text("Your proxy configuration works")
+                dummy_progress.set_rcstyle("running")
+            else:
+                dummy_progress.set_text("Proxy test failed")
+                dummy_progress.set_rcstyle("fail")
+            self.test_proxy_hbox.pack_start(dummy_progress, expand=True, fill=True, padding=12)
+            dummy_progress.show()
+            button = HobAltButton("Retest")
+            button.connect("clicked", self.test_proxy_button_cb)
+            self.test_proxy_hbox.pack_start(button, expand=False, fill=False)
+            button.show()
         self.text_proxy_state = state
 
     def create_proxy_page(self):
-        self.proxy_page_input_elements = []
         advanced_vbox = gtk.VBox(False, 6)
         advanced_vbox.set_border_width(6)
 
@@ -658,19 +686,16 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         sub_vbox.pack_start(hbox, expand=False, fill=False)
 
         self.direct_checkbox = gtk.RadioButton(None, "Direct internet connection")
-        self.proxy_page_input_elements.append(self.direct_checkbox)
         self.direct_checkbox.set_tooltip_text("Check this box to use a direct internet connection with no proxy")
         self.direct_checkbox.set_active(not self.configuration.enable_proxy)
         sub_vbox.pack_start(self.direct_checkbox, expand=False, fill=False)
 
         self.proxy_checkbox = gtk.RadioButton(self.direct_checkbox, "Manual proxy configuration")
-        self.proxy_page_input_elements.append(self.proxy_checkbox)
         self.proxy_checkbox.set_tooltip_text("Check this box to manually set up a specific proxy")
         self.proxy_checkbox.set_active(self.configuration.enable_proxy)
         sub_vbox.pack_start(self.proxy_checkbox, expand=False, fill=False)
 
         self.same_checkbox = gtk.CheckButton("Use the same proxy for all protocols")
-        self.proxy_page_input_elements.append(self.same_checkbox)
         self.same_checkbox.set_tooltip_text("Check this box to use the HTTP proxy for all five proxies")
         self.same_checkbox.set_active(self.configuration.same_proxy)
         hbox = gtk.HBox(False, 12)
@@ -679,34 +704,29 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
 
         proxy_widget, self.http_proxy, self.http_proxy_port, self.http_proxy_details = self.gen_proxy_entry_widget(
             "http", self, True)
-        self.proxy_page_input_elements += [self.http_proxy, self.http_proxy_port, self.http_proxy_details]
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
         proxy_widget, self.https_proxy, self.https_proxy_port, self.https_proxy_details = self.gen_proxy_entry_widget(
             "https", self, True)
-        self.proxy_page_input_elements += [self.https_proxy, self.https_proxy_port, self.https_proxy_details]
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
         proxy_widget, self.ftp_proxy, self.ftp_proxy_port, self.ftp_proxy_details = self.gen_proxy_entry_widget(
             "ftp", self, True)
-        self.proxy_page_input_elements += [self.ftp_proxy, self.ftp_proxy_port, self.ftp_proxy_details]
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
         proxy_widget, self.git_proxy, self.git_proxy_port, self.git_proxy_details = self.gen_proxy_entry_widget(
             "git", self, True)
-        self.proxy_page_input_elements += [self.git_proxy, self.git_proxy_port, self.git_proxy_details]
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
         proxy_widget, self.cvs_proxy, self.cvs_proxy_port, self.cvs_proxy_details = self.gen_proxy_entry_widget(
             "cvs", self, True)
-        self.proxy_page_input_elements += [self.cvs_proxy, self.cvs_proxy_port, self.cvs_proxy_details]
         sub_vbox.pack_start(proxy_widget, expand=False, fill=False)
 
         self.direct_checkbox.connect("toggled", self.proxy_checkbox_toggled_cb)
         self.proxy_checkbox.connect("toggled", self.proxy_checkbox_toggled_cb)
         self.same_checkbox.connect("toggled", self.same_checkbox_toggled_cb)
         
-        self.test_proxy_hbox = gtk.HBox(False, 6)
+        self.test_proxy_hbox = gtk.HBox(False)
         self.test_proxy_state = self.TEST_PROXY_NONE
         self.set_test_proxy_state(self.TEST_PROXY_INITIAL)
         sub_vbox.pack_start(self.test_proxy_hbox, expand=False, fill=False)
