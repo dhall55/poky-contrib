@@ -30,6 +30,7 @@ import shlex
 import re
 import logging
 import sys
+import copy
 from bb.ui.crumbs.template import TemplateMgr
 from bb.ui.crumbs.imageconfigurationpage import ImageConfigurationPage
 from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
@@ -746,6 +747,20 @@ class Builder(gtk.Window):
         self.previous_step = self.current_step
         self.current_step = next_step
 
+    def set_user_config_proxies(self):
+        if self.configuration.enable_proxy == True:
+            self.handler.set_http_proxy(self.configuration.combine_proxy("http"))
+            self.handler.set_https_proxy(self.configuration.combine_proxy("https"))
+            self.handler.set_ftp_proxy(self.configuration.combine_proxy("ftp"))
+            self.handler.set_git_proxy(self.configuration.combine_host_only("git"), self.configuration.combine_port_only("git"))
+            self.handler.set_cvs_proxy(self.configuration.combine_host_only("cvs"), self.configuration.combine_port_only("cvs"))
+        elif self.configuration.enable_proxy == False:
+            self.handler.set_http_proxy("")
+            self.handler.set_https_proxy("")
+            self.handler.set_ftp_proxy("")
+            self.handler.set_git_proxy("", "")
+            self.handler.set_cvs_proxy("", "")
+
     def set_user_config(self):
         self.handler.init_cooker()
         # set bb layers
@@ -767,19 +782,7 @@ class Builder(gtk.Window):
         self.handler.set_extra_config(self.configuration.extra_setting)
         self.handler.set_extra_inherit("packageinfo")
         self.handler.set_extra_inherit("image_types")
-        # set proxies
-        if self.configuration.enable_proxy == True:
-            self.handler.set_http_proxy(self.configuration.combine_proxy("http"))
-            self.handler.set_https_proxy(self.configuration.combine_proxy("https"))
-            self.handler.set_ftp_proxy(self.configuration.combine_proxy("ftp"))
-            self.handler.set_git_proxy(self.configuration.combine_host_only("git"), self.configuration.combine_port_only("git"))
-            self.handler.set_cvs_proxy(self.configuration.combine_host_only("cvs"), self.configuration.combine_port_only("cvs"))
-        elif self.configuration.enable_proxy == False:
-            self.handler.set_http_proxy("")
-            self.handler.set_https_proxy("")
-            self.handler.set_ftp_proxy("")
-            self.handler.set_git_proxy("", "")
-            self.handler.set_cvs_proxy("", "")
+        self.set_user_config_proxies()
 
     def update_recipe_model(self, selected_image, selected_recipes):
         self.recipe_model.set_selected_image(selected_image)
@@ -1324,6 +1327,12 @@ class Builder(gtk.Window):
             self.configuration = dialog.configuration
             self.save_defaults() # remember settings
             settings_changed = dialog.settings_changed
+        elif dialog.proxy_test_ran:
+            # The user might have modified the proxies in the "Proxy"
+            # tab, which in turn made the proxy settings modify in bb.
+            # If "Cancel" was pressed, restore the previous proxy
+            # settings inside bb.
+            self.set_user_config_proxies()
         dialog.destroy()
         return response == gtk.RESPONSE_YES, settings_changed
 

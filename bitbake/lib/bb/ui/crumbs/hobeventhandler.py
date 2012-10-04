@@ -146,6 +146,8 @@ class HobHandler(gobject.GObject):
             self.runCommand(["triggerEvent", "bb.event.RequestPackageInfo()"])
         elif next_command == self.SUB_SANITY_CHECK:
             self.runCommand(["triggerEvent", "bb.event.SanityCheck()"])
+        elif next_command == self.SUB_NETWORK_TEST:
+            self.runCommand(["triggerEvent", "bb.event.NetworkTest()"])
         elif next_command == self.SUB_BUILD_RECIPES:
             self.clear_busy()
             self.building = True
