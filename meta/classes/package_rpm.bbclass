@@ -185,17 +185,20 @@ rpm_update_pkg () {
         # been run by now, so don't have to run them(preun, postun, etc.) when
         # erase the pkg
         if [ -s $installdir/remove.manifest ]; then
+            echo "DBG: Removing `wc -l $installdir/remove.manifest`"
             rpm_common_comand --noscripts --nodeps \
                 -e `cat $installdir/remove.manifest`
         fi
 
         # Attempt to install the incremental pkgs
         if [ -s $installdir/incremental.manifest ]; then
+            echo "DBG: Installing `wc -l $installdir/incremental.manifest`"
             rpm_common_comand --replacefiles --replacepkgs \
                -Uvh $installdir/incremental.manifest
         fi
     else
         # Attempt to install
+        echo "DBG: Installing `wc -l $manifest`"
         rpm_common_comand --replacepkgs -Uhv $manifest
     fi
 }
@@ -324,11 +327,15 @@ package_install_internal_rpm () {
 				rm -f $m
 			fi
 		done
+		sort -u ${target_rootfs}/install/original_solution.manifest -o ${target_rootfs}/install/original_solution.manifest.new
+		mv ${target_rootfs}/install/original_solution.manifest.new ${target_rootfs}/install/original_solution.manifest
 	fi
 
 	# Setup manifest of packages to install...
 	mkdir -p ${target_rootfs}/install
 	rm -f ${target_rootfs}/install/install.manifest
+	rm -f ${target_rootfs}/install/install_multilib.manifest
+	rm -f ${target_rootfs}/install/install_attemptonly.manifest
 
 	# Uclibc builds don't provide this stuff...
 	if [ x${TARGET_OS} = "xlinux" ] || [ x${TARGET_OS} = "xlinux-gnueabi" ] ; then
@@ -428,7 +435,7 @@ package_install_internal_rpm () {
 	fi
 
 	# Now that we have a solution, pull out a list of what to install...
-	echo "Manifest: ${target_rootfs}/install/install.manifest"
+	echo "Manifest: ${target_rootfs}/install/install_solution.manifest"
 	${RPM} -D "_dbpath ${target_rootfs}/install" -qa --qf "%{packageorigin}\n" \
 		--root "${target_rootfs}/install" \
 		-D "__dbi_txn create nofsync private" \
@@ -459,8 +466,8 @@ package_install_internal_rpm () {
 
 	fi
 
-	cat ${target_rootfs}/install/install_solution.manifest > ${target_rootfs}/install/total_solution.manifest
-	cat ${target_rootfs}/install/install_multilib_solution.manifest >> ${target_rootfs}/install/total_solution.manifest
+	cat ${target_rootfs}/install/install_solution.manifest \
+	    ${target_rootfs}/install/install_multilib_solution.manifest | sort -u > ${target_rootfs}/install/total_solution.manifest
 
 	# Construct install scriptlet wrapper
 	cat << EOF > ${WORKDIR}/scriptlet_wrapper
@@ -521,12 +528,16 @@ EOF
 	if [ "${INSTALL_COMPLEMENTARY_RPM}" = "1" ] ; then
 		# Only install packages not already installed (dependency calculation will
 		# almost certainly have added some that have been)
-		sort ${target_rootfs}/install/original_solution.manifest > ${target_rootfs}/install/original_solution_sorted.manifest
-		sort ${target_rootfs}/install/total_solution.manifest > ${target_rootfs}/install/total_solution_sorted.manifest
+		echo "DBG: Constructing complementary install lists"
+		sort -u ${target_rootfs}/install/original_solution.manifest > ${target_rootfs}/install/original_solution_sorted.manifest
+		sort -u ${target_rootfs}/install/total_solution.manifest > ${target_rootfs}/install/total_solution_sorted.manifest
+		echo "DBG:   `wc -l ${target_rootfs}/install/original_solution_sorted.manifest`"
+		echo "DBG:   `wc -l ${target_rootfs}/install/total_solution_sorted.manifest`"
 		comm -2 -3 ${target_rootfs}/install/total_solution_sorted.manifest \
 			${target_rootfs}/install/original_solution_sorted.manifest > \
 			${target_rootfs}/install/diff.manifest
 		mv ${target_rootfs}/install/diff.manifest ${target_rootfs}/install/total_solution.manifest
+		echo "DBG:   `wc -l ${target_rootfs}/install/total_solution.manifest`"
 	elif [ "${INC_RPM_IMAGE_GEN}" = "1" -a -f "${target_rootfs}/etc/passwd" ]; then
 		echo "Skipping pre install due to existing image"
 	else
