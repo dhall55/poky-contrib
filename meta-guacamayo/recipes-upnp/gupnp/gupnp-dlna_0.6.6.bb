@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=4fbd65380cdd255951079008b364516c \
                     "
 DEPENDS = "gupnp gst-plugins-base"
 
-PR = "r1"
+PR = "r2"
 
 inherit autotools pkgconfig gnome
 
