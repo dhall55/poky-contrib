@@ -1,8 +1,13 @@
-DESCRIPTION = "Ruby is an interpreted scripting language \
-for quick and easy object-oriented programming."
+SUMMARY = "An interpreter of object-oriented scripting language"
+DESCRIPTION = "Ruby is an interpreted scripting language for quick \
+and easy object-oriented programming. It has many features to process \
+text files and to do system management tasks (as in Perl). \
+It is simple, straight-forward, and extensible. \
+"
+HOMEPAGE = "http://www.ruby-lang.org/"
 SECTION = "devel/ruby"
 PRIORITY = "optional"
-LICENSE = "GPL"
+LICENSE = "Ruby | BSD | GPLv2"
 DEPENDS = "ruby-native zlib openssl"
 DEPENDS_virtclass-native = ""
 
@@ -18,8 +23,6 @@ S = "${WORKDIR}/ruby-${PV}"
 
 inherit autotools
 
-# fix building of socket extension
-EXTRA_OECONF = "--enable-wide-getaddrinfo"
 
 # This snippet lets compiled extensions which rely on external libraries,
 # such as zlib, compile properly.  If we don't do this, then when extmk.rb
