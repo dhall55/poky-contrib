@@ -211,14 +211,17 @@
                 <link linkend='build-directory'>build directory</link>. 
                 The following example shows how to enable a layer named <filename>meta-mylayer</filename>:
                 <literallayout class='monospaced'>
-     LCONF_VERSION = "1"
+     LCONF_VERSION = "6"
 
+     BBPATH = "${TOPDIR}"
      BBFILES ?= ""
-     BBLAYERS = " \
+
+     BBLAYERS ?= " \
        /path/to/poky/meta \
        /path/to/poky/meta-yocto \
+       /path/to/poky/meta-yocto-bsp \
        /path/to/poky/meta-mylayer \
-       "
+       "                
                 </literallayout>
             </para>
 
@@ -229,6 +232,14 @@
                 During the processing of each <filename>conf/layer.conf</filename> file, BitBake adds the 
                 recipes, classes and configurations contained within the particular layer to the source
                 directory.
+                <note>
+                    Removing the <filename>meta-yocto</filename> layer exposes a bug for the 
+                    current release of the Yocto Project.
+                    If for some reason you do remove this layer from the 
+                    <filename>bblayers.conf</filename>, you must set the 
+                    <filename>LCONF_VERSION</filename> variable to "5".
+                    See <ulink url='https://bugzilla.yoctoproject.org/show_bug.cgi?id=3176'>[YOCTO_#3176]</ulink>
+                    for more information.</note>
             </para>
         </section>
 
@@ -326,12 +337,6 @@
                     Using <filename>_prepend</filename> ensures your path will be searched prior to other 
                     paths in the final list.
                 </note>
-            </para>
-
-            <para>
-                For another example on how to use a <filename>.bbappend</filename> file, see the 
-                "<link linkend='changing-recipes-kernel'>Changing <filename>recipes-kernel</filename></link>"
-                section.
             </para>
         </section>
 
@@ -1025,8 +1030,8 @@
         <para>
             For a complete example that shows how to add a new machine, 
             see the 
-            "<ulink url='&YOCTO_DOCS_DEV_URL;#dev-manual-bsp-appendix'>BSP Development Example</ulink>" 
-            in Appendix A.
+            "<ulink url='&YOCTO_DOCS_BSP_URL;#creating-a-new-bsp-layer-using-the-yocto-bsp-script'>Creating a New BSP Layer Using the yocto-bsp Script</ulink>" 
+            in the Yocto Project Board Support Package (BSP) Developer's Guide.
         </para>
 
         <section id="platdev-newmachine-conffile">
