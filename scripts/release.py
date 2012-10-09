@@ -78,13 +78,13 @@ for root, dirnames, filenames in os.walk(sourcesdir):
         if "-series." not in filename:
             if releasetype=="gplonly":
                 if "GPL" in os.path.dirname(root):
-                    source_matches.append(os.path.join(root, filename))
+                   source_matches.append(os.path.join(root, filename))
             else:
                 source_matches.append(os.path.join(root, filename))
 for line in source_matches:
     print line
 
-staging_workdir = os.path.join(os.path.join(tmpdir, "release"))
+staging_workdir = os.path.join(os.path.join(deploydir, "release"))
 try:
     os.removedirs(staging_workdir)
 except:
@@ -93,8 +93,7 @@ try:
     os.makedirs(staging_workdir)
 except:
     pass
-
-
+    
 for source in source_matches:
     source_basename = os.path.basename(source)
     source_workdir = os.path.join(os.path.join(tmpdir, os.path.join("work_release", source_basename + "_work")))
@@ -121,25 +120,30 @@ for source in source_matches:
             git_repo_name = git_repo_name[1:] if git_repo_name.startswith('_') else git_repo_name
             print "Extracted " + source_basename + " to " + source_workdir +". The repo is " + git_repo_name
             subprocess.call(["tar", "czvf", "../" + git_repo_name + ".tar.gz", "."], cwd=source_workdir+"/git")
-            shutil.copyfile(os.path.join(source_workdir, git_repo_name + ".tar.gz"), os.path.join(staging_workdir, git_repo_name + ".tar.gz"))
-        elif "svn" not in source:
-            source_name = subprocess.check_output("tar -ztf" + source, shell=True).strip().split('/')[1]
+            shutil.copy(os.path.join(source_workdir, git_repo_name + ".tar.gz"), staging_workdir)
+            print "Copied " + git_repo_name + ".tar.gz" + " to " + staging_workdir +"."
         elif "svn" in source:
             # Ugh, I dislike how svn repos got packed.
             svn_rev=source_basename.split("+")[1].split("-")[0].replace("r", "_")
             dl_name=source_basename.split("-")[0]
             for files in os.listdir(dldir):
-                if dl_name in files and svn_rev in files:
-                    shutil.copyfile(os.path.join(dldir, files), os.path.join(staging_workdir, files))
-
+                if dl_name in files and svn_rev in files and ".done" not in files:
+                    shutil.copy(os.path.join(dldir, files), staging_workdir)
+                    print "Copied " + files + " to " + staging_workdir +"."
+        else:
+            source_name = subprocess.check_output("tar -ztf" + source, shell=True).strip().split('/')[1]
+            for files in os.listdir(dldir):
+                if source_name in files and ".done" not in files:
+                    shutil.copy(os.path.join(dldir, files), staging_workdir)
+                    print "Copying " + files + " to " + staging_workdir +"."
+    else:
+        source_name = source.strip().split("-")[0-1]
+        for files in os.listdir(dldir):
+            if source_name in files and ".done" not in files:
+                shutil.copy(os.path.join(dldir, files), staging_workdir)
+                print "Copying " + files + " to " + staging_workdir +"."
 for series in series_matches:
-    print "Extracting " + series + " to staging DL_DIR."
-    series_basename = os.path.basename(series)
-    shutil.copyfile(series, os.path.join(staging_workdir, series_basename))
-    subprocess.call(["tar", "xzf", os.path.join(staging_workdir, series_basename)], cwd=staging_workdir)
-    os.remove(os.path.join(staging_workdir, series_basename))
-    series_untar_dir = os.path.join(staging_workdir, series_basename.replace(".tar.gz", ""))
-    for files in os.listdir(series_untar_dir):
-        shutil.move(os.path.join(series_untar_dir, files), os.path.join(staging_workdir, files))
-    os.removedirs(os.path.join(staging_workdir, series_untar_dir))
+    print "Copying " + series + " to staging DL_DIR."
+    shutil.copy(series, staging_workdir)
+
 
