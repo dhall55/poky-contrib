@@ -101,13 +101,17 @@ python debian_package_name_hook () {
                     if debian_pn:
                         newpkg = debian_pn
                     elif pkg == orig_pkg:
-                        newpkg = pkgname
+                        suffix = d.getVar('DEBIAN_SUFFIX', True) or ""
+                        newpkg = pkgname + suffix
                     else:
-                        newpkg = pkg.replace(orig_pkg, devname, 1)
+                        suffix = d.getVar('DEBIAN_SUFFIX', True) or ""
+                        newpkg = pkg.replace(orig_pkg, devname + suffix, 1)
+
                     mlpre=d.getVar('MLPREFIX', True)
                     if mlpre:
                         if not newpkg.find(mlpre) == 0:
                             newpkg = mlpre + newpkg
+                    
                     if newpkg != pkg:
                         d.setVar('PKG_' + pkg, newpkg)
 
