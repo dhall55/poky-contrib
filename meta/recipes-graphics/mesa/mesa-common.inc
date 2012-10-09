@@ -41,6 +41,8 @@ EXCLUDE_FROM_WORLD = "1"
 # Remove the mesa-dri dependency on mesa-dri-dev, as mesa-dri is empty
 RDEPENDS_${PN}-dev = ""
 
+DEBIAN_SUFFIX = "-mesa"
+
 PACKAGES =+ "libegl libegl-dev \
              libglu libglu-dev \
              libosmesa libosmesa-dev \
