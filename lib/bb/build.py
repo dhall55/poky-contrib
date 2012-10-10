@@ -249,7 +249,23 @@ def exec_func_shell(func, d, runfile, cwd=None):
     d.delVarFlag('PWD', 'export')
 
     with open(runfile, 'w') as script:
-        script.write('#!/bin/sh -e\n')
+        script.write('''#!/bin/sh\n
+# Emit a useful diagnostic if something fails:
+bb_exit_handler() {
+    ret=$?
+    case $ret in
+    0)  ;;
+    *)  case $BASH_VERSION in
+        "")   echo "WARNING: exit code $ret from a shell command.";;
+        *)    echo "WARNING: ${BASH_SOURCE[0]}:${BASH_LINENO[0]} exit $ret from
+  \"$BASH_COMMAND\"";;
+        esac
+        exit $ret
+    esac
+}
+trap 'bb_exit_handler' 0
+set -e
+''')
         data.emit_func(func, script, d)
 
         if bb.msg.loggerVerboseLogs:
@@ -257,6 +273,12 @@ def exec_func_shell(func, d, runfile, cwd=None):
         if cwd:
             script.write("cd %s\n" % cwd)
         script.write("%s\n" % func)
+        script.write('''
+# cleanup
+ret=$?
+trap '' 0
+exit $?
+''')
 
     os.chmod(runfile, 0775)
 
