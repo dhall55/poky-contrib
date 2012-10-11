@@ -52,10 +52,10 @@ class Configuration:
 
     @classmethod
     def parse_proxy_string(cls, proxy):
-        pattern = "^\s*((http|https|ftp|git|cvs)://)?((\S+):(\S+)@)?(\S+):(\d+)/?"
+        pattern = "^\s*((http|https|ftp|git|cvs)://)?((\S+):(\S+)@)?([^\s:]+)(:(\d+))?/?"
         match = re.search(pattern, proxy)
         if match:
-            return match.group(2), match.group(4), match.group(5), match.group(6), match.group(7)
+            return match.group(2), match.group(4), match.group(5), match.group(6), match.group(8)
         else:
             return None, None, None, "", ""
 
@@ -83,10 +83,10 @@ class Configuration:
 
     @classmethod
     def make_proxy_string(cls, prot, user, passwd, host, port, default_prot=""):
-        if host == None or host == "" or port == None or port == "":
+        if host == None or host == "":# or port == None or port == "":
             return ""
 
-        return Configuration.make_host_string(prot, user, passwd, host, default_prot) + ":" + Configuration.make_port_string(port)
+        return Configuration.make_host_string(prot, user, passwd, host, default_prot) + (":" + Configuration.make_port_string(port) if port else "")
 
     def __init__(self):
         self.curr_mach = ""
@@ -1327,6 +1327,8 @@ class Builder(gtk.Window):
             self.configuration = dialog.configuration
             self.save_defaults() # remember settings
             settings_changed = dialog.settings_changed
+            if dialog.proxy_settings_changed:
+                self.set_user_config_proxies()
         elif dialog.proxy_test_ran:
             # The user might have modified the proxies in the "Proxy"
             # tab, which in turn made the proxy settings modify in bb.
