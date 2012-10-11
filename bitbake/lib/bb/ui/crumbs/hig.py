@@ -355,7 +355,9 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.image_types_checkbuttons = {}
 
         self.md5 = self.config_md5()
+        self.proxy_md5 = self.config_proxy_md5()
         self.settings_changed = False
+        self.proxy_settings_changed = False
         self.handler = handler
         self.proxy_test_ran = False
 
@@ -366,12 +368,15 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
     def _get_sorted_value(self, var):
         return " ".join(sorted(str(var).split())) + "\n"
 
-    def config_md5(self):
-        data = ""
-        data += ("ENABLE_PROXY: "         + self._get_sorted_value(self.configuration.enable_proxy))
+    def config_proxy_md5(self):
+        data = ("ENABLE_PROXY: "         + self._get_sorted_value(self.configuration.enable_proxy))
         if self.configuration.enable_proxy:
             for protocol in self.configuration.proxies.keys():
                 data += (protocol + ": " + self._get_sorted_value(self.configuration.combine_proxy(protocol)))
+        return hashlib.md5(data).hexdigest()
+
+    def config_md5(self):
+        data = ""
         for key in self.configuration.extra_setting.keys():
             data += (key + ": " + self._get_sorted_value(self.configuration.extra_setting[key]))
         return hashlib.md5(data).hexdigest()
@@ -488,6 +493,20 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
             self.configuration.split_proxy("cvs", self.cvs_proxy.get_text() + ":" + self.cvs_proxy_port.get_text())       
 
     def response_cb(self, dialog, response_id):
+        if response_id == gtk.RESPONSE_YES:
+            # Check that all proxy entries have a corresponding port
+            for proxy, port in zip(self.all_proxy_addresses, self.all_proxy_ports):
+                if proxy.get_text() and not port.get_text():
+                    lbl = "<b>Enter all port numbers</b>\n\n"
+                    msg = "Proxy servers require a port number. Please make sure you have entered a port number for each proxy server."
+                    dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING, msg)
+                    button = dialog.add_button("Close", gtk.RESPONSE_OK)
+                    HobButton.style_button(button)
+                    response = dialog.run()
+                    dialog.destroy()
+                    self.emit_stop_by_name("response")
+                    return
+
         self.configuration.dldir = self.dldir_text.get_text()
         self.configuration.sstatedir = self.sstatedir_text.get_text()
         self.configuration.sstatemirror = ""
@@ -511,6 +530,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
 
         md5 = self.config_md5()
         self.settings_changed = (self.md5 != md5)
+        self.proxy_settings_changed = (self.proxy_md5 != self.config_proxy_md5())
 
     def create_build_environment_page(self):
         advanced_vbox = gtk.VBox(False, 6)
@@ -698,6 +718,8 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         advanced_vbox.set_border_width(6)
         self.same_proxy_addresses = []
         self.same_proxy_ports = []
+        self.all_proxy_ports = []
+        self.all_proxy_addresses = []
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
@@ -722,7 +744,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.proxy_checkbox.set_active(self.configuration.enable_proxy)
         sub_vbox.pack_start(self.proxy_checkbox, expand=False, fill=False)
 
-        self.same_checkbox = gtk.CheckButton("Use the same proxy for all protocols")
+        self.same_checkbox = gtk.CheckButton("Use the HTTP proxy for all protocols")
         proxy_test_focus.append(self.same_checkbox)
         self.same_checkbox.set_tooltip_text("Check this box to use the HTTP proxy for all five proxies")
         self.same_checkbox.set_active(self.configuration.same_proxy)
@@ -760,7 +782,8 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         proxy_test_focus += [self.cvs_proxy, self.cvs_proxy_port]
         self.same_proxy_addresses.append(self.cvs_proxy)
         self.same_proxy_ports.append(self.cvs_proxy_port)
-
+        self.all_proxy_ports = self.same_proxy_ports + [self.http_proxy_port]
+        self.all_proxy_addresses = self.same_proxy_addresses + [self.http_proxy]
         sub_vbox.pack_start(self.proxy_table, expand=False, fill=False)
         self.proxy_table.show_all()
 
