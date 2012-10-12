@@ -69,7 +69,7 @@ def legitimize_package_name(s):
     # Remaining package name validity fixes
     return s.lower().replace('_', '-').replace('@', '+').replace(',', '+').replace('/', '-')
 
-def do_split_packages(d, root, file_regex, output_pattern, description, postinst=None, recursive=False, hook=None, extra_depends=None, aux_files_pattern=None, postrm=None, allow_dirs=False, prepend=False, match_path=False, aux_files_pattern_verbatim=None, allow_links=False):
+def do_split_packages(d, root, file_regex, output_pattern, description, postinst=None, recursive=False, hook=None, extra_depends=None, aux_files_pattern=None, postrm=None, allow_dirs=False, prepend=False, match_path=False, aux_files_pattern_verbatim=None, allow_links=False, allow_missing=False):
     """
     Used in .bb files to split up dynamically generated subpackages of a
     given package, usually plugins or modules.
@@ -113,6 +113,7 @@ def do_split_packages(d, root, file_regex, output_pattern, description, postinst
                       package name. Can be a single string item or a list
                       of strings for multiple items. Must include %s.
     allow_links    -- True to allow symlinks to be matched - default False
+    allow_missing  -- True to allow the root to be missing - default False
 
     """
 
@@ -138,15 +139,20 @@ def do_split_packages(d, root, file_regex, output_pattern, description, postinst
         postinst = '#!/bin/sh\n' + postinst + '\n'
     if postrm:
         postrm = '#!/bin/sh\n' + postrm + '\n'
-    if not recursive:
-        objs = os.listdir(dvar + root)
-    else:
-        objs = []
-        for walkroot, dirs, files in os.walk(dvar + root):
-            for file in files:
-                relpath = os.path.join(walkroot, file).replace(dvar + root + '/', '', 1)
-                if relpath:
-                    objs.append(relpath)
+
+    try:
+        if not recursive:
+            objs = os.listdir(dvar + root)
+        else:
+            objs = []
+            for walkroot, dirs, files in os.walk(dvar + root):
+                for file in files:
+                    relpath = os.path.join(walkroot, file).replace(dvar + root + '/', '', 1)
+                    if relpath:
+                        objs.append(relpath)
+    except OSError as e:
+        if not allow_missing:
+            raise e
 
     if extra_depends == None:
         extra_depends = d.getVar("PN", True)
