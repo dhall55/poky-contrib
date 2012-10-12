@@ -10,13 +10,12 @@ DEPENDS = "virtual/kernel"
 
 inherit module
 
-SRCREV = "4d3e89e379fc66480d729abe8daa5c86eb585400"
-PV = "2.0.pre11+git${SRCREV}"
-PR = "r0"
+SRCREV = "cbb0f0f5203e9901084f38792e484f6fa988e10a"
+PV = "2.0.5+git${SRCREV}"
+PR = "r1"
 
 SRC_URI = "git://git.lttng.org/lttng-modules.git;protocol=git \
-           file://lttng-modules-replace-KERNELDIR-with-KERNEL_SRC.patch \
-           file://lttng-sycalls-protect-is_compat_task-from-redefiniti.patch"
+           file://lttng-modules-replace-KERNELDIR-with-KERNEL_SRC.patch"
 
 export INSTALL_MOD_DIR="kernel/lttng-modules"
 export KERNEL_SRC="${STAGING_KERNEL_DIR}"
