@@ -5,7 +5,7 @@
 SUMMARY = "Profiling tools"
 LICENSE = "MIT"
 
-PR = "r1"
+PR = "r2"
 
 inherit packagegroup
 
@@ -29,8 +29,9 @@ PROFILETOOLS = "\
     oprofileui-server \
     powertop \
     latencytop \
-    lttng-control \
-    lttng-viewer"
+    lttng-tools \
+    lttng-modules \
+    babeltrace"
 
 # systemtap needs elfutils which is not fully buildable on uclibc
 # hence we exclude it from uclibc based builds
@@ -44,7 +45,7 @@ SYSTEMTAP_mips = ""
 # which means we can not use syscall() to call it. So we ignore
 # it for x86_64/uclibc
 
-LTTNGUST = "lttng-ust"
+LTTNGUST = "lttng2-ust"
 LTTNGUST_libc-uclibc = ""
 LTTNGUST_mips = ""
 
