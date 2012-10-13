@@ -1063,14 +1063,23 @@ python populate_packages () {
                 path = os.path.join(root, f)
                 rpath = path[len(inst_root):]
                 pkg_files[pkg].append(rpath)
+
+                if not os.path.islink(path):
+                    continue
+
+                target = os.readlink(path)
+                if target[0] != '/':
+                    # make path absolute relative to inst_root
+                    target = os.path.join(root[len(inst_root):], target)
+
+                # make path absolute; do not use os.path.join() here
+                # because target might start with multiple '/'
+                rtarget = inst_root + target
                 try:
-                    s = os.stat(path)
+                    os.lstat(rtarget)
                 except OSError, (err, strerror):
                     if err != errno.ENOENT:
                         raise
-                    target = os.readlink(path)
-                    if target[0] != '/':
-                        target = os.path.join(root[len(inst_root):], target)
                     dangling_links[pkg].append(os.path.normpath(target))
 
     for pkg in package_list:
