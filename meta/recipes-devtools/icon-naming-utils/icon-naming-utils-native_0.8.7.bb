@@ -1,6 +1,6 @@
 LICENSE = "GPLv2"
 DEPENDS = "libxml-simple-perl-native"
-PR = "r4"
+PR = "r5"
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=94d55d512a9ba36caa9b7df079bae19f"
 
@@ -12,6 +12,8 @@ SRC_URI[sha256sum] = "1cb49ce6a04626939893a447da696f20003903d61bd80c6d74d29dd79c
 S = "${WORKDIR}/icon-naming-utils-${PV}"
 
 inherit autotools native perlnative
+
+export libexecdir="${bindir}"
 
 do_configure_append() {
 	# Make sure we use our nativeperl wrapper.

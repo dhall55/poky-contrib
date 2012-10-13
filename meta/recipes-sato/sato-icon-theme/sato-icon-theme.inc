@@ -12,7 +12,7 @@ inherit autotools pkgconfig allarch gtk-icon-cache
 
 FILES_${PN} += "${datadir}"
 
-EXTRA_OECONF += "--with-iconmap=${STAGING_LIBDIR_NATIVE}/../libexec/icon-name-mapping"
+EXTRA_OECONF += "--with-iconmap=${STAGING_BINDIR_NATIVE}/icon-name-mapping"
 
 # Explictly setting "Sato" as the default icon theme to avoid flickering from
 # the desktop and settings daemon racing.  This shouldn't be done here but in the sato image
