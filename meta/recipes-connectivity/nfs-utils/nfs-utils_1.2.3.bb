@@ -27,6 +27,7 @@ PARALLEL_MAKE = ""
 
 # Only kernel-module-nfsd is required here (but can be built-in)  - the nfsd module will
 # pull in the remainder of the dependencies.
+KERNEL_FEATURES_append = " nfsd"
 
 INITSCRIPT_NAME = "nfsserver"
 # The server has no dependencies at the user run levels, so just put
