@@ -3,7 +3,7 @@
 #
 
 SUMMARY = "Host packages for the standalone SDK or external toolchain"
-PR = "r11"
+PR = "r12"
 LICENSE = "MIT"
 
 inherit nativesdk packagegroup
@@ -20,6 +20,7 @@ RDEPENDS_${PN} = "\
     nativesdk-libtool \
     nativesdk-autoconf \
     nativesdk-automake \
+    nativesdk-perl-modules \
     "
 
 RDEPENDS_${PN}_darwin8 = "\
