@@ -123,7 +123,6 @@ RDEPENDS_task-guacamayo-core = "			\
 			     dconf			\
 			     guacamayo-gsettings	\
 			     dbus			\
-			     dbus-x11			\
                              ${GUACA_NETWORKING}	\
 			     gstreamer			\
 			     gst-plugins-base		\
