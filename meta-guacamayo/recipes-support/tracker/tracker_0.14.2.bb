@@ -21,8 +21,8 @@ EXTRA_OECONF += " tracker_cv_have_ioprio=yes --disable-introspection"
 
 do_install_append() {
 	rm -rf ${D}/usr/share/xul-ext
-	rm -rf ${D}/usr/lib/firefox-15.0.1
-	rm -rf ${D}/usr/lib/thunderbird-15.0
+	rm -rf ${D}/usr/lib/firefox-*
+	rm -rf ${D}/usr/lib/thunderbird-*
 }
 
 LEAD_SONAME = "libtrackerclient.so.0"
