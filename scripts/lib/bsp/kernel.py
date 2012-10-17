@@ -710,6 +710,7 @@ def all_branches(context):
 
     gitcmd = "git ls-remote %s *heads* 2>&1" % (giturl)
     tmp = subprocess.Popen(gitcmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+    print "bsp.kernel.all_branches succeeded, gitcmd was %s" % gitcmd
 
     branches = []
 
@@ -729,6 +730,7 @@ def all_branches(context):
         for line in tmpline:
             if len(line)==0:
                 break;
+
             idx = line.find("refs/heads/")
             kbranch = line[idx + len("refs/heads/"):]
             kbranch_prefix = kbranch.rsplit("/", 1)[0]
@@ -737,12 +739,19 @@ def all_branches(context):
                 for base_prefix in base_prefixes:
                     if kbranch_prefix == base_prefix:
                         branches.append(kbranch)
+                        print "bsp.kernel.all_branches base_prefix case appended kbranch: %s" % kbranch
                 continue
 
             if (kbranch.find("/") != -1 and
                 (kbranch.find("standard") != -1 or kbranch.find("base") != -1) or
                 kbranch == "base"):
                 branches.append(kbranch)
+                print "bsp.kernel.all_branches appended kbranch: %s" % kbranch
                 continue
+
+    if branches:
+        print "bsp.kernel.all_branches returned branches: %s" % branches
+    else:
+        print "bsp.kernel.all_branches returned NO branches"
 
     return branches
