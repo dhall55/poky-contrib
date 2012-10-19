@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.yocto.bc.ui.wizards;
 
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.swt.widgets.Text;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 public class BitbakeRecipeUIElement {
@@ -27,8 +27,8 @@ public class BitbakeRecipeUIElement {
 	private String srcuri;
 	private String md5sum;
 	private String sha256sum;
-	private String metaDir;
-	private ArrayList inheritance;
+	private URI metaDir;
+	private ArrayList<String> inheritance;
 
 	public BitbakeRecipeUIElement()
 	{
@@ -43,8 +43,12 @@ public class BitbakeRecipeUIElement {
 		this.srcuri = "";
 		this.md5sum = "";
 		this.sha256sum = "";
-		this.inheritance = new ArrayList();
-		this.metaDir = "";
+		this.inheritance = new ArrayList<String>();
+		try {
+			this.metaDir = new URI("");
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public String getContainer() {
@@ -135,11 +139,11 @@ public class BitbakeRecipeUIElement {
 		this.inheritance = value;
 	}
 	
-	public String getMetaDir() {
+	public URI getMetaDir() {
 		return metaDir;
 	}
 	
-	public void setMetaDir(String value) {
+	public void setMetaDir(URI value) {
 		metaDir = value;
 	}
 }

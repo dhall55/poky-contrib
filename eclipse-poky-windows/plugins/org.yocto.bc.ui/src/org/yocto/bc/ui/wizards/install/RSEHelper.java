@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -505,5 +507,14 @@ public class RSEHelper {
 			status= new Status(IStatus.ERROR, Activator.PLUGIN_ID, code, message, null);
 		}
 		throw new CoreException(status);
+	}
+
+	public static URI createNewURI(URI oldURI, String name) {
+		try {
+			return new URI(oldURI.getScheme(), oldURI.getHost(), oldURI.getPath() + name, oldURI.getFragment());
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 }

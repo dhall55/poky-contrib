@@ -11,12 +11,29 @@
  *******************************************************************************/
 package org.yocto.bc.ui.wizards;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
@@ -30,29 +47,10 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
-
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Set;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Iterator;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.FilenameFilter;
-import java.security.MessageDigest;
-import java.math.BigInteger;
+import org.yocto.bc.ui.wizards.install.RSEHelper;
 
 public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	private Text containerText;
@@ -64,13 +62,13 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	private Text homepageText;
 	private Text authorText;
 	private Text sectionText;
-	private Text srcuriText;
+	private Text txtSrcURI;
 	private Text md5sumText;
 	private Text sha256sumText;
 	private BitbakeRecipeUIElement element;
 	
 	private ISelection selection;
-	private String metaDirLoc;
+	private URI metaDirLoc;
 	private ArrayList inheritance;
 	
 	public NewBitBakeFileRecipeWizardPage(ISelection selection) {
@@ -123,10 +121,10 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 		label = new Label(container, SWT.NULL);
 		label.setText("SRC_&URI:");
 
-		srcuriText = new Text(container, SWT.BORDER | SWT.SINGLE);
+		txtSrcURI = new Text(container, SWT.BORDER | SWT.SINGLE);
 		gd = new GridData(GridData.FILL_HORIZONTAL);
-		srcuriText.setLayoutData(gd);
-		srcuriText.addModifyListener(new ModifyListener() {
+		txtSrcURI.setLayoutData(gd);
+		txtSrcURI.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				dialogChanged();
 			}
@@ -194,8 +192,8 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 		}
 		
 		IProject project = container.getProject();
-		metaDirLoc = project.getLocation().toString() + "/meta";
-	
+		metaDirLoc = RSEHelper.createNewURI(project.getLocationURI(), "/meta");
+		
 		if (fileName.length() == 0) {
 			updateStatus("File name must be specified");
 			return;
@@ -219,7 +217,7 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 			return;
 		}
 
-		if (srcuriText.getText().length() == 0) {
+		if (txtSrcURI.getText().length() == 0) {
 			updateStatus("SRC_URI can't be empty");
 		}
 		
@@ -237,7 +235,7 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 		element.setMd5sum(md5sumText.getText());
 		element.setSection(sectionText.getText());
 		element.setSha256sum(sha256sumText.getText());
-		element.setSrcuri(srcuriText.getText());
+		element.setSrcuri(txtSrcURI.getText());
 		element.setInheritance(inheritance);
 		element.setMetaDir(metaDirLoc);
 		
@@ -255,20 +253,20 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	}
 	
 	private void handlePopulate() {
-		String src_uri = srcuriText.getText();
-		if ((src_uri.startsWith("http://") || src_uri.startsWith("ftp://")) 
-			&& (src_uri.endsWith("tar.gz") || src_uri.endsWith("tar.bz2"))) {
+		String srcURI = txtSrcURI.getText();
+		if ((srcURI.startsWith("http://") || srcURI.startsWith("ftp://")) 
+			&& (srcURI.endsWith("tar.gz") || srcURI.endsWith("tar.bz2"))) {
 		
 			HashMap<String, String> mirror_map = createMirrorLookupTable();
 		
-			populateRecipeName(src_uri);
-			populateSrcuriChecksum(src_uri);
-			String extractDir = extractPackage(src_uri);
+			populateRecipeName(srcURI);
+			populateSrcuriChecksum(srcURI);
+			String extractDir = extractPackage(srcURI);
 			populateLicensefileChecksum(extractDir);
-			updateSrcuri(mirror_map, src_uri);
+			updateSrcuri(mirror_map, srcURI);
 			populateInheritance(extractDir);
-		} else if (src_uri.startsWith("file://")) {
-			String path_str = src_uri.substring(7);
+		} else if (srcURI.startsWith("file://")) {
+			String path_str = srcURI.substring(7);
 			File package_dir = new File(path_str);
 			if (package_dir.isDirectory()) {
 				String package_name = path_str.substring(path_str.lastIndexOf("/")+1);
@@ -282,6 +280,7 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	
 	private String extractPackage(String src_uri) {
 		try {
+			//FIXME : create folder remote and run command there
 			File working_dir = new File(metaDirLoc+"/temp");
 			int idx = src_uri.lastIndexOf("/");
 			String tar_file = src_uri.substring(idx+1);
@@ -298,11 +297,13 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 				tar_idx = tar_file_path.lastIndexOf(".tar.bz2");
 				tar_cmd = "tar -xvf " + tar_file_path;
 			}
+			//FIXME : run command remote
 			final Process process = Runtime.getRuntime().exec(tar_cmd, null, working_dir);
 			int returnCode = process.waitFor();
 			if (returnCode == 0) {
 				return tar_file_path.substring(0, tar_idx);
 			}
+//			RSEHelper.runCommandRemote(connection, initialDir, remoteCommandPath, arguments, monitor)
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -333,6 +334,9 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	}
 	
 	private void populateLicensefileChecksum(String extractDir) {
+		if (extractDir == null)
+			throw new RuntimeException("Something went wrong during source extraction!");
+		
 		String licenseFileChecksum_str = null;
 		String licenseFilePath = null;
 		
@@ -516,7 +520,7 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	    }
 	    int idx = src_uri.lastIndexOf("-");
 	    String new_src_uri = src_uri.substring(0, idx)+"-${PV}.tar.gz";
-	    srcuriText.setText(new_src_uri);
+	    txtSrcURI.setText(new_src_uri);
 	}
 	
 	private void initialize() {
