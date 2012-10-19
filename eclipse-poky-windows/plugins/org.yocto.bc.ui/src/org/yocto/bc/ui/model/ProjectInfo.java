@@ -35,7 +35,7 @@ public class ProjectInfo implements IModelElement {
 	public String getProjectName() {
 		return name;
 	}
-	public URI getRootPath() {
+	public URI getURI() {
 		return location;
 	}
 	public void initialize() throws Exception {

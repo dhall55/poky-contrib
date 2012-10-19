@@ -63,8 +63,7 @@ public class OEFile extends FileStore {
 	 */
 	protected final YoctoHostFile file;
 	
-	protected ProjectInfo projectInfo;
-	private List ignoredPaths;
+	private List<?> ignoredPaths;
 
 	/**
 	 * The absolute file system path of the file represented by this store.
@@ -80,11 +79,10 @@ public class OEFile extends FileStore {
 	 * @param root 
 	 * @throws SystemMessageException 
 	 */
-	public OEFile(URI fileURI, List ignoredPaths, URI root, ProjectInfo projInfo, IProgressMonitor monitor) throws SystemMessageException {
+	public OEFile(URI fileURI, List<?> ignoredPaths, URI root, ProjectInfo projInfo, IProgressMonitor monitor) throws SystemMessageException {
 		this.ignoredPaths = ignoredPaths;
 		this.root = root;
-		this.projectInfo = projInfo;
-		this.file = new YoctoHostFile(projectInfo, fileURI, monitor);
+		this.file = new YoctoHostFile(projInfo, fileURI, monitor);
 		this.filePath = file.getAbsolutePath();
 	}
 
@@ -107,25 +105,7 @@ public class OEFile extends FileStore {
 
 	@Override
 	public String[] childNames(int options, IProgressMonitor monitor) {
-		IFileService fileService = projectInfo.getFileService(monitor);
-		if (file.isDirectory()) {
-			IHostFile[] files;
-			try {
-				files = fileService.list(file.getAbsolutePath(), "*", IFileService.FILE_TYPE_FILES_AND_FOLDERS, monitor);
-				ArrayList<String> names = new ArrayList<String>();
-				
-				for (IHostFile f : files) {
-					names.add(f.getName());
-				}
-				return (String[])names.toArray();
-			} catch (SystemMessageException e) {
-				e.printStackTrace();
-			}
-			return EMPTY_STRING_ARRAY;
-			
-		} else {
-			return EMPTY_STRING_ARRAY;
-		}
+		return file.getChildNames(monitor);
 	}
 
 	/*
@@ -149,7 +129,7 @@ public class OEFile extends FileStore {
 		if(isPotentialBuildDir(path)) {
 			BBSession config = null;
 			try {
-				ShellSession shell = new ShellSession(ShellSession.SHELL_TYPE_BASH, RSEHelper.getRemoteHostFile(projectInfo.getConnection(), root.getPath(), monitor), 
+				ShellSession shell = new ShellSession(file.getProjectInfo(), ShellSession.SHELL_TYPE_BASH, RSEHelper.getRemoteHostFile(file.getConnection(), root.getPath(), monitor), 
 							ProjectInfoHelper.getInitScriptPath(root) + " " + path, null);
 				config = new BBSession(shell, root, true);
 				config.initialize();
@@ -272,23 +252,27 @@ public class OEFile extends FileStore {
 	
 	@Override
 	public IFileStore getChild(IPath path) {
-		//TODO
-		return null;
-//		return new OEFile(new File(file, path.toOSString()), ignoredPaths, root);
+		//URI fileURI, List<?> ignoredPaths, URI root, ProjectInfo projInfo, IProgressMonitor monitor
+		try {
+			return new OEFile(file.getChildURIformPath(path), ignoredPaths, root, file.getProjectInfo(), new NullProgressMonitor());
+		} catch (SystemMessageException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@Override
 	public IFileStore getChild(String name) {
-		//TODO
-//		URI fileURI, List ignorePaths, URI root, ProjectInfo projInfo, IProgressMonitor monitor
-//		return new OEFile(new File(file, name), ignoredPaths, root, new NullProgressMonitor());
+		try {
+			return new OEFile(file.getChildURI(name), ignoredPaths, root, file.getProjectInfo(), new NullProgressMonitor());
+		} catch (SystemMessageException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 
 	private IFileStore getDeadChild(String name) {
-		//TODO 
-//		return new OEIgnoreFile(new File(file, name));
-		return null;
+		return new OEIgnoreFile(file.getChildHostFile(name));
 	}
 
 	/*
@@ -309,7 +293,7 @@ public class OEFile extends FileStore {
 	public IFileStore getParent() {
 		URI parentURI = file.getParentFile();
 		try {
-			return parentURI == null ? null : new OEFile(parentURI, ignoredPaths, root, projectInfo, new NullProgressMonitor());
+			return parentURI == null ? null : new OEFile(parentURI, ignoredPaths, root, file.getProjectInfo(), new NullProgressMonitor());
 		} catch (SystemMessageException e) {
 			e.printStackTrace();
 			return null;
@@ -416,6 +400,7 @@ public class OEFile extends FileStore {
 
 	@Override
 	public void move(IFileStore destFile, int options, IProgressMonitor monitor) throws CoreException {
+		file.move(destFile, monitor);
 //		if (!(destFile instanceof OEFile)) {
 //			super.move(destFile, options, monitor);
 //			return;
@@ -478,7 +463,7 @@ public class OEFile extends FileStore {
 
 	@Override
 	public InputStream openInputStream(int options, IProgressMonitor monitor) throws CoreException {
-		//TODO
+		file.getInputStream(options, monitor);
 //		monitor = Policy.monitorFor(monitor);
 //		try {
 //			monitor.beginTask("", 1); //$NON-NLS-1$
@@ -501,7 +486,7 @@ public class OEFile extends FileStore {
 
 	@Override
 	public OutputStream openOutputStream(int options, IProgressMonitor monitor) throws CoreException {
-		//TODO
+		file.getOutputStream(options, monitor);
 //		monitor = Policy.monitorFor(monitor);
 //		try {
 //			monitor.beginTask("", 1); //$NON-NLS-1$
@@ -524,10 +509,9 @@ public class OEFile extends FileStore {
 
 	@Override
 	public void putInfo(IFileInfo info, int options, IProgressMonitor monitor) throws CoreException {
-		//TODO
+		file.putInfo(info, options, monitor);
 //		boolean success = true;
-//
-//		//native does not currently set last modified
+//		native does not currently set last modified
 //		if ((options & EFS.SET_LAST_MODIFIED) != 0)
 //			success &= file.setLastModified(info.getLastModified());
 //		if (!success && !file.exists())
@@ -542,8 +526,7 @@ public class OEFile extends FileStore {
 //		if (options == EFS.CACHE)
 //			return super.toLocalFile(options, monitor);
 //		return file;
-		//TODO 
-		return null;
+		return file.toLocalFile();
 	}
 
 	/* (non-Javadoc)
@@ -560,5 +543,9 @@ public class OEFile extends FileStore {
 	@Override
 	public URI toURI() {
 		return URIUtil.toURI(filePath);
+	}
+
+	public ProjectInfo getProjectInfo() {
+		return file.getProjectInfo();
 	}
 }

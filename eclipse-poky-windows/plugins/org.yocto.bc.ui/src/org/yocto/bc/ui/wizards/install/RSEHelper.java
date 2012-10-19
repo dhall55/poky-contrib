@@ -425,23 +425,10 @@ public class RSEHelper {
 		try {
 			shellService = (IShellService) getConnectedShellService(connection, new SubProgressMonitor(monitor, 7));
 
-			// This is necessary because runCommand does not actually run the
-			// command right now.
+			//FIXME: maybe create this file directly remote - and set the variable to a default location only if under proxy
 			String env[] = new String[]{"GIT_PROXY_COMMAND=/home/root/socks-gw"};
 			try {
 				IHostShell hostShell = shellService.runCommand(initialDir, remoteCommand, env, new SubProgressMonitor(monitor, 3));
-				if (hostShell != null) {
-//					IHostShellOutputReader outReader = hostShell.getStandardOutputReader();
-//					IHostOutput line = null;
-//					while ((line = outReader.readLine()) != null){
-//						System.out.println(line.getString());
-//					}
-//					IHostShellOutputReader errReader = hostShell.getStandardErrorReader();
-//					line = null;
-//					while ((line = errReader.readLine()) != null){
-//						System.out.println(line.getString());
-//					}
-				}
 				p = new HostShellProcessAdapter(hostShell);
 			} catch (Exception e) {
 				if (p != null) {
@@ -452,12 +439,6 @@ public class RSEHelper {
 		} catch (Exception e1) {
 			abort(e1.getMessage(), e1, IRSECoreStatusCodes.EXCEPTION_OCCURRED);
 		}
-//		try {
-//			p.waitFor();
-//		} catch (InterruptedException e) {
-//			p.destroy();
-//		}
-//		monitor.done();
 		return p;
 	}
 	

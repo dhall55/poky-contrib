@@ -11,10 +11,12 @@
 package org.yocto.bc.ui.editors.bitbake;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ResourceBundle;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.ui.IEditorInput;
@@ -65,10 +67,19 @@ public class BitBakeFileEditor extends AbstractDecoratedTextEditor {
 			viewerConfiguration.setTargetFile(targetFile);
 			
 			try {
-				viewerConfiguration.setBBSession(Activator.getBBSession(p.getLocationURI(), new NullProgressMonitor()));
+				viewerConfiguration.setBBSession(Activator.getBBSession(Activator.getProjInfo(p.getLocationURI()), new NullProgressMonitor()));
 			} catch (IOException e) {
 				e.printStackTrace();
 				throw new PartInitException(Status.CANCEL_STATUS);
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (CoreException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 		super.init(site, input);

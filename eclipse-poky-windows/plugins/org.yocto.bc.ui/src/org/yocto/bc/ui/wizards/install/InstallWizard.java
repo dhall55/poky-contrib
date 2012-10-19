@@ -191,7 +191,7 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 				myConsole.newMessageStream().println(cw.getContents());
 
 				model.put(InstallWizard.KEY_PINFO, pinfo);
-				Activator.putProjInfo(pinfo.getRootPath(), pinfo);
+				Activator.putProjInfo(pinfo.getURI(), pinfo);
 
 				this.getContainer().run(false, false, new CreateBBCProjectOperation(pinfo));
 				return true;

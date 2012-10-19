@@ -269,7 +269,8 @@ public class OptionsPage extends FiniteStateWizardPage {
 			if (!uri.getPath().isEmpty()) {
 				String separator = uri.getPath().endsWith(URI_SEPARATOR) ? "" : URI_SEPARATOR;
 				
-				return new URI( uri.getScheme(), 
+				return new URI( uri.getScheme(),
+								uri.getHost(),
 								uri.getPath() + separator + txtProjectName.getText(),
 								uri.getFragment());
 			} else {

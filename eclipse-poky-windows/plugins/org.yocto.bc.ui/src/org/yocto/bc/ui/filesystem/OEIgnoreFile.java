@@ -22,12 +22,14 @@ import org.eclipse.core.filesystem.provider.FileInfo;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.rse.services.files.IHostFile;
+import org.yocto.bc.ui.model.YoctoHostFile;
 
 public class OEIgnoreFile implements IFileStore {
 
-	private final File file;
+	private final YoctoHostFile file;
 
-	public OEIgnoreFile(File file) {
+	public OEIgnoreFile(YoctoHostFile file) {
 		this.file = file;
 	}
 
@@ -107,8 +109,9 @@ public class OEIgnoreFile implements IFileStore {
 	public void putInfo(IFileInfo info, int options, IProgressMonitor monitor) throws CoreException {
 	}
 
+	
 	public File toLocalFile(int options, IProgressMonitor monitor) throws CoreException {
-		return file;
+		return file.toLocalFile();
 	}
 
 	public URI toURI() {

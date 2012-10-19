@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
+import org.eclipse.rse.services.files.IHostFile;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 import org.yocto.bc.bitbake.BBRecipe;
@@ -73,7 +74,8 @@ public class Activator extends AbstractUIPlugin {
 	 * @return
 	 * @throws IOException
 	 */
-	public static BBSession getBBSession(URI projectRoot, Writer out, IProgressMonitor monitor) throws IOException {
+	public static BBSession getBBSession(ProjectInfo projectInfo, Writer out, IProgressMonitor monitor) throws IOException {
+		URI projectRoot = projectInfo.getURI();
 		if (bbSessionMap == null) {
 			bbSessionMap = new Hashtable<URI, BBSession>();
 		}
@@ -81,7 +83,7 @@ public class Activator extends AbstractUIPlugin {
 		BBSession bbs = (BBSession) bbSessionMap.get(projectRoot);
 		
 		if (bbs == null) {
-			bbs = new BBSession(getShellSession(projectRoot, out, monitor), projectRoot);
+			bbs = new BBSession(getShellSession(projectInfo, out, monitor), projectRoot);
 			bbSessionMap.put(projectRoot, bbs);
 		}
 		
@@ -94,7 +96,8 @@ public class Activator extends AbstractUIPlugin {
 	 * @return
 	 * @throws IOException
 	 */
-	public static BBSession getBBSession(URI projectRoot, IProgressMonitor monitor) throws IOException {
+	public static BBSession getBBSession(ProjectInfo projectInfo, IProgressMonitor monitor) throws IOException {
+		URI projectRoot = projectInfo.getURI();
 		if (bbSessionMap == null) {
 			bbSessionMap = new Hashtable<URI, BBSession>();
 		}
@@ -102,7 +105,7 @@ public class Activator extends AbstractUIPlugin {
 		BBSession bbs = (BBSession) bbSessionMap.get(projectRoot);
 		
 		if (bbs == null) {
-			bbs = new BBSession(getShellSession(projectRoot, null, monitor), projectRoot);
+			bbs = new BBSession(getShellSession(projectInfo, null, monitor), projectRoot);
 			bbSessionMap.put(projectRoot, bbs);
 		}
 		
@@ -173,7 +176,8 @@ public class Activator extends AbstractUIPlugin {
 	 * @return a cached shell session for a given project root.
 	 * @throws IOException 
 	 */
-	private static ShellSession getShellSession(URI absolutePath, Writer out, IProgressMonitor monitor) throws IOException {
+	private static ShellSession getShellSession(ProjectInfo projInfo, Writer out, IProgressMonitor monitor) throws IOException {
+		URI absolutePath = projInfo.getURI();
 		if (shellMap == null) {
 			shellMap = new Hashtable<String, ShellSession>();
 		}
@@ -181,7 +185,8 @@ public class Activator extends AbstractUIPlugin {
 		ShellSession ss = (ShellSession) shellMap.get(absolutePath);
 		
 		if (ss == null) {
-			ss = new ShellSession(ShellSession.SHELL_TYPE_BASH, RSEHelper.getRemoteHostFile(projInfoMap.get(absolutePath).getConnection(), absolutePath.getPath(), monitor), ProjectInfoHelper.getInitScriptPath(absolutePath), out);
+			IHostFile remoteHostFile = RSEHelper.getRemoteHostFile(projInfo.getConnection(), absolutePath.getPath(), monitor);
+			ss = new ShellSession(projInfo, ShellSession.SHELL_TYPE_BASH, remoteHostFile, ProjectInfoHelper.getInitScriptPath(absolutePath), out);
 		}
 		
 		return ss;

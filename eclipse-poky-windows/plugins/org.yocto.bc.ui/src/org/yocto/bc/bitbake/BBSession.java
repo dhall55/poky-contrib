@@ -183,7 +183,7 @@ public class BBSession implements IBBSessionListener, IModelElement, Map {
 	}
 
 	public URI getProjInfoRoot() {
-		return pinfo.getRootPath();
+		return pinfo.getURI();
 	}
 
 	/**
@@ -261,7 +261,7 @@ public class BBSession implements IBBSessionListener, IModelElement, Map {
 	 */
 	public MessageConsole getConsole() {
 		if (sessionConsole == null) {
-			String cName = ProjectInfoHelper.getProjectName(pinfo.getRootPath()) + " Console";
+			String cName = ProjectInfoHelper.getProjectName(pinfo.getURI()) + " Console";
 			IConsoleManager conMan = ConsolePlugin.getDefault().getConsoleManager();
 			IConsole[] existing = conMan.getConsoles();
 			for (int i = 0; i < existing.length; i++)
@@ -731,10 +731,12 @@ public class BBSession implements IBBSessionListener, IModelElement, Map {
 						return;
 					}
 				}
-				for(int i=0;changed != null && i<changed.length;i++) {
-					if (this.depends.contains(changed[i].getLocation().toString())) {
-						initialized = false;
-						return;
+				if (!depends.isEmpty()) {
+					for(int i=0;changed != null && i<changed.length;i++) {
+						if (changed[i].getLocation() != null && this.depends.contains(changed[i].getLocation().toString())) {
+							initialized = false;
+							return;
+						}
 					}
 				}
 			}

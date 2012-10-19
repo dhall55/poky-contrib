@@ -11,6 +11,7 @@
 package org.yocto.bc.ui.actions;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
@@ -64,11 +65,15 @@ public class LaunchVariableWizardAction implements IWorkbenchWindowActionDelegat
 
 				try {
 					if (p.isOpen() && p.hasNature(BitbakeCommanderNature.NATURE_ID)) {
-						session = Activator.getBBSession(((IResource)element).getProject().getLocationURI(), new NullProgressMonitor());
+						session = Activator.getBBSession(Activator.getProjInfo(((IResource)element).getProject().getLocationURI()), new NullProgressMonitor());
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (CoreException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}

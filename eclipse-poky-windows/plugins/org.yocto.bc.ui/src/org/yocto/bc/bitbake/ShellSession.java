@@ -18,7 +18,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Writer;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.rse.services.files.IHostFile;
+import org.yocto.bc.ui.model.ProjectInfo;
+import org.yocto.bc.ui.wizards.install.RSEHelper;
 
 /**
  * A class for Linux shell sessions.
@@ -66,36 +71,42 @@ public class ShellSession {
 	private String shellPath = null;
 	private final String initCmd;
 	private final IHostFile root;
-	private final Writer out;
-	
+//	private final Writer out;
+	private ProjectInfo projectInfo;
 
-	public ShellSession(int shellType, IHostFile root, String initCmd, Writer out) throws IOException {
+	public ShellSession(ProjectInfo pInfo, int shellType, IHostFile root, String initCmd, Writer out) throws IOException {
+		this.projectInfo = pInfo;
 		this.root = root;
 		this.initCmd  = initCmd;
-		if (out == null) {
-			this.out = new NullWriter();
-		} else {
-			this.out = out;
-		}
+//		if (out == null) {
+//			this.out = new NullWriter();
+//		} else {
+//			this.out = out;
+//		}
 		if (shellType == SHELL_TYPE_SH) {
 			shellPath = "/bin/sh";
 		}
 		shellPath  = "/bin/bash";
 		
-		initializeShell();
+		initializeShell(new NullProgressMonitor());
 	}
 
-	private void initializeShell() throws IOException {
-		process = Runtime.getRuntime().exec(shellPath);
-		pos = process.getOutputStream();
-		
-		if (root != null) {
-			out.write(execute("cd " + root.getAbsolutePath()));
+	private void initializeShell(IProgressMonitor monitor) throws IOException {
+		try {
+			RSEHelper.runCommandRemote(RSEHelper.getRemoteConnectionByName(projectInfo.getConnection().getName()), root.getAbsolutePath(), "source " + initCmd, "", monitor);
+		} catch (CoreException e) {
+			e.printStackTrace();
 		}
-		
-		if (initCmd != null) {
-			out.write(execute("source " + initCmd));
-		}
+//		process = Runtime.getRuntime().exec(shellPath);
+//		pos = process.getOutputStream();
+//		
+//		if (root != null) {
+//			out.write(execute("cd " + root.getAbsolutePath()));
+//		}
+//		
+//		if (initCmd != null) {
+//			out.write(execute("source " + initCmd));
+//		}
 	}
 
 	synchronized 
@@ -105,46 +116,54 @@ public class ShellSession {
 
 	synchronized 
 	public String execute(String command, int[] retCode) throws IOException {
+		//FIXME : parse output 
+		try {
+			process = RSEHelper.runCommandRemote(RSEHelper.getRemoteConnectionByName(projectInfo.getConnection().getName()), root.getAbsolutePath(), command, "", new NullProgressMonitor());
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+		
 		String errorMessage = null;
 		interrupt = false;
-		out.write(command);
-		out.write(LT);
-		
-		sendToProcessAndTerminate(command);
-
+//		out.write(command);
+//		out.write(LT);
+//		
+//		sendToProcessAndTerminate(command);
+//
 		if (process.getErrorStream().available() > 0) {
 			byte[] msg = new byte[process.getErrorStream().available()];
 
 			process.getErrorStream().read(msg, 0, msg.length);
-			out.write(new String(msg));
-			out.write(LT);
+//			out.write(new String(msg));
+//			out.write(LT);
 			errorMessage = "Error while executing: " + command + LT + new String(msg);
 		}
-		
-		BufferedReader br = new BufferedReader(new InputStreamReader(process
-				.getInputStream()));
-
+//		
+//		BufferedReader br = new BufferedReader(new InputStreamReader(process
+//				.getInputStream()));
+//
 		StringBuffer sb = new StringBuffer();
-		String line = null;
+//		String line = null;
 
-		while (((line = br.readLine()) != null) && !line.endsWith(TERMINATOR) && !interrupt) {
-			sb.append(line);
-			sb.append(LT);
-			out.write(line);
-			out.write(LT);
-		}
+//		while (((line = br.readLine()) != null) && !line.endsWith(TERMINATOR) && !interrupt) {
+//			sb.append(line);
+//			sb.append(LT);
+//			out.write(line);
+//			out.write(LT);
+//		}
 		
 		if (interrupt) {
 			process.destroy();
-			initializeShell();
+			initializeShell(null);
 			interrupt = false;
-		}else if (line != null && retCode != null) {
-			try {
-				retCode[0]=Integer.parseInt(line.substring(0,line.lastIndexOf(TERMINATOR)));
-			}catch (NumberFormatException e) {
-				throw new IOException("Can NOT get return code" + command + LT + line);
-			}
-		}
+		} 
+//		else if (line != null && retCode != null) {
+//			try {
+//				retCode[0]=Integer.parseInt(line.substring(0,line.lastIndexOf(TERMINATOR)));
+//			}catch (NumberFormatException e) {
+//				throw new IOException("Can NOT get return code" + command + LT + line);
+//			}
+//		}
 		
 		if (errorMessage != null) {
 			throw new IOException(errorMessage);
@@ -176,14 +195,14 @@ synchronized
 				byte[] msg = new byte[errIs.available()];
 
 				errIs.read(msg, 0, msg.length);
-				out.write(new String(msg));
+//				out.write(new String(msg));
 				handler.response(new String(msg), true);
 			} 
 			
 			std = br.readLine();
 			
 			if (std != null && !std.endsWith(terminator)) {
-				out.write(std);
+//				out.write(std);
 				handler.response(std, false);
 			} 
 			
@@ -191,7 +210,7 @@ synchronized
 		
 		if (interrupt) {
 			process.destroy();
-			initializeShell();
+			initializeShell(null);
 			interrupt = false;
 		}
 	}
@@ -247,4 +266,5 @@ synchronized
 		}
 		
 	}
+
 }
