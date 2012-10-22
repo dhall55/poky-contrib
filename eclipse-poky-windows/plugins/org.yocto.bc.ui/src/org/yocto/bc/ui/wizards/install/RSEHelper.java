@@ -170,7 +170,7 @@ public class RSEHelper {
 		ArrayList <IHost> terminalConnections = new ArrayList <IHost>(Arrays.asList(RSECorePlugin.getTheSystemRegistry()
 				.getHostsBySubSystemConfigurationCategory("terminal")));//$NON-NLS-1$
 		
-		ArrayList<?> shellConnections = new ArrayList<>(Arrays.asList(RSECorePlugin.getTheSystemRegistry()
+		ArrayList<Object> shellConnections = new ArrayList<Object>(Arrays.asList(RSECorePlugin.getTheSystemRegistry()
 				.getHostsBySubSystemConfigurationCategory("shells"))); //$NON-NLS-1$
 
 		Iterator <IHost>iter = filConnections.iterator();

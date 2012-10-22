@@ -163,7 +163,9 @@ public class YoctoHostFile implements IHostFile{
 	public URI getChildURI(String name) {
 		try {
 			return new URI(fileURI.getScheme(), fileURI.getHost(), fileService.getFile(file.getAbsolutePath(), name, null).getAbsolutePath(), fileURI.getFragment());
-		} catch (URISyntaxException | SystemMessageException e) {
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (SystemMessageException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -188,7 +190,10 @@ public class YoctoHostFile implements IHostFile{
 	public URI getChildURIformPath(IPath path) {
 		try {
 			return new URI(fileURI.getScheme(), fileURI.getHost(), fileService.getFile(file.getAbsolutePath(), path.toPortableString(), null).getAbsolutePath(), fileURI.getFragment());
-		} catch (URISyntaxException | SystemMessageException e) {
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return null;
+		} catch (SystemMessageException e) {
 			e.printStackTrace();
 			return null;
 		}
