@@ -17,7 +17,7 @@ EXTRA_OECONF = "--enable-malloc0returnsnull \
                 --disable-specs --with-groff=no --with-ps2pdf=no --with-fop=no --without-xmlto"
 
 python () {
-        whitelist = [ "pixman", "libpciaccess" ]
+        whitelist = [ "pixman", "libpciaccess", "libxkbcommon" ]
         if not d.getVar('BPN', True) in whitelist and not oe.utils.contains ('DISTRO_FEATURES', 'x11', True, False, d):
                 raise bb.parse.SkipPackage("'x11' not in DISTRO_FEATURES")
 }
