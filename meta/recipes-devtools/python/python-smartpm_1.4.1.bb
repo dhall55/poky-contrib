@@ -15,9 +15,9 @@ PR = "r0"
 SRCNAME = "smart"
 
 SRC_URI = "\
-     http://launchpad.net/smart/trunk/1.4.1/+download/smart-1.4.1.tar.bz2 \
-     file://smartpm-rpm5-nodig.patch \
-"
+          http://launchpad.net/smart/trunk/${PV}/+download/${SRCNAME}-${PV}.tar.bz2 \
+          file://smartpm-rpm5-nodig.patch \
+          "
 
 SRC_URI[md5sum] = "573ef32ba177a6b3c4bf7ef04873fcb6"
 SRC_URI[sha256sum] = "b1d519ddb43d60f293b065c28870a5d9e8b591cd49e8c68caea48ace91085eba"
@@ -26,21 +26,19 @@ S = "${WORKDIR}/${SRCNAME}-${PV}"
 # Options - rpm, qt4, gtk
 PACKAGECONFIG ??= "rpm"
 
-rpm-rdep = "python-smartpm-backend-rpm"
-qt-rdep = "python-smartpm-interface-qt4"
-gtk-rdep = "python-smartpm-interface-gtk"
+RPM_RDEP = "python-smartpm-backend-rpm"
+QT_RDEP = "python-smartpm-interface-qt4"
+GTK_RDEP = "python-smartpm-interface-gtk"
 
-rpm-rdep_virtclass-native = ""
-qt-rdep_virtclass-native = ""
-gtk-rdep_virtclass-native = ""
+RPM_RDEP_virtclass-native = ""
+QT_RDEP_virtclass-native = ""
+GTK_RDEP_virtclass-native = ""
 
-PACKAGECONFIG[rpm] = ",,rpm,${rpm-rdep}"
-PACKAGECONFIG[qt4] = ",,qt4-x11,${qt-rdep}"
-PACKAGECONFIG[gtk] = ",,gtk+,${gtk-rdep}"
+PACKAGECONFIG[rpm] = ",,rpm,${RPM_RDEP}"
+PACKAGECONFIG[qt4] = ",,qt4-x11,${QT_RDEP}"
+PACKAGECONFIG[gtk] = ",,gtk+,${GTK_RDEP}"
 
 inherit distutils
-
-BBCLASSEXTEND = "native nativesdk"
 
 do_install_append() {
    # Cleanup unused item...
@@ -97,3 +95,6 @@ FILES_python-smartpm-backend-rpm = "${libdir}/python*/site-packages/smart/backen
 FILES_python-smartpm-interface-qt4 = "${libdir}/python*/site-packages/smart/interfaces/qt4"
 FILES_python-smartpm-interface-gtk = "${libdir}/python*/site-packages/smart/interfaces/gtk"
 FILES_python-smartpm-interface-images = "${datadir}/${baselib}/python*/site-packages/smart/interfaces/images"
+
+BBCLASSEXTEND = "native nativesdk"
+
