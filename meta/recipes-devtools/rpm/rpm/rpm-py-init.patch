@@ -1,0 +1,14 @@
+diff --git a/python/rpmmodule.c b/python/rpmmodule.c
+index f7282bc..dde68ca 100644
+--- a/python/rpmmodule.c
++++ b/python/rpmmodule.c
+@@ -392,7 +392,8 @@ void init_rpm(void)
+     if (Py_AtExit(rpm_exithook) == -1)
+ 	return;
+ 
+-    rpmReadConfigFiles(NULL, NULL);
++    const char *argv[1] = {"/tmp/nothing", 0};
++    rpmcliInit(1, argv, NULL);
+ 
+     d = PyModule_GetDict(m);
+ 
