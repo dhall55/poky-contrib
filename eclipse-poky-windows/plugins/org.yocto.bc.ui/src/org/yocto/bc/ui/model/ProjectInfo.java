@@ -15,15 +15,16 @@ import java.net.URI;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteServices;
+import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.services.files.IFileService;
-import org.yocto.bc.ui.wizards.install.RSEHelper;
+import org.yocto.bc.remote.utils.RemoteHelper;
 
 
 public class ProjectInfo implements IModelElement {
 	private String name;
 	private URI location;
 	private String init;
-	private IRemoteConnection connection;
+	private IHost connection;
 	private IRemoteServices remoteServices;
 	
 	public ProjectInfo() {
@@ -56,11 +57,11 @@ public class ProjectInfo implements IModelElement {
 		this.name = name;
 	}
 
-	public IRemoteConnection getConnection() {
+	public IHost getConnection() {
 		return connection;
 	}
 
-	public void setConnection(IRemoteConnection connection) {
+	public void setConnection(IHost connection) {
 		this.connection = connection;
 	}
 
@@ -74,7 +75,7 @@ public class ProjectInfo implements IModelElement {
 	
 	public IFileService getFileService(IProgressMonitor monitor){
 		try {
-			return (IFileService)RSEHelper.getConnectedRemoteFileService(connection, monitor);
+			return (IFileService)RemoteHelper.getConnectedRemoteFileService(connection, monitor);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;

@@ -26,6 +26,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
+import org.eclipse.ptp.remote.core.IRemoteConnection;
+import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.services.files.IHostFile;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
@@ -33,8 +35,8 @@ import org.yocto.bc.bitbake.BBRecipe;
 import org.yocto.bc.bitbake.BBSession;
 import org.yocto.bc.bitbake.ProjectInfoHelper;
 import org.yocto.bc.bitbake.ShellSession;
+import org.yocto.bc.remote.utils.RemoteHelper;
 import org.yocto.bc.ui.model.ProjectInfo;
-import org.yocto.bc.ui.wizards.install.RSEHelper;
 
 public class Activator extends AbstractUIPlugin {
 
@@ -107,6 +109,10 @@ public class Activator extends AbstractUIPlugin {
 		if (bbs == null) {
 			bbs = new BBSession(getShellSession(projectInfo, null, monitor), projectRoot);
 			bbSessionMap.put(projectRoot, bbs);
+		} else {
+			if (projectInfo.getConnection() == null) {
+				System.out.println("this is not ok");
+			}
 		}
 		
 		return bbs;
@@ -147,6 +153,8 @@ public class Activator extends AbstractUIPlugin {
 			} catch (IOException e) {
 				throw new InvocationTargetException(e);
 			}
+			IHost connection = RemoteHelper.getRemoteConnectionByURI(location);
+			pi.setConnection(connection);
 		}
 		
 		return pi;
@@ -185,7 +193,9 @@ public class Activator extends AbstractUIPlugin {
 		ShellSession ss = (ShellSession) shellMap.get(absolutePath);
 		
 		if (ss == null) {
-			IHostFile remoteHostFile = RSEHelper.getRemoteHostFile(projInfo.getConnection(), absolutePath.getPath(), monitor);
+//			if (conn == null)
+//				RemoteHelper.getRemoteConnectionByName();
+			IHostFile remoteHostFile = RemoteHelper.getRemoteHostFile(projInfo.getConnection(), absolutePath.getPath(), monitor);
 			ss = new ShellSession(projInfo, ShellSession.SHELL_TYPE_BASH, remoteHostFile, ProjectInfoHelper.getInitScriptPath(absolutePath), out);
 		}
 		

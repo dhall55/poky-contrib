@@ -2,9 +2,7 @@ package org.yocto.bc.ui.wizards.install;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Hashtable;
@@ -21,19 +19,15 @@ import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.ptp.remote.core.IRemoteConnection;
 import org.eclipse.ptp.remote.core.IRemoteServices;
 import org.eclipse.ptp.remote.core.exception.RemoteConnectionException;
+import org.eclipse.rse.core.model.IHost;
 import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWizard;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleConstants;
-import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.IConsoleView;
 import org.eclipse.ui.console.MessageConsole;
-import org.eclipse.ui.console.MessageConsoleStream;
 import org.yocto.bc.bitbake.ICommandResponseHandler;
+import org.yocto.bc.remote.utils.CommandResponseHandler;
+import org.yocto.bc.remote.utils.ConsoleHelper;
+import org.yocto.bc.remote.utils.ConsoleWriter;
+import org.yocto.bc.remote.utils.RemoteHelper;
 import org.yocto.bc.ui.Activator;
 import org.yocto.bc.ui.model.ProjectInfo;
 import org.yocto.bc.ui.wizards.FiniteStateWizard;
@@ -69,7 +63,7 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 	public static final String VALIDATION_FILE = DEFAULT_INIT_SCRIPT;
 
 	private Map<String, Object> model;
-	private MessageConsole myConsole;
+	private MessageConsole console;
 
 	public InstallWizard() {
 		this.model = new Hashtable<String, Object>();
@@ -79,31 +73,10 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 		setWindowTitle("Yocto Project BitBake Commander");
 		setNeedsProgressMonitor(true);
 		
-		myConsole = findConsole("Yocto Project Console");
-		IWorkbench wb = PlatformUI.getWorkbench();
-		IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
-		IWorkbenchPage page = win.getActivePage();
-		String id = IConsoleConstants.ID_CONSOLE_VIEW;
-		try {
-			IConsoleView view = (IConsoleView) page.showView(id);
-			view.display(myConsole);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		console = ConsoleHelper.findConsole(ConsoleHelper.YOCTO_CONSOLE);
+		ConsoleHelper.showConsole(console);
 	}
 
-	private MessageConsole findConsole(String name) {
-		ConsolePlugin plugin = ConsolePlugin.getDefault();
-		IConsoleManager conMan = plugin.getConsoleManager();
-		IConsole[] existing = conMan.getConsoles();
-		for (int i = 0; i < existing.length; i++)
-			if (name.equals(existing[i].getName()))
-				return (MessageConsole) existing[i];
-		// no console found, so create a new one
-		MessageConsole myConsole = new MessageConsole(name, null);
-		conMan.addConsoles(new IConsole[] { myConsole });
-		return myConsole;
-	}
 
 	public InstallWizard(IStructuredSelection selection) {
 		model = new Hashtable<String, Object>();
@@ -136,7 +109,7 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 
 	@Override
 	public boolean performFinish() {
-		BCCommandResponseHandler cmdOut = new BCCommandResponseHandler(myConsole);
+		CommandResponseHandler cmdHandler = new CommandResponseHandler(console);
 		
 		WizardPage page = (WizardPage) getPage("Options");
 		page.setPageComplete(true);
@@ -155,7 +128,7 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 				LongtimeRunningTask runningTask = new LongtimeRunningTask("Checking out Yocto git repository", cmd, null, null,
 						((IRemoteConnection)model.get(InstallWizard.SELECTED_CONNECTION)), 
 						((IRemoteServices)model.get(InstallWizard.SELECTED_REMOTE_SERVICE)),
-						 cmdOut, 
+						 cmdHandler, 
 					new ICalculatePercentage() {
 						public float calWorkloadDone(String info) throws IllegalArgumentException {
 							Matcher m = pattern.matcher(info.trim());
@@ -170,7 +143,7 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 				this.getContainer().run(true,true, runningTask);
 			}
 
-			if (!cmdOut.hasError()) {
+			if (!cmdHandler.hasError()) {
 				String initPath = "";
 				if (uri.getPath() != null) {
 					 initPath = uri.getPath() + "/" + (String) options.get(INIT_SCRIPT);
@@ -182,13 +155,13 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 				pinfo.setInitScriptPath(initPath);
 				pinfo.setLocation(uri);
 				pinfo.setName(prjName);
-				pinfo.setConnection((IRemoteConnection) model.get(InstallWizard.SELECTED_CONNECTION));
+				pinfo.setConnection((IHost) model.get(InstallWizard.SELECTED_CONNECTION));
 				pinfo.setRemoteServices((IRemoteServices) model.get(InstallWizard.SELECTED_REMOTE_SERVICE));
 			
 				ConsoleWriter cw = new ConsoleWriter();
 				this.getContainer().run(false, false, new BBConfigurationInitializeOperation(pinfo, cw));
 				
-				myConsole.newMessageStream().println(cw.getContents());
+				console.newMessageStream().println(cw.getContents());
 
 				model.put(InstallWizard.KEY_PINFO, pinfo);
 				Activator.putProjInfo(pinfo.getURI(), pinfo);
@@ -289,7 +262,7 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 				for (int i = 1; i < cmdArray.length; i++)
 					args += cmdArray[i] + " ";
 				try {
-					process = RSEHelper.runCommandRemote(RSEHelper.getRemoteConnectionByName(connection.getName()), "", cmdArray[0], args, monitor);
+					process = RemoteHelper.runCommandRemote(RemoteHelper.getRemoteConnectionByName(connection.getName()), "", cmdArray[0], args, monitor);
 					
 					if (process != null) {
 						BufferedReader inbr = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -352,67 +325,5 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 		}
 	}
 
-	private class BCCommandResponseHandler implements ICommandResponseHandler {
-		private MessageConsoleStream myConsoleStream;
-		private Boolean errorOccured = false;
-
-		public BCCommandResponseHandler(MessageConsole console) {
-			try {
-				this.myConsoleStream = console.newMessageStream();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		public Boolean hasError() {
-			return errorOccured;
-		}
-
-		public void response(String line, boolean isError) {
-			try {
-				if (isError) {
-					myConsoleStream.println(line);
-					errorOccured = true;
-				} else {
-					myConsoleStream.println(line);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-	}
-
-	private class ConsoleWriter extends Writer {
-
-		private StringBuffer sb;
-
-		public ConsoleWriter() {
-			sb = new StringBuffer();
-		}
-
-		@Override
-		public void close() throws IOException {
-		}
-
-		public String getContents() {
-			return sb.toString();
-		}
-
-		@Override
-		public void flush() throws IOException {
-		}
-
-		@Override
-		public void write(char[] cbuf, int off, int len) throws IOException {
-			sb.append(cbuf);
-		}
-
-		@Override
-		public void write(String str) throws IOException {
-			sb.append(str);
-		}
-
-	}
 
 }

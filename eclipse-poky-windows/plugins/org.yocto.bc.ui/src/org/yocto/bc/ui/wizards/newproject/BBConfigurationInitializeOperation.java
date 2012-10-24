@@ -18,9 +18,9 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 
 import org.yocto.bc.bitbake.BBSession;
 import org.yocto.bc.bitbake.ProjectInfoHelper;
+import org.yocto.bc.remote.utils.RemoteHelper;
 import org.yocto.bc.ui.Activator;
 import org.yocto.bc.ui.model.ProjectInfo;
-import org.yocto.bc.ui.wizards.install.RSEHelper;
 
 public class BBConfigurationInitializeOperation implements IRunnableWithProgress {
 
@@ -40,7 +40,7 @@ public class BBConfigurationInitializeOperation implements IRunnableWithProgress
 	public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 		BBSession session;
 		try {
-			ProjectInfoHelper.store(RSEHelper.getRemoteConnectionByName(pinfo.getConnection().getName()), pinfo.getURI(), pinfo, monitor);
+			ProjectInfoHelper.store(RemoteHelper.getRemoteConnectionByName(pinfo.getConnection().getName()), pinfo.getURI(), pinfo, monitor);
 			session = Activator.getBBSession(pinfo, writer, monitor);
 			session.initialize();
 

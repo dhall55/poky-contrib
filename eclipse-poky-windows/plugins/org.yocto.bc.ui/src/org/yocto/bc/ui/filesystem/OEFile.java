@@ -43,9 +43,9 @@ import org.eclipse.rse.services.files.IHostFile;
 import org.yocto.bc.bitbake.BBSession;
 import org.yocto.bc.bitbake.ProjectInfoHelper;
 import org.yocto.bc.bitbake.ShellSession;
+import org.yocto.bc.remote.utils.RemoteHelper;
 import org.yocto.bc.ui.model.ProjectInfo;
 import org.yocto.bc.ui.model.YoctoHostFile;
-import org.yocto.bc.ui.wizards.install.RSEHelper;
 
 /**
  * File system implementation based on storage of files in the local
@@ -129,7 +129,7 @@ public class OEFile extends FileStore {
 		if(isPotentialBuildDir(path)) {
 			BBSession config = null;
 			try {
-				ShellSession shell = new ShellSession(file.getProjectInfo(), ShellSession.SHELL_TYPE_BASH, RSEHelper.getRemoteHostFile(file.getConnection(), root.getPath(), monitor), 
+				ShellSession shell = new ShellSession(file.getProjectInfo(), ShellSession.SHELL_TYPE_BASH, RemoteHelper.getRemoteHostFile(file.getConnection(), root.getPath(), monitor), 
 							ProjectInfoHelper.getInitScriptPath(root) + " " + path, null);
 				config = new BBSession(shell, root, true);
 				config.initialize();

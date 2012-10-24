@@ -14,6 +14,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
+import org.yocto.bc.remote.utils.CommandResponseHandler;
+
 public class BitbakeRecipeUIElement {
 	
 	private String container;
@@ -28,6 +30,7 @@ public class BitbakeRecipeUIElement {
 	private String md5sum;
 	private String sha256sum;
 	private URI metaDir;
+	private CommandResponseHandler cmdHandler;
 	private ArrayList<String> inheritance;
 
 	public BitbakeRecipeUIElement()
@@ -145,5 +148,13 @@ public class BitbakeRecipeUIElement {
 	
 	public void setMetaDir(URI value) {
 		metaDir = value;
+	}
+
+	public CommandResponseHandler getCmdHandler() {
+		return cmdHandler;
+	}
+
+	public void setCmdHandler(CommandResponseHandler cmdHandler) {
+		this.cmdHandler = cmdHandler;
 	}
 }

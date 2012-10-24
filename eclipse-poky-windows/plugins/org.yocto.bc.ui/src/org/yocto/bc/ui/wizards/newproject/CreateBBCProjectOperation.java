@@ -25,9 +25,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.yocto.bc.bitbake.ProjectInfoHelper;
+import org.yocto.bc.remote.utils.RemoteHelper;
 import org.yocto.bc.ui.builder.BitbakeCommanderNature;
 import org.yocto.bc.ui.model.ProjectInfo;
-import org.yocto.bc.ui.wizards.install.RSEHelper;
 
 
 /**
@@ -82,7 +82,7 @@ public class CreateBBCProjectOperation extends WorkspaceModifyOperation {
 		IProject proj = wsroot.getProject(projInfo.getProjectName());
 		proj.create(desc, monitor);
 		try {
-			ProjectInfoHelper.store(RSEHelper.getRemoteConnectionByName(projInfo.getConnection().getName()), proj.getLocationURI(), projInfo, monitor);
+			ProjectInfoHelper.store(RemoteHelper.getRemoteConnectionByName(projInfo.getConnection().getName()), proj.getLocationURI(), projInfo, monitor);
 		} catch (IOException e) {
 			throw new InvocationTargetException(e);
 		}

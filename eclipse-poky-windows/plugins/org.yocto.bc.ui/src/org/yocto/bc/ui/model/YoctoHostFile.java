@@ -10,7 +10,7 @@ import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.ptp.remote.core.IRemoteConnection;
+import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.services.files.IFileService;
 import org.eclipse.rse.services.files.IHostFile;
@@ -157,9 +157,10 @@ public class YoctoHostFile implements IHostFile{
 		} 
 		return  new String[]{};
 	}
-	public IRemoteConnection getConnection() {
+	public IHost getConnection() {
 		return projectInfo.getConnection();
 	}
+	
 	public URI getChildURI(String name) {
 		try {
 			return new URI(fileURI.getScheme(), fileURI.getHost(), fileService.getFile(file.getAbsolutePath(), name, null).getAbsolutePath(), fileURI.getFragment());

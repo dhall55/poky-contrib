@@ -11,33 +11,29 @@
  *******************************************************************************/
 package org.yocto.bc.ui.wizards;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
 import java.net.URI;
-import java.security.MessageDigest;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardPage;
+import org.eclipse.rse.core.model.IHost;
+import org.eclipse.rse.services.files.IFileService;
+import org.eclipse.rse.services.files.IHostFile;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -49,8 +45,12 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
-import org.yocto.bc.ui.wizards.install.RSEHelper;
+import org.yocto.bc.remote.utils.CommandResponseHandler;
+import org.yocto.bc.remote.utils.ConsoleHelper;
+import org.yocto.bc.remote.utils.ProcessStreamBuffer;
+import org.yocto.bc.remote.utils.RemoteHelper;
 
 public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	private Text containerText;
@@ -65,19 +65,52 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	private Text txtSrcURI;
 	private Text md5sumText;
 	private Text sha256sumText;
+	private Button btnPopulate;
+	
 	private BitbakeRecipeUIElement element;
 	
 	private ISelection selection;
 	private URI metaDirLoc;
-	private ArrayList inheritance;
+	private ArrayList<String> inheritance;
+
+	private IHost connection;
 	
-	public NewBitBakeFileRecipeWizardPage(ISelection selection) {
+	private MessageConsole console;
+	private CommandResponseHandler cmdHandler;
+	private String tempFolderPath;
+	
+	public static final String TEMP_FOLDER_NAME = "temp";
+	public static final String TAR_BZ2_EXT = ".tar.bz2";
+	public static final String TAR_GZ_EXT = ".tar.gz";
+	public static final String HTTP = "http";
+	public static final String FTP ="ftp";
+	public static final String FILE ="file";
+	public static final String BB_RECIPE_EXT =".bb";
+	public static final String MD5 = "MD5";
+	public static final String SHA256 = "SHA-256";
+	private static final String MIRRORS_FILE = "mirrors.bbclass";
+	private static final String CLASSES_FOLDER = "classes";
+	private static final String COPYING_FILE = "COPYING.MIT";
+	private static final String WHITESPACES = "\\s+";
+	private static final String CMAKE_LIST = "cmakelists.txt";
+	private static final String CMAKE = "cmake";
+	private static final String SETUP_SCRIPT = "setup.py";
+	private static final String DISUTILS = "disutils";
+	private static final String CONFIGURE_IN = "configure.in";
+	private static final String CONFIGURE_AC = "configure.ac";
+	private static final String AUTOTOOLS = "autotools";
+	
+	public NewBitBakeFileRecipeWizardPage(ISelection selection, IHost connection) {
 		super("wizardPage");
 		setTitle("BitBake Recipe");
 		setDescription("Create a new BitBake recipe.");
 		this.selection = selection;
-		element = new BitbakeRecipeUIElement();
-		inheritance = new ArrayList();
+		this.connection = connection;
+		this.element = new BitbakeRecipeUIElement();
+		this.inheritance = new ArrayList<String>();
+		this.console = ConsoleHelper.findConsole(ConsoleHelper.YOCTO_CONSOLE);
+		ConsoleHelper.showConsole(console);
+		this.cmdHandler = new CommandResponseHandler(console);
 	}
 
 	public void createControl(Composite parent) {
@@ -126,13 +159,20 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 		txtSrcURI.setLayoutData(gd);
 		txtSrcURI.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
+				if (txtSrcURI.getText().trim().isEmpty()) {
+					if (btnPopulate != null)
+						btnPopulate.setEnabled(false);
+				} else if (btnPopulate != null){
+						btnPopulate.setEnabled(true);
+				}
 				dialogChanged();
 			}
 		});
 
-		Button buttonP = new Button(container, SWT.PUSH);
-		buttonP.setText("Populate...");
-		buttonP.addSelectionListener(new SelectionAdapter() {
+		btnPopulate= new Button(container, SWT.PUSH);
+		btnPopulate.setText("Populate...");
+		btnPopulate.setEnabled(false);
+		btnPopulate.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				handlePopulate();
@@ -192,7 +232,7 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 		}
 		
 		IProject project = container.getProject();
-		metaDirLoc = RSEHelper.createNewURI(project.getLocationURI(), "/meta");
+		metaDirLoc = RemoteHelper.createNewURI(project.getLocationURI(), "meta");
 		
 		if (fileName.length() == 0) {
 			updateStatus("File name must be specified");
@@ -224,7 +264,7 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 		updateStatus(null);
 	}
 
-	public BitbakeRecipeUIElement getUIElement() {
+	public BitbakeRecipeUIElement populateUIElement() {
 		element.setAuthor(authorText.getText());
 		element.setChecksum(checksumText.getText());
 		element.setContainer(containerText.getText());
@@ -238,7 +278,7 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 		element.setSrcuri(txtSrcURI.getText());
 		element.setInheritance(inheritance);
 		element.setMetaDir(metaDirLoc);
-		
+		element.setCmdHandler(cmdHandler);
 		return element;
 	}
 	
@@ -253,261 +293,197 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	}
 	
 	private void handlePopulate() {
-		String srcURI = txtSrcURI.getText();
-		if ((srcURI.startsWith("http://") || srcURI.startsWith("ftp://")) 
-			&& (srcURI.endsWith("tar.gz") || srcURI.endsWith("tar.bz2"))) {
-		
-			HashMap<String, String> mirror_map = createMirrorLookupTable();
-		
-			populateRecipeName(srcURI);
-			populateSrcuriChecksum(srcURI);
-			String extractDir = extractPackage(srcURI);
-			populateLicensefileChecksum(extractDir);
-			updateSrcuri(mirror_map, srcURI);
-			populateInheritance(extractDir);
-		} else if (srcURI.startsWith("file://")) {
-			String path_str = srcURI.substring(7);
-			File package_dir = new File(path_str);
-			if (package_dir.isDirectory()) {
-				String package_name = path_str.substring(path_str.lastIndexOf("/")+1);
-				fileText.setText(package_name+".bb");
-				populateLicensefileChecksum(path_str);
-				populateInheritance(path_str);
+		try {
+			IProgressMonitor monitor = new NullProgressMonitor();
+			URI srcURI = new URI(txtSrcURI.getText().trim());
+			String scheme = srcURI.getScheme();
+			String srcFileName = getSrcFileName(true);
+			if ((scheme.equals(HTTP) || scheme.equals(FTP))
+				&& (srcFileName.endsWith(TAR_GZ_EXT) || srcFileName.endsWith(TAR_BZ2_EXT))) {
+			
+				populateRecipeName(srcURI);
+				populateSrcUriChecksum(srcURI, monitor);
+				URI extractDir = extractPackage(srcURI, monitor);
+				populateLicenseFileChecksum(extractDir, monitor);
+				updateSrcUri(createMirrorLookupTable(monitor), srcURI);
+				populateInheritance(extractDir, monitor);
+			} else {
+//				File package_dir = new File(path_str);
+//				if (package_dir.isDirectory()) {
+					String packageName = getSrcFileName(false).replace("-", "_");
+					fileText.setText(packageName + BB_RECIPE_EXT);
+					populateLicenseFileChecksum(srcURI, monitor);
+					populateInheritance(srcURI, monitor);
+//				}
 			}
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
 		}
 		
 	}
 	
-	private String extractPackage(String src_uri) {
+	private URI extractPackage(URI srcURI, IProgressMonitor monitor) {
 		try {
-			//FIXME : create folder remote and run command there
-			File working_dir = new File(metaDirLoc+"/temp");
-			int idx = src_uri.lastIndexOf("/");
-			String tar_file = src_uri.substring(idx+1);
-			int tar_file_surfix_idx = tar_file.lastIndexOf(".tar");
-			String tar_file_surfix = tar_file.substring(tar_file_surfix_idx);
-			String tar_file_path = metaDirLoc+"/temp/"+tar_file;
+			String path = getSrcFileName(true);
+			String tarCmd = "tar ";
+			if (path.endsWith(TAR_BZ2_EXT)) {
+				tarCmd += "-zxvf ";
+			} else if(path.endsWith(TAR_GZ_EXT)){
+				tarCmd += "-xvf ";
+			}
 			
-			String tar_cmd = "";
-			int tar_idx = 0;
-			if (tar_file_surfix.matches(".tar.gz")) {
-				tar_cmd = "tar -zxvf "+ tar_file_path;
-				tar_idx = tar_file_path.lastIndexOf(".tar.gz");
-			} else if (tar_file_surfix.matches(".tar.bz2")) {
-				tar_idx = tar_file_path.lastIndexOf(".tar.bz2");
-				tar_cmd = "tar -xvf " + tar_file_path;
-			}
-			//FIXME : run command remote
-			final Process process = Runtime.getRuntime().exec(tar_cmd, null, working_dir);
-			int returnCode = process.waitFor();
-			if (returnCode == 0) {
-				return tar_file_path.substring(0, tar_idx);
-			}
-//			RSEHelper.runCommandRemote(connection, initialDir, remoteCommandPath, arguments, monitor)
+			RemoteHelper.handleRunCommandRemote(connection, this.tempFolderPath, tarCmd + path, "", monitor, cmdHandler);
+			
+			return RemoteHelper.createNewURI(metaDirLoc, TEMP_FOLDER_NAME + "/" + getSrcFileName(false));
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 	
-	private void populateInheritance(String extractDir) {
-		File extract_dir = new File(extractDir);
-		
-		File[] files = extract_dir.listFiles();
-		for (File file : files) {
-			if (file.isDirectory()) 
-				continue;
-			else {	
-				if (file.getName().equalsIgnoreCase("cmakelists.txt"))
-					inheritance.add("cmake");
-				else if (file.getName().equalsIgnoreCase("setup.py"))
-					inheritance.add("disutils");
-				else {
-					String pattern = "configure.[ac|.in]";
-					if (file.getName().equalsIgnoreCase("configure.ac") || file.getName().equalsIgnoreCase("configure.in"))
-						inheritance.add("autotools");
-					else
-						continue;
-				}
-			}
-		}	
+	private void setTempFolderPath(){
+		this.tempFolderPath = getMetaFolderPath() + TEMP_FOLDER_NAME + "/";
 	}
 	
-	private void populateLicensefileChecksum(String extractDir) {
+	private String getMetaFolderPath(){
+		String sep = metaDirLoc.getPath().endsWith("/")? "" : "/";
+		return metaDirLoc.getPath() + sep;
+	}
+	
+	private void populateInheritance(URI extractDir, IProgressMonitor monitor) {
+		IHostFile[] hostFiles = RemoteHelper.getRemoteDirContent(connection, metaDirLoc.getPath(), "", IFileService.FILE_TYPE_FILES, monitor);
+		for (IHostFile file: hostFiles) {
+			String fileName = file.getName();
+			if (fileName.equalsIgnoreCase(CMAKE_LIST)){
+				inheritance.add(CMAKE);
+			} else if (fileName.equalsIgnoreCase(SETUP_SCRIPT)) {
+				inheritance.add(DISUTILS);
+			} else if (fileName.equalsIgnoreCase(CONFIGURE_AC) || file.getName().equalsIgnoreCase(CONFIGURE_IN)) {
+				inheritance.add(AUTOTOOLS);
+			}
+		}
+	}
+	
+	private void populateLicenseFileChecksum(URI extractDir, IProgressMonitor monitor) {
 		if (extractDir == null)
 			throw new RuntimeException("Something went wrong during source extraction!");
 		
-		String licenseFileChecksum_str = null;
-		String licenseFilePath = null;
+		String licenseFileChecksum = null;
 		
 		try {
-			File extract_dir = new File(extractDir);
-				
-			FilenameFilter copyFilter = new FilenameFilter() {
-				public boolean accept(File dir, String name) {
-					if (name.startsWith("COPYING")) {
-						return true;
-					} else {
-						return false;
-					}
-				}
-			};
-
-			File copyFile = null;
-			File[] files = extract_dir.listFiles(copyFilter);
-			for (File file : files) {
-				if (file.isDirectory()) 
-					continue;
-				else {	
-					copyFile = file;
-					licenseFilePath = file.getCanonicalPath();
-					break;
-				}
+			String catCmd = "md5sum " + COPYING_FILE;
+			ProcessStreamBuffer buffer = RemoteHelper.handleRunCommandRemote(connection, metaDirLoc.getPath(), catCmd, "", monitor, cmdHandler);
+			String line = buffer.getLastOutputLineContaining(COPYING_FILE);
+			if (line != null) {
+				String[] tokens = line.split(WHITESPACES);
+				licenseFileChecksum = tokens[0];
 			}
-
-			MessageDigest digest_md5 = MessageDigest.getInstance("MD5");			
-			InputStream is = new FileInputStream(copyFile);				
-			byte[] buffer = new byte[8192];
-			int read = 0;
-			
-			while( (read = is.read(buffer)) > 0) {
-				digest_md5.update(buffer, 0, read);
-			}		
-			byte[] md5sum = digest_md5.digest();
-			BigInteger bigInt_md5 = new BigInteger(1, md5sum);
-			licenseFileChecksum_str = bigInt_md5.toString(16);
-			is.close();
 		} catch (Exception e) {
 			throw new RuntimeException("Unable to process file for MD5 calculation", e);
 		}
 		
-		if (licenseFileChecksum_str != null) {
-			int idx = licenseFilePath.lastIndexOf("/");
-			String license_file_name = licenseFilePath.substring(idx+1);
-			checksumText.setText("file://"+license_file_name+";md5="+licenseFileChecksum_str);					
+		if (licenseFileChecksum != null) {
+			checksumText.setText(RemoteHelper.createNewURI(extractDir, COPYING_FILE).toString() + ";md5=" + licenseFileChecksum);					
 		}
 	}
 	
-	private void populateSrcuriChecksum(String src_uri) {
-		String md5sum_str = null;
-		String sha256sum_str = null;
-		
+	private String getSrcFileName(boolean withExt){
+		URI srcURI;
 		try {
-			File working_dir = new File(metaDirLoc+"/temp");
-			working_dir.mkdir();
-			String download_cmd = "wget " + src_uri;
-			final Process process = Runtime.getRuntime().exec(download_cmd, null, working_dir);
-			int returnCode = process.waitFor();
-			if (returnCode == 0) {
-				int idx = src_uri.lastIndexOf("/");
-				String tar_file = src_uri.substring(idx+1);
-				String tar_file_path = metaDirLoc+"/temp/"+tar_file;
-				MessageDigest digest_md5 = MessageDigest.getInstance("MD5");
-				MessageDigest digest_sha256 = MessageDigest.getInstance("SHA-256");
-				File f = new File(tar_file_path);
-				InputStream is = new FileInputStream(f);				
-				byte[] buffer = new byte[8192];
-				int read = 0;
-				try {
-					while( (read = is.read(buffer)) > 0) {
-						digest_md5.update(buffer, 0, read);
-						digest_sha256.update(buffer, 0, read);
-					}		
-					byte[] md5sum = digest_md5.digest();
-					byte[] sha256sum = digest_sha256.digest();
-					BigInteger bigInt_md5 = new BigInteger(1, md5sum);
-					BigInteger bigInt_sha256 = new BigInteger(1, sha256sum);
-					md5sum_str = bigInt_md5.toString(16);
-					sha256sum_str = bigInt_sha256.toString(16);
+			srcURI = new URI(txtSrcURI.getText().trim());
+			String path = srcURI.getPath();
+			String fileName = path.substring(path.lastIndexOf("/") + 1);
+			if (withExt)
+				return fileName;
+			else {
+				if (fileName.endsWith(TAR_BZ2_EXT)) {
+					return fileName.substring(0, fileName.indexOf(TAR_BZ2_EXT));
+				} else if(fileName.endsWith(TAR_GZ_EXT)){
+					return fileName.substring(0, fileName.indexOf(TAR_GZ_EXT));
 				}
-				catch(IOException e) {
-					throw new RuntimeException("Unable to process file for MD5", e);
-				}
-				finally {
-					try {
-						is.close();
-					}
-					catch(IOException e) {
-						throw new RuntimeException("Unable to close input stream for MD5 calculation", e);
-					}
-				}
-				if (md5sum_str != null)
-					md5sumText.setText(md5sum_str);
-				if (sha256sum_str != null)
-					sha256sumText.setText(sha256sum_str);
+			}
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
+	
+	
+	
+	private void populateSrcUriChecksum(URI srcUri, IProgressMonitor monitor) {
+		try {
+			String rmCmd = "rm -rf " + TEMP_FOLDER_NAME;
+			RemoteHelper.handleRunCommandRemote(connection, metaDirLoc.getPath(), rmCmd, "", monitor, cmdHandler);
+			
+			String mkdirCmd = "mkdir " + TEMP_FOLDER_NAME;
+			setTempFolderPath();
+			RemoteHelper.handleRunCommandRemote(connection, metaDirLoc.getPath(), mkdirCmd, "", monitor, cmdHandler);
+			
+			String wgetCmd = "wget " + srcUri.toURL();
+			RemoteHelper.handleRunCommandRemote(connection, tempFolderPath, wgetCmd, "", monitor, cmdHandler);
+			
+			String md5Cmd = "md5sum " + getSrcFileName(true); 
+			ProcessStreamBuffer md5SumBuffer = RemoteHelper.handleRunCommandRemote(connection, tempFolderPath, md5Cmd, "", monitor, cmdHandler);
+			String line = md5SumBuffer.getLastOutputLineContaining(getSrcFileName(true));
+			if (line != null) {
+				String[] md5SumTokens = line.split(WHITESPACES);
+				md5sumText.setText(md5SumTokens[0]);
+			}
+			
+			String sha256Cmd = "sha256sum " + getSrcFileName(true); 
+			ProcessStreamBuffer sha256SumBuffer = RemoteHelper.handleRunCommandRemote(connection, tempFolderPath, sha256Cmd, "", monitor, cmdHandler);
+			line = sha256SumBuffer.getLastOutputLineContaining(getSrcFileName(true));
+			if (line != null) {
+				String[] sha256SumTokens = line.split(WHITESPACES);
+				sha256sumText.setText(sha256SumTokens[0]);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	private HashMap<String, String> createMirrorLookupTable() {
-		HashMap<String, String> mirror_map = new HashMap<String, String>();
-		File mirror_file = new File(metaDirLoc+"/classes/mirrors.bbclass");
-
-		try {
-			if (mirror_file.exists()) {
-				BufferedReader input = new BufferedReader(new FileReader(mirror_file));
+	private HashMap<String, String> createMirrorLookupTable(IProgressMonitor monitor) {
+		HashMap<String, String> mirrorMap = new HashMap<String, String>();
+		String catCmd = "cat " + MIRRORS_FILE;
+		ProcessStreamBuffer buffer = RemoteHelper.handleRunCommandRemote(connection, getMetaFolderPath() + CLASSES_FOLDER, catCmd, "", monitor, cmdHandler);
 		
-				try
-				{
-					String line = null;
-					String delims = "[\\t]+";
-					
-					while ((line = input.readLine()) != null)
-					{	
-						String[] tokens = line.split(delims);
-						if (tokens.length < 2)
-							continue;
-						String ending_str = " \\n \\";
-						int idx = tokens[1].lastIndexOf(ending_str);
-						String key = tokens[1].substring(0, idx);
-						mirror_map.put(key, tokens[0]);
-					}
-				}
-				finally {
-					input.close();
-				}
+		if (!buffer.hasErrors()){
+			String delims = "[\\t]+";
+			List<String> outputLines = buffer.getOutputLines();
+			for (String outLine : outputLines) {
+				String[] tokens = outLine.split(delims);
+				if (tokens.length < 2)
+					continue;
+				String endingStr = " \\n \\";
+				int idx = tokens[1].lastIndexOf(endingStr);
+				String key = tokens[1].substring(0, idx);
+				mirrorMap.put(key, tokens[0]);
 			}
 		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-
-		}
-		return mirror_map;
+		return mirrorMap;
 	}
 	
-	private void populateRecipeName(String src_uri) {
-		String file_name = fileText.getText();
-		if (!file_name.isEmpty()) 
+	private void populateRecipeName(URI srcUri) {
+		String fileName = fileText.getText();
+		if (!fileName.isEmpty()) 
 			return;
-		String delims = "[/]+";
-		String recipe_file = null;
 		
-		String[] tokens = src_uri.split(delims);
-		if (tokens.length > 0) {
-			String tar_file = tokens[tokens.length - 1];
-			int surfix_idx = 0;
-			if (tar_file.endsWith(".tar.gz"))
-				surfix_idx = tar_file.lastIndexOf(".tar.gz");
-			else
-				surfix_idx = tar_file.lastIndexOf(".tar.bz2");
-			int sept_idx = tar_file.lastIndexOf("-");
-			recipe_file = tar_file.substring(0, sept_idx)+"_"+tar_file.substring(sept_idx+1, surfix_idx)+".bb";
-		}
-		if (recipe_file != null)
-			fileText.setText(recipe_file);
+		String recipeFile = getSrcFileName(false).replace("-", "_");
+		recipeFile += BB_RECIPE_EXT;
+		if (recipeFile != null)
+			fileText.setText(recipeFile);
 	}
 	
-	private void updateSrcuri(HashMap<String, String> mirrorsMap, String src_uri) {
+	private void updateSrcUri(HashMap<String, String> mirrorsMap, URI srcUri) {
 		Set<String> mirrors = mirrorsMap.keySet();
-		Iterator iter = mirrors.iterator();
+		Iterator<String> iter = mirrors.iterator();
 		String mirror_key = null;
+		String srcURL = srcUri.toString();
 		
 	    while (iter.hasNext()) {
 	    	String value = (String)iter.next();
-	    	if (src_uri.startsWith(value)) {
+	    	if (srcURL.startsWith(value)) {
 	    		mirror_key = value;
 	    		break;
 	    	}	
@@ -516,10 +492,10 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 	    if (mirror_key != null) {
 	    	String replace_string = (String)mirrorsMap.get(mirror_key);
 	    	if (replace_string != null)
-	    		src_uri = replace_string+src_uri.substring(mirror_key.length());
+	    		srcURL = replace_string + srcURL.substring(mirror_key.length());
 	    }
-	    int idx = src_uri.lastIndexOf("-");
-	    String new_src_uri = src_uri.substring(0, idx)+"-${PV}.tar.gz";
+	    int idx = srcURL.lastIndexOf("-");
+	    String new_src_uri = srcURL.substring(0, idx)+"-${PV}" + TAR_GZ_EXT;
 	    txtSrcURI.setText(new_src_uri);
 	}
 	
@@ -535,6 +511,7 @@ public class NewBitBakeFileRecipeWizardPage extends WizardPage {
 					container = (IContainer) obj;
 				else
 					container = ((IResource) obj).getParent();
+				IPath location = container.getLocation();
 				containerText.setText(container.getFullPath().toString());
 			}
 		}

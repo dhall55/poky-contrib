@@ -22,8 +22,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.rse.services.files.IHostFile;
+import org.yocto.bc.remote.utils.RemoteHelper;
 import org.yocto.bc.ui.model.ProjectInfo;
-import org.yocto.bc.ui.wizards.install.RSEHelper;
 
 /**
  * A class for Linux shell sessions.
@@ -93,7 +93,7 @@ public class ShellSession {
 
 	private void initializeShell(IProgressMonitor monitor) throws IOException {
 		try {
-			RSEHelper.runCommandRemote(RSEHelper.getRemoteConnectionByName(projectInfo.getConnection().getName()), root.getAbsolutePath(), "source " + initCmd, "", monitor);
+			RemoteHelper.runCommandRemote(RemoteHelper.getRemoteConnectionByName(projectInfo.getConnection().getName()), root.getAbsolutePath(), "source " + initCmd, "", monitor);
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
@@ -118,7 +118,7 @@ public class ShellSession {
 	public String execute(String command, int[] retCode) throws IOException {
 		//FIXME : parse output 
 		try {
-			process = RSEHelper.runCommandRemote(RSEHelper.getRemoteConnectionByName(projectInfo.getConnection().getName()), root.getAbsolutePath(), command, "", new NullProgressMonitor());
+			process = RemoteHelper.runCommandRemote(RemoteHelper.getRemoteConnectionByName(projectInfo.getConnection().getName()), root.getAbsolutePath(), command, "", new NullProgressMonitor());
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
