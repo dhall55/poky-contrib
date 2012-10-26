@@ -2,7 +2,7 @@
 # Sanity check the users setup for common misconfigurations
 #
 
-SANITY_REQUIRED_UTILITIES ?= "patch diffstat makeinfo git bzip2 tar gzip gawk chrpath wget cpio"
+SANITY_REQUIRED_UTILITIES ?= "bzip2 chrpath cpio diffstat gawk git gzip lsb_release makeinfo patch tar wget"
 
 python check_bblayers_conf() {
     bblayers_fn = os.path.join(d.getVar('TOPDIR', True), 'conf/bblayers.conf')
