@@ -26,7 +26,7 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
 import org.eclipse.ui.texteditor.ContentAssistAction;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
-
+import org.eclipse.ui.texteditor.SaveAction;
 import org.yocto.bc.ui.Activator;
 
 /**
@@ -40,24 +40,22 @@ public class BitBakeFileEditor extends AbstractDecoratedTextEditor {
 	static final String CONTENT_ASSIST= "ContentAssist";
 	private BitBakeSourceViewerConfiguration viewerConfiguration;
 	private IFile targetFile;
-	
 	public BitBakeFileEditor() {
 		super();
 		viewerConfiguration = new BitBakeSourceViewerConfiguration(getSharedColors(), getPreferenceStore());
 		setSourceViewerConfiguration(viewerConfiguration);
 		setDocumentProvider(new BitBakeDocumentProvider());
 	}
-	
+
 	@Override
 	protected void createActions() {
 		super.createActions();
-		
 		ResourceBundle bundle= RecipeEditorMessages.getBundle();
 		ContentAssistAction action= new ContentAssistAction(bundle, "contentAssist.", this); //$NON-NLS-1$
 		action.setActionDefinitionId(ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS);
 		setAction(CONTENT_ASSIST, action);
 	}
-	
+
 	@Override
 	public void init(IEditorSite site, IEditorInput input) throws PartInitException {
 			

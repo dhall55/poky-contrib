@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.yocto.bc.ui.editors.bitbake;
 
+import java.net.URI;
+
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension3;
 import org.eclipse.jface.text.IDocumentPartitioner;
@@ -18,7 +22,10 @@ import org.eclipse.jface.text.rules.IPredicateRule;
 import org.eclipse.jface.text.rules.RuleBasedPartitionScanner;
 import org.eclipse.jface.text.rules.SingleLineRule;
 import org.eclipse.jface.text.rules.Token;
+import org.eclipse.rse.core.model.IHost;
+import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.editors.text.FileDocumentProvider;
+import org.yocto.bc.remote.utils.RemoteHelper;
 
 /**
  * Document provider for BB recipe.
@@ -59,4 +66,19 @@ public class BitBakeDocumentProvider extends FileDocumentProvider {
 		}
 	}
 
+	@Override
+	public boolean isDeleted(Object element) {
+		if (element instanceof IFileEditorInput) {
+			IFileEditorInput input= (IFileEditorInput) element;
+
+		    URI uri = input.getFile().getLocationURI();
+			if (uri == null)
+				return true;
+
+			IHost conn = RemoteHelper.getRemoteConnectionByURI(uri);
+			return !RemoteHelper.fileExistsRemote(conn, new NullProgressMonitor(), uri.getPath());
+		}
+
+		return super.isDeleted(element);
+	}
 }

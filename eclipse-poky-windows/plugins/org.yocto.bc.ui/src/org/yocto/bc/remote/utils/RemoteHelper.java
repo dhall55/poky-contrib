@@ -611,5 +611,19 @@ public class RemoteHelper {
 			return null;
 		}
 	}
+
+	public static boolean fileExistsRemote(IHost conn, IProgressMonitor monitor, String path) {
+		try {
+			IFileService fs = getConnectedRemoteFileService(conn, monitor);
+			int nameStart = path.lastIndexOf("/");
+			String parentPath = path.substring(0, nameStart);
+			String name = path.substring(nameStart + 1);
+			IHostFile hostFile = fs.getFile(parentPath, name, monitor);
+			return hostFile.exists();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
 	
 }
