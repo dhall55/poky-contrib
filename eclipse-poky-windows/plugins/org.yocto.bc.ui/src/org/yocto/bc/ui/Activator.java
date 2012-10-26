@@ -153,8 +153,11 @@ public class Activator extends AbstractUIPlugin {
 			} catch (IOException e) {
 				throw new InvocationTargetException(e);
 			}
-			IHost connection = RemoteHelper.getRemoteConnectionByURI(location);
-			pi.setConnection(connection);
+			if (pi.getConnection() == null) {
+				IHost connection = RemoteHelper.getRemoteConnectionByURI(location);
+				pi.setConnection(connection);
+			}
+			projInfoMap.put(location, pi);
 		}
 		
 		return pi;

@@ -18,15 +18,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.Proxy;
-import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+
+import javax.swing.JOptionPane;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
@@ -85,13 +85,30 @@ public class RemoteHelper {
 	public static IHost getRemoteConnectionByURI(URI uri) {
 		if (uri == null)
 			return null;
+		
+		Map<String, IHost> connectionsForHost = new HashMap<String, IHost>();
 		IHost[] connections = RSECorePlugin.getTheSystemRegistry().getHosts();
-		for (int i = 0; i < connections.length; i++)
-			if (connections[i].getHostName().equals(uri.getHost()))
-				return connections[i];
-		return null; // TODO Connection is not found in the list--need to react
-		// somehow, throw the exception?
 
+		IHost firstConnection = null;
+		for (int i = 0; i < connections.length; i++) {
+			if (connections[i].getHostName().equals(uri.getHost())) {
+				if (firstConnection == null)
+					firstConnection = connections[i];
+				connectionsForHost.put(connections[i].getAliasName(), connections[i]);
+			}
+		}
+		
+		if (connectionsForHost.size() == 1)
+			return firstConnection;
+		
+		String[] choices = new String[connectionsForHost.size()];
+		connectionsForHost.keySet().toArray(choices);
+
+		String picked = (String)JOptionPane.showInputDialog(null, "Choose a connection for the current project:"
+	                , "Connection chooser", JOptionPane.QUESTION_MESSAGE
+	                , null, choices, choices[0]);
+		
+		return connectionsForHost.get(picked); 
 	}
 	
 	public static String getRemoteHostName(String remoteConnection)
@@ -503,6 +520,7 @@ public class RemoteHelper {
 		ProcessStreamBuffer buffer = new ProcessStreamBuffer();
 		try {
 			Process process = runCommandRemote(connection, initialDir, cmd, arguments, monitor);
+			
 			if (process == null)
 				throw new Exception("An error has occured while trying to run remote command!");
 			BufferedReader inbr = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -531,6 +549,7 @@ public class RemoteHelper {
 				if (info == null)
 					cancel = true;
 			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

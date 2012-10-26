@@ -28,6 +28,7 @@ import org.eclipse.ui.texteditor.ContentAssistAction;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.SaveAction;
 import org.yocto.bc.ui.Activator;
+import org.yocto.bc.ui.model.ProjectInfo;
 
 /**
  * Editor for BB Recipe
@@ -65,7 +66,9 @@ public class BitBakeFileEditor extends AbstractDecoratedTextEditor {
 			viewerConfiguration.setTargetFile(targetFile);
 			
 			try {
-				viewerConfiguration.setBBSession(Activator.getBBSession(Activator.getProjInfo(p.getLocationURI()), new NullProgressMonitor()));
+				ProjectInfo projInfo = Activator.getProjInfo(p.getLocationURI());
+				((BitBakeDocumentProvider)getDocumentProvider()).setActiveConnection(projInfo.getConnection());
+				viewerConfiguration.setBBSession(Activator.getBBSession(projInfo, new NullProgressMonitor()));
 			} catch (IOException e) {
 				e.printStackTrace();
 				throw new PartInitException(Status.CANCEL_STATUS);
@@ -82,4 +85,5 @@ public class BitBakeFileEditor extends AbstractDecoratedTextEditor {
 		}
 		super.init(site, input);
 	}
+	
 }

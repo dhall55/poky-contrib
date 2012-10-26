@@ -155,7 +155,8 @@ public class InstallWizard extends FiniteStateWizard implements IWorkbenchWizard
 				pinfo.setInitScriptPath(initPath);
 				pinfo.setLocation(uri);
 				pinfo.setName(prjName);
-				pinfo.setConnection((IHost) model.get(InstallWizard.SELECTED_CONNECTION));
+				IRemoteConnection remConn = (IRemoteConnection) model.get(InstallWizard.SELECTED_CONNECTION);
+				pinfo.setConnection(RemoteHelper.getRemoteConnectionByName(remConn.getName()));
 				pinfo.setRemoteServices((IRemoteServices) model.get(InstallWizard.SELECTED_REMOTE_SERVICE));
 			
 				ConsoleWriter cw = new ConsoleWriter();

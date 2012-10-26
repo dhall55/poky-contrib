@@ -42,6 +42,8 @@ public class BitBakeDocumentProvider extends FileDocumentProvider {
 	public static final String RECIPE_CODE= IDocument.DEFAULT_CONTENT_TYPE;
 	public static final String RECIPE_COMMENT= "RECIPE_COMMENT"; //$NON-NLS-1$
 	
+	private IHost connection;
+	
 	private static final String[] CONTENT_TYPES= {
 			RECIPE_CODE,
 			RECIPE_COMMENT
@@ -75,10 +77,15 @@ public class BitBakeDocumentProvider extends FileDocumentProvider {
 			if (uri == null)
 				return true;
 
-			IHost conn = RemoteHelper.getRemoteConnectionByURI(uri);
-			return !RemoteHelper.fileExistsRemote(conn, new NullProgressMonitor(), uri.getPath());
+			if (connection == null) 
+				connection = RemoteHelper.getRemoteConnectionByURI(uri);
+			return !RemoteHelper.fileExistsRemote(connection, new NullProgressMonitor(), uri.getPath());
 		}
 
 		return super.isDeleted(element);
+	}
+
+	public void setActiveConnection(IHost connection) {
+		this.connection = connection;
 	}
 }
